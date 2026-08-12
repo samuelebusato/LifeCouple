@@ -79,12 +79,12 @@ export default function Accedi() {
             </View>
             <Input
               value={codice}
-              onChangeText={setCodice}
-              placeholder="000000"
+              onChangeText={(t) => setCodice(t.replace(/[^0-9]/g, ''))}
+              placeholder="Inserisci il codice"
               keyboardType="number-pad"
-              maxLength={6}
+              maxLength={10}
               autoFocus
-              className="text-center tracking-[8px]"
+              className="text-center text-2xl tracking-[6px]"
             />
             {errore && <Text className="text-sm text-destructive">{errore}</Text>}
             <Button size="lg" disabled={attesa || codice.trim().length < 6} onPress={verifica}>
