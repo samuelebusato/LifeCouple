@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import { t } from '@/lib/i18n';
 
 export default function Accedi() {
   const router = useRouter();
@@ -50,15 +51,13 @@ export default function Accedi() {
         {fase === 'email' ? (
           <View className="gap-6">
             <View className="gap-2">
-              <Text className="font-serif-bold text-3xl text-foreground">Entra</Text>
-              <Text className="text-base text-muted-foreground">
-                Ti mandiamo un codice via email. Niente password da ricordare.
-              </Text>
+              <Text className="font-serif-bold text-3xl text-foreground">{t.accedi.titolo}</Text>
+              <Text className="text-base text-muted-foreground">{t.accedi.sottotitolo}</Text>
             </View>
             <Input
               value={email}
               onChangeText={setEmail}
-              placeholder="la-tua@email.it"
+              placeholder={t.accedi.placeholderEmail}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
@@ -66,21 +65,21 @@ export default function Accedi() {
             />
             {errore && <Text className="text-sm text-destructive">{errore}</Text>}
             <Button size="lg" disabled={attesa || email.trim().length < 5} onPress={inviaCodice}>
-              <Text>{attesa ? 'Invio…' : 'Mandami il codice'}</Text>
+              <Text>{attesa ? t.accedi.invio : t.accedi.mandaCodice}</Text>
             </Button>
           </View>
         ) : (
           <View className="gap-6">
             <View className="gap-2">
-              <Text className="font-serif-bold text-3xl text-foreground">Il codice</Text>
+              <Text className="font-serif-bold text-3xl text-foreground">{t.accedi.titoloCodice}</Text>
               <Text className="text-base text-muted-foreground">
-                L'abbiamo mandato a {email}. Controlla la posta.
+                {t.accedi.sottotitoloCodice(email)}
               </Text>
             </View>
             <Input
               value={codice}
-              onChangeText={(t) => setCodice(t.replace(/[^0-9]/g, ''))}
-              placeholder="Inserisci il codice"
+              onChangeText={(v) => setCodice(v.replace(/[^0-9]/g, ''))}
+              placeholder={t.accedi.placeholderCodice}
               keyboardType="number-pad"
               maxLength={10}
               autoFocus
@@ -88,10 +87,10 @@ export default function Accedi() {
             />
             {errore && <Text className="text-sm text-destructive">{errore}</Text>}
             <Button size="lg" disabled={attesa || codice.trim().length < 6} onPress={verifica}>
-              <Text>{attesa ? 'Verifico…' : 'Entra'}</Text>
+              <Text>{attesa ? t.accedi.verifico : t.accedi.entra}</Text>
             </Button>
             <Button variant="ghost" onPress={() => setFase('email')}>
-              <Text>Cambia email</Text>
+              <Text>{t.accedi.cambiaEmail}</Text>
             </Button>
           </View>
         )}
