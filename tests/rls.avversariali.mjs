@@ -177,10 +177,65 @@ let luogoId;
   esito('il registro azioni non e alterabile (solo-append)', updReg?.length === 0);
 }
 
+// --- appaiamento via link (D-14) ------------------------------------------------
+// a2 crea una coppia e invita; b_estraneo intercetta il link; a2_partner e' chi
+// deve entrare davvero.
+{
+  const a2 = await utente('rls-a2@example.com');
+  const partner = await utente('rls-a2partner@example.com');
+  const estraneo = await utente('rls-estraneo@example.com');
+  await coppiaDi(a2); // a2 ha la sua coppia
+
+  const { data: token, error: eTok } = await a2.rpc('crea_invito');
+  esito('chi e in coppia genera un token di invito', !eTok && typeof token === 'string' && token.length >= 40, eTok?.message);
+
+  const { error: eSelf } = await a2.rpc('apri_invito', { p_token: token });
+  esito('chi ha invitato non puo aprire il proprio invito', /creato tu/.test(eSelf?.message ?? ''), eSelf?.message);
+
+  const { error: eFinto } = await estraneo.rpc('apri_invito', { p_token: 'token-inventato-non-valido' });
+  esito('un token inventato non apre nulla', /non valido/.test(eFinto?.message ?? ''), eFinto?.message);
+
+  // l'estraneo intercetta il link e lo apre: NON deve entrare, solo mettere in attesa
+  const { data: invId, error: eApri } = await estraneo.rpc('apri_invito', { p_token: token });
+  esito('aprire il link NON fa entrare (solo attesa conferma)', !eApri && !!invId, eApri?.message);
+  const { data: membriDopoApertura } = await a2.rpc('n_membri_attivi', { cid: await coppiaDi(a2) });
+  esito('dopo l apertura la coppia ha ancora 1 membro', membriDopoApertura === 1, `membri=${membriDopoApertura}`);
+
+  // l'estraneo NON puo autoconfermarsi
+  const { error: eAuto } = await estraneo.rpc('conferma_invito', { p_invito_id: invId });
+  esito('chi ha aperto non puo confermare da se (solo chi invita)', /chi ha invitato/.test(eAuto?.message ?? ''), eAuto?.message);
+
+  // il token e' monouso in attesa: il partner legittimo non puo aprirlo mentre e' gia' aperto
+  const { error: eSecondo } = await partner.rpc('apri_invito', { p_token: token });
+  esito('token gia aperto non e riapribile', /non piu/.test(eSecondo?.message ?? ''), eSecondo?.message);
+
+  // a2 si accorge che ha aperto l'estraneo e REVOCA invece di confermare
+  const { error: eRev } = await a2.rpc('revoca_invito', { p_invito_id: invId });
+  esito('chi invita puo revocare un invito aperto', !eRev, eRev?.message);
+  const { error: eConfDopoRev } = await a2.rpc('conferma_invito', { p_invito_id: invId });
+  esito('dopo la revoca non si puo piu confermare', /nessuna apertura/.test(eConfDopoRev?.message ?? ''), eConfDopoRev?.message);
+
+  // ora il flusso corretto: nuovo token, il PARTNER apre, a2 conferma
+  const { data: token2 } = await a2.rpc('crea_invito');
+  const { data: inv2 } = await partner.rpc('apri_invito', { p_token: token2 });
+  const { data: coppiaFormata, error: eConf } = await a2.rpc('conferma_invito', { p_invito_id: inv2 });
+  esito('il flusso corretto forma la coppia', !eConf && !!coppiaFormata, eConf?.message);
+  const { data: membriFinali } = await a2.rpc('n_membri_attivi', { cid: coppiaFormata });
+  esito('la coppia ora ha 2 membri', membriFinali === 2);
+
+  const { data: partnerVede } = await partner.from('luogo').select('*').eq('coppia_id', coppiaFormata);
+  esito('il partner appaiato legge i contenuti della coppia', Array.isArray(partnerVede));
+
+  // --- sigillo (D-12) con DUE membri veri: prima era non coperto -----------------
+  const { data: part } = await a2.from('partita').insert({ coppia_id: coppiaFormata, gioco: 'telepatia' }).select().single();
+  await a2.from('invio_sigillato').insert({ partita_id: part.id, natura: 'scelta', contenuto: { s: 'A' } });
+  const { data: sbircia } = await partner.from('invio_sigillato').select('*').eq('partita_id', part.id);
+  esito('D-12: il compagno di coppia NON sbircia il sigillo prima della rivelazione', sbircia?.length === 0);
+}
+
 // =============================================================================
 console.log('\n--- Dichiarati NON coperti (nessun gap silenzioso) ---');
 console.log('- ex-membro dopo lo scioglimento: testabile quando esistera sciogli_coppia (passo 5)');
-console.log('- partner che sbircia il sigillo PRIMA della rivelazione: testabile con accetta_invito (passo 4)');
 console.log('- tetto cumulativo 1 GB: richiederebbe ~100 insert; verificata la sola guardia per-file');
 
 console.log(`\n${falliti === 0 ? 'TUTTI I TEST PASSANO' : `${falliti} TEST FALLITI`}`);

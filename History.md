@@ -425,11 +425,13 @@ Proposta dall'utente il 2026-08-12. **Non è una terza funzione: è il carburant
 ✅ **Migrazione applicata** (0001 + 0002 per B-01). **Tipi TypeScript generati** dallo schema reale in `lib/database.types.ts` (18 relazioni) e il client è ora `createClient<Database>`.
 ✅ **Test avversariali RLS scritti e verdi** — `tests/rls.avversariali.mjs` (`npm run test:rls`), **23 asserzioni contro il progetto reale** con la coppia B come avversario: confine coppia↔coppia in lettura e scrittura, `autore_id` non falsificabile, punti solo alla transizione e non ri-fabbricabili, regressione di B-01, sigillo dei giochi, solo-append del registro, tetto per-file. Tre casi **dichiarati non coperti** con la ragione (servono `sciogli_coppia`/`accetta_invito`): nessun gap silenzioso.
 
+✅ **Appaiamento via link lato database** (D-14) — migrazione `0003_appaiamento.sql`: `crea_invito` (token 192 bit, scadenza 72h, solo l'impronta sha256 nel DB, un solo invito vivo per coppia), `apri_invito` (mette in **attesa di conferma**, non fa entrare), `conferma_invito` (**solo chi ha invitato**, è il passo che interrompe l'ingresso di un estraneo), `revoca_invito`. Permessi chiusi con la lezione di B-01 (`revoke from public`).
+✅ **Test estesi a 37 asserzioni, tutte verdi**: il caso che D-14 esiste per fermare è provato — **un estraneo apre il link intercettato e la coppia resta a 1 membro**; il flusso corretto forma la coppia a 2; token monouso e revocabile. Sbloccato e coperto il **sigillo D-12 fra due membri veri** della stessa coppia (prima non testabile).
+
 **Cosa manca** (in ordine):
-1. **Committare** migrazione + correzione B-01 + client tipizzato + test (proporre, mai eseguire senza conferma).
-2. **Prima funzione: autenticazione + appaiamento via link** (D-14) — funzione `accetta_invito` col controllo di chi invita, e lo schermo di onboarding.
-3. **Scioglimento** (D-04/D-16/D-21) subito dopo: `sciogli_coppia`, e i due test avversariali che ora sono dichiarati non coperti.
-4. Le funzioni nell'ordine di D-11.
+1. **UI di onboarding** (crea coppia · genera e condividi link · apri link · conferma) — è il primo pezzo visibile sul telefono. Da fare nella **fase design** con le skill, non improvvisato.
+2. **Scioglimento** (D-04/D-16/D-21): `sciogli_coppia`. ⚠️ **Decisione implementativa aperta**: D-21 vuole i contenuti **condivisi** (liste, luoghi, eventi) *duplicati una copia a ciascuno*, i **personali** (foto, recensioni) solo all'autore, la creatura cancellata. La duplicazione dei condivisi non è banale (le policy attuali danno all'ex-membro solo `autore_id = auth.uid()`) e va ragionata, non buttata giù. Sblocca l'ultimo test dichiarato non coperto.
+3. Le funzioni nell'ordine di D-11.
 
 ⚠️ **Prima di utenti veri**: riaccendere "Confirm email" nel dashboard (spenta per i test), e scegliere la strategia d'accesso definitiva — probabilmente magic link o OAuth, non password. Gli utenti `rls-*@example.com` di prova si eliminano dal dashboard.
 
