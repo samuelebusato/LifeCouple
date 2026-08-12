@@ -82,6 +82,24 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-23 — Si parte su Expo **SDK 54**, non sull'ultima
+**Deciso il 2026-08-12**, dopo una verifica dell'utente che ha ribaltato una mia scelta.
+
+**Il vincolo**: **Expo Go supporta una sola versione di SDK alla volta**, e la versione sull'App Store è ferma alla **54** (confermato dall'utente sul proprio iPhone). Un progetto su SDK 57 **non partirebbe** sul suo telefono.
+
+**Cronaca, perche' l'errore e' istruttivo**: avevo generato il progetto sull'ultima versione (57) ragionando che *"allinearlo dopo e' un comando solo"*, dopo aver letto un changelog di **maggio** che dava lo store fermo alla 54 e averlo considerato probabilmente superato. Era vero il contrario. **Il costo e' stato nullo solo perche' non c'era ancora codice**: e' esattamente la ragione per cui l'inizializzazione va fatta *prima* di scrivere, e la verifica sul dispositivo reale *prima* dell'inizializzazione.
+
+**Cosa si perde restando su 54** — verificato leggendo i changelog di 55 e 56:
+- **55**: Legacy Architecture abbandonata, Expo UI rifinita, Colors API, transizione Apple Zoom, `Stack.Toolbar`.
+- **56**: build iOS oltre 50% piu' veloci, avvio a freddo Android ~40% piu' veloce, primo render ~33% piu' veloce (interop Swift/C++ diretto al posto dello strato Objective-C++), aggiornamenti OTA piu' piccoli, Expo Router v56, componenti universali.
+- **57**: non ne ho letto il changelog, quindi non lo riassumo.
+
+→ **Niente di tutto questo serve a LifeCouple**: sono prestazioni e comodita' di sviluppo, non capacita', e qui ci sono quattro schermate CRUD e due utenti. **Restare indietro non costa nulla, e salire dopo costa poco**: l'unico breaking change che ci toccherebbe (import da `@react-navigation/*` a `expo-router/react-navigation`) ha un codemod.
+
+**Versioni effettive**: `expo ~54.0.35` · `react-native 0.81.5` · `react 19.1.0` · `expo-router ~6.0.24`.
+
+**Condizione di riesame**: quando l'Expo Go dello store passera' a una SDK piu' recente, o quando servira' comunque un development build (cioe' quando arrivera' l'account Apple).
+
 ### D-22 — Tetto foto: 1 GB per coppia
 **Deciso dall'utente il 2026-08-12.**
 
@@ -249,6 +267,7 @@ _(nessuno: non è stata scritta una riga di codice al 2026-08-12)_
 | R-02 | **Dipendenza da fornitore unico** (Supabase per auth, dati e file) | Proporzionato a V1/V2; l'alternativa costa più di quanto il progetto valga | Se il progetto smette di essere un esperimento |
 | R-03 | **Nessuna revisione legale professionale** dei testi privacy alla partenza | I documenti si adattano da quelli già scritti per HeleoX, rivisti da persona non legale | Prima della pubblicazione pubblica sugli store |
 | R-04 | **Costi di pubblicazione ricorrenti** — Apple Developer 99 €/anno, Google Play 25 $ una tantum | Sono il prezzo minimo di V3: senza store non si impara la parte che si vuole imparare | Se l'app viene ritirata |
+| R-05 | **22 segnalazioni di `npm audit`** (12 alte, 10 moderate) sul progetto appena inizializzato | Risalgono a **tre soli pacchetti**: `image-size` e `postcss` (dentro **Metro**, il bundler) e `uuid` (dentro `xcode` → `@expo/config-plugins`). Tutte le altre voci compaiono come *effetto* perché dipendono da questi. Sono **strumenti di build**: non finiscono nel bundle che arriva sul telefono, e sfruttarle richiederebbe di dare in pasto al bundler un input malevolo — cioè avere già accesso al codice. ⚠️ **`npm audit fix --force` NON va eseguito**: cambierebbe le versioni maggiori di `expo` e `react-native`, rompendo il vincolo SDK 54 di D-23 | Al prossimo aggiornamento di SDK, oppure se una segnalazione tocca una dipendenza **runtime** invece della toolchain |
 
 ---
 
@@ -376,17 +395,28 @@ Proposta dall'utente il 2026-08-12. **Non è una terza funzione: è il carburant
 
 **Aggiornato al 2026-08-12.**
 
-**Stato**: progetto **appena avviato**. Esistono i tre documenti obbligatori e nient'altro. Zero codice, zero risorse cloud, zero costi sostenuti.
+**Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che parte. Zero risorse cloud, zero costi sostenuti.
 
 **Cosa è deciso**: le sei funzioni · i tre giochi da implementare per primi · lo stack completo (D-10) · l'ordine di implementazione (D-11) · la creatura geometrica ora e sostituibile poi (D-09) · il ciclo mestruale rimandato (D-07) e il divieto di reintrodurre art. 9 da altre porte (D-08) · le regole di scioglimento (D-04), posizione (D-05), invio sigillato (D-12) e pass (D-13).
 
-✅ **Le quattro decisioni che bloccavano lo schema sono state prese il 2026-08-12** (D-14 appaiamento, D-15 crescita, D-16 scioglimento, D-17 stadi). **Lo schema del database si può disegnare.**
+✅ **Repo, submodule e inizializzazione fatti il 2026-08-12.** Il progetto è su GitHub (`samuelebusato/LifeCouple`), agganciato al brain come submodule, e **l'app parte e rende**: verificata nella preview web con 1153 moduli compilati, nessun errore in console, navigazione fra le tab funzionante.
+
+**Configurazione applicata**: `name` LifeCouple · `slug` lifecouple · `version` **0.1.0** (1.0.0 su un progetto senza codice sarebbe una bugia) · `scheme` **`lifecouple`** — serve ai link di invito di D-14, è ciò che fa aprire l'app quando si tocca il link su WhatsApp · `ios.bundleIdentifier` e `android.package` **`com.lifecouple.app`** (D-20) · `supportsTablet: false`, perché un'app di coppia sul telefono non ha motivo di farsi recensire anche su iPad.
+
+**Comando per lavorarci**: `npm run web` dentro `Projects/LifeCouple` (o la configurazione `lifecouple-web` in `.claude/launch.json` del brain).
+
+✅ **Schema disegnato** il 2026-08-12 — 16 tabelle, regole RLS e le due funzioni Postgres, in [`Architecture.md`](docs/Architecture.md) §4.
+
+✅ **Strato UI montato e verificato** il 2026-08-12: NativeWind 4.2 + Tailwind 3.4 (fissata: la v4 di Tailwind è incompatibile con NativeWind) · componenti base in stile React Native Reusables **posseduti nel repo** (`components/ui/text.tsx` col `TextClassContext`, `components/ui/button.tsx` con cva) · `lib/utils.ts` (cn) · token shadcn neutri in `global.css` come segnaposto — la direzione visiva vera arriverà nella fase di design, e sarà un cambio di variabili · lucide + react-native-svg · schermate demo del template rimosse, `app/index.tsx` segnaposto che esercita l'intera catena.
+**Verifica fatta contro la realtà, non contro "compila"**: stili calcolati letti nel browser — `text-3xl font-bold` → 30px/700; bottone `rgb(229,52,93)` = `hsl(346 77% 55%)`, cioè il token `--primary` **in variante scura** (il tema scuro risponde); il testo del bottone ha preso `--primary-foreground` dal contesto senza classi esplicite. `tsc --noEmit` pulito.
+⚠️ **Inciampo registrato**: un `babel.config.js` esplicito rompe la risoluzione di `babel-preset-expo` (annidato dentro `expo` nel template) → installato esplicitamente `~54.0.10`. Sintomo: `Cannot find module 'babel-preset-expo'` a ogni bundle.
 
 **Cosa manca** (in ordine):
-1. **Repo git e submodule** — non ancora fatti, **richiedono conferma esplicita**: `git init` locale, creazione del repo remoto, `git submodule add` nel brain (`Rule/regole-sviluppo-progetto.md`). L'utente ha detto che crea la repo e manda l'URL. **È l'unica cosa che blocca l'inizio.**
-2. ✅ **Schema disegnato il 2026-08-12** — 16 tabelle, regole RLS e le due funzioni Postgres, in [`Architecture.md`](docs/Architecture.md) §4. Manca solo di tradurlo in migrazione SQL, che è lavoro meccanico e va fatto **nel repo**.
-3. **Scrivere le policy RLS** e i **test avversariali** che le verificano (`Architecture.md` §7 debito 1) — non è opzionale: senza livello applicativo nostro, una policy dimenticata è un'esposizione diretta.
-4. Inizializzazione del progetto Expo con lo stack di D-10 e l'identificativo `com.lifecouple.app` (D-20).
+1. **Verificare l'app sull'iPhone vero** con Expo Go — è il passo che chiude D-23, e nessuna preview web può sostituirlo.
+2. **Committare lo strato UI** nel repo del progetto e aggiornare il puntatore nel brain (ordine progetto → super-repo) — da proporre, mai eseguire senza conferma.
+3. **Creare il progetto Supabase in regione UE** e generare i tipi dallo schema.
+4. **Tradurre lo schema in migrazione SQL** — tutte le tabelle in una volta, creatura e giochi inclusi (D-11).
+5. **Scrivere le policy RLS** e i **test avversariali** che le verificano (`Architecture.md` §7 debito 1) — non è opzionale: senza un livello applicativo nostro, una policy dimenticata è un'esposizione diretta.
 
 **Le decisioni già prese da non rimettere in discussione senza motivo**, perché vincolano lo schema e cambiarle dopo significa migrare dati già scritti: **D-04** (lo scioglimento revoca l'accesso, non cancella; `autore_id` su ogni contenuto), **D-05** (nessuna posizione in tempo reale), **D-09** (stato separato dal disegno), **D-11** (la creatura si progetta subito anche se si implementa per ultima).
 
