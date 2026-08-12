@@ -255,7 +255,12 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 4. Bug trovati e come sono stati verificati
 
-_(nessuno: non è stata scritta una riga di codice al 2026-08-12)_
+### B-01 — `assegna_punti` chiamabile via RPC da chiunque, anon compreso (2026-08-12)
+**Trovato**: con una chiamata di prova dall'esterno (`POST /rest/v1/rpc/assegna_punti` con la sola anon key), subito dopo l'applicazione di 0001. La chiamata è **entrata nella funzione** ed è stata fermata solo dal vincolo di chiave esterna, perché il `coppia_id` era inventato. Con un id reale, un utente poteva **auto-assegnarsi punti** saltando i trigger — violazione diretta di D-15.
+**Causa**: Postgres concede `EXECUTE` a **PUBLIC** su ogni funzione nuova; il `revoke ... from anon` di 0001 non rimuove il grant a PUBLIC, e anon lo eredita da lì.
+**Correzione**: migrazione `0002_permessi_funzioni.sql` — `revoke ... from public, anon, authenticated` su `assegna_punti` (la chiamano solo i trigger, che non ricontrollano il privilegio dopo la creazione); stessa chiusura su `crea_coppia`, la cui guardia interna aveva retto ma non deve essere l'unico strato (principio 5). `e_membro_attivo` resta eseguibile da tutti **di proposito**: le policy la invocano col ruolo del chiamante.
+**Verificato il 2026-08-12**, dopo l'applicazione di 0002, ripetendo **la stessa identica chiamata**: risponde `42501 permission denied for function assegna_punti` invece di entrare nella funzione. Verificato insieme che `crea_coppia` da anon è ora bloccata al livello dei permessi (la guardia interna resta come secondo strato) e che le tabelle rispondono ancora `[]` ad anon — cioè `e_membro_attivo` continua a servire le policy.
+**Lezione**: due erano già scritte nel processo — la verifica si fa **dall'esterno contro la realtà**, e la seconda riga di difesa (il FK, la guardia interna) è ciò che contiene il danno quando la prima manca. La nuova: **su Postgres, "revoke from anon" senza "revoke from public" non revoca niente.**
 
 ---
 
@@ -411,12 +416,22 @@ Proposta dall'utente il 2026-08-12. **Non è una terza funzione: è il carburant
 **Verifica fatta contro la realtà, non contro "compila"**: stili calcolati letti nel browser — `text-3xl font-bold` → 30px/700; bottone `rgb(229,52,93)` = `hsl(346 77% 55%)`, cioè il token `--primary` **in variante scura** (il tema scuro risponde); il testo del bottone ha preso `--primary-foreground` dal contesto senza classi esplicite. `tsc --noEmit` pulito.
 ⚠️ **Inciampo registrato**: un `babel.config.js` esplicito rompe la risoluzione di `babel-preset-expo` (annidato dentro `expo` nel template) → installato esplicitamente `~54.0.10`. Sintomo: `Cannot find module 'babel-preset-expo'` a ogni bundle.
 
+✅ **App verificata sull'iPhone reale** il 2026-08-12 sera (Expo Go via QR): D-23 chiusa sul dispositivo, non solo in preview. Sbloccata di passaggio la execution policy PowerShell dell'utente (`npm.cmd` come workaround, `RemoteSigned -Scope CurrentUser` come correzione, eseguita dall'utente).
+
+✅ **Migrazione SQL scritta** il 2026-08-12 sera — [`supabase/migrations/0001_schema_iniziale.sql`](supabase/migrations/0001_schema_iniziale.sql): le 16 tabelle, RLS su ognuna, `e_membro_attivo()` security definer (evita la ricorsione RLS su `membro_coppia`), `crea_coppia()` atomica (nessun insert diretto su coppia/membri: l'unico ingresso è la funzione o il futuro invito), trigger dei punti sulla transizione (D-15), trigger del tetto foto che **impone** il GB (D-22), creatura creata insieme alla coppia, `invio_sigillato` leggibile solo dall'autore (D-12). Valori punti e soglie stadi **dichiarati provvisori**. Non ancora applicata: manca il progetto Supabase.
+✅ **Client Supabase pronto**: `lib/supabase.ts` (AsyncStorage su nativo, localStorage su web), `.env.example` col formato delle chiavi, `.env` aggiunto al `.gitignore` **prima** che esista. Nessuna schermata lo importa ancora: l'app gira anche senza `.env`. `tsc` pulito.
+
+✅ **Progetto Supabase creato dall'utente**, `.env` compilato (anon key; URL corretto togliendo il suffisso `/rest/v1/` che l'utente aveva incluso). `.env` fuori da git. Regione UE **da confermare** nel dashboard (l'header CF-RAY dice solo il nodo Cloudflare, non la regione del progetto).
+✅ **Migrazione applicata** (0001 + 0002 per B-01). **Tipi TypeScript generati** dallo schema reale in `lib/database.types.ts` (18 relazioni) e il client è ora `createClient<Database>`.
+✅ **Test avversariali RLS scritti e verdi** — `tests/rls.avversariali.mjs` (`npm run test:rls`), **23 asserzioni contro il progetto reale** con la coppia B come avversario: confine coppia↔coppia in lettura e scrittura, `autore_id` non falsificabile, punti solo alla transizione e non ri-fabbricabili, regressione di B-01, sigillo dei giochi, solo-append del registro, tetto per-file. Tre casi **dichiarati non coperti** con la ragione (servono `sciogli_coppia`/`accetta_invito`): nessun gap silenzioso.
+
 **Cosa manca** (in ordine):
-1. **Verificare l'app sull'iPhone vero** con Expo Go — è il passo che chiude D-23, e nessuna preview web può sostituirlo.
-2. **Committare lo strato UI** nel repo del progetto e aggiornare il puntatore nel brain (ordine progetto → super-repo) — da proporre, mai eseguire senza conferma.
-3. **Creare il progetto Supabase in regione UE** e generare i tipi dallo schema.
-4. **Tradurre lo schema in migrazione SQL** — tutte le tabelle in una volta, creatura e giochi inclusi (D-11).
-5. **Scrivere le policy RLS** e i **test avversariali** che le verificano (`Architecture.md` §7 debito 1) — non è opzionale: senza un livello applicativo nostro, una policy dimenticata è un'esposizione diretta.
+1. **Committare** migrazione + correzione B-01 + client tipizzato + test (proporre, mai eseguire senza conferma).
+2. **Prima funzione: autenticazione + appaiamento via link** (D-14) — funzione `accetta_invito` col controllo di chi invita, e lo schermo di onboarding.
+3. **Scioglimento** (D-04/D-16/D-21) subito dopo: `sciogli_coppia`, e i due test avversariali che ora sono dichiarati non coperti.
+4. Le funzioni nell'ordine di D-11.
+
+⚠️ **Prima di utenti veri**: riaccendere "Confirm email" nel dashboard (spenta per i test), e scegliere la strategia d'accesso definitiva — probabilmente magic link o OAuth, non password. Gli utenti `rls-*@example.com` di prova si eliminano dal dashboard.
 
 **Le decisioni già prese da non rimettere in discussione senza motivo**, perché vincolano lo schema e cambiarle dopo significa migrare dati già scritti: **D-04** (lo scioglimento revoca l'accesso, non cancella; `autore_id` su ogni contenuto), **D-05** (nessuna posizione in tempo reale), **D-09** (stato separato dal disegno), **D-11** (la creatura si progetta subito anche se si implementa per ultima).
 
