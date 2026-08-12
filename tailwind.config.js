@@ -5,6 +5,17 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      // Fraunces porta il carattere del "diario" nei titoli; il corpo resta
+      // sul font di sistema, piu' leggibile su schermo piccolo.
+      fontFamily: {
+        serif: ['Fraunces_600SemiBold'],
+        'serif-bold': ['Fraunces_700Bold'],
+      },
+      borderRadius: {
+        // angoli morbidi, da quaderno rilegato
+        xl: '16px',
+        '2xl': '22px',
+      },
       // Token in variabili CSS (global.css): la palette si cambia in un punto solo,
       // e i componenti in stile shadcn/RNR li trovano coi nomi che si aspettano.
       colors: {

@@ -599,12 +599,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apri_invito: { Args: { p_token: string }; Returns: string }
       assegna_punti: {
         Args: { cid: string; n: number; rif: string; tipo_evento: string }
         Returns: undefined
       }
+      conferma_invito: { Args: { p_invito_id: string }; Returns: string }
       crea_coppia: { Args: never; Returns: string }
+      crea_invito: { Args: never; Returns: string }
       e_membro_attivo: { Args: { cid: string }; Returns: boolean }
+      ha_coppia_attiva: { Args: { uid: string }; Returns: boolean }
+      n_membri_attivi: { Args: { cid: string }; Returns: number }
+      revoca_invito: { Args: { p_invito_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

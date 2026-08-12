@@ -3,51 +3,66 @@
 @tailwind utilities;
 
 /*
- * Token del tema — palette NEUTRA segnaposto in stile shadcn.
- * La direzione visiva vera (colori di LifeCouple, tipografia) arriva nella
- * fase di design: qui conta solo che ogni componente passi dai token,
- * così il restyling sara' un cambio di variabili, non una caccia ai colori.
+ * LifeCouple — direzione "Diario intimo".
+ * Metafora: un quaderno condiviso. Carta color crema, inchiostro terra,
+ * un accento terracotta. Non tecnologico, non aziendale, non giocoso.
+ *
+ * I token si definiscono QUI, una volta. Nei componenti non deve mai comparire
+ * un colore a mano: se lo fa, e' un bug di sistema, non una scelta.
  */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --primary: 346 77% 49%;
-    --primary-foreground: 355 100% 97%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 346 77% 49%;
+    /* carta e inchiostro */
+    --background: 40 33% 96%;        /* crema calda, non bianco */
+    --foreground: 24 28% 16%;        /* inchiostro terra scuro, non nero */
+    --card: 40 40% 98%;              /* pagina leggermente piu' chiara */
+    --card-foreground: 24 28% 16%;
+
+    /* terracotta: l'accento, usato con parsimonia */
+    --primary: 12 62% 47%;
+    --primary-foreground: 40 40% 98%;
+
+    /* toni terra tenui per le superfici secondarie */
+    --secondary: 34 24% 90%;
+    --secondary-foreground: 24 24% 24%;
+    --muted: 36 22% 91%;
+    --muted-foreground: 28 15% 42%;
+    --accent: 30 40% 88%;
+    --accent-foreground: 24 28% 20%;
+
+    /* un rosso desaturato, coerente col mattone, non un rosso "errore" acceso */
+    --destructive: 4 55% 46%;
+    --destructive-foreground: 40 40% 98%;
+
+    --border: 32 20% 84%;
+    --input: 32 20% 84%;
+    --ring: 12 62% 47%;
   }
 
+  /*
+   * Notte del diario: la stessa carta di sera. Marroni caldi profondi invece
+   * del grigio-blu tecnologico, cosi' il tema scuro resta "diario" e non
+   * diventa un'altra app.
+   */
   @media (prefers-color-scheme: dark) {
     :root {
-      --background: 240 10% 3.9%;
-      --foreground: 0 0% 98%;
-      --card: 240 10% 5.9%;
-      --card-foreground: 0 0% 98%;
-      --primary: 346 77% 55%;
-      --primary-foreground: 355 100% 97%;
-      --secondary: 240 3.7% 15.9%;
-      --secondary-foreground: 0 0% 98%;
-      --muted: 240 3.7% 15.9%;
-      --muted-foreground: 240 5% 64.9%;
-      --accent: 240 3.7% 15.9%;
-      --accent-foreground: 0 0% 98%;
-      --destructive: 0 72% 51%;
-      --destructive-foreground: 0 0% 98%;
-      --border: 240 3.7% 15.9%;
-      --input: 240 3.7% 15.9%;
-      --ring: 346 77% 55%;
+      --background: 24 22% 11%;
+      --foreground: 38 30% 90%;
+      --card: 24 20% 14%;
+      --card-foreground: 38 30% 90%;
+      --primary: 12 58% 55%;
+      --primary-foreground: 24 22% 11%;
+      --secondary: 24 14% 20%;
+      --secondary-foreground: 38 24% 86%;
+      --muted: 24 14% 20%;
+      --muted-foreground: 34 14% 62%;
+      --accent: 20 22% 24%;
+      --accent-foreground: 38 28% 88%;
+      --destructive: 4 60% 58%;
+      --destructive-foreground: 24 22% 11%;
+      --border: 24 14% 24%;
+      --input: 24 14% 24%;
+      --ring: 12 58% 55%;
     }
   }
 }

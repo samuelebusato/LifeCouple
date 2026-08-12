@@ -262,6 +262,13 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Verificato il 2026-08-12**, dopo l'applicazione di 0002, ripetendo **la stessa identica chiamata**: risponde `42501 permission denied for function assegna_punti` invece di entrare nella funzione. Verificato insieme che `crea_coppia` da anon è ora bloccata al livello dei permessi (la guardia interna resta come secondo strato) e che le tabelle rispondono ancora `[]` ad anon — cioè `e_membro_attivo` continua a servire le policy.
 **Lezione**: due erano già scritte nel processo — la verifica si fa **dall'esterno contro la realtà**, e la seconda riga di difesa (il FK, la guardia interna) è ciò che contiene il danno quando la prima manca. La nuova: **su Postgres, "revoke from anon" senza "revoke from public" non revoca niente.**
 
+### B-02 — Errore NativeWind "Cannot manually set color scheme" nella preview web (2026-08-12, APERTO)
+**Sintomo**: nella console del browser, ripetuto a ogni render, `Error: Cannot manually set color scheme, as dark mode is set via a media query. Please use StyleSheet.setFlag('darkMode', 'class')`.
+**Cosa NON è**: non blocca il rendering. Verificato con gli stili calcolati che i token si applicano **correttamente in entrambe le modalità** — chiaro: carta crema `rgb(248,246,241)` + inchiostro `rgb(52,39,29)`; scuro: crema `rgb(237,232,222)` su marrone. Le route rendono, il font Fraunces si carica, la rete è pulita (200).
+**Causa**: interazione **web-only** fra `userInterfaceStyle: "automatic"` (che serve all'app **nativa** per seguire la modalità notte del sistema) e NativeWind in dark-mode `media` sul web: Expo prova a riflettere lo schema via `Appearance.setColorScheme`, e NativeWind lo rifiuta. Escluso StatusBar come fonte (reso solo-nativo, l'errore resta).
+**Perché lasciato aperto e non risolto stasera**: il web è **solo preview di sviluppo**; l'app vera è nativa, dove `Appearance` è nativo e questo errore NativeWind-web non si presenta. La correzione pulita (passare a dark-mode `class` e gestire il toggle da `useColorScheme`, riscrivendo `global.css` da `@media` a selettore `.dark`) è un refactoring del theming, non un lavoro di fine serata.
+⚠️ **Da fare prima di dichiararlo chiuso**: (1) verificare sull'**iPhone reale** che l'errore non compaia e che la modalità notte segua il sistema; (2) se si vuole la console web pulita, il refactoring dark-mode `class`. **Nessun gap silenzioso**: è dichiarato, non nascosto.
+
 ---
 
 ## 5. Rischi accettati esplicitamente
@@ -428,10 +435,15 @@ Proposta dall'utente il 2026-08-12. **Non è una terza funzione: è il carburant
 ✅ **Appaiamento via link lato database** (D-14) — migrazione `0003_appaiamento.sql`: `crea_invito` (token 192 bit, scadenza 72h, solo l'impronta sha256 nel DB, un solo invito vivo per coppia), `apri_invito` (mette in **attesa di conferma**, non fa entrare), `conferma_invito` (**solo chi ha invitato**, è il passo che interrompe l'ingresso di un estraneo), `revoca_invito`. Permessi chiusi con la lezione di B-01 (`revoke from public`).
 ✅ **Test estesi a 37 asserzioni, tutte verdi**: il caso che D-14 esiste per fermare è provato — **un estraneo apre il link intercettato e la coppia resta a 1 membro**; il flusso corretto forma la coppia a 2; token monouso e revocabile. Sbloccato e coperto il **sigillo D-12 fra due membri veri** della stessa coppia (prima non testabile).
 
+✅ **UI di onboarding costruita** (2026-08-12) nella direzione **"Diario intimo"** (scelta dell'utente fra tre): carta crema, inchiostro terra, accento terracotta, titoli in **Fraunces** (serif). Token in `global.css`, chiaro e scuro. Schermate: `benvenuto` (hero con l'emblema dei due cuori intrecciati), `accedi` (**OTP via email**, senza password — decisione tecnica registrata), `onboarding` (crea coppia · genera e condividi link · apri invito · conferma, con polling dello stato), `home` (segnaposto). Provider di sessione (`lib/auth.tsx`) e gate di routing (`app/index.tsx`) che smista fra login/appaiamento/app. **Verificato nel browser**: le tre route rendono, Fraunces caricato, token giusti in chiaro e scuro a 375px, `tsc` pulito, rete 200. Unico neo: **B-02** (errore darkMode web-only, non bloccante, aperto).
+
 **Cosa manca** (in ordine):
-1. **UI di onboarding** (crea coppia · genera e condividi link · apri link · conferma) — è il primo pezzo visibile sul telefono. Da fare nella **fase design** con le skill, non improvvisato.
-2. **Scioglimento** (D-04/D-16/D-21): `sciogli_coppia`. ⚠️ **Decisione implementativa aperta**: D-21 vuole i contenuti **condivisi** (liste, luoghi, eventi) *duplicati una copia a ciascuno*, i **personali** (foto, recensioni) solo all'autore, la creatura cancellata. La duplicazione dei condivisi non è banale (le policy attuali danno all'ex-membro solo `autore_id = auth.uid()`) e va ragionata, non buttata giù. Sblocca l'ultimo test dichiarato non coperto.
-3. Le funzioni nell'ordine di D-11.
+1. **Verificare l'onboarding sull'iPhone reale** — il flusso vero (Share del link, OTP, deep link) e la conferma che B-02 non compaia su nativo. Serve prima: configurare il **template email** in Supabase perché mostri il codice (`{{ .Token }}`), o lasciare il magic link.
+2. **Deep link dell'invito**: gestire l'apertura di `lifecouple://invito/<token>` quando il partner tocca il link (ora il token si incolla a mano). Route `app/invito/[token].tsx`.
+3. **Scioglimento** (D-04/D-16/D-21): `sciogli_coppia`. ⚠️ **Decisione implementativa aperta**: D-21 vuole i contenuti **condivisi** (liste, luoghi, eventi) *duplicati una copia a ciascuno*, i **personali** (foto, recensioni) solo all'autore, la creatura cancellata. La duplicazione dei condivisi non è banale e va ragionata. Sblocca l'ultimo test non coperto.
+4. Le funzioni nell'ordine di D-11.
+
+⚠️ **Prima di utenti veri** (invariato): riaccendere "Confirm email", strategia d'accesso definitiva, eliminare gli utenti di test, confermare la regione UE.
 
 ⚠️ **Prima di utenti veri**: riaccendere "Confirm email" nel dashboard (spenta per i test), e scegliere la strategia d'accesso definitiva — probabilmente magic link o OAuth, non password. Gli utenti `rls-*@example.com` di prova si eliminano dal dashboard.
 
