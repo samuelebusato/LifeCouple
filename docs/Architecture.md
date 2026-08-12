@@ -1,0 +1,279 @@
+# LifeCouple — Architecture
+
+Architettura completa, con **trade-off** e **alternative scartate col loro costo**. Obblighi di contenuto: [`Rule/regole-sviluppo-sicuro.md`](../../../Rule/regole-sviluppo-sicuro.md) §1.2.
+
+> **Stato al 2026-08-12**: architettura **progettata, non implementata**. Nessun componente esiste. Ciò che segue è il disegno da cui partirà il codice, non una descrizione di ciò che c'è.
+
+---
+
+## 1. Componenti e responsabilità
+
+| Componente | Responsabilità | Dove gira |
+|---|---|---|
+| **App mobile** (React Native + Expo) | Interfaccia, cattura foto, inserimento luoghi, compressione lato client | Telefono dell'utente |
+| **Auth** (Supabase Auth) | Registrazione, login, sessione, token | Supabase, regione UE |
+| **Database** (Postgres con RLS) | Coppie, membri, eventi, luoghi, elementi delle liste, metadati foto | Supabase, regione UE |
+| **Storage** (Supabase Storage) | File delle fotografie | Supabase, regione UE |
+| **Policy RLS** | **Il controllo di autorizzazione vero**: chi vede quale riga | Dentro il database |
+| **Invio sigillato** | Macchina a stati condivisa dai tre giochi: invito → accettazione → invio segreto di entrambi → **rivelazione solo quando entrambi hanno inviato**. Il confronto avviene in una **funzione Postgres**, mai nel client | Database |
+| **Creatura — stato** | Punti di crescita, stadio derivato, umore. **Non sa come viene disegnata** | Database + app |
+| **Creatura — disegno** | Riceve `stadio` e `umore`, restituisce il visivo. **Non sa da dove vengono** | App |
+
+> **Il confine fra questi due ultimi componenti è una decisione di architettura, non un dettaglio di implementazione** (D-09). È ciò che rende sostituibile il disegno senza toccare la logica: si parte con `react-native-svg` + Reanimated e si arriva, quando ha senso, a file **Lottie** consegnati da un illustratore — stessa interfaccia, renderer diverso. Se la logica di crescita conoscesse le forme, la sostituzione costerebbe quanto rifare la funzione.
+>
+> **Vincolo collegato**: **~5-6 stadi discreti**, non una scala continua. Il costo dell'upgrade grafico cresce linearmente col numero di stati visivi: pochi stadi si possono far illustrare, molti no — e la versione elaborata non arriverebbe mai.
+
+Non esiste un backend applicativo scritto da noi. L'app parla direttamente con Supabase, e **l'autorizzazione vive nel database**.
+
+**Trade-off dichiarato**: senza un livello server nostro, ogni regola di autorizzazione che dimentichiamo di scrivere come policy RLS **non esiste** — non c'è un secondo strato che la recuperi. In cambio si eliminano un servizio da scrivere, da deployare e da mantenere (V1) e il suo costo (V2). Contropartita accettata: le policy RLS diventano l'artefatto più critico del progetto e vanno testate come tale (§7).
+
+---
+
+## 2. Confini di fiducia
+
+Sono **tre**, e il secondo è quello che rende questa app diversa da un'app qualsiasi.
+
+| # | Confine | Da cosa a cosa |
+|---|---|---|
+| **TB-1** | Utente ↔ backend | Il telefono è ostile per definizione: chiunque può parlare all'API con un token valido e chiedere righe non sue |
+| **TB-2** | **Partner ↔ partner** | I due membri della coppia **non sono la stessa entità di fiducia**. Condividono contenuti ma non identità |
+| **TB-3** | Coppia ↔ coppia | I dati di una coppia non devono essere raggiungibili da un'altra |
+
+> ⚠️ **TB-2 è il confine caratteristico di questo prodotto, ed è quello che le app di coppia trattano peggio.** L'assunzione implicita di quasi tutte è *"sono una coppia, quindi si fidano"*. È vera finché è vera. L'architettura non deve dipendere da quell'assunzione: deve funzionare correttamente **anche quando smette di essere vera**, senza migrazioni d'emergenza su dati che nel frattempo sono diventati contesi.
+
+---
+
+## 3. Stack, con la motivazione di ogni scelta
+
+| Scelta | Perché | Alternativa scartata e suo costo |
+|---|---|---|
+| **React Native + Expo** | Un codice per iOS e Android; accesso nativo a galleria, mappa e notifiche | **Web app**: zero store e zero review, ma niente push affidabili su iOS e niente accesso fluido alla galleria — e non insegna il passaggio "review dello store", che è parte dell'obiettivo. **Nativo separato**: due codebase per una persona sola su un progetto non core |
+| **Supabase** (auth + Postgres + storage) | Tre pezzi in un servizio, piano gratuito iniziale, e la RLS come controllo di autorizzazione nel database | **AWS**: più controllo, IAM verificabile con `simulate-principal-policy`, coerenza con HeleoX — ma sproporzionato a quattro funzioni CRUD, e allunga i tempi (viola V1 e V2). **Locale peer-to-peer**: privacy per costruzione e costo zero, ma la sincronizzazione fra due dispositivi è il pezzo più difficile dell'intero progetto e non c'è backup |
+| **Row Level Security come autorizzazione primaria** | Se la query applicativa è sbagliata, il dato **non esce lo stesso** | **Controllo solo nel codice dell'app**: gratis da scrivere, ma un client compromesso o una query dimenticata espone tutto. Inaccettabile con foto intime |
+| **Regione UE** obbligatoria | Dati personali di residenti UE, e un trasferimento extra-UE aprirebbe un capitolo (clausole contrattuali tipo) sproporzionato al progetto | Regione USA: nessun vantaggio, costo di conformità reale |
+| **Mappa: inserimento manuale** | Vedi `History.md` D-05 | Check-in automatico: più comodo, ma trasforma l'app in un tracker di persona |
+| **Foto compresse lato client** | È l'unica funzione a costo non limitato (V2) | Caricamento dell'originale: qualità migliore, ma satura il piano gratuito in mesi |
+
+### 3-bis. Strato di sviluppo e UI (deciso il 2026-08-12)
+
+Scelto sotto due vincoli espliciti dell'utente: **scrivere meno codice possibile** e **investire il tempo risparmiato sulla UI**.
+
+| Strato | Scelta | Perché |
+|---|---|---|
+| Routing | **expo-router** | Routing per file: nessuna configurazione di navigazione da scrivere |
+| Stile | **NativeWind** | Tailwind dentro React Native, compilato in anticipo (nessun costo a runtime) |
+| Componenti | **React Native Reusables** | Porting diretto di **shadcn/ui** su RN, modello copia-e-incolla: entra solo ciò che si usa, e il codice è proprio da subito |
+| Movimento | **Reanimated + Moti** | Moti è l'API dichiarativa sopra Reanimated: un'animazione è una prop |
+| Creatura | **react-native-svg** + Reanimated | Vettoriale e sostituibile con Lottie senza cambiare interfaccia (D-09) |
+| Tipi | **`supabase gen types typescript`** | I tipi si **generano dallo schema**: zero tipi a mano, e uno schema che cambia rompe il build invece dell'app |
+| Dati e cache | **TanStack Query** | Toglie la gran parte del codice di stato: caricamento, errore, refetch, cache |
+| Icone | **lucide-react-native** | Stesso set di shadcn: coerenza visiva senza lavoro |
+| Mappa | **react-native-maps** | Apple Maps su iOS, Google Maps su Android, entrambi nativi |
+| Foto | **expo-image-picker + expo-image-manipulator** | Compressione lato client richiesta dal vincolo di costo |
+| Liste | **FlashList** | Sostituisce FlatList senza riscrivere nulla |
+
+**Alternative scartate, col loro costo**
+
+- **Tamagui** — tecnicamente il più forte: un compilatore appiattisce gli stili e sul native va quasi come React Native puro. Ma **il suo vantaggio è la prestazione, e la prestazione non è il vincolo qui**: quattro schermate CRUD e due utenti. In cambio chiede di imparare un'API di stile proprietaria e poco trasferibile. Contro V1 (meno tempo), perde.
+- **gluestack-ui** — ottima seconda scelta, filosofia copia-e-incolla e base NativeWind identiche. Scartata per un motivo di **leva**, non di qualità: vedi sotto.
+
+**Il motivo di fondo della scelta shadcn, che vale più della singola libreria**: l'ecosistema di UI generabile o riusabile (v0, 21st.dev, Tailwind UI, l'intero mondo shadcn) produce **React web + Tailwind**. Scegliendo mobile si perde quella leva. Adottare **la forma shadcn + Tailwind anche su native** ne recupera la maggior parte: stessi nomi di classe, stessi nomi di componente, stessa struttura — un componente trovato o generato non si incolla, ma **si traduce quasi meccanicamente** invece di essere riprogettato. È il vero motivo per preferire React Native Reusables a gluestack: non è più bello, è **più vicino a ciò che gli strumenti sanno produrre**.
+
+**Dove va speso il tempo risparmiato** (decisione di progetto, non consiglio generico): componenti standard presi dalla libreria **senza toccarli** — form, bottoni, input, sheet — perché sono il 70% delle schermate e nessuno li guarda; tutto il tempo risparmiato su **tre schermate**: mappa dei ricordi, griglia foto, apertura. Più due cose che costano quasi nulla e cambiano la percezione più della libreria scelta: **token definiti prima** (una scala tipografica, una di spazio, due accenti) e un **font non di sistema** via `@expo-google-fonts`.
+
+---
+
+## 4. Il modello dati, e perché la sua forma è una decisione di sicurezza
+
+> **Schema disegnato il 2026-08-12**, dopo la chiusura delle quattro decisioni bloccanti (D-14…D-17). Copre **tutte** le funzioni, creatura e giochi inclusi, anche se l'implementazione le rimanda in fondo (D-11).
+
+### 4.1 Le tabelle
+
+```mermaid
+erDiagram
+    coppia ||--o{ membro_coppia : "ha 2"
+    coppia ||--o{ invito : genera
+    coppia ||--|| creatura : possiede
+    coppia ||--o{ punti_evento : accumula
+    coppia ||--o{ evento : ""
+    coppia ||--o{ luogo : ""
+    coppia ||--o{ elemento_lista : ""
+    coppia ||--o{ foto : ""
+    coppia ||--o{ partita : ""
+    luogo  ||--o{ foto : "ha foto"
+    elemento_lista ||--o{ recensione : "una per membro"
+    partita ||--o{ invio_sigillato : raccoglie
+    partita ||--|| partita_risultato : produce
+    domanda ||--o{ invio_sigillato : ""
+```
+
+**Identità e legame**
+
+| Tabella | Colonne che contano | Nota |
+|---|---|---|
+| `coppia` | `id`, `stato` (attiva/sciolta), `creata_il`, `sciolta_il`, `byte_foto_usati` | Il contatore serve a **imporre** il tetto foto, non solo a mostrarlo |
+| `membro_coppia` | `coppia_id`, `utente_id`, `entrato_il`, **`uscito_il`** | ⚠️ L'appartenenza è un **intervallo**, non un fatto permanente (D-04) |
+| `invito` | `coppia_id`, `creato_da`, **`token_hash`**, `scade_il`, `usato_il`, `aperto_da`, `stato` | ⚠️ Si salva **l'impronta del token, non il token**: se il database trapela, i link non sono utilizzabili. Stato: `emesso` → `aperto_in_attesa_conferma` → `accettato` / `scaduto` / `revocato` (D-14) |
+
+**Contenuti** — tutti con `coppia_id` **e** `autore_id`
+
+| Tabella | Colonne che contano |
+|---|---|
+| `evento` | `titolo`, `inizio`, `fine`, `tutto_il_giorno`, `nota` |
+| `luogo` | `nome`, `lat`, `lng`, **`stato`** (desiderato/visitato), **`visitato_il`**, `nota` |
+| `elemento_lista` | **`tipo`** (film/ristorante), `titolo`, **`stato`** (desiderato/fatto), **`fatto_il`** |
+| `recensione` | `elemento_id`, `autore_id`, `voto`, `testo` — **una per membro**, vincolo unico su (elemento, autore) |
+| `foto` | `chiave_storage`, **`luogo_id`** (facoltativo), `scattata_il`, `byte` |
+
+> **Perché `recensione` è una tabella separata e non due colonne su `elemento_lista`**: sono **due persone** e possono avere due opinioni sullo stesso film. Metterle nell'elemento costringerebbe a un'unica recensione di coppia — che è la cosa meno interessante che si possa fare in un'app per due. Alternativa scartata: campo unico condiviso; costo: si perde il confronto, che è metà del divertimento.
+
+**Creatura e punteggio** (D-15, D-16)
+
+| Tabella | Colonne | Nota |
+|---|---|---|
+| `creatura` | `coppia_id` (chiave), `punti`, `creata_il` | ⚠️ **Nessun `autore_id`**: è l'unico oggetto senza autore, ed è il motivo per cui allo scioglimento si cancella invece di essere revocata (D-16) |
+| `stadio_soglia` | `stadio`, `punti_minimi` | Lo **stadio si deriva dai punti**, non si salva. Tabella e non costante nel codice: le soglie si tarano senza migrazione |
+| `punti_evento` | `coppia_id`, `tipo`, `riferimento_id`, `punti`, `creato_il` | ⚠️ **Vincolo unico su (coppia, tipo, riferimento)**: è la guardia che impedisce di fabbricare punti togliendo e rimettendo lo stesso elemento (D-15) |
+
+**Giochi** (D-12, D-19)
+
+| Tabella | Colonne | Nota |
+|---|---|---|
+| `domanda` | **`coppia_id` che può essere NULL**, `gioco`, `lingua`, `testo` | 🔑 `NULL` = banco comune scritto da noi (D-08 garantito); valorizzato = **domanda personalizzata di quella coppia** (D-19, contenuto non controllabile). Una sola tabella, il NULL fa la distinzione |
+| `partita` | `coppia_id`, `gioco`, `stato`, `fase`, `turno_di`, `creata_il` | Stati: `invito` → `deposito` → `tentativi` → `conclusa` |
+| `invio_sigillato` | `partita_id`, `round`, `autore_id`, `natura` (verità/tentativo/scelta), `domanda_id`, `contenuto` | 🔴 **La tabella che l'altro non legge mai** |
+| `partita_risultato` | `partita_id`, `esito`, `punti_assegnati`, `rivelato_il` | Ciò che diventa visibile a entrambi **dopo** la rivelazione |
+| `registro_azioni` | `coppia_id`, `autore_id`, `azione`, `oggetto`, `creato_il` | Solo-append: risponde al *"non sono stato io a cancellarle"* (TB-2, categoria R) |
+
+### 4.2 Le regole di accesso (policy RLS)
+
+Due funzioni di supporto, e tutto il resto ne discende:
+- `e_membro_attivo(coppia_id)` → l'utente corrente ha una riga in `membro_coppia` con `uscito_il IS NULL`
+- `e_autore(riga)` → `autore_id = auth.uid()`
+
+**Due assi indipendenti, e tenerli separati è ciò che rende semplice il modello** (precisazioni dell'utente del 2026-08-12):
+
+- **Visibilità: tutto è di entrambi.** Ogni contenuto della coppia è visibile a entrambi i membri attivi, senza eccezioni per tipo. La galleria generale mostra **tutte** le foto della coppia — quelle di lui e quelle di lei; un luogo mostra **tutte** le foto legate a quel luogo, di entrambi; un elemento mostra **entrambe** le recensioni.
+- **Cancellazione e modifica: sempre e solo l'autore.** Una regola sola, per ogni tabella di contenuto. Chi carica, comanda su ciò che ha caricato.
+
+| Azione | Regola |
+|---|---|
+| Leggere un contenuto | `e_membro_attivo(coppia_id)` |
+| Crearlo | `e_membro_attivo(coppia_id)` **e** `autore_id = auth.uid()` **imposto dal database** — mai accettato dal client |
+| Modificarlo o cancellarlo | **Solo `e_autore`** — per **ogni** tipo di contenuto |
+| `invio_sigillato` | **SELECT solo sulle proprie righe.** Nessuna eccezione, in nessuna fase |
+| `registro_azioni` | INSERT sì, UPDATE e DELETE **nessuna policy** = impossibili |
+| `domanda` | Leggibile se `coppia_id IS NULL` **oppure** `e_membro_attivo(coppia_id)` |
+
+> **Le foto legate a un luogo non sono una collezione separata**: `foto.luogo_id` è facoltativo, la galleria generale è *tutte le foto della coppia* e la vista di un luogo è *le foto con quel `luogo_id`*. Una foto sta in entrambe le viste perché è **una sola riga**, non due — nessuna duplicazione, nessuna sincronizzazione da mantenere.
+
+**Piccolo costo accettato**: se un membro aggiunge un film sbagliato, l'altro **non può correggerlo**. È il prezzo della regola unica, ed è preferibile all'alternativa — dare a entrambi il potere di cancellare renderebbe possibile svuotare per ritorsione ciò che l'altro ha costruito.
+
+### 4.2-bis Cosa succede allo scioglimento — qui, e **solo** qui, i contenuti si dividono
+
+La cancellazione ha una regola sola (§4.2). Lo scioglimento no: **due classi**, e la linea non è chi può cancellare ma **quanto è sensibile il contenuto**.
+
+| Classe | Sorte | Perché |
+|---|---|---|
+| **Personale** (`foto`, `recensione`) | Resta **solo all'autore** | È il caso per cui D-04 esiste: una copia permanente di materiale intimo a un ex è **il danno**, non la soluzione |
+| **Condiviso** (`elemento_lista`, `luogo`, `evento`) | **Duplicato: una copia a ciascuno**, e il legame è reciso | Sono esperienze fatte insieme: conservarle **non rivela all'altro niente che non sapesse già**, ed è il test che distingue i due casi. Le foto legate a un luogo seguono la **loro** classe: la copia di chi non le ha caricate contiene il luogo, non le foto altrui |
+| **Creatura** | **Sparisce per entrambi** | Non ha autore (D-16) |
+
+*Il principio, in una riga*: **la sorte segue la sensibilità, non la condivisione.** La domanda che decide ogni caso futuro è — *conservarne una copia rivela all'ex qualcosa che non aveva già?*
+
+**Costo della duplicazione**: è un'operazione una tantum dentro la funzione di scioglimento, non una complicazione permanente dello schema. **Alternativa scartata**: lasciare i contenuti condivisi visibili a entrambi in sola lettura — costa meno codice, ma **lascia i due account legati per sempre**, che è esattamente ciò che uno scioglimento deve evitare.
+
+⚠️ **Regola di progetto**: *nessuna tabella senza RLS*, verificata da un test che fallisce se una tabella ne è priva. È il debito n. 1 di §7: senza un livello applicativo nostro, una policy dimenticata è un'esposizione diretta.
+
+### 4.3 Le due funzioni che il client non può sostituire
+
+Sono l'unica logica che **non** può stare nell'app, perché il client è ostile per definizione:
+
+1. **`rivela_partita(partita_id)`** — verifica che **entrambi** abbiano inviato, poi confronta e scrive `partita_risultato`. Finché uno solo ha inviato, non restituisce nulla. È ciò che rende il sigillo reale invece che grafico (D-12).
+2. **`assegna_punti(coppia_id, tipo, riferimento_id)`** — inserisce in `punti_evento` rispettando il vincolo unico e incrementa `creatura.punti`. Chiamata da trigger sulla **transizione** `desiderato → visitato/fatto`, mai sull'inserimento (D-15).
+
+**Rischio accettato su `assegna_punti`**: cancellare del tutto un luogo e ricrearlo genera un nuovo riferimento, quindi nuovi punti. Non lo si impedisce: è un gioco **cooperativo senza classifica**, quindi l'unico effetto è ingannare sé stessi. Se un domani nascesse un confronto fra coppie, questa riga andrebbe rivista **prima**.
+
+### 4.4 Perché il ciclo mestruale non è nello schema, e non è un'incoerenza
+
+D-11 impone di prevedere **subito** creatura e giochi anche se si implementano per ultimi. Il ciclo (D-07) è rimandato **anche nello schema**, e la differenza è precisa: creatura e giochi **toccano altre tabelle** — i punti nascono dalle transizioni di luoghi ed elementi, quindi quelle tabelle devono nascere con le colonne giuste. Il ciclo invece è **una tabella isolata** che non tocca nulla: aggiungerla domani non è una migrazione di dati contesi, è una tabella in più.
+
+*La regola generale, riusabile*: si anticipa nello schema ciò che **modifica tabelle esistenti**; si rimanda ciò che **si aggiunge di fianco**.
+
+> **"Scioglimento" — definizione, perché il termine ricorre ovunque nei documenti.** È **l'azione con cui uno dei due chiude il legame fra i due account**, non necessariamente una rottura sentimentale. Copre quattro casi reali: la coppia si lascia · ci si è appaiati con **la persona sbagliata** (link finito a chi non doveva, o una prova) · uno **smette di usare l'app** e non vuole lasciare i propri dati visibili all'altro · uno vuole uscire **per ragioni di sicurezza personale**.
+> È una funzione obbligatoria: senza, l'unica uscita da uno spazio condiviso sarebbe cancellare il proprio account. Nell'interfaccia avrà un nome più umano (*"non condividere più con…"*); "scioglimento" è il termine preciso della documentazione.
+
+**Due campi portano tutto il peso**, e sono i due che è facile non mettere:
+
+- **`autore_id` su ogni contenuto.** Senza, non si può rispondere a *"di chi è questa foto?"* — e quella domanda diventa obbligatoria il giorno della rottura, e obbligatoria per legge quando un utente esercita l'art. 17 GDPR. Aggiungerlo dopo significa attribuire retroattivamente contenuti già contesi: non si può fare correttamente.
+- **`uscito_il` su `membro_coppia`.** L'appartenenza alla coppia è un **intervallo**, non un fatto permanente. È ciò che rende esprimibile in una policy RLS la frase *"vedi i contenuti della coppia finché ne fai parte"*.
+
+**Regola di accesso** (da tradurre in policy RLS, una per tabella, sia in lettura sia in scrittura):
+
+| Azione | Chi può |
+|---|---|
+| Leggere un contenuto della coppia | Chi è membro **attivo** della coppia |
+| Creare un contenuto | Chi è membro attivo; `autore_id` = chiamante, **imposto dal database**, non dal client |
+| Modificare / cancellare un contenuto | **Solo l'autore** |
+| Leggere dopo lo scioglimento | Solo i contenuti di cui si è **autori** |
+
+**Conseguenza voluta di D-04**: lo scioglimento **revoca l'accesso, non cancella**. Ciascuno conserva ciò che ha caricato; ciò che ha caricato l'altro sparisce dalla sua vista. Nessuna copia silenziosa a nessuno dei due.
+
+**Alternative scartate col loro costo**:
+- *Tutto in comune e alla rottura si cancella tutto* — semplice, ma distrugge irreversibilmente i ricordi di **entrambi** per decisione di **uno**.
+- *Tutto in comune e alla rottura entrambi tengono copia* — è la peggiore per la privacy: consegna a un ex-partner una copia permanente di materiale intimo dell'altro, con l'app come complice tecnico.
+
+---
+
+## 5. Flussi di dati
+
+1. **Appaiamento** — `—` **da decidere** (codice di invito, link, email). È il primo attraversamento di TB-2 e determina lo schema: finché non è deciso, le policy RLS non si possono scrivere. È la voce più bloccante del backlog.
+2. **Foto**: scatto o scelta dalla galleria → **compressione sul telefono** → caricamento nello storage → riga di metadati nel database con `autore_id` e `coppia_id`. Il file non passa mai da un nostro server, perché non ne esiste uno.
+3. **Luogo**: l'utente cerca o tocca un punto sulla mappa → si salva **coordinata e nota**, mai una posizione rilevata dal dispositivo (D-05).
+4. **Cancellazione account**: obbligatoria in-app per Apple. Ordine deliberato — **prima i file nello storage, poi le righe indice**, perché l'ordine inverso lascia file orfani che nessuna query trova più. È lo stesso errore già trovato e corretto su HeleoX (`Rule/catena-cancellazione.md`), e va **verificato end-to-end**, non assunto.
+
+---
+
+## 6. Eccezioni di costo e scala (scelte consapevoli, non omissioni)
+
+| Cosa non c'è | Perché | Quando si riconsidera |
+|---|---|---|
+| Backend applicativo proprio | Nessuna logica che debba girare in un posto fidato: sono quattro CRUD | Se nasce logica che il client non può eseguire (pagamenti, moderazione) |
+| Cifratura end-to-end delle foto | Costo di complessità alto (gestione chiavi fra due dispositivi, recupero dopo cambio telefono) sproporzionato a V1 | Se il prodotto smette di essere un esperimento — è **il primo upgrade di sicurezza** da fare |
+| Piano a pagamento del backend | Il gratuito basta all'inizio (V2) | Al superamento del tetto foto |
+| Monitoraggio e allarmi | Nessun utente, nessun ricavo | Ai primi utenti reali fuori dalla cerchia |
+| Disaster recovery formale | I dati sono di esperimento; l'utente ha gli originali delle foto sul telefono | Se qualcuno ci mette dentro ricordi che non ha altrove — **momento in cui il rischio diventa reale e non tecnico** |
+
+### Costo ricorrente reale (verificato il 2026-08-12)
+
+| Voce | Costo |
+|---|---|
+| **Expo** — piano gratuito: **30 build al mese** (max 15 iOS), 1.000 utenti attivi su EAS Update | **0 €** |
+| **Supabase** — piano gratuito: 500 MB database, **1 GB file**, 50.000 utenti attivi | **0 €** |
+| **Mappa** — SDK nativo su entrambe le piattaforme | **0 €** — ⚠️ ma **ricerca luoghi e geocodifica si pagano a chiamata**: va tenuta d'occhio se si aggiunge la ricerca per nome |
+| Apple Developer | 99 €/anno |
+| Google Play | 25 $ una tantum |
+
+**Ricorrente in fase di sviluppo e primi utenti: ~99 €/anno.**
+
+⚠️ **Due soglie fanno passare Supabase al piano Pro (25 $/mese, ~300 €/anno), e vale la pena conoscerle prima di incontrarle:**
+
+1. **Lo spazio**: il piano gratuito ha **1 GB di file in totale**, che è esattamente il tetto di una singola coppia (D-22). Il consumo *reale* atteso è però ~150 MB a coppia con la compressione lato client, quindi la soglia si incontra intorno alle **5-7 coppie**, non alla prima.
+2. ⚠️ **La pausa per inattività**: i progetti gratuiti **si sospendono dopo una settimana senza attività**. Per un'app pubblicata è un rischio concreto proprio nella fase iniziale — un'app appena uscita con pochissimi utenti *può* restare ferma una settimana, e il primo che torna trova errori. Con un'attività anche minima non succede, ma è il motivo per cui il piano gratuito è adatto allo sviluppo e discutibile per la pubblicazione.
+
+**Quindi**: ~99 €/anno finché è un esperimento fra poche coppie; **~400 €/anno** se diventa un'app pubblicata che vuole essere affidabile. Il salto è dovuto tanto alla pausa quanto allo spazio.
+
+### Ordine di implementazione (deciso il 2026-08-12)
+
+L'utente ha deciso di implementare **la creatura per ultima**. Sequenza che ne deriva: autenticazione e appaiamento → calendario → mappa → foto → liste → **giochi di affinità → creatura**.
+
+⚠️ **Ma lo schema del database deve prevederla dal primo giorno.** Punti di crescita, stadio e le risposte dei giochi non si aggiungono a posteriori senza migrare dati già scritti: è lo stesso vincolo di `autore_id` (D-04) e della separazione stato/disegno (D-09). **Si progetta subito, si implementa per ultima** — sono due cose diverse e vanno tenute separate.
+
+---
+
+## 7. Debiti tecnici noti, dichiarati alla nascita
+
+1. **Le policy RLS sono un punto di guasto singolo.** Senza un secondo strato applicativo, una policy sbagliata è un'esposizione diretta. → **Test avversariali obbligatori**: due coppie di prova, e la verifica esplicita che l'utente A non legga nulla della coppia B, e che un ex-membro non legga i contenuti dell'altro. È verifica *contro la realtà*, non "la query sembra giusta" (`regole-sviluppo-sicuro.md` principio 4).
+2. **Portabilità**: auth, dati e file su un solo fornitore. Migrare significa riscrivere l'autorizzazione, non solo spostare righe.
+3. **Nessuna moderazione dei contenuti.** Un'app che ospita foto private caricate da utenti terzi ha, prima o poi, un problema di contenuti. Oggi non esiste alcun meccanismo: è un gap **dichiarato**, non risolto.
+4. **Il tetto di spazio foto non è fissato** (`—`). Finché non lo è, il costo massimo del progetto è ignoto — cioè V2 non è verificabile.
