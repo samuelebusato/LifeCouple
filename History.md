@@ -82,6 +82,34 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-25 — L'invito non blocca l'ingresso: si entra da soli, si invita quando si vuole
+**Deciso dall'utente il 2026-08-12** (seconda sessione serale), guardando l'app sull'iPhone.
+
+**Com'era**: dopo aver creato lo spazio si restava fermi sulla schermata di invito, in attesa che il partner aprisse il link e che chi aveva invitato confermasse. Fino ad allora l'app era inaccessibile.
+
+**Com'è ora**: creata la coppia, si entra. Il partner si invita dalla home quando si vuole. Le funzioni che richiedono due persone mostrano un cartellino — *"invita il tuo partner per continuare"* — invece di essere nascoste o disabilitate in silenzio.
+
+**Perché**: l'attesa era **un muro nel punto peggiore**, subito dopo la registrazione e prima di aver visto qualunque cosa. Chiedeva di coordinarsi con un'altra persona *prima* di sapere se l'app valesse la pena. Chi installa la sera tardi, o il cui partner non risponde, restava fuori da un prodotto che non aveva ancora visto.
+
+**Perché la sicurezza non cambia**: lo spazio esiste già come coppia da un membro — `crea_coppia()` inserisce la riga in `membro_coppia`, quindi `e_membro_attivo()` risponde e **tutte le policy RLS funzionano identiche**. Non è stato toccato nessun controllo di autorizzazione: è cambiato solo *quando* si mostra l'app.
+
+⚠️ **Il vincolo che questa decisione ha rischiato di rompere, e come è stato tenuto**: la **conferma di chi invita** è, delle quattro condizioni di D-14, l'unica che *interrompe* l'ingresso di un estraneo che ha aperto un link inoltrato — le altre tre lo rendono solo improbabile. Quella conferma viveva nella schermata di onboarding, cioè proprio la schermata che ora si può lasciare. Se fosse rimasta lì, chi entra da solo non avrebbe più potuto confermare, e D-14 sarebbe stata svuotata **senza che nessun test se ne accorgesse**. Per questo il ciclo dell'invito è stato estratto in `lib/invito.ts` e la conferma compare **anche in home**.
+
+**Conseguenza da tenere presente quando arriveranno le funzioni** (non risolta qui, va decisa a quel punto): chi entra da solo può creare contenuti *prima* che il partner arrivi, e al momento dell'unione **il partner vede tutto il pregresso**. Con D-21 (visibilità totale) è coerente, ma è una cosa che l'utente non si aspetta necessariamente: va valutato se avvisarlo al momento dell'invito.
+
+**Verificato contro il database reale**, non solo nell'interfaccia: chi è solo vede 1 riga in `membro_coppia` (`completa=false`, funzioni di coppia chiuse); dopo il flusso completo invito → apertura → conferma, entrambi ne vedono 2 e per entrambi la coppia risulta la stessa.
+
+### D-24 — La lingua segue il dispositivo, non un selettore nell'app
+**Deciso dall'utente il 2026-08-12.** **Modifica D-18**, che diceva *"a scelta dell'utente"*.
+
+**Scelta**: italiano a chi ha il telefono in italiano, inglese a tutti gli altri. Nessun selettore.
+
+**Perché**: la lingua del telefono è già la dichiarazione di preferenza dell'utente, fatta una volta per tutte le app. Un selettore in più chiede di nuovo una cosa che il sistema operativo sa già, e va costruito, salvato e ricordato: è codice e schermate in cambio di niente, contro V1 (scrivere meno codice possibile).
+
+**Costo accettato**: chi vive all'estero col telefono in inglese ma è italiano vedrà l'inglese, e non potrà cambiarlo. Un selettore si aggiunge in seguito se qualcuno lo chiede — è un'aggiunta *di fianco*, non una migrazione di dati, quindi rimandarlo non costa nulla (stessa regola generale di D-11).
+
+**Implementazione**: `lib/i18n.ts`, dizionario italiano e inglese senza librerie di i18n — due lingue non giustificano il peso di i18next. Il dizionario italiano **definisce il tipo**, quindi una chiave aggiunta in una lingua e dimenticata nell'altra **non compila**. Provato togliendone una: `tsc` la segnala.
+
 ### D-23 — Si parte su Expo **SDK 54**, non sull'ultima
 **Deciso il 2026-08-12**, dopo una verifica dell'utente che ha ribaltato una mia scelta.
 
@@ -177,6 +205,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ### D-18 — L'app è bilingue: italiano e inglese, a scelta dell'utente
 **Deciso dall'utente il 2026-08-12.**
+⟳ **Modificata lo stesso giorno da D-24**: il bilinguismo resta, la *scelta dell'utente* no — la lingua la decide il dispositivo. Leggere D-24 prima di agire su questa.
 **Perché ora e non dopo**: è la stessa decisione già presa per l'app calcistica — internazionalizzare dal primo giorno costa giorni, farlo a ritroso costa settimane.
 **Costo da mettere in conto**: il **banco domande va scritto due volte**, e le schede degli store pure. Non è traduzione meccanica: una domanda divertente in italiano tradotta parola per parola smette di esserlo.
 
@@ -378,6 +407,34 @@ Proposta dall'utente il 2026-08-12. **Non è una terza funzione: è il carburant
 ⚠️ **Diritti sul contenuto**: i mazzi di Gottman sono protetti; le "36 domande" di Aron (1997) provengono da un articolo scientifico. **Scrivere un banco proprio** è più sicuro e costa poco — è la stessa logica delle clip dell'app calcistica, ma qui il contenuto è testo, quindi il problema è di un ordine di grandezza più piccolo.
 ⚠️ **Le risposte sono contenuto condiviso** e ricadono sotto D-04: hanno un autore, e allo scioglimento seguono la stessa regola di foto e luoghi.
 
+#### P-04 — Altri quattro giochi proposti dall'utente il 2026-08-12
+Registrati come **possibili giochi futuri**, non decisi. Nessuno entra nell'MVP: l'ordine di D-11 resta.
+
+🔑 **L'osservazione che conta per il costo, ed è il motivo per cui vale la pena averli scritti insieme: non sono quattro lavori, sono due famiglie.**
+I tre giochi già previsti (quiz, telepatia, obbligo o verità) sono **un solo meccanismo** — *ognuno invia in segreto, si rivela quando hanno inviato entrambi* — che è il sigillo D-12 già in schema. Delle quattro proposte:
+- **una ci ricade dentro** e costa quasi nulla: è un nuovo tipo di domanda, non un gioco nuovo;
+- **due chiedono un secondo meccanismo**, diverso e non ancora previsto: *uno produce, l'altro indovina, a turni*. Costruito una volta, però, le serve entrambe;
+- **una non è un gioco**: è un tema di contenuto, ed è quella che tocca una decisione già presa.
+
+**1. Indovina cosa ha disegnato l'altro** — meccanismo *produci → indovina*, a turni.
+È la più cara delle quattro: serve una superficie di disegno sul telefono, e il disegno va salvato e trasmesso. ⚠️ Un disegno è **un contenuto con un autore**, quindi ricade su D-04 e D-21 come le foto: va deciso se conta come contenuto personale (resta a chi l'ha fatto) o condiviso. E se i disegni si conservano, consumano spazio — il tetto di D-22 li riguarda.
+
+**2. Indovina la parola dell'altro** — stesso meccanismo del punto 1, ma **solo testo**.
+Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la strada più economica per provarla: nessuna superficie di disegno, nessun file, nessuno spazio. **Conviene farla prima del disegno**, non dopo: verifica se il formato piace, al costo di una schermata.
+
+**3. Chi è più propenso a…** — meccanismo **già previsto**: entrambi rispondono in segreto, si confronta.
+È il candidato più forte dei quattro, perché non è un gioco nuovo ma **una variante di contenuto del sigillo D-12**: si scrive il banco e funziona. ⚠️ Vale però il vincolo di P-03 sul linguaggio: risultato della singola sessione, mai un punteggio che resta — *"chi è più propenso a"* scivola con naturalezza in una classifica fra le due persone, e una classifica persistente è di nuovo *l'app che emette un verdetto sulla relazione*.
+
+**4. Domande sulla vita sessuale / di coppia** — 🔴 **qui il nome nasconde due cose diverse, e vanno separate.**
+- **"Vita di coppia"** (come vi siete conosciuti, cosa vi piace fare insieme, ricordi): nessun problema, è il banco normale.
+- **"Vita sessuale"**: è **categoria particolare dell'art. 9 GDPR**, e **D-08 la esclude esplicitamente dal banco domande** — insieme a salute, religione, opinioni politiche, origine etnica e appartenenza sindacale.
+
+⚠️ **Perché non basta dire "la mettiamo dopo"**: D-08 non è una regola di stile, è il **contrappeso a D-07**. Il calendario del ciclo è stato rimandato *proprio perché* art. 9; un gioco che chiede della vita sessuale raccoglie **la stessa categoria di dati**, e D-08 esiste testualmente per impedire che rientri "dalla porta di servizio" senza che nessuno se ne accorga, perché un quiz non si presenta come funzione sanitaria.
+
+⚠️ **E non è coperta da D-19** (le domande scritte dalla coppia): quella distinzione regge perché *non le chiediamo noi* — un campo libero non è un trattamento progettato per raccogliere categorie particolari. Un gioco che noi costruiamo con un banco a tema sessuale **è esattamente** un trattamento progettato per raccoglierle: è il caso che la distinzione di D-19 escludeva, non uno che ci rientra.
+
+**Cosa serve per farla, se la si vuole davvero** (è una decisione dell'utente, non un divieto): la stessa impalcatura di P-02 — consenso esplicito e separato, funzione spenta finché non è concesso, e la consapevolezza che il dato passa dai nostri server dentro il confine di fiducia TB-2. Ragionevole trattarla **insieme** a P-02 dopo la prima pubblicazione: sono lo stesso problema, e affrontarli in un lotto solo è la logica con cui D-07 è stata presa.
+
 #### P-02 — Calendario del ciclo mestruale con calcolo automatico dei giorni
 > ✅ **Deciso il 2026-08-12: rimandato dopo la prima pubblicazione** (D-07). L'analisi sotto resta valida e si applicherà quando la funzione entrerà.
 
@@ -437,13 +494,18 @@ Proposta dall'utente il 2026-08-12. **Non è una terza funzione: è il carburant
 
 ✅ **UI di onboarding costruita** (2026-08-12) nella direzione **"Diario intimo"** (scelta dell'utente fra tre): carta crema, inchiostro terra, accento terracotta, titoli in **Fraunces** (serif). Token in `global.css`, chiaro e scuro. Schermate: `benvenuto` (hero con l'emblema dei due cuori intrecciati), `accedi` (**OTP via email**, senza password — decisione tecnica registrata), `onboarding` (crea coppia · genera e condividi link · apri invito · conferma, con polling dello stato), `home` (segnaposto). Provider di sessione (`lib/auth.tsx`) e gate di routing (`app/index.tsx`) che smista fra login/appaiamento/app. **Verificato nel browser**: le tre route rendono, Fraunces caricato, token giusti in chiaro e scuro a 375px, `tsc` pulito, rete 200. Unico neo: **B-02** (errore darkMode web-only, non bloccante, aperto).
 
+✅ **L'invito non blocca più l'ingresso** (D-25) e **l'app è bilingue davvero** (D-24), il 2026-08-12 in terza sessione. Nuovi file: `lib/i18n.ts` (dizionario it/en, lingua dal dispositivo), `lib/invito.ts` (ciclo dell'invito condiviso fra onboarding e home, **perché la conferma di D-14 dev'essere raggiungibile anche da chi entra da solo**), `components/serve-partner.tsx` (il cartellino da mettere nelle funzioni di coppia quando si è soli). `useCoppia` ora distingue *lo spazio esiste* da *il partner è dentro*. Verificato contro il database reale e nel browser in entrambe le lingue; `tsc` pulito.
+
+🔴 **Diagnosi chiusa sul link d'invito che "non arriva"**: il backend è a posto (`crea_invito` restituisce il token, l'invito è in tabella). Il problema è che dentro **Expo Go** `Linking.createURL` non produce `lifecouple://…` ma **`exp://<ip-locale>:8081/--/invito/<token>`**: in Expo Go `resolveScheme` ignora lo `scheme` dell'app e torna sempre `exp` (`node_modules/expo-linking/build/Schemes.js`, ramo StoreClient). Conseguenze: WhatsApp e Messaggi **non lo rendono cliccabile** (rendono solo http/https), l'indirizzo vale solo sulla stessa Wi-Fi, e comunque la route che dovrebbe riceverlo non esiste. **Non ancora deciso** come risolverlo — le tre strade sono: (a) condividere il **codice** invece del link, che funziona subito e non tocca D-14 perché il segreto è lo stesso; (b) route + development build; (c) **universal link https** con dominio proprio, l'unica che dà un link cliccabile, da fase di pubblicazione.
+
 **Cosa manca** (in ordine):
-1. **Verificare l'onboarding sull'iPhone reale** — il flusso vero (Share del link, OTP, deep link) e la conferma che B-02 non compaia su nativo. Serve prima: configurare il **template email** in Supabase perché mostri il codice (`{{ .Token }}`), o lasciare il magic link.
-2. **Deep link dell'invito**: gestire l'apertura di `lifecouple://invito/<token>` quando il partner tocca il link (ora il token si incolla a mano). Route `app/invito/[token].tsx`.
+1. **Verificare sull'iPhone reale** il flusso non bloccante e l'invito. Serve prima: configurare il **template email** in Supabase perché mostri il codice (`{{ .Token }}`), o lasciare il magic link.
+2. **Decidere la forma del link d'invito** fra le tre strade qui sopra, e implementarla. Se si sceglie (b) o (c), serve la route `app/invito/[token].tsx`.
 3. **Scioglimento** (D-04/D-16/D-21): `sciogli_coppia`. ⚠️ **Decisione implementativa aperta**: D-21 vuole i contenuti **condivisi** (liste, luoghi, eventi) *duplicati una copia a ciascuno*, i **personali** (foto, recensioni) solo all'autore, la creatura cancellata. La duplicazione dei condivisi non è banale e va ragionata. Sblocca l'ultimo test non coperto.
 4. Le funzioni nell'ordine di D-11.
 
 ⚠️ **Prima di utenti veri** (invariato): riaccendere "Confirm email", strategia d'accesso definitiva, eliminare gli utenti di test, confermare la regione UE.
+Gli utenti di prova da eliminare dal dashboard sono ora: `rls-*@example.com`, più `diagnosi-invito@`, `solo-test@`, `duo-x@`, `duo-y@` (`@example.com`), creati il 2026-08-12 per la diagnosi del link e la verifica di D-25.
 
 ⚠️ **Prima di utenti veri**: riaccendere "Confirm email" nel dashboard (spenta per i test), e scegliere la strategia d'accesso definitiva — probabilmente magic link o OAuth, non password. Gli utenti `rls-*@example.com` di prova si eliminano dal dashboard.
 
