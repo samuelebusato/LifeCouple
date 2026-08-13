@@ -8,10 +8,13 @@ import { Insieme } from '@/components/insieme';
 import { ServePartner } from '@/components/serve-partner';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { Fondo } from '@/components/schermata';
+import { SPAZIO_BARRA } from '@/components/barra-volante';
 import { supabase } from '@/lib/supabase';
 import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
 import { useRiepilogo } from '@/lib/riepilogo';
+import { useTema } from '@/lib/tema';
 import { lingua, t } from '@/lib/i18n';
 
 /**
@@ -42,11 +45,30 @@ function Riquadro({
   onPress?: () => void;
   largo?: boolean;
 }) {
+  const { c, vetro } = useTema();
   return (
     <Pressable onPress={onPress} className={largo ? 'w-full p-1.5' : 'w-1/2 p-1.5'}>
-      <View className="min-h-[110px] gap-1 rounded-3xl bg-card p-4">
-        <Icona color="#bf5333" size={20} />
-        <Text className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      {/* I riquadri della home restano **carta piena**, non vetro: sono gia' il
+          contenuto principale della schermata, e un vetro sopra un fondo
+          sfumato, ripetuto cinque volte, diventa nebbia. Il vetro sta sui
+          comandi che galleggiano, non su cio' che si legge. */}
+      <View
+        className="min-h-[118px] gap-1 rounded-3xl bg-card p-4"
+        style={{
+          shadowColor: vetro.ombra,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.6,
+          shadowRadius: 14,
+          elevation: 4,
+        }}
+      >
+        <View
+          className="h-9 w-9 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: c.alone }}
+        >
+          <Icona color={c.accento} size={18} />
+        </View>
+        <Text className="pt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
           {etichetta}
         </Text>
         <Text className="font-serif text-xl text-foreground" numberOfLines={2}>
@@ -65,6 +87,7 @@ function Riquadro({
 export default function Home() {
   const router = useRouter();
   const { coppiaId, completa, insiemeDal, errore, loading, ricarica } = useCoppia();
+  const { c } = useTema();
   const r = useRiepilogo(coppiaId);
 
   // Finche' si e' da soli si resta in ascolto: se il partner apre l'invito,
@@ -84,9 +107,12 @@ export default function Home() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#bf5333" />
-      </SafeAreaView>
+      <View className="flex-1">
+        <Fondo />
+        <SafeAreaView className="flex-1 items-center justify-center">
+          <ActivityIndicator color={c.accento} />
+        </SafeAreaView>
+      </View>
     );
   }
 
@@ -94,7 +120,9 @@ export default function Home() {
   // schermata che finge uno stato che non abbiamo potuto leggere.
   if (errore) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center gap-4 bg-background px-8">
+      <View className="flex-1">
+        <Fondo />
+        <SafeAreaView className="flex-1 items-center justify-center gap-4 px-8">
         <Text className="font-serif-bold text-2xl text-foreground">{t.home.titoloErrore}</Text>
         <Text className="max-w-xs text-center text-base text-muted-foreground">
           {t.home.testoErrore}
@@ -106,7 +134,8 @@ export default function Home() {
         <Button variant="ghost" onPress={() => supabase.auth.signOut()}>
           <Text>{t.home.esci}</Text>
         </Button>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     );
   }
 
@@ -116,8 +145,14 @@ export default function Home() {
     : null;
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="items-center gap-4 px-5 pb-32 pt-4">
+    <View className="flex-1">
+      <Fondo />
+      <SafeAreaView className="flex-1" edges={['top']}>
+      <ScrollView
+        contentContainerClassName="items-center gap-4 px-5 pt-4"
+        contentContainerStyle={{ paddingBottom: SPAZIO_BARRA }}
+        showsVerticalScrollIndicator={false}
+      >
         {completa ? (
           <>
             <Insieme insiemeDal={insiemeDal} ricarica={ricarica} />
@@ -205,6 +240,7 @@ export default function Home() {
           <Text>{t.home.esci}</Text>
         </Button>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }

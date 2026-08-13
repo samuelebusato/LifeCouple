@@ -1,5 +1,13 @@
 import type { Luogo } from '@/lib/luoghi';
 
+/** Un ristorante con le coordinate del suo posto (0012): disegnabile. */
+export type RistoranteSuMappa = {
+  id: string;
+  titolo: string;
+  lat: number;
+  lng: number;
+};
+
 /**
  * La versione **web** della mappa: non esiste.
  *
@@ -11,7 +19,9 @@ import type { Luogo } from '@/lib/luoghi';
 export function MappaVera(_: {
   centro: { latitude: number; longitude: number };
   luoghi: Luogo[];
+  ristoranti?: RistoranteSuMappa[];
   onLuogo: (l: Luogo) => void;
+  onRistorante?: (r: RistoranteSuMappa) => void;
   onPuntoNuovo: (p: { lat: number; lng: number }) => void;
 }) {
   return null;

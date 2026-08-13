@@ -22,6 +22,9 @@ export type Elemento = {
   stato: string;
   fatto_il: string | null;
   creato_il: string;
+  /** Il posto del ristorante (0012): e' cio' che lo porta sulla mappa. */
+  luogo_id: string | null;
+  luogo: { id: string; nome: string; lat: number; lng: number } | null;
   recensioni: Recensione[];
 };
 
@@ -49,7 +52,7 @@ export function usePreferiti(coppiaId: string | null) {
     }
     const { data, error } = await supabase
       .from('elemento_lista')
-      .select('*, recensione(*)')
+      .select('*, recensione(*), luogo:luogo_id(id, nome, lat, lng)')
       .eq('coppia_id', coppiaId)
       .order('creato_il', { ascending: false });
     setErrore(error?.message ?? null);
@@ -57,7 +60,7 @@ export function usePreferiti(coppiaId: string | null) {
       setElementi(
         (data ?? []).map((r) => {
           const { recensione, ...resto } = r as typeof r & { recensione: Recensione[] };
-          return { ...resto, recensioni: recensione ?? [] } as Elemento;
+          return { ...resto, recensioni: recensione ?? [] } as unknown as Elemento;
         })
       );
     }
@@ -129,7 +132,45 @@ export function usePreferiti(coppiaId: string | null) {
     [ricarica]
   );
 
-  return { elementi, loading, errore, ricarica, aggiungi, segnaFatto, recensisci, elimina };
+  /**
+   * Lega un ristorante a un posto (0012): crea il luogo dal risultato della
+   * ricerca e lo aggancia. Un solo ingresso per due scritture, cosi' non
+   * esiste lo stato "luogo creato ma ristorante non collegato" sparso in giro.
+   * La policy consente l'aggancio solo all'autore del ristorante: per gli
+   * altri l'update filtra zero righe, e si dice.
+   */
+  const collegaPosto = React.useCallback(
+    async (
+      elemento: Elemento,
+      posto: { nome: string; lat: number; lng: number }
+    ): Promise<string | null> => {
+      const visitato = elemento.stato === 'fatto';
+      const { data, error } = await supabase
+        .from('luogo')
+        .insert({
+          coppia_id: elemento.coppia_id,
+          nome: posto.nome.trim(),
+          lat: posto.lat,
+          lng: posto.lng,
+          stato: visitato ? 'visitato' : 'desiderato',
+          visitato_il: visitato ? new Date().toISOString() : null,
+        })
+        .select('id')
+        .single();
+      if (error) return error.message;
+      const up = await supabase
+        .from('elemento_lista')
+        .update({ luogo_id: data.id }, { count: 'exact' })
+        .eq('id', elemento.id);
+      if (up.error) return up.error.message;
+      if (up.count === 0) return 'solo-autore';
+      await ricarica();
+      return null;
+    },
+    [ricarica]
+  );
+
+  return { elementi, loading, errore, ricarica, aggiungi, segnaFatto, recensisci, elimina, collegaPosto };
 }
 
 /** L'ultimo film visto: serve al riquadro della home. */

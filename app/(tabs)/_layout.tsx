@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { CalendarDays, Heart, Image, Map, Sparkles, Star } from 'lucide-react-native';
+import { BarraVolante } from '@/components/barra-volante';
 import { t } from '@/lib/i18n';
 
 /**
@@ -10,22 +11,19 @@ import { t } from '@/lib/i18n';
  * **una sezione vuota e dichiarata e' onesta, una sezione nascosta no** — chi
  * usa l'app sa cosa ci sara', e noi sappiamo cosa manca. L'ordine di
  * implementazione resta quello di D-11.
+ *
+ * Il disegno della barra sta in `components/barra-volante.tsx`: qui restano
+ * solo le rotte, le icone e i titoli. La barra di sistema e' sostituita per
+ * intero perche' non sa fare ne' il vetro ne' lo stacco dal bordo.
  */
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props) => <BarraVolante {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#bf5333',
-        tabBarInactiveTintColor: '#9a8b7d',
-        tabBarLabelStyle: { fontSize: 10 },
-        tabBarStyle: {
-          backgroundColor: 'transparent',
-          borderTopWidth: 0,
-          elevation: 0,
-          position: 'absolute',
-        },
-        tabBarBackground: () => null,
+        // Le schermate devono poter scorrere **sotto** la pillola: e' cio' che
+        // le da' qualcosa da sfocare. Sfondo trasparente su tutta la catena.
         sceneStyle: { backgroundColor: 'transparent' },
       }}
     >

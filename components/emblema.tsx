@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
  * Line-art sottile, colore terracotta (--primary), coerente col diario.
  * Statico: bello di suo, senza bisogno di animazione.
  */
-export function Emblema({ size = 96, color = '#bf5333' }: { size?: number; color?: string }) {
+export function Emblema({ size = 96, color = '#d64360' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100" fill="none">
       {/* cuore sinistro */}

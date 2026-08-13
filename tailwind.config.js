@@ -5,16 +5,20 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
-      // Fraunces porta il carattere del "diario" nei titoli; il corpo resta
-      // sul font di sistema, piu' leggibile su schermo piccolo.
+      // Fraunces resta anche in "Quarzo rosa": un serif con contrasto alto e'
+      // cio' che distingue un'interfaccia premium da una di sistema. Il corpo
+      // resta sul font di sistema, piu' leggibile su schermo piccolo.
       fontFamily: {
         serif: ['Fraunces_600SemiBold'],
         'serif-bold': ['Fraunces_700Bold'],
       },
       borderRadius: {
-        // angoli morbidi, da quaderno rilegato
+        // Raggi ampi: il vetro ha bisogno di angoli morbidi, altrimenti il
+        // bordo luminoso spezza invece di accompagnare.
         xl: '16px',
         '2xl': '22px',
+        '3xl': '28px',
+        '4xl': '34px',
       },
       // Token in variabili CSS (global.css): la palette si cambia in un punto solo,
       // e i componenti in stile shadcn/RNR li trovano coi nomi che si aspettano.
@@ -47,6 +51,21 @@ module.exports = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        // La scala del rosa, disponibile come `bg-rosa-100`, `text-rosa-700`...
+        // Serve dove un solo `primary` non basta: velature, fondi di sezione,
+        // gradienti. Si inverte da sola nel tema scuro (vedi global.css).
+        rosa: {
+          50: 'hsl(var(--rosa-50))',
+          100: 'hsl(var(--rosa-100))',
+          200: 'hsl(var(--rosa-200))',
+          300: 'hsl(var(--rosa-300))',
+          400: 'hsl(var(--rosa-400))',
+          500: 'hsl(var(--rosa-500))',
+          600: 'hsl(var(--rosa-600))',
+          700: 'hsl(var(--rosa-700))',
+          800: 'hsl(var(--rosa-800))',
+          900: 'hsl(var(--rosa-900))',
         },
       },
     },

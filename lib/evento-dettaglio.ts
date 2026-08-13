@@ -24,6 +24,12 @@ export type Foto = {
   autore_id: string;
 };
 
+export type RistoranteEvento = {
+  id: string;
+  titolo: string;
+  stato: string;
+};
+
 /**
  * Tutto quello che appartiene a un evento: il momento, il posto, gli scatti e
  * le parole.
@@ -35,6 +41,7 @@ export type Foto = {
 export function useEventoDettaglio(id: string | undefined) {
   const [evento, setEvento] = React.useState<Evento | null>(null);
   const [luogo, setLuogo] = React.useState<Luogo | null>(null);
+  const [ristorante, setRistorante] = React.useState<RistoranteEvento | null>(null);
   const [commenti, setCommenti] = React.useState<Commento[]>([]);
   const [foto, setFoto] = React.useState<Foto[]>([]);
   const [errore, setErrore] = React.useState<string | null>(null);
@@ -69,6 +76,18 @@ export function useEventoDettaglio(id: string | undefined) {
     } else {
       setLuogo(null);
     }
+
+    // Il ristorante della serata (0012): stessa forma del luogo.
+    if (ev?.elemento_id) {
+      const { data } = await supabase
+        .from('elemento_lista')
+        .select('id, titolo, stato')
+        .eq('id', ev.elemento_id)
+        .maybeSingle();
+      setRistorante((data as RistoranteEvento | null) ?? null);
+    } else {
+      setRistorante(null);
+    }
     setLoading(false);
   }, [id]);
 
@@ -100,7 +119,62 @@ export function useEventoDettaglio(id: string | undefined) {
     [ricarica]
   );
 
-  return { evento, luogo, commenti, foto, loading, errore, ricarica, commenta, cancellaCommento };
+  /**
+   * Modifica **mirata** dall'ingranaggio della pagina evento (D-35): un campo
+   * alla volta, non un secondo form completo. La regola "la modifica vive in
+   * un posto solo" resta vera per il form intero, che sta nel calendario.
+   * La policy consente l'update solo all'autore: agli altri l'errore arriva
+   * dal database, e la pagina lo mostra invece di fingere.
+   */
+  const aggiorna = React.useCallback(
+    async (
+      campi: Partial<{
+        nota: string | null;
+        inizio: string;
+        fine: string | null;
+        luogo_id: string | null;
+        elemento_id: string | null;
+      }>
+    ): Promise<string | null> => {
+      if (!evento) return null;
+      const { error, count } = await supabase
+        .from('evento')
+        .update(campi, { count: 'exact' })
+        .eq('id', evento.id);
+      if (error) return error.message;
+      // RLS non "vieta": filtra. Zero righe toccate = non era tuo da modificare.
+      if (count === 0) return 'solo-autore';
+      await ricarica();
+      return null;
+    },
+    [evento, ricarica]
+  );
+
+  const eliminaEvento = React.useCallback(async (): Promise<string | null> => {
+    if (!evento) return null;
+    const { error, count } = await supabase
+      .from('evento')
+      .delete({ count: 'exact' })
+      .eq('id', evento.id);
+    if (error) return error.message;
+    if (count === 0) return 'solo-autore';
+    return null;
+  }, [evento]);
+
+  return {
+    evento,
+    luogo,
+    ristorante,
+    commenti,
+    foto,
+    loading,
+    errore,
+    ricarica,
+    commenta,
+    cancellaCommento,
+    aggiorna,
+    eliminaEvento,
+  };
 }
 
 /** Gli eventi legati a un luogo: e' l'ingresso dalla mappa. */

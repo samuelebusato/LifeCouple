@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Fondo } from '@/components/schermata';
 import { supabase } from '@/lib/supabase';
 import { t } from '@/lib/i18n';
 
@@ -43,9 +44,11 @@ export default function Accedi() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1">
+      <Fondo />
+      <SafeAreaView className="flex-1">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-center px-8"
       >
         {fase === 'email' ? (
@@ -95,6 +98,7 @@ export default function Accedi() {
           </View>
         )}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }

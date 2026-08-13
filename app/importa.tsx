@@ -4,8 +4,10 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Check, Square } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
+import { BottoneVetro } from '@/components/ui/vetro';
+import { Fondo } from '@/components/schermata';
 import { cn } from '@/lib/utils';
+import { useTema } from '@/lib/tema';
 import { useCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
 import { TIPI, type TipoEvento } from '@/lib/eventi';
@@ -62,6 +64,8 @@ export default function Importa() {
     })();
   }, [coppiaId]);
 
+  // `tema` e non `{ c }`: in questa schermata `c` e' gia' il candidato.
+  const tema = useTema();
   const conta = Object.keys(scelti).length;
 
   function spunta(c: Candidato) {
@@ -107,7 +111,11 @@ export default function Importa() {
     return (
       <View className="gap-2 rounded-2xl bg-card p-4">
         <Pressable className="flex-row items-start gap-3" onPress={() => spunta(c)}>
-          {attivo ? <Check color="#bf5333" size={22} /> : <Square color="#9a8b7d" size={22} />}
+          {attivo ? (
+            <Check color={tema.c.accento} size={22} />
+          ) : (
+            <Square color={tema.c.tenue} size={22} />
+          )}
           <View className="flex-1">
             <Text className="font-serif text-lg text-foreground">{c.titolo}</Text>
             <Text className="text-xs text-muted-foreground">
@@ -151,7 +159,9 @@ export default function Importa() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1">
+      <Fondo />
+      <SafeAreaView className="flex-1">
       <View className="flex-row items-center justify-between px-6 pb-2 pt-4">
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Text className="text-base text-muted-foreground">{t.calendario.chiudi}</Text>
@@ -162,7 +172,7 @@ export default function Importa() {
 
       {stato === 'attesa' && (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#bf5333" />
+          <ActivityIndicator color={tema.c.accento} />
         </View>
       )}
 
@@ -218,13 +228,19 @@ export default function Importa() {
             })}
           </ScrollView>
 
-          <View className="absolute inset-x-0 bottom-0 gap-2 bg-background px-6 pb-8 pt-3">
-            <Button size="lg" disabled={conta === 0 || salvando} onPress={conferma}>
+          <View className="absolute inset-x-0 bottom-0 gap-2 px-6 pb-8 pt-3">
+            <BottoneVetro
+              variante="accento"
+              altezza={58}
+              disabled={conta === 0 || salvando}
+              onPress={conferma}
+            >
               <Text>{salvando ? t.onboarding.attesa : t.importa.importa(conta)}</Text>
-            </Button>
+            </BottoneVetro>
           </View>
         </>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }

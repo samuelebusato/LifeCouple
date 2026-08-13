@@ -14,6 +14,43 @@ export type Database = {
   }
   public: {
     Tables: {
+      // ⚠️ SCRITTO A MANO, non generato — migrazione 0011 (cartelle della
+      // galleria). Il resto di questo file viene dallo schema reale: questo
+      // blocco va **sostituito rigenerando i tipi** appena la 0011 e' applicata,
+      // altrimenti resta l'unico punto in cui i tipi dicono ciò che crediamo
+      // invece di ciò che è. Vale anche per `foto.cartella_id` più sotto.
+      cartella: {
+        Row: {
+          autore_id: string
+          coppia_id: string
+          creato_il: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          autore_id?: string
+          coppia_id: string
+          creato_il?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          autore_id?: string
+          coppia_id?: string
+          creato_il?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartella_coppia_id_fkey"
+            columns: ["coppia_id"]
+            isOneToOne: false
+            referencedRelation: "coppia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commento: {
         Row: {
           autore_id: string
@@ -137,6 +174,7 @@ export type Database = {
           },
         ]
       }
+      // ⚠️ `luogo_id` SCRITTO A MANO (0012) — da sostituire rigenerando i tipi.
       elemento_lista: {
         Row: {
           autore_id: string
@@ -144,6 +182,7 @@ export type Database = {
           creato_il: string
           fatto_il: string | null
           id: string
+          luogo_id: string | null
           stato: string
           tipo: string
           titolo: string
@@ -154,6 +193,7 @@ export type Database = {
           creato_il?: string
           fatto_il?: string | null
           id?: string
+          luogo_id?: string | null
           stato?: string
           tipo: string
           titolo: string
@@ -164,6 +204,7 @@ export type Database = {
           creato_il?: string
           fatto_il?: string | null
           id?: string
+          luogo_id?: string | null
           stato?: string
           tipo?: string
           titolo?: string
@@ -176,13 +217,22 @@ export type Database = {
             referencedRelation: "coppia"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "elemento_lista_luogo_id_fkey"
+            columns: ["luogo_id"]
+            isOneToOne: false
+            referencedRelation: "luogo"
+            referencedColumns: ["id"]
+          },
         ]
       }
+      // ⚠️ `elemento_id` SCRITTO A MANO (0012) — da sostituire rigenerando i tipi.
       evento: {
         Row: {
           autore_id: string
           coppia_id: string
           creato_il: string
+          elemento_id: string | null
           fine: string | null
           id: string
           inizio: string
@@ -199,6 +249,7 @@ export type Database = {
           autore_id?: string
           coppia_id: string
           creato_il?: string
+          elemento_id?: string | null
           fine?: string | null
           id?: string
           inizio: string
@@ -215,6 +266,7 @@ export type Database = {
           autore_id?: string
           coppia_id?: string
           creato_il?: string
+          elemento_id?: string | null
           fine?: string | null
           id?: string
           inizio?: string
@@ -235,12 +287,21 @@ export type Database = {
             referencedRelation: "coppia"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "evento_elemento_id_fkey"
+            columns: ["elemento_id"]
+            isOneToOne: false
+            referencedRelation: "elemento_lista"
+            referencedColumns: ["id"]
+          },
         ]
       }
       foto: {
         Row: {
           autore_id: string
           byte: number
+          cartella_id: string | null
+          elemento_id: string | null
           chiave_storage: string
           coppia_id: string
           creato_il: string
@@ -252,6 +313,8 @@ export type Database = {
         Insert: {
           autore_id?: string
           byte: number
+          cartella_id?: string | null
+          elemento_id?: string | null
           chiave_storage: string
           coppia_id: string
           creato_il?: string
@@ -263,6 +326,8 @@ export type Database = {
         Update: {
           autore_id?: string
           byte?: number
+          cartella_id?: string | null
+          elemento_id?: string | null
           chiave_storage?: string
           coppia_id?: string
           evento_id?: string | null
@@ -272,6 +337,13 @@ export type Database = {
           scattata_il?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "foto_cartella_id_fkey"
+            columns: ["cartella_id"]
+            isOneToOne: false
+            referencedRelation: "cartella"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "foto_coppia_id_fkey"
             columns: ["coppia_id"]

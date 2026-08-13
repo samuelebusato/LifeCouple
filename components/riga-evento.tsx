@@ -1,16 +1,29 @@
 import { View, Pressable, Image } from 'react-native';
-import { CalendarCheck, Heart, Palmtree, Sparkles } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { CalendarCheck, Clock, Heart, MapPin, Palmtree, Sparkles, Tag } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
+import { CartaVetro } from '@/components/ui/vetro';
 import { cn } from '@/lib/utils';
 import type { Evento } from '@/lib/eventi';
+import { useTema } from '@/lib/tema';
 import { lingua, t } from '@/lib/i18n';
 
 /** Colore e icona dicono il tipo prima di leggere: il calendario si scorre, non si studia. */
-export const aspetto = (e: Evento) => {
-  if (e.speciale) return { Icona: Sparkles, colore: '#bf5333' };
-  if (e.tipo === 'romantico') return { Icona: Heart, colore: '#bf5333' };
-  if (e.tipo === 'vacanza') return { Icona: Palmtree, colore: '#4f7a5f' };
-  return { Icona: CalendarCheck, colore: '#8a7563' };
+export function useAspetto(e: Evento) {
+  const { c, scuro } = useTema();
+  if (e.speciale) return { Icona: Sparkles, colore: c.accento };
+  if (e.tipo === 'romantico') return { Icona: Heart, colore: c.accento };
+  if (e.tipo === 'vacanza') return { Icona: Palmtree, colore: scuro ? '#7fb894' : '#4f7a5f' };
+  return { Icona: CalendarCheck, colore: c.tenue };
+}
+
+/** Versione senza hook, per chi disegna fuori da un componente (pallini del mese). */
+export const aspetto = (e: Evento, scuro = false) => {
+  const accento = scuro ? '#ec798e' : '#d64360';
+  if (e.speciale) return { Icona: Sparkles, colore: accento };
+  if (e.tipo === 'romantico') return { Icona: Heart, colore: accento };
+  if (e.tipo === 'vacanza') return { Icona: Palmtree, colore: scuro ? '#7fb894' : '#4f7a5f' };
+  return { Icona: CalendarCheck, colore: scuro ? '#b1a0a3' : '#816a6f' };
 };
 
 function quando(e: Evento) {
@@ -21,6 +34,19 @@ function quando(e: Evento) {
   return da.toLocaleTimeString(lingua, { hour: '2-digit', minute: '2-digit' });
 }
 
+/**
+ * La scheda di un evento, in **due forme**.
+ *
+ * * **Con foto**: immagine grande in testa, a tutta larghezza, con il titolo
+ *   scritto sopra su una velatura scura. E' la forma dello screenshot chiesto
+ *   dall'utente, ed e' giusta perche' quando una foto c'e' e' lei a dire di
+ *   cosa si trattava — molto meglio di qualunque icona.
+ * * **Senza foto**: riga compatta. *Perche' non la stessa forma per tutti*: la
+ *   maggioranza degli eventi non ha foto (i compleanni importati, gli impegni),
+ *   e dare a ciascuno 180 punti di altezza trasformerebbe un mese di calendario
+ *   in un rotolo da scorrere per minuti. Una scheda grande **vuota** non e'
+ *   piu' bella: e' solo piu' grande.
+ */
 export function RigaEvento({
   e,
   mio,
@@ -39,57 +65,133 @@ export function RigaEvento({
   /** Indirizzo firmato della prima foto dell'evento, se ne ha una. */
   anteprima?: string;
 }) {
-  const { Icona, colore } = aspetto(e);
+  const { Icona, colore } = useAspetto(e);
+  const { c } = useTema();
   const Contenitore: any = onPress ? Pressable : View;
+
+  // ---------------------------------------------------------------- con foto
+  if (anteprima) {
+    return (
+      <Contenitore onPress={onPress} className="w-full">
+        <CartaVetro raggio={26}>
+          <View className="overflow-hidden" style={{ borderRadius: 26 }}>
+            <View style={{ height: 190, width: '100%' }}>
+              <Image
+                source={{ uri: anteprima }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+              {/* La velatura serve al testo, non alla foto: senza, un titolo
+                  chiaro su un cielo chiaro non si legge. Parte da meta' altezza
+                  cosi' la foto resta foto nella parte alta. */}
+              <LinearGradient
+                colors={['rgba(0,0,0,0)', 'rgba(20,6,12,0.78)']}
+                locations={[0.35, 1]}
+                style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
+              />
+              <View className="absolute inset-x-0 bottom-0 gap-1 p-4">
+                <View className="flex-row items-center gap-1.5">
+                  <Icona color="#ffffff" size={13} />
+                  <Text
+                    className="text-xs uppercase tracking-wide"
+                    style={{ color: 'rgba(255,255,255,0.92)' }}
+                  >
+                    {quando(e)}
+                  </Text>
+                  {!!contatore && (
+                    <Text className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                      · {contatore}
+                    </Text>
+                  )}
+                </View>
+                <Text className="font-serif-bold text-2xl" style={{ color: '#ffffff' }}>
+                  {e.titolo}
+                </Text>
+              </View>
+            </View>
+
+            <View className="gap-2 p-4">
+              {!!e.nota && <Text className="text-base text-muted-foreground">{e.nota}</Text>}
+              <View className="flex-row flex-wrap items-center gap-x-4 gap-y-1">
+                {!!e.categoria && (
+                  <View className="flex-row items-center gap-1.5">
+                    <Tag color={c.tenue} size={13} />
+                    <Text className="text-xs text-muted-foreground">{e.categoria}</Text>
+                  </View>
+                )}
+                <View className="flex-row items-center gap-1.5">
+                  <Clock color={c.tenue} size={13} />
+                  <Text className="text-xs text-muted-foreground">
+                    {mio ? t.calendario.daTe : t.calendario.dalPartner}
+                  </Text>
+                </View>
+              </View>
+              {mio && onElimina && (
+                <Pressable onPress={onElimina} hitSlop={8} className="pt-1">
+                  <Text className="text-xs text-destructive">{t.calendario.elimina}</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+        </CartaVetro>
+      </Contenitore>
+    );
+  }
+
+  // -------------------------------------------------------------- senza foto
   return (
-    <Contenitore
-      onPress={onPress}
-      className="w-full flex-row gap-3 rounded-2xl bg-card p-4"
-    >
-      {/* Se l'evento ha una foto e' lei a dire di cosa si trattava, molto piu'
-          dell'icona del tipo: la miniatura prende il posto dell'icona. */}
-      {anteprima ? (
-        <Image
-          source={{ uri: anteprima }}
-          style={{ width: 56, height: 56, borderRadius: 14 }}
-          resizeMode="cover"
-        />
-      ) : (
-        <View className="pt-1">
-          <Icona color={colore} size={22} />
+    <Contenitore onPress={onPress} className="w-full">
+      <CartaVetro raggio={22}>
+        <View className="flex-row gap-3 p-4">
+          <View
+            className="h-11 w-11 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: c.alone }}
+          >
+            <Icona color={colore} size={20} />
+          </View>
+          <View className="flex-1 gap-1">
+            <View className="flex-row items-center justify-between">
+              <Text className={cn('text-xs uppercase tracking-wide')} style={{ color: colore }}>
+                {quando(e)}
+              </Text>
+              {!!contatore && <Text className="text-xs text-muted-foreground">{contatore}</Text>}
+            </View>
+            <Text className="font-serif text-xl text-foreground">{e.titolo}</Text>
+            {!!e.nota && <Text className="text-base text-muted-foreground">{e.nota}</Text>}
+            {/* Da quale calendario e' arrivato: senza, venti compleanni importati
+                sono venti impegni indistinguibili (0007). */}
+            {!!e.categoria && (
+              <View className="flex-row items-center gap-1.5 pt-0.5">
+                <Tag color={c.tenue} size={12} />
+                <Text className="text-xs text-muted-foreground">{e.categoria}</Text>
+              </View>
+            )}
+            <View className="flex-row items-center justify-between pt-1">
+              <Text className="text-xs text-muted-foreground">
+                {mio ? t.calendario.daTe : t.calendario.dalPartner}
+              </Text>
+              {/* Solo l'autore cancella (D-21): la policy lo impone comunque, qui
+                  si evita di offrire un gesto che finirebbe in errore. */}
+              {mio && onElimina && (
+                <Pressable onPress={onElimina} hitSlop={8}>
+                  <Text className="text-xs text-destructive">{t.calendario.elimina}</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
         </View>
-      )}
-      <View className="flex-1 gap-1">
-        <View className="flex-row items-center justify-between">
-          <Text className={cn('text-xs uppercase tracking-wide')} style={{ color: colore }}>
-            {quando(e)}
-          </Text>
-          {!!contatore && (
-            <Text className="text-xs text-muted-foreground">{contatore}</Text>
-          )}
-        </View>
-        <Text className="font-serif text-xl text-foreground">{e.titolo}</Text>
-        {!!e.nota && <Text className="text-base text-muted-foreground">{e.nota}</Text>}
-        {/* Da quale calendario e' arrivato: senza, venti compleanni importati
-            sono venti impegni indistinguibili (0007). */}
-        {!!e.categoria && (
-          <Text className="text-xs uppercase tracking-wide text-muted-foreground">
-            {e.categoria}
-          </Text>
-        )}
-        <View className="flex-row items-center justify-between pt-1">
-          <Text className="text-xs text-muted-foreground">
-            {mio ? t.calendario.daTe : t.calendario.dalPartner}
-          </Text>
-          {/* Solo l'autore cancella (D-21): la policy lo impone comunque, qui
-              si evita di offrire un gesto che finirebbe in errore. */}
-          {mio && onElimina && (
-            <Pressable onPress={onElimina} hitSlop={8}>
-              <Text className="text-xs text-destructive">{t.calendario.elimina}</Text>
-            </Pressable>
-          )}
-        </View>
-      </View>
+      </CartaVetro>
     </Contenitore>
+  );
+}
+
+/** Riga con luogo, usata dove serve mostrare il posto insieme all'evento. */
+export function RigaLuogo({ nome }: { nome: string }) {
+  const { c } = useTema();
+  return (
+    <View className="flex-row items-center gap-1.5">
+      <MapPin color={c.tenue} size={13} />
+      <Text className="text-xs text-muted-foreground">{nome}</Text>
+    </View>
   );
 }

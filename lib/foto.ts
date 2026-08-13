@@ -40,7 +40,12 @@ async function comprimi(uri: string) {
 export async function caricaFoto(
   coppiaId: string,
   immagini: { uri: string }[],
-  legami?: { eventoId?: string | null; luogoId?: string | null }
+  legami?: {
+    eventoId?: string | null;
+    luogoId?: string | null;
+    cartellaId?: string | null;
+    elementoId?: string | null;
+  }
 ): Promise<{ caricate: number; errore: string | null }> {
   let caricate = 0;
   for (const img of immagini) {
@@ -64,6 +69,10 @@ export async function caricaFoto(
         byte: dati.byteLength,
         evento_id: legami?.eventoId ?? null,
         luogo_id: legami?.luogoId ?? null,
+        // Caricare stando dentro una cartella ce le mette: e' l'unico momento in
+        // cui l'intenzione e' gia' chiara senza chiederla.
+        cartella_id: legami?.cartellaId ?? null,
+        elemento_id: legami?.elementoId ?? null,
       });
       if (error) {
         await supabase.storage.from('foto').remove([chiave]);
@@ -115,6 +124,31 @@ export async function anteprimePerEvento(eventiIds: string[]) {
     if (firmati[chiave]) perEvento[idEvento] = firmati[chiave];
   }
   return perEvento;
+}
+
+/**
+ * La copertina di film e ristoranti: stessa forma di `anteprimePerEvento`.
+ *
+ * Una richiesta sola per tutto l'elenco, e la **prima caricata vince** — la
+ * locandina la mette chi ha aggiunto il film, e non ha senso che cambi da sola
+ * quando l'altro aggiunge una foto della serata.
+ */
+export async function copertinePerElemento(elementiIds: string[]) {
+  if (elementiIds.length === 0) return {} as Record<string, string>;
+  const { data } = await supabase
+    .from('foto')
+    .select('elemento_id, chiave_storage, creato_il')
+    .in('elemento_id', elementiIds)
+    .order('creato_il', { ascending: true });
+
+  const prima = new Map<string, string>();
+  for (const r of data ?? []) {
+    if (r.elemento_id && !prima.has(r.elemento_id)) prima.set(r.elemento_id, r.chiave_storage);
+  }
+  const firmati = await indirizziFirmati([...prima.values()]);
+  const per: Record<string, string> = {};
+  for (const [id, chiave] of prima) if (firmati[chiave]) per[id] = firmati[chiave];
+  return per;
 }
 
 /**

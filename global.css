@@ -3,66 +3,102 @@
 @tailwind utilities;
 
 /*
- * LifeCouple — direzione "Diario intimo".
- * Metafora: un quaderno condiviso. Carta color crema, inchiostro terra,
- * un accento terracotta. Non tecnologico, non aziendale, non giocoso.
+ * LifeCouple — direzione "Quarzo rosa", seconda taratura (2026-08-13).
+ *
+ * La prima versione usava tonalita' 336-344: sull'iPhone leggevano **viola**,
+ * soprattutto nel tema scuro (prugna). L'utente ha chiesto rosa-bianco: tutte
+ * le tinte salgono a 347-351 (rosa caldo, lato pesca), i neutri perdono
+ * saturazione — un grigio appena rosato invece di un lilla — e il tema scuro
+ * diventa un bruno-rosa invece di una prugna.
  *
  * I token si definiscono QUI, una volta. Nei componenti non deve mai comparire
  * un colore a mano: se lo fa, e' un bug di sistema, non una scelta.
+ * **Unica eccezione dichiarata**: sfocatura, sfumature e icone (expo-blur,
+ * expo-linear-gradient, lucide) vogliono colori letterali e non leggono le
+ * variabili CSS. Quei pochi valori stanno in `lib/tema.ts`, che e' la loro
+ * unica casa.
  */
 @layer base {
   :root {
-    /* carta e inchiostro */
-    --background: 40 33% 96%;        /* crema calda, non bianco */
-    --foreground: 24 28% 16%;        /* inchiostro terra scuro, non nero */
-    --card: 40 40% 98%;              /* pagina leggermente piu' chiara */
-    --card-foreground: 24 28% 16%;
+    /* --- la scala del rosa: dalla luce alla pietra ------------------------ */
+    --rosa-50: 351 100% 98.5%;
+    --rosa-100: 351 92% 96.5%;
+    --rosa-200: 350 86% 93%;
+    --rosa-300: 350 80% 86%;
+    --rosa-400: 349 72% 74%;
+    --rosa-500: 349 66% 62%;
+    --rosa-600: 348 62% 53%;
+    --rosa-700: 347 58% 44%;
+    --rosa-800: 346 48% 34%;
+    --rosa-900: 345 38% 24%;
 
-    /* terracotta: l'accento, usato con parsimonia */
-    --primary: 12 62% 47%;
-    --primary-foreground: 40 40% 98%;
+    /* --- bianco e bruno-rosa ---------------------------------------------- */
+    --background: 350 70% 99%;       /* bianco con un velo di rosa, non bianco puro */
+    --foreground: 348 22% 15%;       /* bruno caldo scurissimo: non nero, non viola */
+    --card: 0 0% 100%;               /* la carta e' bianca davvero: fa risaltare il fondo */
+    --card-foreground: 348 22% 15%;
 
-    /* toni terra tenui per le superfici secondarie */
-    --secondary: 34 24% 90%;
-    --secondary-foreground: 24 24% 24%;
-    --muted: 36 22% 91%;
-    --muted-foreground: 28 15% 42%;
-    --accent: 30 40% 88%;
-    --accent-foreground: 24 28% 20%;
+    /* --- l'accento: rosa pieno, usato per le azioni ------------------------ */
+    --primary: 348 64% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    /* un rosso desaturato, coerente col mattone, non un rosso "errore" acceso */
-    --destructive: 4 55% 46%;
-    --destructive-foreground: 40 40% 98%;
+    /* --- superfici secondarie: rosa cosi' tenui da leggersi come bianchi ---- */
+    --secondary: 350 68% 96.5%;
+    --muted: 349 42% 95.5%;
+    --muted-foreground: 347 10% 46%; /* grigio caldo: la saturazione bassa e' cio' che toglie il viola */
+    --secondary-foreground: 347 26% 28%;
+    --accent: 350 82% 93%;
+    --accent-foreground: 347 40% 26%;
 
-    --border: 32 20% 84%;
-    --input: 32 20% 84%;
-    --ring: 12 62% 47%;
+    /* Un rosso-corallo che non litiga col rosa: piu' caldo e piu' aranciato,
+     * cosi' "elimina" non si confonde con "conferma". */
+    --destructive: 4 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 349 32% 91%;
+    --input: 349 32% 91%;
+    --ring: 348 64% 55%;
   }
 
   /*
-   * Notte del diario: la stessa carta di sera. Marroni caldi profondi invece
-   * del grigio-blu tecnologico, cosi' il tema scuro resta "diario" e non
-   * diventa un'altra app.
+   * Notte di quarzo: bruno-rosa profondo, NON prugna. La differenza sta tutta
+   * nella tonalita' (348-350 invece di 336) e nella saturazione bassa dei
+   * fondi: al buio un fondo saturo vira al viola su qualunque schermo OLED.
    */
   @media (prefers-color-scheme: dark) {
     :root {
-      --background: 24 22% 11%;
-      --foreground: 38 30% 90%;
-      --card: 24 20% 14%;
-      --card-foreground: 38 30% 90%;
-      --primary: 12 58% 55%;
-      --primary-foreground: 24 22% 11%;
-      --secondary: 24 14% 20%;
-      --secondary-foreground: 38 24% 86%;
-      --muted: 24 14% 20%;
-      --muted-foreground: 34 14% 62%;
-      --accent: 20 22% 24%;
-      --accent-foreground: 38 28% 88%;
-      --destructive: 4 60% 58%;
-      --destructive-foreground: 24 22% 11%;
-      --border: 24 14% 24%;
-      --input: 24 14% 24%;
-      --ring: 12 58% 55%;
+      --rosa-50: 348 18% 16%;
+      --rosa-100: 348 20% 20%;
+      --rosa-200: 349 24% 26%;
+      --rosa-300: 349 32% 36%;
+      --rosa-400: 349 46% 48%;
+      --rosa-500: 349 60% 60%;
+      --rosa-600: 349 68% 68%;
+      --rosa-700: 350 76% 78%;
+      --rosa-800: 350 84% 87%;
+      --rosa-900: 351 92% 94%;
+
+      --background: 348 16% 8%;
+      --foreground: 350 22% 95%;
+      --card: 348 14% 12.5%;
+      --card-foreground: 350 22% 95%;
+
+      --primary: 349 75% 70%;
+      --primary-foreground: 348 16% 9%;
+
+      --secondary: 348 12% 18%;
+      --secondary-foreground: 350 20% 90%;
+      --muted: 348 12% 18%;
+      --muted-foreground: 349 10% 66%;
+      --accent: 349 16% 24%;
+      --accent-foreground: 350 28% 90%;
+
+      --destructive: 4 70% 60%;
+      --destructive-foreground: 348 16% 9%;
+
+      --border: 348 12% 23%;
+      --input: 348 12% 23%;
+      --ring: 349 75% 70%;
     }
   }
 }

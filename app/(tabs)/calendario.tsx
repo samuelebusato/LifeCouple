@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   View,
   ScrollView,
+  FlatList,
   Modal,
   Switch,
   Platform,
@@ -20,10 +21,17 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RigaEvento, aspetto } from '@/components/riga-evento';
+import { CercaLuogo } from '@/components/cerca-luogo';
+import { BottoneVetro, CartaVetro, TondoVetro, Vetro } from '@/components/ui/vetro';
+import { Fondo } from '@/components/schermata';
+import { SPAZIO_BARRA } from '@/components/barra-volante';
+import { useTastiera } from '@/lib/tastiera';
+import { useTema } from '@/lib/tema';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { useLuoghi } from '@/lib/luoghi';
+import { usePreferiti } from '@/lib/preferiti';
 import { anteprimePerEvento } from '@/lib/foto';
 import {
   useEventi,
@@ -63,8 +71,9 @@ const LARGHEZZA = Dimensions.get('window').width;
 /** Oltre questo trascinamento (o questa velocita') il periodo cambia davvero. */
 const SOGLIA = LARGHEZZA / 4;
 const VELOCITA = 0.4;
-/** Giorni disegnati a destra e a sinistra nella striscia della settimana. */
-const RAGGIO_STRISCIA = 60;
+/** Giorni disegnati a destra e a sinistra nella striscia. Un anno per lato:
+ *  la FlatList monta solo cio' che si vede, quindi 730 celle costano quanto 10. */
+const RAGGIO_STRISCIA = 365;
 const LARGHEZZA_CELLA = LARGHEZZA / 7;
 
 /** Una cella della griglia: numero, e i pallini di cio' che succede quel giorno. */
@@ -125,8 +134,15 @@ export default function Calendario() {
   const { coppiaId, ricarica: ricaricaCoppia } = useCoppia();
   const { eventi, loading, errore, ricarica, aggiungi, aggiorna, elimina } = useEventi(coppiaId);
   // I posti servono qui per legare un evento a un luogo: e' cio' che lo fa
-  // comparire anche sulla mappa (D-33).
-  const { luoghi } = useLuoghi(coppiaId);
+  // comparire anche sulla mappa (D-33). `aggiungi` serve alla ricerca: un posto
+  // scelto fra i risultati va prima creato, poi legato.
+  const { luoghi, aggiungi: aggiungiLuogo } = useLuoghi(coppiaId);
+  // I ristoranti dei preferiti: un evento puo' averne uno (0012).
+  const { elementi } = usePreferiti(coppiaId);
+  const ristoranti = React.useMemo(
+    () => elementi.filter((e) => e.tipo === 'ristorante'),
+    [elementi]
+  );
 
   // Si torna qui dalla pagina dell'evento quando si vuole modificarlo: il
   // foglio di modifica e' uno solo, e vive dove si creano gli eventi.
@@ -148,6 +164,11 @@ export default function Calendario() {
   const [tuttoIlGiorno, setTuttoIlGiorno] = React.useState(false);
   const [nota, setNota] = React.useState('');
   const [luogoId, setLuogoId] = React.useState<string | null>(null);
+  const [elementoId, setElementoId] = React.useState<string | null>(null);
+  /** Nome del posto appena creato dalla ricerca: serve solo a dirlo a schermo. */
+  const [luogoCercato, setLuogoCercato] = React.useState<string | null>(null);
+  const tema = useTema();
+  const { aperta: tastieraAperta } = useTastiera();
   const [attesa, setAttesa] = React.useState(false);
   const [erroreForm, setErroreForm] = React.useState<string | null>(null);
 
@@ -186,20 +207,29 @@ export default function Calendario() {
     () => Array.from({ length: RAGGIO_STRISCIA * 2 }, (_, i) => aggiungiGiorni(partenzaStriscia, i)),
     [partenzaStriscia]
   );
-  const striscia = React.useRef<ScrollView>(null);
+  const striscia = React.useRef<FlatList<Date>>(null);
 
-  // Portare la striscia sul giorno scelto: `contentOffset` non basta (sul web
-  // viene ignorato al primo render), e serve comunque quando il giorno cambia
-  // dalle frecce o dopo aver salvato un evento.
+  /** Indice del giorno scelto dentro la striscia. */
+  const indiceGiorno = React.useMemo(
+    () =>
+      Math.round((inizioGiorno(giorno).getTime() - partenzaStriscia.getTime()) / 86_400_000),
+    [giorno, partenzaStriscia]
+  );
+
+  // Portare la striscia sul giorno scelto quando cambia **da fuori** (frecce,
+  // salvataggio). B-06: con lo ScrollView era uno scrollTo a timeout zero, che
+  // sul telefono partiva PRIMA che la striscia fosse misurata: non faceva
+  // nulla, e la striscia restava ferma a 60 giorni fa — "i giorni nascosti".
+  // La FlatList con getItemLayout sa le posizioni SENZA misurare: lo scroll e'
+  // deterministico anche al primo fotogramma.
   React.useEffect(() => {
     if (vista !== 'giorni') return;
-    const indice = Math.round(
-      (inizioGiorno(giorno).getTime() - partenzaStriscia.getTime()) / 86_400_000
-    );
-    const x = Math.max(0, (indice - 3) * LARGHEZZA_CELLA);
-    const id = setTimeout(() => striscia.current?.scrollTo({ x, animated: false }), 0);
-    return () => clearTimeout(id);
-  }, [vista, giorno, partenzaStriscia]);
+    striscia.current?.scrollToIndex({
+      index: Math.max(0, indiceGiorno),
+      viewOffset: 3 * LARGHEZZA_CELLA,
+      animated: false,
+    });
+  }, [vista, indiceGiorno]);
   const apertoDaParametro = React.useRef<string | null>(null);
   React.useEffect(() => {
     if (!modifica || apertoDaParametro.current === modifica) return;
@@ -286,6 +316,7 @@ export default function Calendario() {
     setNota(e?.nota ?? '');
     setTipo((e?.tipo as TipoEvento) ?? 'impegno');
     setLuogoId(e?.luogo_id ?? null);
+    setElementoId(e?.elemento_id ?? null);
     setTuttoIlGiorno(e?.tutto_il_giorno ?? false);
     setQuandoNuovo(base);
     setRitorno(dopo);
@@ -315,6 +346,7 @@ export default function Calendario() {
       tipo,
       nota,
       luogoId,
+      elementoId,
     };
 
     setAttesa(true);
@@ -329,14 +361,16 @@ export default function Calendario() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1">
+      <Fondo />
+      <SafeAreaView className="flex-1" edges={['top']}>
       <View className="flex-row items-center justify-end px-6 pt-2">
         <Pressable
           onPress={() => router.push('/importa')}
           hitSlop={8}
           className="flex-row items-center gap-2"
         >
-          <CalendarPlus color="#8a7563" size={20} />
+          <CalendarPlus color={tema.c.tenue} size={20} />
           <Text className="text-sm text-muted-foreground">{t.importa.apri}</Text>
         </Pressable>
       </View>
@@ -381,7 +415,7 @@ export default function Calendario() {
         ) : (
           <View className="flex-row items-center justify-between px-6 py-2">
             <Pressable onPress={() => vai(-1)} hitSlop={12}>
-              <ChevronLeft color="#8a7563" size={26} />
+              <ChevronLeft color={tema.c.tenue} size={26} />
             </Pressable>
             <Pressable onPress={() => setGiorno(oggi)}>
               <Text className="font-serif-bold text-2xl capitalize text-foreground">
@@ -389,26 +423,36 @@ export default function Calendario() {
               </Text>
             </Pressable>
             <Pressable onPress={() => vai(1)} hitSlop={12}>
-              <ChevronRight color="#8a7563" size={26} />
+              <ChevronRight color={tema.c.tenue} size={26} />
             </Pressable>
           </View>
         )}
 
         {vista === 'giorni' && (
           /* Striscia continua: si scorre di quanto si vuole, non di sette in
-             sette. La settimana e' un ritaglio comodo, non una gabbia.
+             sette — le frecce saltano la settimana, il dito va dove gli pare.
              Qui nessun giorno e' "fuori": sbiadire gli altri mesi ha senso in
              una griglia mensile, in una striscia che li attraversa tutti
              renderebbe illeggibile meta' dei numeri. */
-          <ScrollView
+          <FlatList
             ref={striscia}
+            data={settimana}
             horizontal
             showsHorizontalScrollIndicator={false}
+            keyExtractor={(d) => d.toISOString()}
+            getItemLayout={(_, i) => ({
+              length: LARGHEZZA_CELLA,
+              offset: i * LARGHEZZA_CELLA,
+              index: i,
+            })}
+            initialScrollIndex={Math.max(0, indiceGiorno - 3)}
+            initialNumToRender={9}
+            windowSize={5}
             snapToInterval={LARGHEZZA_CELLA}
-            decelerationRate="fast"
-          >
-            {settimana.map((d) => (
-              <View key={d.toISOString()} style={{ width: LARGHEZZA_CELLA }}>
+            decelerationRate="normal"
+            onScrollToIndexFailed={() => {}}
+            renderItem={({ item: d }) => (
+              <View style={{ width: LARGHEZZA_CELLA }}>
                 <Text className="text-center text-xs uppercase text-muted-foreground">
                   {d.getDate() === 1
                     ? d.toLocaleDateString(lingua, { month: 'short' })
@@ -427,8 +471,8 @@ export default function Calendario() {
                   onPress={() => setGiorno(d)}
                 />
               </View>
-            ))}
-          </ScrollView>
+            )}
+          />
         )}
 
         {vista === 'anno' && (
@@ -520,7 +564,7 @@ export default function Calendario() {
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#bf5333" />
+          <ActivityIndicator color={tema.c.accento} />
         </View>
       ) : (
         <ScrollView contentContainerClassName="gap-3 px-6 pb-32">
@@ -581,12 +625,13 @@ export default function Calendario() {
         </ScrollView>
       )}
 
-      <Pressable
-        onPress={() => apriForm()}
-        className="absolute bottom-24 right-6 h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg"
-      >
-        <Plus color="#fdfaf5" size={28} />
-      </Pressable>
+      {!tastieraAperta && (
+        <View style={{ position: 'absolute', right: 20, bottom: SPAZIO_BARRA - 8 }}>
+          <TondoVetro lato={58} onPress={() => apriForm()}>
+            <Plus color={tema.c.accento} size={26} />
+          </TondoVetro>
+        </View>
+      )}
 
       {/* Il giorno aperto: tutto quello che succede, con spazio per leggerlo. */}
       <Modal
@@ -595,8 +640,8 @@ export default function Calendario() {
         transparent
         onRequestClose={() => setDettaglio(null)}
       >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="max-h-[80%] rounded-t-3xl bg-background">
+        <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}>
+          <View className="max-h-[80%] rounded-t-3xl bg-card">
             <ScrollView contentContainerClassName="gap-3 p-6">
               <Text className="font-serif-bold text-2xl capitalize text-foreground">
                 {dettaglio?.toLocaleDateString(lingua, {
@@ -652,13 +697,15 @@ export default function Calendario() {
         {/* La tastiera copriva il form: il foglio sale con lei, e il contenuto
             scorre, cosi' la nota resta visibile mentre la si scrive. */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          className="flex-1 justify-end bg-black/40"
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 justify-end"
+          style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
         >
-          <View className="max-h-[88%] rounded-t-3xl bg-background">
+          <View className="max-h-[88%] rounded-t-3xl bg-card">
             <ScrollView
               contentContainerClassName="gap-4 p-6"
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
               showsVerticalScrollIndicator={false}
             >
               <Text className="font-serif-bold text-2xl text-foreground">{t.calendario.nuovo}</Text>
@@ -742,12 +789,37 @@ export default function Calendario() {
                 </View>
               )}
 
-              {/* Dove: si sceglie fra i posti gia' segnati sulla mappa. Non si
-                  creano posti da qui — un luogo nasce dove lo si tocca, non da
-                  un campo di testo che non sa dov'e'. */}
-              {luoghi.length > 0 && (
-                <View className="gap-2">
-                  <Text className="text-sm text-muted-foreground">{t.evento.dove}</Text>
+              {/* Dove: si sceglie fra i posti gia' segnati **oppure si cerca**.
+               *
+               * ⚠️ Questo **cambia** la regola scritta in D-34 ("non si creano
+               * posti da qui: un luogo nasce dove lo si tocca, non da un campo
+               * di testo che non sa dov'e'"). La ragione di quella regola era
+               * esattamente che il campo di testo non aveva coordinate; con la
+               * ricerca (2026-08-13) le ha, perche' arrivano dal risultato
+               * scelto. La regola cade insieme al motivo che la reggeva — il
+               * tocco lungo sulla mappa resta, e resta il modo migliore per i
+               * posti che un indirizzo non ce l'hanno. */}
+              <View className="gap-2">
+                <Text className="text-sm text-muted-foreground">{t.evento.dove}</Text>
+                <CercaLuogo
+                  onScegli={async (trovato) => {
+                    const err = await aggiungiLuogo(
+                      { lat: trovato.lat, lng: trovato.lng, nome: trovato.nome, visitato: false },
+                      ricaricaCoppia
+                    );
+                    if (err) return setErroreForm(err);
+                    // Il posto appena creato non e' ancora nell'elenco locale:
+                    // lo si ritrova al giro seguente, e intanto lo si segna
+                    // come scelto per nome — l'utente ha appena detto che e' li'.
+                    setLuogoCercato(trovato.nome);
+                  }}
+                />
+                {!!luogoCercato && (
+                  <Text className="text-xs text-primary">
+                    {t.calendario.postoAggiunto(luogoCercato)}
+                  </Text>
+                )}
+                {luoghi.length > 0 && (
                   <View className="flex-row flex-wrap gap-2">
                     <Pressable
                       onPress={() => setLuogoId(null)}
@@ -785,6 +857,54 @@ export default function Calendario() {
                       </Pressable>
                     ))}
                   </View>
+                )}
+              </View>
+
+              {/* Il ristorante della serata (0012): si sceglie fra quelli dei
+                  preferiti. Toccarlo dalla mappa o dai preferiti riportera'
+                  qui — l'evento resta il centro (D-33). */}
+              {ristoranti.length > 0 && (
+                <View className="gap-2">
+                  <Text className="text-sm text-muted-foreground">{t.calendario.ristorante}</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    <Pressable
+                      onPress={() => setElementoId(null)}
+                      className={cn(
+                        'rounded-full px-3 py-2',
+                        elementoId === null ? 'bg-primary' : 'bg-card'
+                      )}
+                    >
+                      <Text
+                        className={cn(
+                          'text-xs',
+                          elementoId === null ? 'text-primary-foreground' : 'text-muted-foreground'
+                        )}
+                      >
+                        {t.calendario.nessunRistorante}
+                      </Text>
+                    </Pressable>
+                    {ristoranti.map((r) => (
+                      <Pressable
+                        key={r.id}
+                        onPress={() => setElementoId(r.id)}
+                        className={cn(
+                          'rounded-full px-3 py-2',
+                          elementoId === r.id ? 'bg-primary' : 'bg-card'
+                        )}
+                      >
+                        <Text
+                          className={cn(
+                            'text-xs',
+                            elementoId === r.id
+                              ? 'text-primary-foreground'
+                              : 'text-muted-foreground'
+                          )}
+                        >
+                          {r.titolo}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
               )}
 
@@ -792,17 +912,26 @@ export default function Calendario() {
 
               {erroreForm && <Text className="text-sm text-destructive">{erroreForm}</Text>}
 
-              <Button size="lg" disabled={attesa || titolo.trim().length === 0} onPress={salva}>
+              <BottoneVetro
+                variante="accento"
+                altezza={58}
+                disabled={attesa || titolo.trim().length === 0}
+                onPress={salva}
+              >
                 <Text>{attesa ? t.onboarding.attesa : t.calendario.salva}</Text>
-              </Button>
-              <Button variant="ghost" onPress={() => setAperto(false)}>
+              </BottoneVetro>
+              <BottoneVetro altezza={48} onPress={() => setAperto(false)}>
                 <Text>{t.calendario.annulla}</Text>
-              </Button>
+              </BottoneVetro>
+              {/* Un po' d'aria in fondo: senza, l'ultimo bottone resta incollato
+                  al bordo del foglio quando la tastiera e' aperta. */}
+              <View style={{ height: 8 }} />
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 

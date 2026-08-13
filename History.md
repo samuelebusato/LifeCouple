@@ -82,6 +82,30 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-36 — Il ristorante entra nel modello: sulla mappa, e dentro l'evento
+**Chiesto dall'utente il 2026-08-13 (sera).** Migrazione `0012`.
+
+**I due legami**: un ristorante può avere un **posto** (`elemento_lista.luogo_id` — è ciò che lo disegna sulla mappa, in ambra) e un evento può avere un **ristorante** (`evento.elemento_id` — la cena da qualche parte). Toccare il ristorante — dalla mappa o dai preferiti — porta **all'evento**: è D-33 esteso, l'evento resta il centro e il ristorante è la quarta strada per arrivarci.
+
+**Il posto si aggancia dalla scheda del preferito** con la stessa ricerca della mappa, e **la ricerca supera una regola di D-34** ("un luogo nasce dove lo si tocca, non da un campo di testo che non sa dov'è"): la ragione di quella regola era che il campo di testo non aveva coordinate — il risultato della ricerca le ha, quindi la regola cade insieme al motivo che la reggeva. Il tocco lungo resta per i posti senza indirizzo.
+
+⚠️ **Vincolo scoperto rileggendo le policy**: `evento`, `elemento_lista` e `foto` hanno update **solo-autore** (0001). Conseguenze rese esplicite: l'ingranaggio della pagina evento mostra le azioni di modifica solo all'autore; "sposta in cartella" solo sulle proprie foto; e gli update ora chiedono il **conteggio** delle righe toccate — RLS non vieta, *filtra*, e zero righe in silenzio è il fallimento peggiore.
+
+### D-35 — "Quarzo rosa" seconda taratura, e la pagina evento con l'ingranaggio
+**Feedback dall'iPhone reale, 2026-08-13 (sera).** Il primo giro del redesign, giudicato sul telefono: palette percepita **viola** (tonalità 336-344, tema scuro prugna), toolbar con le voci ammassate su un lato, "nessun effetto liquid glass", ricerca luoghi muta, giorni nascosti nel calendario.
+
+- **Palette**: tutte le tinte salgono a 347-351 (rosa caldo), neutri desaturati, tema scuro bruno-rosa. La lezione: **una tonalità si giudica sullo schermo OLED del telefono, non sul monitor** — a saturazione alta e luce bassa il magenta vira al viola.
+- **Liquid glass vero**: `expo-glass-effect` (GlassView, iOS 26) quando c'è, tre strati come ripiego — col **velo dimezzato**: la prima taratura (0.74 di opacità) copriva la sfocatura, e un vetro che non lascia intuire cosa ha sotto è plastica.
+- **Pagina evento** rifatta sullo stile chiesto: hero con la prima foto, righe di dettaglio con icone, foto che **si allargano al tocco**, e l'**ingranaggio** in basso a destra con le cinque azioni (aggiungi foto / descrizione / elimina / cambia data / cambia luogo). Ogni azione è un foglio che tocca **un campo**: il form completo resta nel calendario, così i due non divergono — la ragione di "la modifica vive in un posto solo" sopravvive alla nuova forma.
+- **Toolbar**: la riga dentro la pillola prendeva la larghezza del contenuto, non del contenitore — `width: '100%'` esplicito e `flexBasis: 0` per voce.
+- ⚠️ **Ricaduta dell'inciampo di `mappa-vera`, per intero**: l'import "difensivo" di `expo-glass-effect` dentro un try/catch **ha rotto il bundle web** — Metro risolve i require staticamente, il try/catch protegge solo il runtime. Stessa cura: file per piattaforma (`vetro-nativo.native.ts` / `vetro-nativo.ts`). La lezione era già scritta nel commento di mappa-vera; è servito ricascarci per impararla.
+
+### B-06 — La striscia dei giorni restava ferma a 60 giorni fa (2026-08-13, CHIUSO)
+**Sintomo riferito**: "la sezione giorni nasconde i giorni". **Causa**: lo `scrollTo` di posizionamento partiva in un `setTimeout(0)`, cioè **prima** che lo ScrollView orizzontale fosse misurato sul telefono: non faceva nulla, e la striscia restava all'inizio — due mesi prima di oggi. Sul web la corsa non si vedeva quasi mai: è un difetto che esiste solo dove il layout è asincrono. **Correzione**: FlatList con `getItemLayout` + `initialScrollIndex` — le posizioni sono note *senza* misurare, lo scroll è deterministico al primo fotogramma. Di passaggio la striscia copre ora ±365 giorni (la FlatList monta solo ciò che si vede) e la ricerca Photon ha perso `lang=it`, che il servizio **rifiuta con un 400** ("Supported are: default, de, en, fr") — ogni digitazione falliva, e sembrava che la ricerca non esistesse.
+
+### B-05 — Dopo la rottura, le copie puntavano a righe invisibili (2026-08-13, CHIUSO con `0012`)
+**Latente da `0008`, trovato progettando `0012`.** Quando `sciogli_coppia` copiava un evento per il membro m, `luogo_id` restava quello **originale**: se il posto era dell'altro, m ne riceveva sì una copia, ma il suo evento continuava a puntare all'originale — che dopo la rottura non può più leggere. Risultato: eventi con il posto "sparito", visibile solo alla prima rottura vera. **Nessun test lo copriva**: i test di scioglimento verificavano la visibilità delle righe, non la **raggiungibilità dei riferimenti** fra loro. **Correzione**: tabelle di mappatura vecchio→nuovo per membro, e ogni copia che punta a una riga copiata viene ricucita sulla copia; l'ordine dei blocchi ora conta (luoghi → elementi → eventi). ⚠️ **Da estendere i test avversariali** su questo caso — dichiarato, non ancora fatto.
+
 ### D-34 — Mappa, luoghi e foto: tutto ciò che serviva a chiudere il modello di D-33
 **Implementati il 2026-08-13 (sera)** su richiesta dell'utente. Migrazioni `0009` e `0010`.
 
@@ -618,7 +642,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-13.**
+**Aggiornato al 2026-08-13 (sera, dopo il redesign).**
 
 **Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che parte. Zero risorse cloud, zero costi sostenuti.
 
@@ -670,11 +694,15 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ✅ **Tipi di evento, vacanze e navigazione col dito** (D-30) e **importazione selettiva dal calendario del telefono** (D-31), il 2026-08-13 — migrazione `0006`, `lib/importa.ts`, `app/importa.tsx`, `components/riga-evento.tsx`. La coppia reale (`samuele.busato03@` + `samuelebusato96@`) è formata e ha `insieme_dal` al **2026-01-01**.
 
+✅ **Redesign "Quarzo rosa" col vetro liquido** (D-35, 2026-08-13 sera): palette rosa-bianco su token (prima taratura giudicata viola sull'iPhone e corretta), vetro nativo iOS 26 con ripiego a tre strati, toolbar volante che sparisce a tastiera aperta, galleria stile Foto con **cartelle** (`0011`), pagina evento con hero, foto che si allargano e ingranaggio a cinque azioni, ricerca luoghi **Photon/OSM** (senza posizione, per scelta), striscia giorni a scorrimento libero (B-06). Ristoranti sulla mappa e dentro gli eventi (D-36, `0012`), che corregge anche B-05.
+
 **Cosa manca** (in ordine):
-1. **Verificare sull'iPhone reale**: la tastiera sul nuovo appuntamento, lo **scorrimento col dito** e la **striscia della settimana**, i selettori data nativi e soprattutto l'**importazione**, che sul web non esiste per definizione (`expo-calendar` è un modulo nativo — incluso in Expo Go, quindi nessuna development build). È anche l'occasione per chiudere B-02 (l'errore darkMode è web-only: va confermato che su iOS non compaia).
-2. **Decidere la forma del link d'invito** fra le tre strade qui sopra, e implementarla. Se si sceglie (b) o (c), serve la route `app/invito/[token].tsx`.
-3. **Scioglimento** (D-04/D-16/D-21): `sciogli_coppia`. ⚠️ **Decisione implementativa aperta**: D-21 vuole i contenuti **condivisi** (liste, luoghi, eventi) *duplicati una copia a ciascuno*, i **personali** (foto, recensioni) solo all'autore, la creatura cancellata. La duplicazione dei condivisi non è banale e va ragionata. Sblocca l'ultimo test non coperto.
-4. Le funzioni nell'ordine di D-11.
+1. **Applicare `0012`** sul progetto Supabase (l'app ora legge `evento.elemento_id` e `elemento_lista.luogo_id`: senza, preferiti/mappa/evento falliscono) e **rigenerare i tipi** (`lib/database.types.ts` ha tre blocchi scritti a mano: 0011 e 0012).
+2. **Rieseguire e estendere i test avversariali**: `npm run test:rls` dopo la 0012, più il caso di B-05 (raggiungibilità dei riferimenti dopo la rottura), oggi dichiarato e non coperto.
+3. **Riprovare sull'iPhone il giro completo**: palette, toolbar, vetro (su iOS 26 è quello di sistema), tastiera, striscia giorni, ricerca, importazione, foto e cartelle. B-02 da confermare chiuso su iOS.
+4. **Decidere la forma del link d'invito** fra le tre strade qui sopra. Se (b) o (c), serve la route `app/invito/[token].tsx`.
+5. **Schermata di scioglimento e cancellazione account** (Apple): la funzione database c'è (`0004`→`0012`), il bottone no.
+6. Le funzioni nell'ordine di D-11 (invio sigillato, giochi, creatura).
 
 ⚠️ **Prima di utenti veri** (invariato): riaccendere "Confirm email", strategia d'accesso definitiva, eliminare gli utenti di test, confermare la regione UE.
 Gli utenti di prova da eliminare dal dashboard sono ora: `rls-*@example.com`, più `diagnosi-invito@`, `solo-test@`, `duo-x@`, `duo-y@` (`@example.com`), creati il 2026-08-12 per la diagnosi del link e la verifica di D-25, e `diagnosi-solo-2@` … `diagnosi-solo-5@` e `prova-coppia-1@` / `prova-coppia-2@` (`@example.com`), creati il 2026-08-13 per riprodurre B-03 e provare D-26 e D-29. Diversi di questi hanno anche una **coppia** che resta nel database — `prova-coppia-*` ne ha una completa, con data di inizio e relativo evento.

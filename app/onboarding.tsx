@@ -6,6 +6,8 @@ import { Emblema } from '@/components/emblema';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Fondo } from '@/components/schermata';
+import { useTema } from '@/lib/tema';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
@@ -24,6 +26,7 @@ export default function Onboarding() {
   // rimandato la scelta e poi riceve un invito non deve rifare il giro.
   const { fase: faseIniziale } = useLocalSearchParams<{ fase?: string }>();
   const [fase, setFase] = React.useState<Fase>(faseIniziale === 'unisci' ? 'unisci' : 'scelta');
+  const tema = useTema();
   const [errore, setErrore] = React.useState<string | null>(null);
   const [attesa, setAttesa] = React.useState(false);
   const [tokenIncollato, setTokenIncollato] = React.useState('');
@@ -86,7 +89,9 @@ export default function Onboarding() {
   }, [fase, ricarica]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1">
+      <Fondo />
+      <SafeAreaView className="flex-1">
       <View className="flex-1 justify-center px-8">
         {fase === 'scelta' && (
           <View className="items-center gap-8">
@@ -144,7 +149,7 @@ export default function Onboarding() {
               </View>
             ) : (
               <View className="flex-row items-center gap-2">
-                <ActivityIndicator color="#bf5333" />
+                <ActivityIndicator color={tema.c.accento} />
                 <Text className="text-sm text-muted-foreground">
                   {t.onboarding.inAttesaApertura}
                 </Text>
@@ -189,7 +194,7 @@ export default function Onboarding() {
 
         {fase === 'attesa-conferma' && (
           <View className="items-center gap-4">
-            <ActivityIndicator color="#bf5333" />
+            <ActivityIndicator color={tema.c.accento} />
             <Text className="font-serif text-xl text-foreground">
               {t.onboarding.titoloAttesaConferma}
             </Text>
@@ -199,6 +204,7 @@ export default function Onboarding() {
           </View>
         )}
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }

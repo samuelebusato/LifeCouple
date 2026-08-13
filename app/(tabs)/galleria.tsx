@@ -1,55 +1,125 @@
 import * as React from 'react';
-import { View, ScrollView, Image, ActivityIndicator, Pressable, Platform } from 'react-native';
+import {
+  View,
+  Image,
+  ActivityIndicator,
+  Pressable,
+  Platform,
+  Modal,
+  useWindowDimensions,
+  ScrollView,
+} from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ImagePlus, Trash2 } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  FolderPlus,
+  ImagePlus,
+  Plus,
+  Trash2,
+  X,
+  FolderInput,
+} from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Vetro, CartaVetro, TondoVetro, BottoneVetro } from '@/components/ui/vetro';
+import { Fondo, ScorrevoleSchermata } from '@/components/schermata';
+import { SPAZIO_BARRA } from '@/components/barra-volante';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
 import { supabase } from '@/lib/supabase';
 import { caricaFoto, cancellaFoto, indirizziFirmati, scegliFoto } from '@/lib/foto';
+import {
+  cancellaCartella,
+  creaCartella,
+  elencaCartelle,
+  spostaFoto,
+  type Cartella,
+} from '@/lib/cartelle';
+import { useTema } from '@/lib/tema';
 import { t } from '@/lib/i18n';
 
-type Scatto = { id: string; chiave_storage: string; autore_id: string; creato_il: string };
+type Scatto = {
+  id: string;
+  chiave_storage: string;
+  autore_id: string;
+  creato_il: string;
+  cartella_id: string | null;
+};
 
 /**
- * La galleria condivisa (D-06/D-21/D-22).
+ * La galleria condivisa (D-06/D-21/D-22), rifatta il 2026-08-13 nello stile
+ * dell'app Foto: griglia fitta a foto grandi, con **zoom** e una sezione
+ * **Cartelle** (migrazione 0011).
  *
- * Si vede tutto in due, si cancella solo il proprio. Le immagini si aprono con
- * indirizzi **firmati e temporanei**: il bucket e' privato, e nessuna foto ha
- * un indirizzo pubblico da poter girare per sbaglio.
+ * Le scelte che contano:
+ *
+ * * **Griglia senza margini fra le foto.** Le miniature arrotondate e
+ *   distanziate di prima erano sei francobolli in fila; le foto si guardano, e
+ *   guardare vuol dire togliere di mezzo tutto il resto. Il vetro qui non entra:
+ *   sopra le immagini sporcherebbe. Il vetro sta sui **comandi** che galleggiano.
+ * * **Lo zoom e' l'unico modo onesto di dire "piu' grandi"**: quanto grande
+ *   dipende da cosa si sta guardando, non da una scelta nostra fatta una volta.
+ * * Si vede tutto in due, si cancella solo il proprio. Le immagini si aprono con
+ *   indirizzi **firmati e temporanei**: il bucket e' privato, e nessuna foto ha
+ *   un indirizzo pubblico da poter girare per sbaglio.
  */
 export default function Galleria() {
   const { session } = useAuth();
   const { coppiaId, ricarica: ricaricaCoppia } = useCoppia();
+  const { c } = useTema();
+  const { width } = useWindowDimensions();
+
+  const [vista, setVista] = React.useState<'foto' | 'cartelle'>('foto');
+  const [colonne, setColonne] = React.useState(3);
   const [scatti, setScatti] = React.useState<Scatto[]>([]);
+  const [cartelle, setCartelle] = React.useState<Cartella[]>([]);
+  const [dentro, setDentro] = React.useState<Cartella | null>(null);
   const [url, setUrl] = React.useState<Record<string, string>>({});
   const [loading, setLoading] = React.useState(true);
   const [attesa, setAttesa] = React.useState(false);
   const [errore, setErrore] = React.useState<string | null>(null);
+  const [creando, setCreando] = React.useState(false);
+  const [nome, setNome] = React.useState('');
+  const [aperta, setAperta] = React.useState<Scatto | null>(null);
+  const [spostando, setSpostando] = React.useState<Scatto | null>(null);
 
   const ricarica = React.useCallback(async () => {
     if (!coppiaId) {
       setScatti([]);
+      setCartelle([]);
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase
-      .from('foto')
-      .select('id, chiave_storage, autore_id, creato_il')
-      .eq('coppia_id', coppiaId)
-      .order('creato_il', { ascending: false });
-    setErrore(error?.message ?? null);
-    const righe = (data ?? []) as Scatto[];
+    const [foto, cart] = await Promise.all([
+      supabase
+        .from('foto')
+        .select('id, chiave_storage, autore_id, creato_il, cartella_id')
+        .eq('coppia_id', coppiaId)
+        .order('creato_il', { ascending: false }),
+      elencaCartelle(coppiaId),
+    ]);
+    setErrore(foto.error?.message ?? cart.errore);
+    const righe = (foto.data ?? []) as Scatto[];
     setScatti(righe);
+    setCartelle(cart.cartelle);
+    // Un solo giro di firme per tutte le foto: su una schermata che si scorre,
+    // una richiesta per riga sono N attese.
     setUrl(await indirizziFirmati(righe.map((r) => r.chiave_storage)));
     setLoading(false);
   }, [coppiaId]);
 
-  React.useEffect(() => {
-    ricarica();
-  }, [ricarica]);
+  // Le schede restano montate: senza questo, tornando sulla galleria si
+  // vedrebbero le foto di quando l'app e' stata avviata (la lezione di D-32).
+  useFocusEffect(
+    React.useCallback(() => {
+      ricarica();
+    }, [ricarica])
+  );
+
+  const visibili = dentro ? scatti.filter((s) => s.cartella_id === dentro.id) : scatti;
+  const lato = Math.floor((width - (colonne - 1) * 2) / colonne);
 
   async function aggiungi() {
     setErrore(null);
@@ -63,92 +133,418 @@ export default function Galleria() {
       setAttesa(false);
       return setErrore(esito.errore);
     }
-    const r = await caricaFoto(esito.coppiaId, scelta.immagini);
+    const r = await caricaFoto(esito.coppiaId, scelta.immagini, { cartellaId: dentro?.id ?? null });
     setAttesa(false);
     if (r.errore) setErrore(r.errore);
     await ricarica();
   }
 
+  async function nuovaCartella() {
+    const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
+    if (!esito.coppiaId) return setErrore(esito.errore);
+    const r = await creaCartella(esito.coppiaId, nome);
+    if (r.errore) setErrore(r.errore);
+    setNome('');
+    setCreando(false);
+    await ricarica();
+  }
+
+  const copertina = (cartellaId: string) => {
+    const prima = scatti.find((s) => s.cartella_id === cartellaId);
+    return prima ? url[prima.chiave_storage] : undefined;
+  };
+  const quante = (cartellaId: string) =>
+    scatti.filter((s) => s.cartella_id === cartellaId).length;
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-row items-center justify-between px-6 pb-2 pt-4">
-        <Text className="font-serif-bold text-2xl text-foreground">{t.tab.galleria}</Text>
-        <Text className="text-xs text-muted-foreground">{t.galleria.tetto}</Text>
-      </View>
-
-      {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#bf5333" />
-        </View>
-      ) : (
-        <ScrollView contentContainerClassName="gap-2 px-4 pb-32">
-          {errore && <Text className="px-2 text-sm text-destructive">{errore}</Text>}
-
-          {scatti.length === 0 && (
-            <View className="items-center gap-2 py-16">
-              <Text className="font-serif text-xl text-foreground">{t.galleria.vuotoTitolo}</Text>
-              <Text className="max-w-xs text-center text-sm text-muted-foreground">
-                {t.galleria.vuotoTesto}
-              </Text>
-            </View>
+    <View className="flex-1">
+      <Fondo />
+      <SafeAreaView className="flex-1" edges={['top']}>
+        {/* --- intestazione ------------------------------------------------ */}
+        <View className="flex-row items-center gap-3 px-5 pb-3 pt-1">
+          {dentro && (
+            <TondoVetro lato={38} tinto={false} onPress={() => setDentro(null)}>
+              <ChevronLeft color={c.testo} size={20} />
+            </TondoVetro>
           )}
+          <View className="flex-1">
+            <Text className="font-serif-bold text-3xl text-foreground" numberOfLines={1}>
+              {dentro ? dentro.nome : t.tab.galleria}
+            </Text>
+            <Text className="pt-0.5 text-xs text-muted-foreground">
+              {dentro
+                ? t.galleria.nFoto(visibili.length)
+                : `${t.galleria.nFoto(scatti.length)} · ${t.galleria.tetto}`}
+            </Text>
+          </View>
+        </View>
 
-          <View className="flex-row flex-wrap">
-            {scatti.map((s) => (
-              <View key={s.id} className="w-1/3 p-1">
-                <View className="aspect-square overflow-hidden rounded-2xl bg-card">
-                  {url[s.chiave_storage] ? (
-                    <Image
-                      source={{ uri: url[s.chiave_storage] }}
-                      style={{ width: '100%', height: '100%' }}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View className="flex-1 items-center justify-center">
-                      <ActivityIndicator color="#bf5333" />
-                    </View>
-                  )}
-                </View>
-                {/* Ciascuno cancella le proprie: la policy lo impone sia sulla
-                    riga sia sul file (0009), qui si evita di offrirlo. */}
-                {s.autore_id === session?.user.id && (
+        {/* --- Foto / Cartelle, e lo zoom ---------------------------------- */}
+        {!dentro && (
+          <View className="flex-row items-center justify-between gap-3 px-5 pb-3">
+            <Vetro raggio={18} ombra={false}>
+              <View className="flex-row p-1">
+                {(['foto', 'cartelle'] as const).map((v) => (
                   <Pressable
-                    className="absolute right-2 top-2 rounded-full bg-background/80 p-1.5"
+                    key={v}
+                    onPress={() => setVista(v)}
+                    className="rounded-2xl px-4 py-1.5"
+                    style={{
+                      backgroundColor:
+                        vista === v ? c.aloneForte : 'transparent',
+                      borderRadius: 14,
+                    }}
+                  >
+                    <Text
+                      className="text-sm"
+                      style={{
+                        color: vista === v ? c.accento : c.tenue,
+                        fontWeight: vista === v ? '700' : '500',
+                      }}
+                    >
+                      {v === 'foto' ? t.galleria.foto : t.galleria.cartelle}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Vetro>
+
+            {vista === 'foto' && (
+              <Vetro raggio={18} ombra={false}>
+                <View className="flex-row p-1">
+                  {[2, 3, 5].map((n) => (
+                    <Pressable
+                      key={n}
+                      onPress={() => setColonne(n)}
+                      className="px-3 py-1.5"
+                      style={{
+                        backgroundColor: colonne === n ? c.aloneForte : 'transparent',
+                        borderRadius: 14,
+                      }}
+                    >
+                      {/* Il numero di quadretti dice la densita' meglio di una cifra. */}
+                      <View style={{ flexDirection: 'row', gap: 2 }}>
+                        {Array.from({ length: n === 5 ? 3 : n }).map((_, i) => (
+                          <View
+                            key={i}
+                            style={{
+                              width: n === 2 ? 7 : n === 3 ? 5 : 3,
+                              height: n === 2 ? 7 : n === 3 ? 5 : 3,
+                              borderRadius: 1,
+                              backgroundColor: colonne === n ? c.accento : c.tenue,
+                            }}
+                          />
+                        ))}
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              </Vetro>
+            )}
+          </View>
+        )}
+
+        {!!errore && <Text className="px-5 pb-2 text-sm text-destructive">{errore}</Text>}
+
+        {loading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color={c.accento} />
+          </View>
+        ) : vista === 'cartelle' && !dentro ? (
+          /* --- le cartelle ----------------------------------------------- */
+          <ScorrevoleSchermata contentContainerStyle={{ paddingHorizontal: 14, gap: 12 }}>
+            <Pressable onPress={() => setCreando(true)}>
+              <CartaVetro>
+                <View className="flex-row items-center gap-3 p-4">
+                  <View
+                    className="h-11 w-11 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: c.alone }}
+                  >
+                    <FolderPlus color={c.accento} size={20} />
+                  </View>
+                  <Text className="text-base font-semibold text-foreground">
+                    {t.galleria.nuovaCartella}
+                  </Text>
+                </View>
+              </CartaVetro>
+            </Pressable>
+
+            {cartelle.length === 0 && (
+              <View className="items-center gap-2 px-6 py-10">
+                <Text className="font-serif text-xl text-foreground">
+                  {t.galleria.nessunaCartella}
+                </Text>
+                <Text className="max-w-xs text-center text-sm text-muted-foreground">
+                  {t.galleria.nessunaCartellaTesto}
+                </Text>
+              </View>
+            )}
+
+            <View className="flex-row flex-wrap">
+              {cartelle.map((cart) => {
+                const cop = copertina(cart.id);
+                return (
+                  <View key={cart.id} className="w-1/2 p-1.5">
+                    <Pressable
+                      onPress={() => {
+                        setDentro(cart);
+                        setVista('foto');
+                      }}
+                    >
+                      <View
+                        className="aspect-square overflow-hidden rounded-3xl"
+                        style={{ backgroundColor: c.alone }}
+                      >
+                        {cop ? (
+                          <Image
+                            source={{ uri: cop }}
+                            style={{ width: '100%', height: '100%' }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View className="flex-1 items-center justify-center">
+                            <Text className="text-xs text-muted-foreground">
+                              {t.galleria.cartellaVuota}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <View className="flex-row items-center justify-between px-1 pt-2">
+                        <View className="flex-1">
+                          <Text className="text-sm font-semibold text-foreground" numberOfLines={1}>
+                            {cart.nome}
+                          </Text>
+                          <Text className="text-xs text-muted-foreground">
+                            {t.galleria.nFoto(quante(cart.id))}
+                          </Text>
+                        </View>
+                        {cart.autore_id === session?.user.id && (
+                          <Pressable
+                            hitSlop={10}
+                            onPress={async () => {
+                              await cancellaCartella(cart.id);
+                              await ricarica();
+                            }}
+                          >
+                            <Trash2 color={c.pericolo} size={15} />
+                          </Pressable>
+                        )}
+                      </View>
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+
+            {cartelle.length > 0 && (
+              <Text className="px-3 pt-1 text-xs text-muted-foreground">
+                {t.galleria.tolteDaCartella}
+              </Text>
+            )}
+          </ScorrevoleSchermata>
+        ) : (
+          /* --- la griglia delle foto -------------------------------------- */
+          <ScorrevoleSchermata contentContainerStyle={{ gap: 2 }}>
+            {visibili.length === 0 && (
+              <View className="items-center gap-2 px-6 py-16">
+                <Text className="font-serif text-xl text-foreground">
+                  {t.galleria.vuotoTitolo}
+                </Text>
+                <Text className="max-w-xs text-center text-sm text-muted-foreground">
+                  {t.galleria.vuotoTesto}
+                </Text>
+              </View>
+            )}
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
+              {visibili.map((s) => (
+                <Pressable key={s.id} onPress={() => setAperta(s)}>
+                  <View style={{ width: lato, height: lato, backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                    {url[s.chiave_storage] ? (
+                      <Image
+                        source={{ uri: url[s.chiave_storage] }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="flex-1 items-center justify-center">
+                        <ActivityIndicator color={c.accento} />
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </ScorrevoleSchermata>
+        )}
+
+        {/* --- aggiungi: vetro, sopra la barra volante ---------------------- */}
+        {Platform.OS !== 'web' && (
+          <View style={{ position: 'absolute', right: 20, bottom: SPAZIO_BARRA - 8 }}>
+            <TondoVetro lato={58} onPress={aggiungi} disabled={attesa}>
+              {attesa ? (
+                <ActivityIndicator color={c.accento} />
+              ) : vista === 'cartelle' && !dentro ? (
+                <Plus color={c.accento} size={26} />
+              ) : (
+                <ImagePlus color={c.accento} size={24} />
+              )}
+            </TondoVetro>
+          </View>
+        )}
+      </SafeAreaView>
+
+      {/* --- foglio: nuova cartella --------------------------------------- */}
+      <Modal visible={creando} transparent animationType="fade" onRequestClose={() => setCreando(false)}>
+        <Pressable
+          className="flex-1 justify-center px-6"
+          style={{ backgroundColor: 'rgba(20,8,14,0.35)' }}
+          onPress={() => setCreando(false)}
+        >
+          {/* Il tocco dentro al foglio non deve chiuderlo. */}
+          <Pressable onPress={() => {}}>
+            <CartaVetro>
+              <View className="gap-4 p-5">
+                <Text className="font-serif text-xl text-foreground">
+                  {t.galleria.nuovaCartella}
+                </Text>
+                <Input
+                  value={nome}
+                  onChangeText={setNome}
+                  placeholder={t.galleria.nomeCartella}
+                  autoFocus
+                  maxLength={60}
+                  returnKeyType="done"
+                  onSubmitEditing={nuovaCartella}
+                />
+                <View className="flex-row gap-3">
+                  <BottoneVetro
+                    style={{ flex: 1 }}
+                    altezza={48}
+                    onPress={() => {
+                      setNome('');
+                      setCreando(false);
+                    }}
+                  >
+                    <Text>{t.galleria.annulla}</Text>
+                  </BottoneVetro>
+                  <BottoneVetro
+                    style={{ flex: 1 }}
+                    altezza={48}
+                    variante="accento"
+                    disabled={!nome.trim()}
+                    onPress={nuovaCartella}
+                  >
+                    <Text>{t.galleria.crea}</Text>
+                  </BottoneVetro>
+                </View>
+              </View>
+            </CartaVetro>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* --- la foto a schermo pieno -------------------------------------- */}
+      <Modal visible={!!aperta} transparent animationType="fade" onRequestClose={() => setAperta(null)}>
+        <View className="flex-1" style={{ backgroundColor: 'rgba(12,6,9,0.94)' }}>
+          <SafeAreaView className="flex-1">
+            {aperta && url[aperta.chiave_storage] && (
+              <Image
+                source={{ uri: url[aperta.chiave_storage] }}
+                style={{ flex: 1, width: '100%' }}
+                resizeMode="contain"
+              />
+            )}
+            <View className="flex-row items-center justify-between px-5 pb-3">
+              <TondoVetro lato={48} tinto={false} onPress={() => setAperta(null)}>
+                <X color={c.testo} size={20} />
+              </TondoVetro>
+              <View className="flex-row gap-3">
+                {/* Spostare e' un update, e la policy e' solo-autore (0001):
+                    offrire il gesto sulle foto dell'altro produrrebbe solo un
+                    fallimento silenzioso. */}
+                {aperta?.autore_id === session?.user.id && (
+                  <TondoVetro
+                    lato={48}
+                    tinto={false}
+                    onPress={() => {
+                      setSpostando(aperta);
+                      setAperta(null);
+                    }}
+                  >
+                    <FolderInput color={c.testo} size={20} />
+                  </TondoVetro>
+                )}
+                {aperta?.autore_id === session?.user.id && (
+                  <TondoVetro
+                    lato={48}
+                    tinto={false}
                     onPress={async () => {
-                      await cancellaFoto(s.id, s.chiave_storage);
+                      const s = aperta;
+                      setAperta(null);
+                      if (s) await cancellaFoto(s.id, s.chiave_storage);
                       await ricarica();
                     }}
                   >
-                    <Trash2 color="#b3261e" size={14} />
-                  </Pressable>
+                    <Trash2 color={c.pericolo} size={20} />
+                  </TondoVetro>
                 )}
               </View>
-            ))}
-          </View>
-        </ScrollView>
-      )}
-
-      {Platform.OS !== 'web' && (
-        <Pressable
-          onPress={aggiungi}
-          disabled={attesa}
-          className="absolute bottom-24 right-6 h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg"
-        >
-          {attesa ? (
-            <ActivityIndicator color="#fdfaf5" />
-          ) : (
-            <ImagePlus color="#fdfaf5" size={26} />
-          )}
-        </Pressable>
-      )}
-
-      {Platform.OS === 'web' && (
-        <View className="px-6 pb-28">
-          <Button variant="outline" disabled>
-            <Text>{t.galleria.soloTelefono}</Text>
-          </Button>
+            </View>
+          </SafeAreaView>
         </View>
-      )}
-    </SafeAreaView>
+      </Modal>
+
+      {/* --- foglio: sposta in una cartella -------------------------------- */}
+      <Modal
+        visible={!!spostando}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSpostando(null)}
+      >
+        <Pressable
+          className="flex-1 justify-end"
+          style={{ backgroundColor: 'rgba(20,8,14,0.35)' }}
+          onPress={() => setSpostando(null)}
+        >
+          <Pressable onPress={() => {}}>
+            <CartaVetro raggio={30} style={{ margin: 10 }}>
+              <SafeAreaView edges={['bottom']}>
+                <View className="gap-2 p-5">
+                  <Text className="font-serif text-xl text-foreground">{t.galleria.spostaIn}</Text>
+                  <ScrollView style={{ maxHeight: 320 }}>
+                    <Pressable
+                      className="py-3"
+                      onPress={async () => {
+                        if (spostando) await spostaFoto(spostando.id, null);
+                        setSpostando(null);
+                        await ricarica();
+                      }}
+                    >
+                      <Text className="text-base text-muted-foreground">
+                        {t.galleria.senzaCartella}
+                      </Text>
+                    </Pressable>
+                    {cartelle.map((cart) => (
+                      <Pressable
+                        key={cart.id}
+                        className="py-3"
+                        onPress={async () => {
+                          if (spostando) await spostaFoto(spostando.id, cart.id);
+                          setSpostando(null);
+                          await ricarica();
+                        }}
+                      >
+                        <Text className="text-base text-foreground">{cart.nome}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+              </SafeAreaView>
+            </CartaVetro>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
   );
 }

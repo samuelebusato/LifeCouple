@@ -3,13 +3,16 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Emblema } from '@/components/emblema';
 import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
+import { BottoneVetro } from '@/components/ui/vetro';
+import { Fondo } from '@/components/schermata';
 import { t } from '@/lib/i18n';
 
 export default function Benvenuto() {
   const router = useRouter();
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1">
+      <Fondo />
+      <SafeAreaView className="flex-1">
       <View className="flex-1 items-center justify-center px-8">
         <Emblema size={104} />
         <Text className="mt-8 font-serif-bold text-5xl text-foreground">LifeCouple</Text>
@@ -19,11 +22,12 @@ export default function Benvenuto() {
       </View>
 
       <View className="gap-4 px-8 pb-4">
-        <Button size="lg" onPress={() => router.push('/accedi')}>
+        <BottoneVetro variante="accento" altezza={58} onPress={() => router.push('/accedi')}>
           <Text>{t.benvenuto.inizia}</Text>
-        </Button>
+        </BottoneVetro>
         <Text className="text-center text-sm text-muted-foreground">{t.benvenuto.nota}</Text>
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }

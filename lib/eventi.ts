@@ -21,6 +21,8 @@ export type Evento = {
   categoria: string | null;
   /** Dove e' successo: facoltativo, non tutto ha un posto da ricordare (0008). */
   luogo_id: string | null;
+  /** Il ristorante della serata (0012): un'altra strada verso l'evento, D-33. */
+  elemento_id: string | null;
   speciale: string | null;
   origine_esterna: string | null;
   creato_il: string;
@@ -80,6 +82,7 @@ export function useEventi(coppiaId: string | null) {
         tipo: TipoEvento;
         nota?: string;
         luogoId?: string | null;
+        elementoId?: string | null;
       },
       ricaricaCoppia: () => Promise<StatoCoppia>
     ): Promise<string | null> => {
@@ -95,6 +98,7 @@ export function useEventi(coppiaId: string | null) {
         tipo: dati.tipo,
         nota: dati.nota?.trim() || null,
         luogo_id: dati.luogoId ?? null,
+        elemento_id: dati.elementoId ?? null,
       });
       if (error) return error.message;
       await ricarica();
@@ -115,6 +119,7 @@ export function useEventi(coppiaId: string | null) {
         tipo: TipoEvento;
         nota?: string;
         luogoId?: string | null;
+        elementoId?: string | null;
       }
     ): Promise<string | null> => {
       const { error } = await supabase
@@ -127,6 +132,7 @@ export function useEventi(coppiaId: string | null) {
           tipo: dati.tipo,
           nota: dati.nota?.trim() || null,
           luogo_id: dati.luogoId ?? null,
+          elemento_id: dati.elementoId ?? null,
         })
         .eq('id', id);
       if (error) return error.message;
