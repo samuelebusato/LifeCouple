@@ -42,7 +42,26 @@
         }
       ],
       "expo-font",
-      "expo-localization"
+      "expo-localization",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "LifeCouple legge il tuo calendario solo quando scegli di importare qualcosa, e importa unicamente le voci che spunti tu."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "LifeCouple usa la posizione solo quando tocchi «segna dove sono»: non ti segue mai, e il tuo partner non può vedere dove sei adesso."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LifeCouple accede alle foto solo per quelle che scegli tu di aggiungere ai vostri ricordi."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

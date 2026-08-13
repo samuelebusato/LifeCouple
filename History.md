@@ -82,6 +82,146 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-34 — Mappa, luoghi e foto: tutto ciò che serviva a chiudere il modello di D-33
+**Implementati il 2026-08-13 (sera)** su richiesta dell'utente. Migrazioni `0009` e `0010`.
+
+**La mappa** (`react-native-maps`, Apple Maps su iOS, inclusa in Expo Go: nessuna development build). I posti si segnano in **due modi, entrambi espliciti** — tocco lungo sul punto, o «segna dove sono adesso». *Perché conta*: la posizione non viene letta né all'avvio né in background, e **nessuno dei due può sapere dove si trova l'altro adesso**. È D-05, e vale più di qualunque funzione che potrebbe abilitare. Toccando un posto si aprono i suoi eventi, e da lì si entra nella pagina dell'evento.
+
+**Il legame evento↔luogo** si sceglie nel foglio dell'evento, fra i posti già segnati. Non si creano luoghi da lì: *un posto nasce dove lo si tocca, non da un campo di testo che non sa dov'è*.
+
+**Le foto**: bucket **privato**, indirizzi **firmati e a scadenza** (un indirizzo che non scade è una foto pubblica con un nome difficile), compressione prima del caricamento — l'originale resta sul telefono (D-06) — e tetto di 1 GB imposto dal trigger (D-22). Il confine passa dal **percorso** `<coppia_id>/<file>`: le policy dello storage leggono la prima cartella e chiamano `e_membro_attivo`, cioè la stessa regola di appartenenza delle tabelle. Se un giorno cambia, cambia in un posto solo.
+
+### B-04 — Il trigger che doveva proteggere la cancellazione la impediva (2026-08-13, CHIUSO)
+**Sintomo**: dopo aver applicato `0009`, il test *"dopo la rottura si può ancora cancellare il proprio (art. 17)"* è andato **rosso**: `Direct deletion from storage tables is not allowed. Use the Storage API instead.`
+
+**Causa**: il trigger di `0009` cancellava il file con `delete from storage.objects` quando spariva la riga `foto`. Sembrava la strada più solida — il file segue la riga sempre, chiunque cancelli — ma Supabase vieta quella scrittura, e il rifiuto faceva fallire **l'intera transazione**: nessuno riusciva più a cancellare una foto.
+
+**Correzione** (`0010`): trigger rimosso, il file si cancella dallo Storage API subito prima della riga. ⚠️ **Limite dichiarato**: se l'app muore fra i due passi resta un file orfano — invisibile, perché il bucket è privato e nessuna riga lo indica — che è il male minore rispetto a una riga che punta al vuoto. Si chiude davvero con la cancellazione dell'account, dove il bucket della coppia va svuotato per intero.
+
+**Lezione**: una funzione scritta **per** proteggere la catena di cancellazione la stava spezzando, e non si vedeva leggendo il codice — solo eseguendolo. È il terzo caso in due giorni in cui il test avversariale trova ciò che la lettura non trova (B-01, la rieseguibilità dell'invito, questo).
+
+### D-33 — L'evento è il centro: calendario, mappa e recap sono **tre viste della stessa cosa**
+**Deciso dall'utente il 2026-08-13 (sera).** Migrazione `0008`.
+
+**Il modello**: un evento ha un momento, e può avere **un luogo**, **delle foto** e **dei commenti**. Il calendario lo guarda nel tempo, la mappa nello spazio, il recap in elenco — ma la cosa guardata è sempre la stessa, e tutte e tre le strade portano alla **pagina dell'evento** (`app/evento/[id].tsx`), dove c'è tutto quello che di quel momento è rimasto.
+
+**Perché è una semplificazione e non un'aggiunta**: prima mappa e calendario sarebbero state due funzioni con due modelli di dati paralleli — luoghi da una parte, eventi dall'altra, e le foto in un terzo posto. Così invece c'è **una** entità e tre proiezioni: meno codice, e soprattutto nessuna domanda del tipo "questa foto appartiene al luogo o alla serata?".
+
+**Luogo e foto restano facoltativi**: un impegno di lavoro non ha un posto da ricordare, una foto può vivere da sola nella galleria. Renderli obbligatori costringerebbe a inventare dati per far entrare la realtà nello schema.
+
+⚠️ **I commenti sono personali** (D-21): alla rottura restano a chi li ha scritti, non si duplicano. Un commento è il pensiero di una persona su un momento — duplicarlo significherebbe lasciare all'ex le parole dell'altro. *La sorte segue la sensibilità*, come per foto e recensioni.
+
+⚠️ **Lo scioglimento è stato riscritto insieme allo schema**, non dopo: senza, dopo la rottura le foto legate a un evento altrui sarebbero rimaste appese a una riga invisibile al loro autore, e i commenti attaccati alla copia sbagliata. Ora ogni legame nuovo — foto→evento, commento→evento, evento→luogo — viene ricucito sulla copia del proprio autore. *Il punto generale*: **una funzione che duplica dati deve essere aggiornata nello stesso commit in cui nascono i dati nuovi**, altrimenti il buco si scopre alla prima rottura vera, quando è tardi.
+
+**La modifica vive in un posto solo**: la pagina dell'evento rimanda al foglio del calendario (`?modifica=<id>`) invece di avere un secondo form. Due form sullo stesso oggetto divergono sempre, e il secondo si dimentica di un campo.
+
+**Verificato**: dalla vista eventi si apre la pagina, il commento si scrive e compare firmato e datato (*"l'hai messo tu · 13 ago"*). ⚠️ **Le foto no**: il collegamento c'è nel database, ma manca lo **storage** su Supabase — la pagina lo dice invece di mostrare una griglia vuota.
+
+### D-32 — Sei sezioni nella barra fin da subito, anche quelle vuote — e riquadri che non inventano numeri
+**Chiesto dall'utente il 2026-08-13 (sera).**
+
+**La barra**: Noi · Calendario · Giochi · Mappa · Preferiti · Galleria. Le sezioni ci sono **tutte da ora**, anche dove dentro non c'è ancora la funzione. *Perché mostrarle vuote invece di nasconderle*: una sezione vuota **che dice cosa manca** è onesta e orienta chi guarda; una nascosta lascia credere che l'app sia finita così. È la stessa regola del "nessun gap silenzioso" applicata all'interfaccia invece che alla documentazione — e ogni schermata in arrivo dichiara *cosa* manca perché esista (il meccanismo del sigillo per i giochi, il componente mappa, lo storage per la galleria).
+
+**La home a riquadri**: giorni insieme, prossimo impegno in calendario, posti visitati, ultimo film, ultima partita, un ricordo dalla galleria. Ogni riquadro mostra **un dato vero o niente**: dove la funzione non esiste ancora dice "mai giocato", "nessuna foto", non uno zero che sembra un dato. Su una schermata che si guarda ogni giorno, un numero inventato è peggio di un vuoto onesto — è la stessa lezione di B-03 (*non lo so* non è *non c'è*) portata in home.
+
+⚠️ **Trovato provando**: le schede della barra restano **montate** quando si passa dall'una all'altra, quindi i riquadri mostravano i dati di quando l'app era stata avviata — segnavo un film come visto e la home continuava a dire "ancora nessuno". Risolto ricaricando il riepilogo a ogni ritorno sulla scheda (`useFocusEffect`). *Vale oltre questo caso*: in un'app a schede, "l'ho letto al mount" significa "l'ho letto una volta sola, forse ore fa".
+
+⚠️ **Scostamento dichiarato dalla richiesta**: il riquadro chiesto era "**paesi** visitati", ma `luogo` non ha un campo paese e ricavarlo dalle coordinate richiederebbe un servizio esterno di geocodifica — cioè mandare fuori le posizioni della coppia, che è esattamente ciò che D-05 evita. Il riquadro conta quindi i **posti visitati**, dato che esiste già. Se il paese serve davvero, si aggiunge come campo da compilare quando si segna un luogo, e si conta `distinct` — nessuna chiamata esterna.
+
+### D-31 — L'importazione dal calendario del telefono è **selettiva**, e non potrebbe essere altrimenti
+**Chiesta dall'utente il 2026-08-13**, con la forma confermata dopo aver messo in chiaro la conseguenza.
+
+**Cosa fa**: legge i calendari del telefono — che includono già gli account collegati (Google, iCloud), senza che l'app parli con nessun servizio esterno — mostra le voci da un mese fa a un anno avanti, e importa **solo quelle spuntate**. Il tipo viene indovinato (un volo o un hotel → vacanza; il resto → impegno) e resta modificabile: la macchina propone, la persona decide.
+
+⚠️ **Perché selettiva e non "importa tutto"**: quello che entra finisce nel calendario **condiviso**, e per D-21 la visibilità è totale — il partner lo vede tutto, per sempre. Un'importazione in blocco trascinerebbe dentro il colloquio di lavoro, la visita medica, la cena con chi non c'entra. **La selezione non è una comodità in più: è la mitigazione.** Per la stessa ragione **nessuna spunta è attiva all'apertura**: si parte da zero e si aggiunge, invece di partire da tutto e togliere — una spunta dimenticata, qui, mostra al partner una cosa che non avresti mostrato.
+
+**Il permesso si chiede aprendo la schermata**, non all'avvio dell'app: chiedere l'accesso al calendario a chi non ha ancora deciso di importare niente è il modo migliore per farselo negare, e per meritarselo.
+
+**Anche per categoria** (chiesto il 2026-08-13, migrazione `0007`): nel telefono le categorie — festività, compleanni, casa, lavoro, famiglia — non sono un'etichetta dentro l'evento, sono **calendari distinti** dentro l'account. Quindi le voci si mostrano raggruppate per calendario, con "Tutti / Nessuno" su ciascun gruppo: prendere tutti i compleanni in un tocco resta una scelta consapevole, perché la categoria la nomini tu, e non è il "prendi tutto" che la selezione esiste per evitare. Il nome del calendario resta scritto sull'evento (`categoria`) e compare nella riga: senza, venti compleanni importati sarebbero venti impegni indistinguibili. È testo libero e non un elenco chiuso — i nomi dei calendari li decide chi li ha creati, e cambiano da telefono a telefono e da lingua a lingua. Non va confusa col **tipo** (D-30), che è la classificazione nostra e vale per tutti gli eventi.
+
+**Ripetibile senza doppioni**: ogni riga importata ricorda da dove viene (`origine_esterna`), e l'unicità è **per coppia** — se entrambi importano lo stesso compleanno dai rispettivi telefoni resta un evento solo, perché sul calendario condiviso il doppione è rumore. Per i ricorrenti l'identificativo include la data, così il compleanno di quest'anno e quello del prossimo restano due righe distinte.
+
+### D-30 — Tre tipi di evento, e la vacanza che occupa i giorni invece di un istante
+**Chiesti dall'utente il 2026-08-13.** Migrazione `0006`.
+
+**I tre tipi**: *impegno* (il default), *romantico*, *vacanza*. Un `check`, non una tabella: sono tre valori decisi da noi, non un elenco che gli utenti estendono. Ognuno ha icona e colore propri — il mese si legge a colpo d'occhio, e i pallini sotto ai giorni sono colorati per tipo.
+
+**La vacanza usa `fine`**, che esisteva dallo schema iniziale senza significato: non serviva una colonna nuova, serviva dargliene uno. Ed è l'unico tipo che **attraversa** i giorni invece di stare in uno: `eventiDelGiorno` include gli intervalli che coprono la data. *Perché conta*: guardando solo la data d'inizio, una settimana in montagna comparirebbe il giorno della partenza e sparirebbe per tutti gli altri — cioè proprio nei giorni in cui la si sta vivendo. Un vincolo impedisce a un ritorno di precedere la partenza: è un errore di inserimento, non un dato.
+
+**Le quattro viste, dopo la revisione del 2026-08-13 (sera)**: **giorni · mese · anno · eventi**. La prima si chiama *Giorni* e non *Settimana* perché è quello che fa: si naviga fra i giorni, e la settimana è solo la finestra che se ne vede. L'ultima — **Eventi** — mostra le cose senza il calendario intorno: quelle che devono venire in ordine di arrivo, quelle passate dalla più recente, ognuna con **quanto manca** o **quanto è passata** (*"fra 4 giorni"*, *"2251 giorni fa"*). È la domanda vera quando si guarda un elenco così, e nessuna griglia la risponde. Una vacanza resta "in arrivo" finché non è **finita**, non finché non è cominciata.
+
+**Ogni evento si apre**: toccarlo mostra un pop-up con tipo, data per esteso, nota, categoria e autore — e da lì si **modifica**. Prima l'unico modo di correggere un refuso era cancellare e riscrivere. Modifica e cancellazione restano dell'autore soltanto (D-21); agli altri il pop-up resta una scheda di lettura.
+
+**Le tre viste originarie**: settimana · mese · anno. La vista *giorno* è stata **tolta**: apriva un giorno alla volta facendo il lavoro che ora fa il foglio di dettaglio — meglio, e raggiungibile da ovunque. Al suo posto l'**anno**, che serve a una cosa diversa dalle altre due: non sapere *cosa succede* ma **ritrovare** — in che mese cadeva quella cosa, dove stanno le vacanze. Dodici riquadri con il peso di ogni mese (quante cose, e di che colore); toccarne uno porta alla vista mese.
+
+**Navigazione**: in mese e anno si trascina per cambiare periodo; in **settimana** il gesto orizzontale appartiene a una **striscia continua** di quattro mesi, che scorre giorno per giorno invece che di sette in sette — la settimana è un ritaglio comodo, non una gabbia. La striscia è ancorata a *oggi* e non al giorno scelto, così non si ricostruisce sotto il dito a ogni tocco.
+
+**Tocco sul giorno — due comportamenti, perché sono due gesti diversi**: nella **griglia del mese** il primo tocco sceglie e il secondo **apre il foglio** di dettaglio (convenzione dei calendari veri). Nella **striscia** invece si *naviga fra i giorni*: toccarne uno lo sceglie e il suo programma compare **sotto, nella stessa schermata**. Un foglio che si apre e si chiude sarebbe un passaggio di troppo per un gesto che si ripete decine di volte — la striscia è fatta per scorrere fra i giorni, non per aprirli uno alla volta.
+
+⚠️ **Corretto dopo la prova sul telefono**: nella striscia i giorni degli altri mesi erano sbiaditi al 40% come nella griglia mensile — ma una striscia li attraversa tutti, quindi metà dei numeri risultava illeggibile. Sbiadire ha senso solo dove esiste un "fuori": in una griglia che rappresenta *un* mese, non in un nastro continuo. Il primo giorno di ogni mese ora mostra il nome del mese al posto dell'iniziale del giorno, così scorrendo si sa sempre dove si è.
+
+⚠️ **Inciampo registrato**: `contentOffset` sulla striscia veniva ignorato al primo render e la settimana partiva da due mesi prima. Sostituito con uno `scrollTo` esplicito in un effetto, che vale anche quando il giorno cambia dalle frecce.
+
+### D-29 — La data da cui si sta insieme: si chiede quando la coppia si forma, e diventa un segno sul calendario
+**Chiesto dall'utente il 2026-08-13.** Migrazione `0005`.
+
+**Cosa fa**: appena il partner accetta l'invito, la home chiede *"da quando state insieme?"*. Da quel giorno partono i **giorni insieme** — il riquadro grande della home — e il giorno stesso viene **segnato sul calendario** come evento di tutto il giorno.
+
+**Perché passa da una funzione e non da una scrittura diretta**: `coppia` non ha policy di INSERT/UPDATE, quindi dal client è **impossibile** scriverci. È la stessa regola che regge l'intero impianto di autorizzazione (nessun insert diretto su `coppia` e `membro_coppia`, D-14/D-25): aggiungere una policy di UPDATE per una data avrebbe aperto in scrittura la tabella su cui poggiano tutte le altre policy, per comodità.
+
+**Il titolo dell'evento arriva dal client** — il database non sa in che lingua parla l'utente (D-24), e resta scritto nella lingua di chi lo imposta: è un contenuto come gli altri.
+
+**Un solo evento, non un anniversario che torna ogni anno**: lo schema non ha ricorrenze, e simularle creando dodici eventi finti sarebbe debito travestito da funzione. Quando arriveranno le ricorrenze, questo diventerà il primo caso d'uso.
+
+**Dettagli che sembrano minuzie e non lo sono**: l'evento è fissato a **mezzogiorno UTC**, non a mezzanotte — l'ora non si vede (dura tutto il giorno) ma così il giorno resta quello giusto in ogni fuso, mentre una mezzanotte UTC diventerebbe *il giorno prima* per chi sta a ovest. E i giorni si contano fra **giorni civili**, non fra istanti: alle 23:00 e alle 07:00 il numero dev'essere lo stesso.
+
+**Verificato dal lato del partner**, non di chi ha impostato la data: coppia formata fra due utenti di prova, data 14 giugno 2020 → il riquadro conta **2251 giorni**, e il **partner** legge sia `insieme_dal` sia l'evento "Il nostro inizio" nel proprio calendario.
+
+**Limite dichiarato**: un client può comunque inserire per conto suo un evento con `speciale = 'insieme_dal'` — le policy guardano coppia e autore, non le singole colonne. Il danno si ferma al proprio calendario e l'indice unico impedisce che ne esistano due.
+
+### D-28 — Il calendario si usa **anche da soli**, e il primo appuntamento fa nascere lo spazio
+**Deciso il 2026-08-13** implementando la prima funzione vera (D-11 punto 3).
+
+**Scelta**: il calendario **non** mostra il cartellino "serve il partner". Chi entra prima segna i suoi appuntamenti e li ritrova quando l'altro arriva. Il cartellino resta per i **giochi**, che da soli non hanno proprio senso — lì manca l'altro giocatore, non solo la compagnia.
+
+**Perché**: un calendario condiviso usato da soli è un calendario, cioè utile lo stesso; un quiz sulle preferenze del partner senza partner non è niente. La regola generale che ne ricavo per le funzioni che arrivano: **si blocca ciò che senza due persone non esiste, non ciò che senza due persone è solo meno bello.** Mappa, liste e foto seguiranno il calendario; i tre giochi seguiranno il cartellino.
+
+**Il primo appuntamento crea la coppia**, come già fa "Invita" (D-26): `assicuraCoppia` sta prima dell'inserimento. Chiedere *"prima crea il tuo spazio"* davanti al primo evento sarebbe di nuovo il cancello, solo spostato più avanti.
+
+**Conseguenza già nota, ora concreta**: quando il partner entra, vede **anche il pregresso** — gli appuntamenti scritti prima che arrivasse. È coerente con D-21 (visibilità totale) ed è la conseguenza che D-25 aveva lasciato aperta; resta da decidere se avvisare al momento dell'invito.
+
+**Verificato nel browser**, con un utente che non aveva ancora uno spazio: il primo evento lo ha creato al volo, l'evento "tutto il giorno" perde l'ora nella riga, l'ordinamento tiene, l'eliminazione funziona. Più **3 asserzioni nuove** sul confine di coppia applicato agli eventi: l'avversario non li legge e non li cancella (54 verdi in tutto).
+
+⚠️ **Falso allarme registrato perché non si ripeta**: il modale sembrava non chiudersi. Due cause sovrapposte, **nessuna dell'app**: la scheda del browser non componeva frame (`document.hidden`, `requestAnimationFrame` fermo), quindi l'animazione di uscita non finiva mai; e la mia verifica leggeva il DOM nello stesso tick del clic, prima che React committasse. Sul web l'animazione del modale ora è disattivata — lì è preview di sviluppo — e le verifiche si leggono in una chiamata separata. *Lezione*: **uno strumento di verifica che altera le condizioni può inventare bug che non esistono**, e costa quanto uno vero.
+
+### D-27 — Lo scioglimento è **unilaterale**, e i giochi si cancellano mentre i ricordi restano
+**Deciso il 2026-08-13** implementando `sciogli_coppia` (migrazione `0004`). Sono due scelte che D-04/D-16/D-21 non coprivano.
+
+**Unilaterale**: chi scioglie non ha bisogno del consenso dell'altro, e l'altro non può impedirlo né rinviarlo. *Perché*: una conferma a due mani trasformerebbe l'uscita in una trattativa, e chi ha più bisogno di uscire è proprio chi non è in condizione di trattare — è il confine di fiducia TB-2 (partner contro partner), lo scenario che l'app deve prendere sul serio. Il costo è la rottura per impulso, che è reversibile riformando la coppia; il costo opposto sarebbe restare legati contro la propria volontà.
+
+**Partite, invii sigillati, risultati e domande personalizzate vengono cancellati**; i contenuti no. *Perché la linea cade qui*: dopo lo scioglimento nessuno è più membro attivo, e quelle tabelle si leggono **solo** per appartenenza alla coppia — resterebbero righe che nessuno può né vedere né cancellare, dati orfani che sopravvivono a chi li ha generati (contro `Rule/catena-cancellazione.md`). I contenuti invece hanno un `autore_id`, e le policy li lasciano al loro autore: hanno qualcuno che li tiene. **La regola generale per il futuro**: si conserva ciò che ha un proprietario dopo la rottura, si cancella ciò che ne resterebbe senza.
+
+**Il pezzo che è costato più codice — la ricucitura**: duplicare i condivisi non basta. La recensione che ho scritto sul film aggiunto da lui è **mia** (personale, resta a me) ma punta a una riga che dopo la rottura non vedo più; stessa cosa per una mia foto legata a un suo luogo. Alla duplicazione ogni legame viene spostato sulla **copia del proprio autore**. Senza questo passaggio si otterrebbero contenuti formalmente conservati e praticamente irraggiungibili — la peggiore delle due cose, perché sembra che funzioni.
+
+**Verificato**: 12 asserzioni nuove contro il database reale (51 in tutto, tutte verdi). Costruiscono una coppia vera con evento, luogo, film, recensione e foto, la rompono e vanno a vedere **cosa resta in mano all'ex**: zero foto dell'altro, una copia propria di ogni condiviso, i legami sulle copie giuste, creatura sparita per entrambi, scrittura chiusa, cancellazione del proprio ancora possibile (art. 17 non decade con la relazione).
+
+**Effetto collaterale utile**: è anche la via d'uscita dal vincolo di D-26 — chi ha creato lo spazio da solo e poi riceve un invito può sciogliere il proprio e accettare.
+
+**Trovato applicandolo**: il blocco di test sull'invito **non era rieseguibile** — passava solo il giorno in cui è stato scritto, perché al secondo giro trovava gli utenti già appaiati e su una coppia completa non si generano inviti. Prima di `sciogli_coppia` non c'era modo di riportarli indietro. Ora ogni blocco si ripulisce da sé.
+
+### D-26 — Si entra **senza creare niente**: la schermata di scelta resta, ma non è più un cancello
+**Deciso dall'utente il 2026-08-13**, fra tre opzioni nominate, dopo la prova sull'iPhone.
+
+**Com'era**: D-25 aveva tolto l'attesa del partner, ma *creare lo spazio* restava obbligatorio per vedere l'app. La prima cosa dopo il login era ancora una domanda — "crea" oppure "ho un invito" — a cui bisognava rispondere prima di poter guardare qualsiasi cosa.
+
+**Com'è ora**: la schermata di scelta resta (chi ha ricevuto un invito deve poterlo aprire subito), ma ha una terza via — **"Entra e decidi dopo"** — che porta in app senza coppia. Lo spazio **nasce al primo gesto che lo richiede**: premere "Invita il tuo partner" crea la coppia e genera il link in un colpo solo. La scelta di rimandare viene **ricordata sul dispositivo** (`lib/preferenze.ts`, chiave per utente): senza memoria si sarebbe ripresentata a ogni avvio, cioè sarebbe rimasta il cancello che si voleva togliere.
+
+**Perché questa e non le altre due**: (a) *creare lo spazio automaticamente al login* è più lineare da raccontare, ma chi riceve un invito si ritroverebbe già dentro una coppia vuota, e il database vieta di stare in due coppie — servirebbe una migrazione che chiuda la coppia vuota all'accettazione, più i relativi test avversariali: lavoro sul pezzo più delicato dell'impianto (D-14) per un guadagno di forma; (b) *lasciare tutto com'era* mantiene la domanda che ha dato fastidio. La via scelta non tocca il database: nessuna policy, nessuna funzione, nessuna migrazione.
+
+**Conseguenza dichiarata, non risolta**: chi crea lo spazio — esplicitamente o premendo "Invita" — **non può più accettare l'invito di qualcun altro** finché non esiste lo scioglimento (D-04/D-21). Era già vero prima; ora è più facile incapparci, perché lo spazio può nascere da un gesto laterale. Per questo il bottone "Ho ricevuto un invito" in home **sparisce appena la coppia esiste**, invece di restare lì e fallire.
+
+**Verificato nel browser** su quattro utenti nuovi: senza coppia si entra e la home lo dice; "Invita" crea lo spazio e produce il token; riavviando l'app chi ha rimandato **non rivede** la schermata di scelta; "Ho ricevuto un invito" porta direttamente al ramo giusto.
+
 ### D-25 — L'invito non blocca l'ingresso: si entra da soli, si invita quando si vuole
 **Deciso dall'utente il 2026-08-12** (seconda sessione serale), guardando l'app sull'iPhone.
 
@@ -298,6 +438,20 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Perché lasciato aperto e non risolto stasera**: il web è **solo preview di sviluppo**; l'app vera è nativa, dove `Appearance` è nativo e questo errore NativeWind-web non si presenta. La correzione pulita (passare a dark-mode `class` e gestire il toggle da `useColorScheme`, riscrivendo `global.css` da `@media` a selettore `.dark`) è un refactoring del theming, non un lavoro di fine serata.
 ⚠️ **Da fare prima di dichiararlo chiuso**: (1) verificare sull'**iPhone reale** che l'errore non compaia e che la modalità notte segua il sistema; (2) se si vuole la console web pulita, il refactoring dark-mode `class`. **Nessun gap silenzioso**: è dichiarato, non nascosto.
 
+### B-03 — La home raccontava uno spazio che non esisteva, e "Esci" non usciva (2026-08-13, CHIUSO)
+**Sintomo, riferito dall'utente dopo il login sull'iPhone**: la home diceva *"Il tuo spazio è pronto — invita il tuo partner per continuare"*, ma premendo **Invita** rispondeva `non sei in una coppia: creane una prima di invitare`; **Esci** sembrava non fare nulla.
+
+**Riprodotto nel browser**, con utenti di prova e sessione iniettata: dopo il logout la pagina **resta** su `/home` e mostra esattamente quella schermata; il bottone produce esattamente quell'errore. Il backend è risultato innocente: `crea_coppia` e `crea_invito` usano la **stessa identica condizione** (`membro_coppia` con `uscito_il is null`), verificate chiamandole contro il progetto reale.
+
+**Tre cause distinte, tutte corrette**:
+1. **Il gate di routing viveva solo sulla route `/`** (`app/index.tsx`). Se la sessione cadeva altrove — uscita volontaria, token scaduto, refresh fallito — nessuno riportava indietro: l'uscita *avveniva* (misurata: la chiave sparisce da `localStorage`) ma la schermata restava sotto gli occhi. Corretto con `GuardiaSessione` in `app/_layout.tsx`, viva su tutte le schermate.
+2. **La home distingueva due stati invece di tre**: guardava solo `completa` e mai `coppiaId`, così l'assenza di coppia veniva raccontata come *"il tuo spazio è pronto"* e offriva un gesto destinato a fallire.
+3. **`useCoppia` scartava l'errore della query** (`const { data } = ...`): una lettura fallita per rete o permessi era **indistinguibile** da "non hai una coppia". Ora `errore` è un terzo stato dichiarato, con schermata e "Riprova".
+
+**Lezione, che vale oltre questo caso**: *non lo so* non è *non c'è*. Un'interfaccia che collassa i due casi mente proprio quando le cose vanno male — e mente con sicurezza, perché la schermata che mostra è una schermata legittima. Vale anche l'altra metà: **una decisione presa una volta sola (il gate all'avvio) non protegge uno stato che cambia nel tempo** (la sessione). È la stessa forma del difetto di `sync-brain.mjs` del 2026-08-12: una verifica fatta in un istante, usata come se valesse sempre.
+
+**Trovato di passaggio e corretto**: premendo "Invita", `ricarica()` rimetteva `loading` a `true` e smontava la schermata sotto le dita, perdendo il link appena generato; ora solo la **prima** lettura è un'attesa a schermo intero. E `Share.share` senza `try/catch` lasciava un'eccezione non gestita dove la condivisione non esiste (browser) o viene chiusa male: ora il link resta a schermo, copiabile a mano.
+
 ---
 
 ## 5. Rischi accettati esplicitamente
@@ -348,12 +502,12 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
 ### MVP — in ordine di implementazione (D-11)
 > Lo **schema del database** copre tutte le voci **dal primo giorno**, creatura e giochi inclusi. L'ordine qui sotto riguarda l'implementazione, non la progettazione.
 
-1. [ ] Autenticazione e **appaiamento della coppia** (modello ancora `—`: è il primo blocco)
-2. [ ] **Scioglimento della coppia** secondo D-04 — subito dopo l'appaiamento, perché è la stessa logica vista dall'altro lato
-3. [ ] Calendario condiviso
-4. [ ] Mappa dei luoghi visitati (inserimento manuale, mai automatico — D-05)
-5. [ ] Cartella foto condivisa con tetto di spazio
-6. [ ] Liste film e ristoranti: visti/provati con recensione, e da vedere/provare
+1. [x] Autenticazione e **appaiamento della coppia** — fatto il 2026-08-12/13 (OTP email, invito con conferma, D-25/D-26)
+2. [x] **Scioglimento della coppia** secondo D-04 — lato database il 2026-08-13 (`0004`, D-27). ⚠️ Manca la **schermata**: la funzione esiste, il bottone no — andrà nelle impostazioni insieme alla cancellazione account (punto 7)
+3. [x] **Calendario condiviso** — fatto il 2026-08-13 (D-28): elenco in arrivo/passati, aggiunta con selettore nativo, "tutto il giorno", eliminazione del proprio
+4. [x] **Mappa dei luoghi visitati** — fatta il 2026-08-13 (D-34): mappa nativa, posti segnati a mano (tocco lungo o «segna dove sono»), eventi del luogo
+5. [x] **Cartella foto condivisa** — fatta il 2026-08-13 (D-34/`0009`/`0010`): bucket privato, indirizzi firmati, compressione, tetto 1 GB dal database
+6. [x] **Liste film e ristoranti** — fatte il 2026-08-13 (D-32): da fare / già fatti, una recensione per persona con voto e testo
 7. [ ] **Cancellazione account in-app** (richiesta obbligatoria da Apple) con catena di cancellazione verificata
 8. [ ] **Meccanismo di invio sigillato** (D-12) — la macchina a stati condivisa dai tre giochi: invito → accettazione → invio segreto di entrambi → rivelazione
 9. [ ] **Gioco 1 — quiz sulle preferenze del partner**: (a) uno invita, l'altro accetta; (b) fase di deposito, entrambi inseriscono le **proprie** risposte corrette su una lista di domande; (c) a turno ciascuno risponde cercando di indovinare quelle dell'altro; vince chi indovina di più
@@ -462,7 +616,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-12.**
+**Aggiornato al 2026-08-13.**
 
 **Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che parte. Zero risorse cloud, zero costi sostenuti.
 
@@ -498,14 +652,30 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 🔴 **Diagnosi chiusa sul link d'invito che "non arriva"**: il backend è a posto (`crea_invito` restituisce il token, l'invito è in tabella). Il problema è che dentro **Expo Go** `Linking.createURL` non produce `lifecouple://…` ma **`exp://<ip-locale>:8081/--/invito/<token>`**: in Expo Go `resolveScheme` ignora lo `scheme` dell'app e torna sempre `exp` (`node_modules/expo-linking/build/Schemes.js`, ramo StoreClient). Conseguenze: WhatsApp e Messaggi **non lo rendono cliccabile** (rendono solo http/https), l'indirizzo vale solo sulla stessa Wi-Fi, e comunque la route che dovrebbe riceverlo non esiste. **Non ancora deciso** come risolverlo — le tre strade sono: (a) condividere il **codice** invece del link, che funziona subito e non tocca D-14 perché il segreto è lo stesso; (b) route + development build; (c) **universal link https** con dominio proprio, l'unica che dà un link cliccabile, da fase di pubblicazione.
 
+✅ **Accesso OTP funzionante sull'iPhone** (2026-08-13): il template email è configurato e il codice arriva davvero. Lo si è scoperto da un bug d'uso — *"non mi fa inserire abbastanza numeri"* — perché la lunghezza dell'OTP di Supabase è configurabile (6-10) e il campo era fisso a 6 (`app/accedi.tsx`, `maxLength` 10 e filtro non-numeri).
+
+✅ **Si entra senza creare lo spazio** (D-26) e **B-03 chiuso**, il 2026-08-13. Nuovi file: `lib/preferenze.ts` (memoria locale della scelta di rimandare, chiave per utente), `GuardiaSessione` in `app/_layout.tsx`. `useCoppia` ora ha **tre** stati (`coppiaId` / `completa` / `errore`) e `ricarica()` **restituisce** lo stato letto, così chi crea al volo decide subito senza aspettare il render. `ServePartner` crea lo spazio se manca, prima di invitare. **Verificato nel browser** su quattro utenti nuovi, stato per stato, con `tsc` pulito — resta da confermare sull'iPhone.
+
+✅ **Scioglimento della coppia** (D-04/D-16/D-21/D-27) — migrazione `0004_scioglimento.sql`, applicata dall'utente il 2026-08-13 e provata con **12 asserzioni nuove**: 51 verdi in tutto. Nessuna policy toccata: erano già scritte per reggere la rottura. Manca solo la schermata da cui invocarlo.
+
+✅ **Calendario condiviso** (D-28), la prima funzione vera, il 2026-08-13 — `app/(tabs)/calendario.tsx` + `lib/eventi.ts` + `lib/date.ts`. Tre viste (**giorno · settimana · mese**), frecce che scorrono di un giorno / una settimana / un mese, tocco sul titolo per tornare a oggi, pallino sui giorni con impegni, elenco del giorno scelto sotto la griglia. Selettore data **nativo** (`@react-native-community/datetimepicker`, incluso in Expo Go per SDK 54: nessuna development build); sul web un campo testo `AAAA-MM-GG HH:MM`, perché lì il componente non esiste e il web è solo preview.
+
+✅ **Barra delle funzioni** (2026-08-13) — le schermate stanno in `app/(tabs)/` e si raggiungono da una toolbar (`Noi` · `Calendario`) invece che l'una dentro l'altra col tasto "Indietro". Le funzioni che arrivano prendono posto lì.
+
+✅ **Giorni insieme** (D-29) — `components/insieme.tsx`: alla formazione della coppia si sceglie la data, il riquadro grande della home conta i giorni, e il giorno finisce sul calendario. Verificato dal lato del partner.
+
+✅ **La tastiera non copre più il form** del nuovo appuntamento (`KeyboardAvoidingView` + contenuto scorrevole). ⚠️ Provato solo nel codice: sul web non c'è tastiera di sistema, la conferma arriva dall'iPhone.
+
+✅ **Tipi di evento, vacanze e navigazione col dito** (D-30) e **importazione selettiva dal calendario del telefono** (D-31), il 2026-08-13 — migrazione `0006`, `lib/importa.ts`, `app/importa.tsx`, `components/riga-evento.tsx`. La coppia reale (`samuele.busato03@` + `samuelebusato96@`) è formata e ha `insieme_dal` al **2026-01-01**.
+
 **Cosa manca** (in ordine):
-1. **Verificare sull'iPhone reale** il flusso non bloccante e l'invito. Serve prima: configurare il **template email** in Supabase perché mostri il codice (`{{ .Token }}`), o lasciare il magic link.
+1. **Verificare sull'iPhone reale**: la tastiera sul nuovo appuntamento, lo **scorrimento col dito** e la **striscia della settimana**, i selettori data nativi e soprattutto l'**importazione**, che sul web non esiste per definizione (`expo-calendar` è un modulo nativo — incluso in Expo Go, quindi nessuna development build). È anche l'occasione per chiudere B-02 (l'errore darkMode è web-only: va confermato che su iOS non compaia).
 2. **Decidere la forma del link d'invito** fra le tre strade qui sopra, e implementarla. Se si sceglie (b) o (c), serve la route `app/invito/[token].tsx`.
 3. **Scioglimento** (D-04/D-16/D-21): `sciogli_coppia`. ⚠️ **Decisione implementativa aperta**: D-21 vuole i contenuti **condivisi** (liste, luoghi, eventi) *duplicati una copia a ciascuno*, i **personali** (foto, recensioni) solo all'autore, la creatura cancellata. La duplicazione dei condivisi non è banale e va ragionata. Sblocca l'ultimo test non coperto.
 4. Le funzioni nell'ordine di D-11.
 
 ⚠️ **Prima di utenti veri** (invariato): riaccendere "Confirm email", strategia d'accesso definitiva, eliminare gli utenti di test, confermare la regione UE.
-Gli utenti di prova da eliminare dal dashboard sono ora: `rls-*@example.com`, più `diagnosi-invito@`, `solo-test@`, `duo-x@`, `duo-y@` (`@example.com`), creati il 2026-08-12 per la diagnosi del link e la verifica di D-25.
+Gli utenti di prova da eliminare dal dashboard sono ora: `rls-*@example.com`, più `diagnosi-invito@`, `solo-test@`, `duo-x@`, `duo-y@` (`@example.com`), creati il 2026-08-12 per la diagnosi del link e la verifica di D-25, e `diagnosi-solo-2@` … `diagnosi-solo-5@` e `prova-coppia-1@` / `prova-coppia-2@` (`@example.com`), creati il 2026-08-13 per riprodurre B-03 e provare D-26 e D-29. Diversi di questi hanno anche una **coppia** che resta nel database — `prova-coppia-*` ne ha una completa, con data di inizio e relativo evento.
 
 ⚠️ **Prima di utenti veri**: riaccendere "Confirm email" nel dashboard (spenta per i test), e scegliere la strategia d'accesso definitiva — probabilmente magic link o OAuth, non password. Gli utenti `rls-*@example.com` di prova si eliminano dal dashboard.
 
