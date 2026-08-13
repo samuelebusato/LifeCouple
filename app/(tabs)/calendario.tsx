@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { useLuoghi } from '@/lib/luoghi';
+import { anteprimePerEvento } from '@/lib/foto';
 import {
   useEventi,
   eventiDelGiorno,
@@ -208,6 +209,15 @@ export default function Calendario() {
     apriForm(e);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modifica, eventi]);
+
+  // Le anteprime servono solo alla vista "eventi", ed e' li' che si chiedono:
+  // altrove sarebbero richieste di rete per immagini che nessuno guarda.
+  const [anteprime, setAnteprime] = React.useState<Record<string, string>>({});
+  const idsElenco = vista === 'eventi' ? eventi.map((e) => e.id).join(',') : '';
+  React.useEffect(() => {
+    if (!idsElenco) return;
+    anteprimePerEvento(idsElenco.split(',')).then(setAnteprime);
+  }, [idsElenco]);
 
   const griglia = React.useMemo(() => grigliaMese(giorno), [giorno]);
   const etichette = React.useMemo(() => iniziali(lingua), []);
@@ -555,6 +565,7 @@ export default function Calendario() {
                     onElimina={() => elimina(e.id)}
                     onPress={() => router.push({ pathname: '/evento/[id]', params: { id: e.id } })}
                     contatore={contatoreGiorni(e)}
+                    anteprima={anteprime[e.id]}
                   />
                 </View>
               ))

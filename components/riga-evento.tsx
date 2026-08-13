@@ -1,4 +1,4 @@
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Image } from 'react-native';
 import { CalendarCheck, Heart, Palmtree, Sparkles } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,7 @@ export function RigaEvento({
   onElimina,
   onPress,
   contatore,
+  anteprima,
 }: {
   e: Evento;
   mio: boolean;
@@ -35,6 +36,8 @@ export function RigaEvento({
   onPress?: () => void;
   /** "fra 4 giorni", "2 giorni fa": usato dalla vista dei soli eventi. */
   contatore?: string;
+  /** Indirizzo firmato della prima foto dell'evento, se ne ha una. */
+  anteprima?: string;
 }) {
   const { Icona, colore } = aspetto(e);
   const Contenitore: any = onPress ? Pressable : View;
@@ -43,9 +46,19 @@ export function RigaEvento({
       onPress={onPress}
       className="w-full flex-row gap-3 rounded-2xl bg-card p-4"
     >
-      <View className="pt-1">
-        <Icona color={colore} size={22} />
-      </View>
+      {/* Se l'evento ha una foto e' lei a dire di cosa si trattava, molto piu'
+          dell'icona del tipo: la miniatura prende il posto dell'icona. */}
+      {anteprima ? (
+        <Image
+          source={{ uri: anteprima }}
+          style={{ width: 56, height: 56, borderRadius: 14 }}
+          resizeMode="cover"
+        />
+      ) : (
+        <View className="pt-1">
+          <Icona color={colore} size={22} />
+        </View>
+      )}
       <View className="flex-1 gap-1">
         <View className="flex-row items-center justify-between">
           <Text className={cn('text-xs uppercase tracking-wide')} style={{ color: colore }}>

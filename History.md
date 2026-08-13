@@ -115,6 +115,8 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 **La modifica vive in un posto solo**: la pagina dell'evento rimanda al foglio del calendario (`?modifica=<id>`) invece di avere un secondo form. Due form sullo stesso oggetto divergono sempre, e il secondo si dimentica di un campo.
 
+**Anteprime nella vista eventi** (2026-08-13): se un evento ha una foto, nell'elenco compare la **miniatura al posto dell'icona** del tipo — l'immagine dice di cosa si trattava molto meglio di un simbolo. Le foto si chiedono **in blocco per tutto l'elenco** e solo in quella vista: su una schermata che si scorre, una richiesta per riga sono N attese, e nelle altre viste sarebbero immagini che nessuno guarda. Fra piu' foto vince la prima caricata.
+
 **Verificato**: dalla vista eventi si apre la pagina, il commento si scrive e compare firmato e datato (*"l'hai messo tu · 13 ago"*). ⚠️ **Le foto no**: il collegamento c'è nel database, ma manca lo **storage** su Supabase — la pagina lo dice invece di mostrare una griglia vuota.
 
 ### D-32 — Sei sezioni nella barra fin da subito, anche quelle vuote — e riquadri che non inventano numeri

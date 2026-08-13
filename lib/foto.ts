@@ -90,6 +90,34 @@ export async function indirizziFirmati(chiavi: string[]) {
 }
 
 /**
+ * Una foto per evento, con l'indirizzo gia' firmato: e' cio' che serve alle
+ * anteprime nell'elenco degli eventi.
+ *
+ * Una sola richiesta per l'intero elenco invece di una per riga: su una
+ * schermata che si scorre, N richieste sono N attese.
+ */
+export async function anteprimePerEvento(eventiIds: string[]) {
+  if (eventiIds.length === 0) return {} as Record<string, string>;
+  const { data } = await supabase
+    .from('foto')
+    .select('evento_id, chiave_storage, creato_il')
+    .in('evento_id', eventiIds)
+    .order('creato_il', { ascending: true });
+
+  // La prima caricata vince: e' quella che di solito racconta la giornata.
+  const prima = new Map<string, string>();
+  for (const r of data ?? []) {
+    if (r.evento_id && !prima.has(r.evento_id)) prima.set(r.evento_id, r.chiave_storage);
+  }
+  const firmati = await indirizziFirmati([...prima.values()]);
+  const perEvento: Record<string, string> = {};
+  for (const [idEvento, chiave] of prima) {
+    if (firmati[chiave]) perEvento[idEvento] = firmati[chiave];
+  }
+  return perEvento;
+}
+
+/**
  * Cancella prima il file, poi la riga.
  *
  * In quest'ordine perche' Supabase **vieta** di toccare `storage.objects` da un
