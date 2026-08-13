@@ -14,11 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      commento: {
+        Row: {
+          autore_id: string
+          coppia_id: string
+          creato_il: string
+          evento_id: string
+          id: string
+          testo: string
+        }
+        Insert: {
+          autore_id?: string
+          coppia_id: string
+          creato_il?: string
+          evento_id: string
+          id?: string
+          testo: string
+        }
+        Update: {
+          autore_id?: string
+          coppia_id?: string
+          creato_il?: string
+          evento_id?: string
+          id?: string
+          testo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commento_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "evento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coppia: {
         Row: {
           byte_foto_usati: number
           creata_il: string
           id: string
+          insieme_dal: string | null
           sciolta_il: string | null
           stato: string
         }
@@ -26,6 +62,7 @@ export type Database = {
           byte_foto_usati?: number
           creata_il?: string
           id?: string
+          insieme_dal?: string | null
           sciolta_il?: string | null
           stato?: string
         }
@@ -33,6 +70,7 @@ export type Database = {
           byte_foto_usati?: number
           creata_il?: string
           id?: string
+          insieme_dal?: string | null
           sciolta_il?: string | null
           stato?: string
         }
@@ -148,7 +186,12 @@ export type Database = {
           fine: string | null
           id: string
           inizio: string
+          luogo_id: string | null
+          categoria: string | null
           nota: string | null
+          origine_esterna: string | null
+          speciale: string | null
+          tipo: string
           titolo: string
           tutto_il_giorno: boolean
         }
@@ -159,7 +202,12 @@ export type Database = {
           fine?: string | null
           id?: string
           inizio: string
+          luogo_id?: string | null
+          categoria?: string | null
           nota?: string | null
+          origine_esterna?: string | null
+          speciale?: string | null
+          tipo?: string
           titolo: string
           tutto_il_giorno?: boolean
         }
@@ -170,7 +218,12 @@ export type Database = {
           fine?: string | null
           id?: string
           inizio?: string
+          luogo_id?: string | null
+          categoria?: string | null
           nota?: string | null
+          origine_esterna?: string | null
+          speciale?: string | null
+          tipo?: string
           titolo?: string
           tutto_il_giorno?: boolean
         }
@@ -191,6 +244,7 @@ export type Database = {
           chiave_storage: string
           coppia_id: string
           creato_il: string
+          evento_id: string | null
           id: string
           luogo_id: string | null
           scattata_il: string | null
@@ -201,6 +255,7 @@ export type Database = {
           chiave_storage: string
           coppia_id: string
           creato_il?: string
+          evento_id?: string | null
           id?: string
           luogo_id?: string | null
           scattata_il?: string | null
@@ -210,6 +265,7 @@ export type Database = {
           byte?: number
           chiave_storage?: string
           coppia_id?: string
+          evento_id?: string | null
           creato_il?: string
           id?: string
           luogo_id?: string | null
@@ -609,8 +665,13 @@ export type Database = {
       crea_invito: { Args: never; Returns: string }
       e_membro_attivo: { Args: { cid: string }; Returns: boolean }
       ha_coppia_attiva: { Args: { uid: string }; Returns: boolean }
+      imposta_insieme_dal: {
+        Args: { p_data: string; p_titolo: string }
+        Returns: undefined
+      }
       n_membri_attivi: { Args: { cid: string }; Returns: number }
       revoca_invito: { Args: { p_invito_id: string }; Returns: undefined }
+      sciogli_coppia: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
