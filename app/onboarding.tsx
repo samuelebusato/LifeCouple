@@ -1,22 +1,29 @@
 import * as React from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Emblema } from '@/components/emblema';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
+import { useIngressoRimandato } from '@/lib/preferenze';
 import { t } from '@/lib/i18n';
 
 type Fase = 'scelta' | 'invita' | 'unisci' | 'attesa-conferma';
 
 export default function Onboarding() {
   const router = useRouter();
+  const { session } = useAuth();
   const { ricarica } = useCoppia();
-  const [fase, setFase] = React.useState<Fase>('scelta');
+  const { rimanda } = useIngressoRimandato(session?.user.id);
+  // Si puo' arrivare qui dall'app, gia' puntati al ramo giusto: chi ha
+  // rimandato la scelta e poi riceve un invito non deve rifare il giro.
+  const { fase: faseIniziale } = useLocalSearchParams<{ fase?: string }>();
+  const [fase, setFase] = React.useState<Fase>(faseIniziale === 'unisci' ? 'unisci' : 'scelta');
   const [errore, setErrore] = React.useState<string | null>(null);
   const [attesa, setAttesa] = React.useState(false);
   const [tokenIncollato, setTokenIncollato] = React.useState('');
@@ -48,6 +55,17 @@ export default function Onboarding() {
   /** Entra da solo: lo spazio esiste gia', il partner si invita quando si vuole (D-25). */
   async function entraComunque() {
     await ricarica();
+    router.replace('/home');
+  }
+
+  /**
+   * Entra **senza** creare niente. La schermata di scelta resta — chi ha un
+   * invito deve poterlo aprire — ma smette di essere un cancello: si guarda
+   * l'app, e lo spazio nasce al primo gesto che lo richiede. La scelta viene
+   * ricordata, altrimenti si ripresenterebbe a ogni avvio.
+   */
+  async function rimandaLaScelta() {
+    await rimanda();
     router.replace('/home');
   }
 
@@ -85,6 +103,9 @@ export default function Onboarding() {
               </Button>
               <Button variant="outline" size="lg" onPress={() => setFase('unisci')}>
                 <Text>{t.onboarding.unisciti}</Text>
+              </Button>
+              <Button variant="ghost" size="lg" onPress={rimandaLaScelta}>
+                <Text>{t.onboarding.entraEDecidoDopo}</Text>
               </Button>
             </View>
             {errore && <Text className="text-center text-sm text-destructive">{errore}</Text>}
