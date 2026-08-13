@@ -14,79 +14,85 @@
  * pretendono stanno in `lib/tema.ts`.
  */
 @layer base {
+  /*
+   * Quarta taratura (2026-08-13, notte) — riferimento: lo screenshot "GLOW
+   * LIKE Barbie". Magenta pieno per le azioni, PASTELLI rosa e azzurro per i
+   * fondi, bianco per il contenuto. Il pastello azzurro entra come `secondary`:
+   * e' il contrappunto che nello screenshot impedisce al rosa di stancare.
+   */
   :root {
-    --rosa-50: 348 100% 99%;
-    --rosa-100: 348 80% 97.5%;
-    --rosa-200: 348 70% 95%;
-    --rosa-300: 348 65% 90%;
-    --rosa-400: 348 60% 80%;
-    --rosa-500: 348 58% 68%;
-    --rosa-600: 348 64% 55%;
-    --rosa-700: 347 58% 45%;
-    --rosa-800: 346 48% 35%;
-    --rosa-900: 345 38% 25%;
+    --rosa-50: 325 100% 98.5%;
+    --rosa-100: 325 90% 96.5%;
+    --rosa-200: 324 85% 93%;
+    --rosa-300: 324 80% 87%;
+    --rosa-400: 323 75% 76%;
+    --rosa-500: 322 75% 63%;
+    --rosa-600: 322 78% 52%;
+    --rosa-700: 321 75% 43%;
+    --rosa-800: 320 65% 33%;
+    --rosa-900: 319 55% 24%;
 
-    /* --- bianco vero ------------------------------------------------------ */
+    /* --- bianco vero per il contenuto ------------------------------------- */
     --background: 0 0% 100%;
-    --foreground: 345 12% 13%;      /* quasi nero, appena caldo */
+    --foreground: 325 12% 13%;
     --card: 0 0% 100%;
-    --card-foreground: 345 12% 13%;
+    --card-foreground: 325 12% 13%;
 
-    /* --- l'accento resta rosa pieno: e' l'unico posto dove il colore vive -- */
-    --primary: 348 64% 55%;
+    /* --- il magenta Barbie: il colore delle azioni ------------------------- */
+    --primary: 322 78% 52%;
     --primary-foreground: 0 0% 100%;
 
-    /* --- superfici secondarie: distinguibili dal bianco, appena ------------ */
-    --secondary: 348 40% 97.5%;
-    --secondary-foreground: 345 14% 25%;
-    --muted: 345 20% 96.5%;
-    --muted-foreground: 345 7% 47%;  /* grigio neutro caldo, niente rosa nel testo */
-    --accent: 348 55% 95%;
-    --accent-foreground: 346 40% 28%;
+    /* --- i due pastelli: azzurro (secondary) e rosa (accent) ---------------- */
+    --secondary: 213 75% 94%;
+    --secondary-foreground: 218 30% 30%;
+    --muted: 320 25% 96%;
+    --muted-foreground: 320 8% 47%;
+    --accent: 325 85% 94%;
+    --accent-foreground: 322 50% 30%;
 
     --destructive: 4 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 345 18% 92%;
-    --input: 345 18% 92%;
-    --ring: 348 64% 55%;
+    --border: 320 25% 91%;
+    --input: 320 25% 91%;
+    --ring: 322 78% 52%;
   }
 
-  /* Notte: neutra e profonda, il rosa solo sugli accenti — come di giorno. */
+  /* Notte: neutra e profonda, magenta chiaro sugli accenti. */
   @media (prefers-color-scheme: dark) {
     :root {
-      --rosa-50: 345 12% 15%;
-      --rosa-100: 346 14% 19%;
-      --rosa-200: 347 18% 25%;
-      --rosa-300: 347 26% 35%;
-      --rosa-400: 348 40% 48%;
-      --rosa-500: 348 55% 60%;
-      --rosa-600: 348 66% 68%;
-      --rosa-700: 349 74% 78%;
-      --rosa-800: 350 82% 87%;
-      --rosa-900: 351 90% 94%;
+      --rosa-50: 322 12% 15%;
+      --rosa-100: 322 14% 19%;
+      --rosa-200: 322 18% 25%;
+      --rosa-300: 322 28% 35%;
+      --rosa-400: 322 45% 48%;
+      --rosa-500: 322 60% 60%;
+      --rosa-600: 322 75% 66%;
+      --rosa-700: 323 80% 76%;
+      --rosa-800: 324 85% 86%;
+      --rosa-900: 325 92% 94%;
 
-      --background: 345 10% 7%;
-      --foreground: 348 15% 95%;
-      --card: 345 9% 11%;
-      --card-foreground: 348 15% 95%;
+      --background: 322 12% 7%;
+      --foreground: 325 20% 95%;
+      --card: 322 10% 11%;
+      --card-foreground: 325 20% 95%;
 
-      --primary: 348 70% 68%;
-      --primary-foreground: 345 10% 8%;
+      --primary: 322 85% 66%;
+      --primary-foreground: 322 12% 8%;
 
-      --secondary: 345 8% 16%;
-      --secondary-foreground: 348 12% 90%;
-      --muted: 345 8% 16%;
-      --muted-foreground: 346 7% 64%;
-      --accent: 347 12% 22%;
-      --accent-foreground: 349 25% 90%;
+      --secondary: 218 15% 18%;
+      --secondary-foreground: 215 25% 85%;
+      --muted: 322 10% 16%;
+      --muted-foreground: 322 8% 64%;
+      --accent: 322 18% 22%;
+      --accent-foreground: 324 40% 90%;
 
       --destructive: 4 70% 60%;
-      --destructive-foreground: 345 10% 8%;
+      --destructive-foreground: 322 12% 8%;
 
-      --border: 345 8% 20%;
-      --input: 345 8% 20%;
-      --ring: 348 70% 68%;
+      --border: 322 10% 20%;
+      --input: 322 10% 20%;
+      --ring: 322 85% 66%;
     }
   }
 }

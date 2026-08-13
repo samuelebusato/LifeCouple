@@ -16,28 +16,28 @@ import { useColorScheme } from 'react-native';
  */
 
 const chiaro = {
-  sfondo: '#ffffff', //   0 0% 100% — terza taratura: il bianco dello screenshot
-  testo: '#251d1f', //    345 12% 13%
-  tenue: '#806f74', //    345 7% 47%
-  accento: '#d64360', //  348 64% 55%
+  sfondo: '#ffffff', //   quarta taratura "Barbie": bianco + magenta + pastelli
+  testo: '#251d22', //    325 12% 13%
+  tenue: '#816e7b', //    320 8% 47%
+  accento: '#e4259e', //  322 78% 52% — il magenta delle azioni
   suAccento: '#ffffff',
   pericolo: '#d93226', // 4 70% 50%
   carta: '#ffffff',
   /** L'alone dietro un'icona attiva: l'accento a bassissima opacita'. */
-  alone: 'rgba(214,67,96,0.08)',
-  aloneForte: 'rgba(214,67,96,0.14)',
+  alone: 'rgba(228,37,158,0.09)',
+  aloneForte: 'rgba(228,37,158,0.15)',
 };
 
 const scuro = {
-  sfondo: '#141012', //   345 10% 7%
-  testo: '#f4eff1', //    348 15% 95%
-  tenue: '#a99da1', //    346 7% 64%
-  accento: '#e87d92', //  348 70% 68%
+  sfondo: '#141012', //   322 12% 7%
+  testo: '#f5f0f3', //    325 20% 95%
+  tenue: '#ab9ca5', //    322 8% 64%
+  accento: '#f25fbc', //  322 85% 66%
   suAccento: '#141012',
   pericolo: '#e05b52', // 4 70% 60%
-  carta: '#201a1c', //    345 9% 11%
-  alone: 'rgba(232,125,146,0.14)',
-  aloneForte: 'rgba(232,125,146,0.22)',
+  carta: '#1f191d', //    322 10% 11%
+  alone: 'rgba(242,95,188,0.15)',
+  aloneForte: 'rgba(242,95,188,0.22)',
 };
 
 type Vetro = {
@@ -101,11 +101,11 @@ export function useTema(): Tema {
  * basso. E' cio' che da' al vetro qualcosa da lasciar trasparire — su un fondo
  * piatto la sfocatura non ha niente da mostrare e sembra grigia.
  */
-// Terza taratura: quasi tutto bianco — il velo rosa vive solo in fondo alla
-// pagina, dove passa la barra di vetro. Colorare tutta la sfumatura era cio'
-// che faceva sembrare l'app "rosa ovunque" invece che bianca con accenti.
-export const fondoChiaro = ['#ffffff', '#ffffff', '#fff5f8'] as const;
-export const fondoScuro = ['#141012', '#141012', '#1d1417'] as const;
+// Quarta taratura, dallo screenshot Barbie: la pagina attraversa i due
+// pastelli — azzurro in alto, rosa in basso — col bianco al centro dove vive
+// il contenuto. La diagonale la mette `Fondo` (start/end), non i colori.
+export const fondoChiaro = ['#d8eafc', '#ffffff', '#fcdcef'] as const;
+export const fondoScuro = ['#10131a', '#141012', '#1e1119'] as const;
 
 export function fondo(scuroAttivo: boolean) {
   return (scuroAttivo ? fondoScuro : fondoChiaro) as unknown as [string, string, string];

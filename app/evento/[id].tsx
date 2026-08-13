@@ -104,10 +104,14 @@ export default function PaginaEvento() {
   // lo scorrimento negativo. Nativo (useNativeDriver): niente ponte JS a ogni
   // fotogramma, che su un gesto continuo si vede tutto.
   const scorrimento = React.useRef(new Animated.Value(0)).current;
+  // Due comportamenti in una scala sola (riferimento: lo screenshot yacht):
+  // tirando GIU' l'immagine si stira (fino a 1.9), scorrendo la pagina VERSO
+  // IL BASSO si ingrandisce "un po'" (fino a 1.12) — dentro la card ritagliata,
+  // quindi cresce senza uscire dai suoi angoli.
   const scalaTesta = scorrimento.interpolate({
-    inputRange: [-320, 0],
-    outputRange: [2.1, 1],
-    extrapolateRight: 'clamp',
+    inputRange: [-320, 0, 320],
+    outputRange: [1.9, 1, 1.12],
+    extrapolate: 'clamp',
   });
   const spostaTesta = scorrimento.interpolate({
     inputRange: [-320, 0],
@@ -270,12 +274,14 @@ export default function PaginaEvento() {
             { useNativeDriver: true }
           )}
         >
-          {/* --- la testa: foto grande o fascia sfumata ---------------------
-              Si tocca per aprire il visore; tirando in giu' si allarga. */}
+          {/* --- la testa: una CARD arrotondata coi margini, come lo yacht
+              dello screenshot — non piu' a tutto schermo. Si tocca per aprire
+              il visore; si allarga tirando giu' e un po' anche scorrendo. */}
+          <SafeAreaView edges={['top']} className="px-3 pt-1">
           <Pressable
             disabled={foto.length === 0}
             onPress={() => setVisore(0)}
-            style={{ height: copertina ? 300 : 190, overflow: 'hidden' }}
+            style={{ height: copertina ? 330 : 190, overflow: 'hidden', borderRadius: 40 }}
           >
             <Animated.View
               style={{
@@ -303,11 +309,13 @@ export default function PaginaEvento() {
               style={{ position: 'absolute', inset: 0 }}
             />
 
-            <SafeAreaView edges={['top']} style={{ position: 'absolute', left: 16, top: 0 }}>
+            {/* La card sta gia' sotto la status bar: il back vive DENTRO
+                l'immagine, in alto a sinistra, come nello screenshot. */}
+            <View style={{ position: 'absolute', left: 14, top: 14 }}>
               <TondoVetro lato={42} tinto={false} onPress={() => router.back()}>
                 <ChevronLeft color={tema.c.testo} size={22} />
               </TondoVetro>
-            </SafeAreaView>
+            </View>
 
             <View className="absolute inset-x-0 bottom-0 gap-1 p-5">
               <View className="flex-row items-center gap-1.5">
@@ -327,6 +335,7 @@ export default function PaginaEvento() {
               </Text>
             </View>
           </Pressable>
+          </SafeAreaView>
 
           {/* --- le righe di dettaglio, come nello screenshot ---------------- */}
           <View className="gap-4 px-5 pt-4">

@@ -56,7 +56,7 @@ export function MappaVera({
           key={l.id}
           coordinate={{ latitude: l.lat, longitude: l.lng }}
           title={l.nome}
-          pinColor={l.stato === 'visitato' ? '#d64360' : '#816a6f'}
+          pinColor={l.stato === 'visitato' ? '#e4259e' : '#816a6f'}
           onPress={() => onLuogo(l)}
           onCalloutPress={() => onLuogo(l)}
         />

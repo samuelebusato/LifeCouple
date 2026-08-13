@@ -27,7 +27,11 @@ export function Fondo() {
   return (
     <LinearGradient
       colors={fondo(scuro)}
-      locations={[0, 0.55, 1]}
+      locations={[0, 0.5, 1]}
+      // Diagonale, come lo sfondo dello screenshot Barbie: azzurro che entra
+      // dall'alto a sinistra, rosa che esce in basso a destra.
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0.9, y: 1 }}
       style={StyleSheet.absoluteFill}
       pointerEvents="none"
     />

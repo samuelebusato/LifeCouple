@@ -82,6 +82,13 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-38 — Quarta taratura: la palette "Barbie" e l'hero a card
+**Chiesto dall'utente il 2026-08-13 (notte), con due screenshot come riferimento.**
+
+- **Palette dallo screenshot "GLOW LIKE"**: magenta pieno (322 78% 52%) per le azioni, **due pastelli** come comprimari — azzurro (`secondary`) e rosa (`accent`) — e il bianco per il contenuto. Il fondo delle schermate attraversa i due pastelli **in diagonale** (azzurro in alto, rosa in basso), come lo sfondo del riferimento. Quarta tinta in un giorno: la lezione cumulativa è che la palette su token rende ogni ripensamento un cambio di valori, non un refactor.
+- **Hero dell'evento a card** (screenshot yacht): l'immagine non è più a tutto schermo ma una carta arrotondata (raggio 40) coi margini, col bottone di ritorno dentro l'immagine. **Scorrendo verso il basso si ingrandisce un po'** (scala fino a 1.12, dentro il ritaglio) oltre allo stiramento sul tiro verso il basso — un'unica interpolazione, animazione nativa.
+- **Preferiti**: la riga di aggiunta stava sotto la pillola di vetro (`SPAZIO_BARRA - 40`); ora rispetta l'ingombro intero.
+
 ### D-37 — I ristoranti si scelgono, non si scrivono — e la ricerca passa a Google
 **Chiesto dall'utente il 2026-08-13 (sera, secondo giro di feedback).** Migrazione `0013`.
 
@@ -706,7 +713,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 ✅ **Redesign "Quarzo rosa" col vetro liquido** (D-35, 2026-08-13 sera): palette rosa-bianco su token (prima taratura giudicata viola sull'iPhone e corretta), vetro nativo iOS 26 con ripiego a tre strati, toolbar volante che sparisce a tastiera aperta, galleria stile Foto con **cartelle** (`0011`), pagina evento con hero, foto che si allargano e ingranaggio a cinque azioni, ricerca luoghi **Photon/OSM** (senza posizione, per scelta), striscia giorni a scorrimento libero (B-06). Ristoranti sulla mappa e dentro gli eventi (D-36, `0012`), che corregge anche B-05.
 
 **Cosa manca** (in ordine):
-0. **Applicare `0013`** (colonne Google sui ristoranti + scioglimento che le copia) e **inserire la chiave** `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` (poi riavviare Metro): senza chiave la ricerca luoghi/ristoranti dichiara di non poter cercare (D-37).
+0. ~~Applicare `0013`~~ ✅ fatto il 2026-08-13 notte. Resta: **inserire la chiave** `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` (poi riavviare Metro): senza chiave la ricerca luoghi/ristoranti dichiara di non poter cercare (D-37).
 1. ~~Applicare `0012`~~ ✅ fatto il 2026-08-13 sera (54 test verdi dopo). **Rigenerare i tipi** resta (`lib/database.types.ts` ha blocchi a mano: 0011, 0012, 0013).
 2. **Rieseguire e estendere i test avversariali**: `npm run test:rls` dopo la 0012, più il caso di B-05 (raggiungibilità dei riferimenti dopo la rottura), oggi dichiarato e non coperto.
 3. **Riprovare sull'iPhone il giro completo**: palette, toolbar, vetro (su iOS 26 è quello di sistema), tastiera, striscia giorni, ricerca, importazione, foto e cartelle. B-02 da confermare chiuso su iOS.

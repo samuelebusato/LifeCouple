@@ -19,7 +19,7 @@ export default function Index() {
   if (authLoading || (session && (coppiaLoading || rimandatoLoading))) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator color="#d64360" />
+        <ActivityIndicator color="#e4259e" />
       </View>
     );
   }

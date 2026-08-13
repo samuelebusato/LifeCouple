@@ -491,7 +491,9 @@ export default function Preferiti() {
               produce solo posti che non esistono. */}
           <View
             className="gap-2 px-5 pt-2"
-            style={{ paddingBottom: tastieraAperta ? 10 : SPAZIO_BARRA - 40 }}
+            // SPAZIO_BARRA intero, non ridotto: con -40 la riga di aggiunta
+            // finiva sotto la pillola di vetro (feedback dal telefono).
+            style={{ paddingBottom: tastieraAperta ? 10 : SPAZIO_BARRA }}
           >
             {erroreForm && <Text className="text-sm text-destructive">{erroreForm}</Text>}
             {tipo === 'film' ? (

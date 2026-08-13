@@ -19,7 +19,7 @@ export function useAspetto(e: Evento) {
 
 /** Versione senza hook, per chi disegna fuori da un componente (pallini del mese). */
 export const aspetto = (e: Evento, scuro = false) => {
-  const accento = scuro ? '#ec798e' : '#d64360';
+  const accento = scuro ? '#f25fbc' : '#e4259e';
   if (e.speciale) return { Icona: Sparkles, colore: accento };
   if (e.tipo === 'romantico') return { Icona: Heart, colore: accento };
   if (e.tipo === 'vacanza') return { Icona: Palmtree, colore: scuro ? '#7fb894' : '#4f7a5f' };

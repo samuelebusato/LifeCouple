@@ -73,7 +73,7 @@ export function Vetro({
         <GlassView
           style={{ borderRadius: raggio, overflow: 'hidden' as const, width: '100%' as const }}
           glassEffectStyle="regular"
-          tintColor={tinto ? (scuro ? 'rgba(232,125,146,0.35)' : 'rgba(214,67,96,0.30)') : undefined}
+          tintColor={tinto ? (scuro ? 'rgba(242,95,188,0.35)' : 'rgba(228,37,158,0.28)') : undefined}
         >
           {children}
         </GlassView>
@@ -93,8 +93,8 @@ export function Vetro({
           colors={
             tinto
               ? scuro
-                ? ['rgba(236,121,142,0.30)', 'rgba(236,121,142,0.12)']
-                : ['rgba(255,255,255,0.62)', 'rgba(255,214,225,0.48)']
+                ? ['rgba(242,95,188,0.30)', 'rgba(242,95,188,0.12)']
+                : ['rgba(255,255,255,0.62)', 'rgba(252,205,233,0.48)']
               : (vetro.velo as unknown as [string, string])
           }
           style={StyleSheet.absoluteFill}
