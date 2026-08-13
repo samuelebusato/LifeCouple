@@ -3,7 +3,7 @@ import { View, Pressable, ActivityIndicator, ScrollView, TextInput } from 'react
 import { MapPin, Search, X } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Vetro } from '@/components/ui/vetro';
-import { useRicercaLuoghi, ATTRIBUZIONE_OSM, type Trovato } from '@/lib/ricerca-luoghi';
+import { useRicercaLuoghi, ATTRIBUZIONE, type Trovato } from '@/lib/ricerca-luoghi';
 import { useTema } from '@/lib/tema';
 import { t } from '@/lib/i18n';
 
@@ -22,13 +22,17 @@ export function CercaLuogo({
   onScegli,
   placeholder,
   autoFocus,
+  soloRistoranti = false,
 }: {
   onScegli: (l: Trovato) => void;
   placeholder?: string;
   autoFocus?: boolean;
+  /** Solo ristoranti veri: e' il vincolo dei preferiti (D-37). */
+  soloRistoranti?: boolean;
 }) {
   const { c } = useTema();
-  const { query, setQuery, risultati, cercando, errore, pulisci } = useRicercaLuoghi();
+  const { query, setQuery, risultati, cercando, errore, pulisci } =
+    useRicercaLuoghi(soloRistoranti);
 
   return (
     <View className="gap-2">
@@ -88,7 +92,7 @@ export function CercaLuogo({
             </ScrollView>
             {risultati.length > 0 && (
               <Text className="px-3 pb-2 pt-1 text-[10px] text-muted-foreground">
-                {ATTRIBUZIONE_OSM}
+                {ATTRIBUZIONE}
               </Text>
             )}
           </View>

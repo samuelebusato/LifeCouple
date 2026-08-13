@@ -13,12 +13,13 @@ module.exports = {
         'serif-bold': ['Fraunces_700Bold'],
       },
       borderRadius: {
-        // Raggi ampi: il vetro ha bisogno di angoli morbidi, altrimenti il
-        // bordo luminoso spezza invece di accompagnare.
-        xl: '16px',
-        '2xl': '22px',
-        '3xl': '28px',
-        '4xl': '34px',
+        // Angoli **dolci** (chiesti il 2026-08-13 sera): raggi ancora piu'
+        // ampi, da superellisse — il vetro e le carte devono sembrare sassi
+        // levigati, non schede smussate.
+        xl: '20px',
+        '2xl': '26px',
+        '3xl': '32px',
+        '4xl': '40px',
       },
       // Token in variabili CSS (global.css): la palette si cambia in un punto solo,
       // e i componenti in stile shadcn/RNR li trovano coi nomi che si aspettano.

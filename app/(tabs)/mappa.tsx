@@ -292,6 +292,7 @@ export default function Mappa() {
             centro={centroMappa}
             luoghi={luoghi}
             ristoranti={ristoranti}
+            spazioSotto={SPAZIO_BARRA - 20}
             onLuogo={(l) => setScelto(l)}
             onRistorante={(r) => setRistoranteAperto(r)}
             onPuntoNuovo={(p) => {

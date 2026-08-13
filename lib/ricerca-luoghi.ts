@@ -1,135 +1,132 @@
 import * as React from 'react';
-import { lingua } from '@/lib/i18n';
+import { lingua, t } from '@/lib/i18n';
 
 /**
- * Ricerca di luoghi mentre si digita, su dati **OpenStreetMap**.
- * Scelta dell'utente il 2026-08-13 fra quattro strade.
+ * Ricerca di luoghi mentre si digita — **Google Places API (New)**.
+ * Deciso dall'utente il 2026-08-13 (sera), al posto di Photon/OSM: i risultati
+ * di Google sono quelli che la gente si aspetta, e le **foto dei ristoranti**
+ * diventano le copertine in app.
  *
- * ## Perche' Photon e non Nominatim
+ * ## La chiave
  *
- * Nominatim e' il servizio "ufficiale" di OSM, ma la sua politica d'uso
- * **vieta esplicitamente l'autocompletamento** ("Auto-complete search — this is
- * not supported") e impone un massimo di una richiesta al secondo. Cercare
- * mentre si digita e' esattamente l'uso che vieta: costruirci sopra
- * significherebbe farsi bloccare l'indirizzo IP a uso reale, e scoprirlo dagli
- * utenti. **Photon** (di Komoot) usa gli stessi dati OpenStreetMap ed e' fatto
- * apposta per l'autocompletamento, senza chiave e senza account.
+ * `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` (l'utente la creera' su Google
+ * Cloud: Places API (New) abilitata + fatturazione). Finche' manca, la ricerca
+ * **dice che manca** invece di fingere di non trovare niente: un campo muto
+ * sembra un bug, un campo che spiega e' uno stato.
  *
  * ## Cosa esce da qui, e cosa no
  *
- * Esce **solo il testo digitato** e la lingua. Photon accetterebbe anche
- * `lat`/`lon` per ordinare i risultati per vicinanza — e i risultati sarebbero
- * migliori — ma sarebbe la posizione della coppia a uscire, che e' cio' che
- * D-05 e lo scostamento dichiarato in D-32 hanno evitato finora. L'utente ha
- * scelto la versione senza posizione **sapendo** che i risultati sono piu'
- * deboli. Non aggiungere quei due parametri senza una decisione nuova.
+ * Esce **solo il testo digitato** e la lingua — niente coordinate, niente
+ * `locationBias`: e' la stessa scelta fatta con OSM (D-05), e resta valida col
+ * fornitore nuovo. Non aggiungere la posizione senza una decisione esplicita.
  *
  * ## Attribuzione
  *
- * I dati sono © contributori OpenStreetMap (ODbL) e l'attribuzione va mostrata
- * dove compaiono i risultati: `ATTRIBUZIONE_OSM`.
+ * Mostrare risultati Places fuori da una mappa Google richiede l'attribuzione
+ * "Google": sta in `ATTRIBUZIONE`, sotto l'elenco dei suggerimenti.
  */
 
-const ENDPOINT = 'https://photon.komoot.io/api/';
+const CHIAVE = process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY;
+const ENDPOINT = 'https://places.googleapis.com/v1/places:searchText';
 
-export const ATTRIBUZIONE_OSM = '© OpenStreetMap';
+export const ATTRIBUZIONE = 'Google';
 
 export type Trovato = {
-  /** Chiave stabile per le liste: Photon non restituisce un id proprio. */
+  /** Chiave stabile per le liste. */
   chiave: string;
-  /** Quello che si legge in grande: il nome del posto, o la via. */
   nome: string;
-  /** Citta', provincia, paese: quello che serve a distinguere due omonimi. */
+  /** Indirizzo formattato: quello che distingue due omonimi. */
   dettaglio: string;
   lat: number;
   lng: number;
+  /** L'id Google del posto: sui ristoranti si salva (0013). */
+  placeId?: string;
+  /** Nome-risorsa della prima foto Google: diventa la copertina. */
+  fotoNome?: string;
 };
 
-type Proprieta = {
-  name?: string;
-  street?: string;
-  housenumber?: string;
-  city?: string;
-  district?: string;
-  county?: string;
-  state?: string;
-  country?: string;
-  postcode?: string;
-  osm_id?: number;
-  osm_type?: string;
+type PostoGoogle = {
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  location?: { latitude?: number; longitude?: number };
+  photos?: { name?: string }[];
 };
 
-function componi(p: Proprieta) {
-  const via = [p.street, p.housenumber].filter(Boolean).join(' ');
-  const nome = p.name || via || p.city || p.state || p.country || '';
-  const dettaglio = [
-    p.name && via ? via : null,
-    p.postcode,
-    p.city ?? p.district ?? p.county,
-    p.state,
-    p.country,
-  ]
-    .filter(Boolean)
-    .join(', ');
-  return { nome, dettaglio };
-}
-
-/** Una ricerca singola. Chi la usa deve gia' aver aspettato (vedi `useRicercaLuoghi`). */
-export async function cercaLuoghi(query: string, segnale?: AbortSignal): Promise<Trovato[]> {
+/**
+ * Una ricerca singola. `soloRistoranti` restringe ai ristoranti: e' il modo in
+ * cui i preferiti impediscono di inventare posti che non esistono.
+ */
+export async function cercaLuoghi(
+  query: string,
+  segnale?: AbortSignal,
+  soloRistoranti = false
+): Promise<Trovato[]> {
   const q = query.trim();
   if (q.length < 3) return [];
+  if (!CHIAVE) throw new Error(t.mappa.mancaChiave);
 
-  // ⚠️ Niente `lang=it`: Photon lo RIFIUTA con un 400 ("Supported are:
-  // default, de, en, fr") e ogni digitazione fallirebbe — e' esattamente il
-  // bug trovato sull'iPhone il 2026-08-13. Il default restituisce i nomi
-  // nella lingua locale del posto, che per i luoghi italiani e' l'italiano.
-  const url =
-    `${ENDPOINT}?q=${encodeURIComponent(q)}&limit=8` + (lingua === 'en' ? '&lang=en' : '');
-
-  const r = await fetch(url, {
+  const r = await fetch(ENDPOINT, {
+    method: 'POST',
     signal: segnale,
     headers: {
-      // Identificarsi e' quello che chiedono i servizi OSM in cambio dell'uso
-      // gratuito. Un client anonimo e' il primo a essere bloccato.
-      'User-Agent': 'LifeCouple/0.1 (app di coppia; contatto via GitHub samuelebusato/LifeCouple)',
-      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': CHIAVE,
+      // Solo i campi che si usano: il conto di Google si fa per campo chiesto.
+      'X-Goog-FieldMask':
+        'places.id,places.displayName,places.formattedAddress,places.location,places.photos',
     },
+    body: JSON.stringify({
+      textQuery: q,
+      languageCode: lingua,
+      pageSize: 8,
+      ...(soloRistoranti ? { includedType: 'restaurant' } : {}),
+    }),
   });
   if (!r.ok) throw new Error(`ricerca non riuscita (${r.status})`);
 
-  const dati = (await r.json()) as {
-    features?: { geometry?: { coordinates?: [number, number] }; properties?: Proprieta }[];
-  };
-
-  const visti = new Set<string>();
+  const dati = (await r.json()) as { places?: PostoGoogle[] };
   const fuori: Trovato[] = [];
-  for (const f of dati.features ?? []) {
-    const c = f.geometry?.coordinates;
-    const p = f.properties ?? {};
-    if (!c || c.length < 2) continue;
-    const { nome, dettaglio } = componi(p);
-    if (!nome) continue;
-    // Photon restituisce a volte lo stesso posto due volte (nodo e via):
-    // due righe identiche in un elenco di suggerimenti sembrano un difetto.
-    const chiave = `${p.osm_type ?? '?'}${p.osm_id ?? `${c[1]},${c[0]}`}`;
-    const impronta = `${nome}|${dettaglio}`;
-    if (visti.has(impronta)) continue;
-    visti.add(impronta);
-    fuori.push({ chiave, nome, dettaglio, lat: c[1], lng: c[0] });
+  for (const p of dati.places ?? []) {
+    const nome = p.displayName?.text;
+    const lat = p.location?.latitude;
+    const lng = p.location?.longitude;
+    if (!nome || lat === undefined || lng === undefined) continue;
+    fuori.push({
+      chiave: p.id ?? `${lat},${lng}`,
+      nome,
+      dettaglio: p.formattedAddress ?? '',
+      lat,
+      lng,
+      placeId: p.id,
+      fotoNome: p.photos?.[0]?.name,
+    });
   }
   return fuori;
 }
 
 /**
+ * L'indirizzo dell'immagine di una foto Places, dal suo nome-risorsa.
+ * Si chiede a Google al momento di mostrarla (niente copia nostra): e' la
+ * strada che le condizioni d'uso di Places prevedono per le foto.
+ */
+export function urlFotoGoogle(nome: string, larghezza = 900) {
+  if (!CHIAVE) return undefined;
+  return `https://places.googleapis.com/v1/${nome}/media?maxWidthPx=${larghezza}&key=${CHIAVE}`;
+}
+
+/** C'e' la chiave? Chi disegna puo' dire "manca" senza provare una fetch. */
+export const CHIAVE_PRESENTE = !!CHIAVE;
+
+/**
  * La ricerca pronta da collegare a un campo di testo.
  *
  * **Aspetta 350 ms** dopo l'ultimo tasto e **annulla la richiesta precedente**:
- * senza la prima, si manda una richiesta per lettera; senza la seconda, la
- * risposta di "ri" puo' arrivare dopo quella di "risto" e sovrascrivere i
- * risultati giusti con quelli vecchi. E' un difetto che si vede solo su rete
- * lenta, cioe' mai in prova e sempre in uso.
+ * senza la prima, una richiesta per lettera (e Google le fattura); senza la
+ * seconda, la risposta di "ri" puo' arrivare dopo quella di "risto" e
+ * sovrascrivere i risultati giusti con quelli vecchi.
  */
-export function useRicercaLuoghi() {
+export function useRicercaLuoghi(soloRistoranti = false) {
   const [query, setQuery] = React.useState('');
   const [risultati, setRisultati] = React.useState<Trovato[]>([]);
   const [cercando, setCercando] = React.useState(false);
@@ -148,7 +145,7 @@ export function useRicercaLuoghi() {
     setCercando(true);
     const attesa = setTimeout(async () => {
       try {
-        const r = await cercaLuoghi(q, controllo.signal);
+        const r = await cercaLuoghi(q, controllo.signal, soloRistoranti);
         setRisultati(r);
         setErrore(null);
       } catch (e: unknown) {
@@ -165,7 +162,7 @@ export function useRicercaLuoghi() {
       clearTimeout(attesa);
       controllo.abort();
     };
-  }, [query]);
+  }, [query, soloRistoranti]);
 
   const pulisci = React.useCallback(() => {
     setQuery('');

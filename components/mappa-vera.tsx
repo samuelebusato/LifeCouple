@@ -20,6 +20,7 @@ export function MappaVera(_: {
   centro: { latitude: number; longitude: number };
   luoghi: Luogo[];
   ristoranti?: RistoranteSuMappa[];
+  spazioSotto?: number;
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;
   onPuntoNuovo: (p: { lat: number; lng: number }) => void;

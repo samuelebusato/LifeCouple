@@ -82,6 +82,15 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-37 — I ristoranti si scelgono, non si scrivono — e la ricerca passa a Google
+**Chiesto dall'utente il 2026-08-13 (sera, secondo giro di feedback).** Migrazione `0013`.
+
+**Il vincolo**: un ristorante non è testo libero — si **seleziona** fra quelli veri (Google Places, `includedType: restaurant`) e la sua **foto su Google diventa la copertina** in app. Dal risultato nascono insieme il luogo (mappa), l'elemento (lista) e l'identità (`google_place_id`, `foto_google`): un ingresso solo, niente ristoranti a metà. I film restano testo libero: un film non deve stare su una mappa.
+
+**Google al posto di Photon/OSM** è decisione esplicita dell'utente, che ribalta la scelta del pomeriggio (fatta quando l'alternativa era "nessuna chiave, nessun costo"). Ora la chiave serve: `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` — **infrastruttura pronta, chiave dell'utente in arrivo**; finché manca, la ricerca **dice che manca** invece di tacere. Restano ferme due cose: **esce solo il testo digitato** (mai la posizione — D-05 sopravvive al cambio di fornitore) e la foto si chiede a Google **al momento di mostrarla** (nome-risorsa salvato, mai copie — è ciò che le condizioni Places prevedono).
+
+**Terza taratura del design, dallo stesso giro di feedback**: palette **bianca** (il colore vive solo sugli accenti — colorare le superfici era ciò che faceva sembrare l'app "rosa ovunque"), angoli più dolci (raggi 20→40), toolbar con larghezze esplicite a ogni livello dopo che lo stretch si era rotto su **due** percorsi diversi (BlurView e GlassView), striscia giorni ad **altezza fissa** (contendeva lo spazio verticale e i numeri finivano coperti), `mapPadding` sulla mappa (logo e callout uscivano sotto la barra), header dell'evento **elastico** (si allarga tirando giù) e **visore a pagine** (tocco sulla foto → schermo pieno → scorri le altre col dito).
+
 ### D-36 — Il ristorante entra nel modello: sulla mappa, e dentro l'evento
 **Chiesto dall'utente il 2026-08-13 (sera).** Migrazione `0012`.
 
@@ -697,7 +706,8 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 ✅ **Redesign "Quarzo rosa" col vetro liquido** (D-35, 2026-08-13 sera): palette rosa-bianco su token (prima taratura giudicata viola sull'iPhone e corretta), vetro nativo iOS 26 con ripiego a tre strati, toolbar volante che sparisce a tastiera aperta, galleria stile Foto con **cartelle** (`0011`), pagina evento con hero, foto che si allargano e ingranaggio a cinque azioni, ricerca luoghi **Photon/OSM** (senza posizione, per scelta), striscia giorni a scorrimento libero (B-06). Ristoranti sulla mappa e dentro gli eventi (D-36, `0012`), che corregge anche B-05.
 
 **Cosa manca** (in ordine):
-1. **Applicare `0012`** sul progetto Supabase (l'app ora legge `evento.elemento_id` e `elemento_lista.luogo_id`: senza, preferiti/mappa/evento falliscono) e **rigenerare i tipi** (`lib/database.types.ts` ha tre blocchi scritti a mano: 0011 e 0012).
+0. **Applicare `0013`** (colonne Google sui ristoranti + scioglimento che le copia) e **inserire la chiave** `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` (poi riavviare Metro): senza chiave la ricerca luoghi/ristoranti dichiara di non poter cercare (D-37).
+1. ~~Applicare `0012`~~ ✅ fatto il 2026-08-13 sera (54 test verdi dopo). **Rigenerare i tipi** resta (`lib/database.types.ts` ha blocchi a mano: 0011, 0012, 0013).
 2. **Rieseguire e estendere i test avversariali**: `npm run test:rls` dopo la 0012, più il caso di B-05 (raggiungibilità dei riferimenti dopo la rottura), oggi dichiarato e non coperto.
 3. **Riprovare sull'iPhone il giro completo**: palette, toolbar, vetro (su iOS 26 è quello di sistema), tastiera, striscia giorni, ricerca, importazione, foto e cartelle. B-02 da confermare chiuso su iOS.
 4. **Decidere la forma del link d'invito** fra le tre strade qui sopra. Se (b) o (c), serve la route `app/invito/[token].tsx`.

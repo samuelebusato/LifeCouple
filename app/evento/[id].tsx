@@ -1,13 +1,15 @@
 import * as React from 'react';
 import {
   View,
-  ScrollView,
   ActivityIndicator,
   Pressable,
   KeyboardAvoidingView,
   Platform,
   Modal,
   Image,
+  Animated,
+  FlatList,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -94,7 +96,24 @@ export default function PaginaEvento() {
   const [bozzaData, setBozzaData] = React.useState(new Date());
   const [bozzaFine, setBozzaFine] = React.useState(new Date());
   const [testoData, setTestoData] = React.useState('');
-  const [fotoAperta, setFotoAperta] = React.useState<string | null>(null);
+  /** Indice della foto aperta a schermo pieno (null = visore chiuso). */
+  const [visore, setVisore] = React.useState<number | null>(null);
+  const { width: larghezzaSchermo } = useWindowDimensions();
+
+  // L'immagine di testa si **allarga tirando verso il basso**: la scala segue
+  // lo scorrimento negativo. Nativo (useNativeDriver): niente ponte JS a ogni
+  // fotogramma, che su un gesto continuo si vede tutto.
+  const scorrimento = React.useRef(new Animated.Value(0)).current;
+  const scalaTesta = scorrimento.interpolate({
+    inputRange: [-320, 0],
+    outputRange: [2.1, 1],
+    extrapolateRight: 'clamp',
+  });
+  const spostaTesta = scorrimento.interpolate({
+    inputRange: [-320, 0],
+    outputRange: [-160, 0],
+    extrapolateRight: 'clamp',
+  });
 
   const mio = evento?.autore_id === session?.user.id;
 
@@ -240,26 +259,44 @@ export default function PaginaEvento() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView
+        <Animated.ScrollView
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 130 }}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scorrimento } } }],
+            { useNativeDriver: true }
+          )}
         >
-          {/* --- la testa: foto grande o fascia sfumata --------------------- */}
-          <View style={{ height: copertina ? 300 : 190 }}>
-            {copertina ? (
-              <Image
-                source={{ uri: copertina }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="cover"
-              />
-            ) : (
-              <LinearGradient
-                colors={tema.scuro ? ['#3a2027', '#241417'] : ['#ffd6e2', '#fff2f6']}
-                style={{ flex: 1 }}
-              />
-            )}
+          {/* --- la testa: foto grande o fascia sfumata ---------------------
+              Si tocca per aprire il visore; tirando in giu' si allarga. */}
+          <Pressable
+            disabled={foto.length === 0}
+            onPress={() => setVisore(0)}
+            style={{ height: copertina ? 300 : 190, overflow: 'hidden' }}
+          >
+            <Animated.View
+              style={{
+                width: '100%',
+                height: '100%',
+                transform: [{ translateY: spostaTesta }, { scale: scalaTesta }],
+              }}
+            >
+              {copertina ? (
+                <Image
+                  source={{ uri: copertina }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <LinearGradient
+                  colors={tema.scuro ? ['#2b1d21', '#1b1315'] : ['#ffe4ec', '#fff8fa']}
+                  style={{ flex: 1 }}
+                />
+              )}
+            </Animated.View>
             <LinearGradient
               colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0)', copertina ? 'rgba(18,7,11,0.82)' : 'rgba(18,7,11,0.25)']}
               locations={[0, 0.4, 1]}
@@ -289,7 +326,7 @@ export default function PaginaEvento() {
                 {evento.titolo}
               </Text>
             </View>
-          </View>
+          </Pressable>
 
           {/* --- le righe di dettaglio, come nello screenshot ---------------- */}
           <View className="gap-4 px-5 pt-4">
@@ -336,12 +373,10 @@ export default function PaginaEvento() {
                 <Text className="text-sm text-muted-foreground">{t.evento.fotoInArrivo}</Text>
               )}
               <View className="flex-row flex-wrap">
-                {foto.map((f) => (
+                {foto.map((f, indice) => (
                   <View key={f.id} className="w-1/2 p-1">
-                    <Pressable
-                      onPress={() => url[f.chiave_storage] && setFotoAperta(url[f.chiave_storage])}
-                    >
-                      <View className="aspect-[4/3] overflow-hidden rounded-3xl bg-card">
+                    <Pressable onPress={() => url[f.chiave_storage] && setVisore(indice)}>
+                      <View className="aspect-[4/3] overflow-hidden rounded-4xl bg-card">
                         {url[f.chiave_storage] ? (
                           <Image
                             source={{ uri: url[f.chiave_storage] }}
@@ -415,7 +450,7 @@ export default function PaginaEvento() {
               </View>
             </View>
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
 
       {/* --- L'INGRANAGGIO: il ventaglio delle azioni ----------------------- */}
@@ -457,24 +492,45 @@ export default function PaginaEvento() {
         </TondoVetro>
       </SafeAreaView>
 
-      {/* --- la foto allargata ---------------------------------------------- */}
+      {/* --- il visore: schermo pieno, e col dito si scorrono le altre ------- */}
       <Modal
-        visible={!!fotoAperta}
+        visible={visore !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => setFotoAperta(null)}
+        onRequestClose={() => setVisore(null)}
       >
-        <View className="flex-1" style={{ backgroundColor: 'rgba(12,6,9,0.95)' }}>
+        <View className="flex-1" style={{ backgroundColor: 'rgba(12,6,9,0.96)' }}>
           <SafeAreaView className="flex-1">
-            {fotoAperta && (
-              <Image
-                source={{ uri: fotoAperta }}
-                style={{ flex: 1, width: '100%' }}
-                resizeMode="contain"
-              />
-            )}
+            <FlatList
+              data={foto}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(f) => f.id}
+              initialScrollIndex={visore ?? 0}
+              getItemLayout={(_, i) => ({
+                length: larghezzaSchermo,
+                offset: i * larghezzaSchermo,
+                index: i,
+              })}
+              renderItem={({ item: f }) => (
+                <View style={{ width: larghezzaSchermo }}>
+                  {url[f.chiave_storage] ? (
+                    <Image
+                      source={{ uri: url[f.chiave_storage] }}
+                      style={{ flex: 1, width: '100%' }}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <View className="flex-1 items-center justify-center">
+                      <ActivityIndicator color={tema.c.accento} />
+                    </View>
+                  )}
+                </View>
+              )}
+            />
             <View className="items-start px-5 pb-3">
-              <TondoVetro lato={48} tinto={false} onPress={() => setFotoAperta(null)}>
+              <TondoVetro lato={48} tinto={false} onPress={() => setVisore(null)}>
                 <X color={tema.c.testo} size={20} />
               </TondoVetro>
             </View>

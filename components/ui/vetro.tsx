@@ -45,7 +45,7 @@ type VetroProps = {
 export function Vetro({
   children,
   style,
-  raggio = 28,
+  raggio = 32,
   intensita,
   ombra = true,
   tinto = false,
@@ -67,10 +67,13 @@ export function Vetro({
   if (vetroNativo && GlassView) {
     return (
       <View style={[stileOmbra, { borderRadius: raggio }, style]}>
+        {/* width 100% ESPLICITO: GlassView e' una vista nativa e non sempre
+            partecipa allo stretch di Yoga — era una delle cause della barra
+            con le voci ammassate su un lato. */}
         <GlassView
-          style={{ borderRadius: raggio, overflow: 'hidden' as const }}
+          style={{ borderRadius: raggio, overflow: 'hidden' as const, width: '100%' as const }}
           glassEffectStyle="regular"
-          tintColor={tinto ? (scuro ? 'rgba(236,121,142,0.35)' : 'rgba(214,67,96,0.30)') : undefined}
+          tintColor={tinto ? (scuro ? 'rgba(232,125,146,0.35)' : 'rgba(214,67,96,0.30)') : undefined}
         >
           {children}
         </GlassView>
@@ -132,7 +135,7 @@ export function BottoneVetro({
   onPress,
   disabled,
   variante = 'neutro',
-  raggio = 22,
+  raggio = 26,
   style,
   altezza = 54,
 }: {
@@ -225,7 +228,7 @@ export function TondoVetro({
 export function CartaVetro({
   children,
   style,
-  raggio = 26,
+  raggio = 30,
   ombra = true,
 }: {
   children?: React.ReactNode;

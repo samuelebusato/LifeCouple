@@ -23,6 +23,7 @@ export function MappaVera({
   centro,
   luoghi,
   ristoranti = [],
+  spazioSotto = 0,
   onLuogo,
   onRistorante,
   onPuntoNuovo,
@@ -30,6 +31,9 @@ export function MappaVera({
   centro: { latitude: number; longitude: number };
   luoghi: Luogo[];
   ristoranti?: RistoranteSuMappa[];
+  /** Quanto della mappa e' coperto in basso (la barra volante): logo Apple,
+   *  callout e bussola si spostano sopra, invece di finire sotto il vetro. */
+  spazioSotto?: number;
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;
   onPuntoNuovo: (p: { lat: number; lng: number }) => void;
@@ -37,6 +41,7 @@ export function MappaVera({
   return (
     <MapView
       style={{ flex: 1 }}
+      mapPadding={{ top: 0, left: 0, right: 0, bottom: spazioSotto }}
       initialRegion={{ ...centro, latitudeDelta: 0.5, longitudeDelta: 0.5 }}
       // `region` controllata renderebbe la mappa un pendolo che torna sempre al
       // centro; per "vai al risultato cercato" basta la key sul centro (sotto).

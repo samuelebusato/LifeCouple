@@ -122,6 +122,7 @@ const it = {
     permessoNegato: 'Senza il permesso di posizione non possiamo segnare dove sei.',
     cerca: 'Cerca un posto…',
     cercaNota: 'La ricerca manda solo quello che scrivi, mai dove sei.',
+    mancaChiave: 'Manca la chiave Google: EXPO_PUBLIC_GOOGLE_PLACES_KEY nel .env.',
     nessunEventoRistorante: 'Nessuna serata legata a questo ristorante, per ora.',
     soloTelefono: 'La mappa vera si vede sul telefono. Qui resta l’elenco.',
     senzaComponente:
@@ -190,6 +191,7 @@ const it = {
     aggiungiCopertina: 'Aggiungi una copertina',
     cambiaCopertina: 'Cambia copertina',
     aggiungiPosto: 'Aggiungi il posto',
+    cercaRistorante: 'Cerca un ristorante',
     daFare: 'Da fare',
     fatti: 'Già fatti',
     fatto: 'fatto',
@@ -396,6 +398,7 @@ const en: Dizionario = {
     permessoNegato: 'Without location permission we can’t pin where you are.',
     cerca: 'Search for a place…',
     cercaNota: 'The search only sends what you type, never where you are.',
+    mancaChiave: 'Google key missing: EXPO_PUBLIC_GOOGLE_PLACES_KEY in .env.',
     nessunEventoRistorante: 'No evening tied to this restaurant yet.',
     soloTelefono: 'The real map shows on the phone. Here you get the list.',
     senzaComponente:
@@ -464,6 +467,7 @@ const en: Dizionario = {
     aggiungiCopertina: 'Add a cover',
     cambiaCopertina: 'Change cover',
     aggiungiPosto: 'Add the place',
+    cercaRistorante: 'Find a restaurant',
     daFare: 'To do',
     fatti: 'Done',
     fatto: 'done',

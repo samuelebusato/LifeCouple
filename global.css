@@ -3,102 +3,90 @@
 @tailwind utilities;
 
 /*
- * LifeCouple — direzione "Quarzo rosa", seconda taratura (2026-08-13).
+ * LifeCouple — "Quarzo rosa", terza taratura (2026-08-13, sera).
  *
- * La prima versione usava tonalita' 336-344: sull'iPhone leggevano **viola**,
- * soprattutto nel tema scuro (prugna). L'utente ha chiesto rosa-bianco: tutte
- * le tinte salgono a 347-351 (rosa caldo, lato pesca), i neutri perdono
- * saturazione — un grigio appena rosato invece di un lilla — e il tema scuro
- * diventa un bruno-rosa invece di una prugna.
+ * Riferimento: lo screenshot portato dall'utente — pagina **bianca**, carte
+ * bianche, testo quasi nero, il colore solo sugli accenti. Le prime due
+ * tarature coloravano le superfici; questa le lascia bianche e il rosa vive
+ * SOLO dove si agisce: bottoni, selezioni, icone attive.
  *
- * I token si definiscono QUI, una volta. Nei componenti non deve mai comparire
- * un colore a mano: se lo fa, e' un bug di sistema, non una scelta.
- * **Unica eccezione dichiarata**: sfocatura, sfumature e icone (expo-blur,
- * expo-linear-gradient, lucide) vogliono colori letterali e non leggono le
- * variabili CSS. Quei pochi valori stanno in `lib/tema.ts`, che e' la loro
- * unica casa.
+ * I token si definiscono QUI, una volta. I letterali che i moduli nativi
+ * pretendono stanno in `lib/tema.ts`.
  */
 @layer base {
   :root {
-    /* --- la scala del rosa: dalla luce alla pietra ------------------------ */
-    --rosa-50: 351 100% 98.5%;
-    --rosa-100: 351 92% 96.5%;
-    --rosa-200: 350 86% 93%;
-    --rosa-300: 350 80% 86%;
-    --rosa-400: 349 72% 74%;
-    --rosa-500: 349 66% 62%;
-    --rosa-600: 348 62% 53%;
-    --rosa-700: 347 58% 44%;
-    --rosa-800: 346 48% 34%;
-    --rosa-900: 345 38% 24%;
+    --rosa-50: 348 100% 99%;
+    --rosa-100: 348 80% 97.5%;
+    --rosa-200: 348 70% 95%;
+    --rosa-300: 348 65% 90%;
+    --rosa-400: 348 60% 80%;
+    --rosa-500: 348 58% 68%;
+    --rosa-600: 348 64% 55%;
+    --rosa-700: 347 58% 45%;
+    --rosa-800: 346 48% 35%;
+    --rosa-900: 345 38% 25%;
 
-    /* --- bianco e bruno-rosa ---------------------------------------------- */
-    --background: 350 70% 99%;       /* bianco con un velo di rosa, non bianco puro */
-    --foreground: 348 22% 15%;       /* bruno caldo scurissimo: non nero, non viola */
-    --card: 0 0% 100%;               /* la carta e' bianca davvero: fa risaltare il fondo */
-    --card-foreground: 348 22% 15%;
+    /* --- bianco vero ------------------------------------------------------ */
+    --background: 0 0% 100%;
+    --foreground: 345 12% 13%;      /* quasi nero, appena caldo */
+    --card: 0 0% 100%;
+    --card-foreground: 345 12% 13%;
 
-    /* --- l'accento: rosa pieno, usato per le azioni ------------------------ */
+    /* --- l'accento resta rosa pieno: e' l'unico posto dove il colore vive -- */
     --primary: 348 64% 55%;
     --primary-foreground: 0 0% 100%;
 
-    /* --- superfici secondarie: rosa cosi' tenui da leggersi come bianchi ---- */
-    --secondary: 350 68% 96.5%;
-    --muted: 349 42% 95.5%;
-    --muted-foreground: 347 10% 46%; /* grigio caldo: la saturazione bassa e' cio' che toglie il viola */
-    --secondary-foreground: 347 26% 28%;
-    --accent: 350 82% 93%;
-    --accent-foreground: 347 40% 26%;
+    /* --- superfici secondarie: distinguibili dal bianco, appena ------------ */
+    --secondary: 348 40% 97.5%;
+    --secondary-foreground: 345 14% 25%;
+    --muted: 345 20% 96.5%;
+    --muted-foreground: 345 7% 47%;  /* grigio neutro caldo, niente rosa nel testo */
+    --accent: 348 55% 95%;
+    --accent-foreground: 346 40% 28%;
 
-    /* Un rosso-corallo che non litiga col rosa: piu' caldo e piu' aranciato,
-     * cosi' "elimina" non si confonde con "conferma". */
     --destructive: 4 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 349 32% 91%;
-    --input: 349 32% 91%;
+    --border: 345 18% 92%;
+    --input: 345 18% 92%;
     --ring: 348 64% 55%;
   }
 
-  /*
-   * Notte di quarzo: bruno-rosa profondo, NON prugna. La differenza sta tutta
-   * nella tonalita' (348-350 invece di 336) e nella saturazione bassa dei
-   * fondi: al buio un fondo saturo vira al viola su qualunque schermo OLED.
-   */
+  /* Notte: neutra e profonda, il rosa solo sugli accenti — come di giorno. */
   @media (prefers-color-scheme: dark) {
     :root {
-      --rosa-50: 348 18% 16%;
-      --rosa-100: 348 20% 20%;
-      --rosa-200: 349 24% 26%;
-      --rosa-300: 349 32% 36%;
-      --rosa-400: 349 46% 48%;
-      --rosa-500: 349 60% 60%;
-      --rosa-600: 349 68% 68%;
-      --rosa-700: 350 76% 78%;
-      --rosa-800: 350 84% 87%;
-      --rosa-900: 351 92% 94%;
+      --rosa-50: 345 12% 15%;
+      --rosa-100: 346 14% 19%;
+      --rosa-200: 347 18% 25%;
+      --rosa-300: 347 26% 35%;
+      --rosa-400: 348 40% 48%;
+      --rosa-500: 348 55% 60%;
+      --rosa-600: 348 66% 68%;
+      --rosa-700: 349 74% 78%;
+      --rosa-800: 350 82% 87%;
+      --rosa-900: 351 90% 94%;
 
-      --background: 348 16% 8%;
-      --foreground: 350 22% 95%;
-      --card: 348 14% 12.5%;
-      --card-foreground: 350 22% 95%;
+      --background: 345 10% 7%;
+      --foreground: 348 15% 95%;
+      --card: 345 9% 11%;
+      --card-foreground: 348 15% 95%;
 
-      --primary: 349 75% 70%;
-      --primary-foreground: 348 16% 9%;
+      --primary: 348 70% 68%;
+      --primary-foreground: 345 10% 8%;
 
-      --secondary: 348 12% 18%;
-      --secondary-foreground: 350 20% 90%;
-      --muted: 348 12% 18%;
-      --muted-foreground: 349 10% 66%;
-      --accent: 349 16% 24%;
-      --accent-foreground: 350 28% 90%;
+      --secondary: 345 8% 16%;
+      --secondary-foreground: 348 12% 90%;
+      --muted: 345 8% 16%;
+      --muted-foreground: 346 7% 64%;
+      --accent: 347 12% 22%;
+      --accent-foreground: 349 25% 90%;
 
       --destructive: 4 70% 60%;
-      --destructive-foreground: 348 16% 9%;
+      --destructive-foreground: 345 10% 8%;
 
-      --border: 348 12% 23%;
-      --input: 348 12% 23%;
-      --ring: 349 75% 70%;
+      --border: 345 8% 20%;
+      --input: 345 8% 20%;
+      --ring: 348 70% 68%;
     }
   }
 }

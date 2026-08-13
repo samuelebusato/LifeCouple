@@ -25,6 +25,10 @@ export type Elemento = {
   /** Il posto del ristorante (0012): e' cio' che lo porta sulla mappa. */
   luogo_id: string | null;
   luogo: { id: string; nome: string; lat: number; lng: number } | null;
+  /** Identita' Google del ristorante (0013): scelto, non inventato. */
+  google_place_id: string | null;
+  /** Nome-risorsa della foto Places: la copertina, chiesta a Google al volo. */
+  foto_google: string | null;
   recensioni: Recensione[];
 };
 
@@ -170,7 +174,57 @@ export function usePreferiti(coppiaId: string | null) {
     [ricarica]
   );
 
-  return { elementi, loading, errore, ricarica, aggiungi, segnaFatto, recensisci, elimina, collegaPosto };
+  /**
+   * Aggiunge un **ristorante vero** (D-37): dal risultato Google nascono
+   * insieme il luogo (per la mappa) e l'elemento con identita' e copertina.
+   * Un solo ingresso per tre fatti, cosi' non esistono ristoranti a meta'.
+   */
+  const aggiungiRistorante = React.useCallback(
+    async (
+      trovato: { nome: string; lat: number; lng: number; placeId?: string; fotoNome?: string },
+      ricaricaCoppia: () => Promise<StatoCoppia>
+    ): Promise<string | null> => {
+      const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
+      if (!esito.coppiaId) return esito.errore;
+      const { data, error } = await supabase
+        .from('luogo')
+        .insert({
+          coppia_id: esito.coppiaId,
+          nome: trovato.nome.trim(),
+          lat: trovato.lat,
+          lng: trovato.lng,
+          stato: 'desiderato',
+        })
+        .select('id')
+        .single();
+      if (error) return error.message;
+      const ins = await supabase.from('elemento_lista').insert({
+        coppia_id: esito.coppiaId,
+        tipo: 'ristorante',
+        titolo: trovato.nome.trim(),
+        luogo_id: data.id,
+        google_place_id: trovato.placeId ?? null,
+        foto_google: trovato.fotoNome ?? null,
+      });
+      if (ins.error) return ins.error.message;
+      await ricarica();
+      return null;
+    },
+    [coppiaId, ricarica]
+  );
+
+  return {
+    elementi,
+    loading,
+    errore,
+    ricarica,
+    aggiungi,
+    segnaFatto,
+    recensisci,
+    elimina,
+    collegaPosto,
+    aggiungiRistorante,
+  };
 }
 
 /** L'ultimo film visto: serve al riquadro della home. */

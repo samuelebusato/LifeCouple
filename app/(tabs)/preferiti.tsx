@@ -26,6 +26,7 @@ import { caricaFoto, copertinePerElemento, scegliFoto } from '@/lib/foto';
 import { supabase } from '@/lib/supabase';
 import type { Evento } from '@/lib/eventi';
 import { usePreferiti, type Elemento, type TipoElemento } from '@/lib/preferiti';
+import { urlFotoGoogle } from '@/lib/ricerca-luoghi';
 import { useTastiera } from '@/lib/tastiera';
 import { useTema } from '@/lib/tema';
 import { Modal } from 'react-native';
@@ -277,8 +278,17 @@ export default function Preferiti() {
   const router = useRouter();
   const { session } = useAuth();
   const { coppiaId, ricarica: ricaricaCoppia } = useCoppia();
-  const { elementi, loading, errore, aggiungi, segnaFatto, recensisci, elimina, collegaPosto } =
-    usePreferiti(coppiaId);
+  const {
+    elementi,
+    loading,
+    errore,
+    aggiungi,
+    segnaFatto,
+    recensisci,
+    elimina,
+    collegaPosto,
+    aggiungiRistorante,
+  } = usePreferiti(coppiaId);
   const { c } = useTema();
   const { aperta: tastieraAperta } = useTastiera();
 
@@ -289,6 +299,8 @@ export default function Preferiti() {
   const [copertine, setCopertine] = React.useState<Record<string, string>>({});
   /** Il ristorante a cui si sta agganciando un posto (foglio con la ricerca). */
   const [postoPer, setPostoPer] = React.useState<Elemento | null>(null);
+  /** Il foglio "cerca un ristorante vero" (D-37): niente testo libero. */
+  const [cercaRist, setCercaRist] = React.useState(false);
   /** Le serate per ristorante: i legami evento→elemento (0012), in blocco. */
   const [eventiPer, setEventiPer] = React.useState<Record<string, Evento[]>>({});
 
@@ -432,7 +444,10 @@ export default function Preferiti() {
                   key={e.id}
                   e={e}
                   mioId={session?.user.id}
-                  copertina={copertine[e.id]}
+                  copertina={
+                    copertine[e.id] ??
+                    (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
+                  }
                   eventi={eventiPer[e.id]}
                   onFatto={(f) => segnaFatto(e.id, f)}
                   onRecensisci={(v, txt) => recensisci(e, v, txt)}
@@ -453,7 +468,10 @@ export default function Preferiti() {
                   key={e.id}
                   e={e}
                   mioId={session?.user.id}
-                  copertina={copertine[e.id]}
+                  copertina={
+                    copertine[e.id] ??
+                    (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
+                  }
                   eventi={eventiPer[e.id]}
                   onFatto={(f) => segnaFatto(e.id, f)}
                   onRecensisci={(v, txt) => recensisci(e, v, txt)}
@@ -467,36 +485,84 @@ export default function Preferiti() {
           )}
 
           {/* Lo spazio sotto serve alla barra volante — ma la barra sparisce a
-              tastiera aperta, e tenerlo lascerebbe un buco sopra i tasti. */}
+              tastiera aperta, e tenerlo lascerebbe un buco sopra i tasti.
+              I FILM si scrivono; i RISTORANTI si SCELGONO fra quelli veri
+              (D-37): il testo libero per un posto che deve stare su una mappa
+              produce solo posti che non esistono. */}
           <View
             className="gap-2 px-5 pt-2"
             style={{ paddingBottom: tastieraAperta ? 10 : SPAZIO_BARRA - 40 }}
           >
             {erroreForm && <Text className="text-sm text-destructive">{erroreForm}</Text>}
-            <View className="flex-row items-center gap-2">
-              <Input
-                className="flex-1"
-                value={nuovo}
-                onChangeText={setNuovo}
-                placeholder={t.preferiti.placeholder[tipo]}
-                onSubmitEditing={salva}
-                returnKeyType="done"
-              />
-              <TondoVetro
-                lato={54}
-                onPress={salva}
-                disabled={attesa || nuovo.trim().length === 0}
-              >
-                {attesa ? (
-                  <ActivityIndicator color={c.accento} />
-                ) : (
-                  <Text style={{ color: c.accento, fontSize: 26, lineHeight: 30 }}>+</Text>
-                )}
-              </TondoVetro>
-            </View>
+            {tipo === 'film' ? (
+              <View className="flex-row items-center gap-2">
+                <Input
+                  className="flex-1"
+                  value={nuovo}
+                  onChangeText={setNuovo}
+                  placeholder={t.preferiti.placeholder.film}
+                  onSubmitEditing={salva}
+                  returnKeyType="done"
+                />
+                <TondoVetro
+                  lato={54}
+                  onPress={salva}
+                  disabled={attesa || nuovo.trim().length === 0}
+                >
+                  {attesa ? (
+                    <ActivityIndicator color={c.accento} />
+                  ) : (
+                    <Text style={{ color: c.accento, fontSize: 26, lineHeight: 30 }}>+</Text>
+                  )}
+                </TondoVetro>
+              </View>
+            ) : (
+              <BottoneVetro variante="accento" onPress={() => setCercaRist(true)}>
+                <Text>{t.preferiti.cercaRistorante}</Text>
+              </BottoneVetro>
+            )}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Il foglio "cerca un ristorante vero": selezione, non invenzione. */}
+      <Modal
+        visible={cercaRist}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCercaRist(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 justify-end"
+          style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
+        >
+          <CartaVetro raggio={32} style={{ margin: 8 }}>
+            <SafeAreaView edges={['bottom']}>
+              <View className="gap-4 p-6">
+                <View className="flex-row items-center justify-between">
+                  <Text className="font-serif-bold text-2xl text-foreground">
+                    {t.preferiti.cercaRistorante}
+                  </Text>
+                  <Pressable onPress={() => setCercaRist(false)} hitSlop={8}>
+                    <X color={c.tenue} size={20} />
+                  </Pressable>
+                </View>
+                <CercaLuogo
+                  autoFocus
+                  soloRistoranti
+                  placeholder={t.preferiti.placeholder.ristorante}
+                  onScegli={async (trovato) => {
+                    setCercaRist(false);
+                    const err = await aggiungiRistorante(trovato, ricaricaCoppia);
+                    if (err) setErroreForm(err);
+                  }}
+                />
+              </View>
+            </SafeAreaView>
+          </CartaVetro>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Il foglio "aggiungi il posto": la stessa ricerca della mappa. */}
       <Modal

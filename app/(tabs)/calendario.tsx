@@ -439,6 +439,11 @@ export default function Calendario() {
             data={settimana}
             horizontal
             showsHorizontalScrollIndicator={false}
+            // Altezza FISSA: senza, su iOS la lista orizzontale contendeva lo
+            // spazio verticale con l'elenco sottostante e i numeri finivano
+            // coperti. Un'altezza dichiarata non ha niente da negoziare.
+            style={{ height: 84, flexGrow: 0 }}
+            contentContainerStyle={{ alignItems: 'flex-start' }}
             keyExtractor={(d) => d.toISOString()}
             getItemLayout={(_, i) => ({
               length: LARGHEZZA_CELLA,

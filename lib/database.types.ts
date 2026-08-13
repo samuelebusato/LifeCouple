@@ -174,13 +174,16 @@ export type Database = {
           },
         ]
       }
-      // ⚠️ `luogo_id` SCRITTO A MANO (0012) — da sostituire rigenerando i tipi.
+      // ⚠️ `luogo_id` (0012), `google_place_id`/`foto_google` (0013) SCRITTI A
+      // MANO — da sostituire rigenerando i tipi.
       elemento_lista: {
         Row: {
           autore_id: string
           coppia_id: string
           creato_il: string
           fatto_il: string | null
+          foto_google: string | null
+          google_place_id: string | null
           id: string
           luogo_id: string | null
           stato: string
@@ -192,6 +195,8 @@ export type Database = {
           coppia_id: string
           creato_il?: string
           fatto_il?: string | null
+          foto_google?: string | null
+          google_place_id?: string | null
           id?: string
           luogo_id?: string | null
           stato?: string
@@ -203,6 +208,8 @@ export type Database = {
           coppia_id?: string
           creato_il?: string
           fatto_il?: string | null
+          foto_google?: string | null
+          google_place_id?: string | null
           id?: string
           luogo_id?: string | null
           stato?: string

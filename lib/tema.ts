@@ -16,28 +16,28 @@ import { useColorScheme } from 'react-native';
  */
 
 const chiaro = {
-  sfondo: '#fffbfc', //   350 70% 99%
-  testo: '#2f1e21', //    348 22% 15%
-  tenue: '#816a6f', //    347 10% 46%
+  sfondo: '#ffffff', //   0 0% 100% — terza taratura: il bianco dello screenshot
+  testo: '#251d1f', //    345 12% 13%
+  tenue: '#806f74', //    345 7% 47%
   accento: '#d64360', //  348 64% 55%
   suAccento: '#ffffff',
   pericolo: '#d93226', // 4 70% 50%
   carta: '#ffffff',
   /** L'alone dietro un'icona attiva: l'accento a bassissima opacita'. */
-  alone: 'rgba(214,67,96,0.12)',
-  aloneForte: 'rgba(214,67,96,0.17)',
+  alone: 'rgba(214,67,96,0.08)',
+  aloneForte: 'rgba(214,67,96,0.14)',
 };
 
 const scuro = {
-  sfondo: '#181112', //   348 16% 8%
-  testo: '#f5eff0', //    350 22% 95%
-  tenue: '#b1a0a3', //    349 10% 66%
-  accento: '#ec798e', //  349 75% 70%
-  suAccento: '#181112',
+  sfondo: '#141012', //   345 10% 7%
+  testo: '#f4eff1', //    348 15% 95%
+  tenue: '#a99da1', //    346 7% 64%
+  accento: '#e87d92', //  348 70% 68%
+  suAccento: '#141012',
   pericolo: '#e05b52', // 4 70% 60%
-  carta: '#241b1d', //    348 14% 12.5%
-  alone: 'rgba(236,121,142,0.18)',
-  aloneForte: 'rgba(236,121,142,0.26)',
+  carta: '#201a1c', //    345 9% 11%
+  alone: 'rgba(232,125,146,0.14)',
+  aloneForte: 'rgba(232,125,146,0.22)',
 };
 
 type Vetro = {
@@ -101,8 +101,11 @@ export function useTema(): Tema {
  * basso. E' cio' che da' al vetro qualcosa da lasciar trasparire — su un fondo
  * piatto la sfocatura non ha niente da mostrare e sembra grigia.
  */
-export const fondoChiaro = ['#ffffff', '#fff4f7', '#ffe9ef'] as const;
-export const fondoScuro = ['#181112', '#1d1315', '#251519'] as const;
+// Terza taratura: quasi tutto bianco — il velo rosa vive solo in fondo alla
+// pagina, dove passa la barra di vetro. Colorare tutta la sfumatura era cio'
+// che faceva sembrare l'app "rosa ovunque" invece che bianca con accenti.
+export const fondoChiaro = ['#ffffff', '#ffffff', '#fff5f8'] as const;
+export const fondoScuro = ['#141012', '#141012', '#1d1417'] as const;
 
 export function fondo(scuroAttivo: boolean) {
   return (scuroAttivo ? fondoScuro : fondoChiaro) as unknown as [string, string, string];

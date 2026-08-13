@@ -44,14 +44,15 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
         bottom: Math.max(insets.bottom, 10) + 6,
       }}
     >
-      <Vetro raggio={30} intensita={scuro ? 60 : 55}>
-        {/* `width: '100%'` esplicito, e ogni voce con `flexBasis: 0`: sul
-            telefono la riga prendeva la larghezza del contenuto invece che
-            della pillola, e le sei voci finivano ammassate su un lato. */}
+      <Vetro raggio={34} intensita={scuro ? 60 : 55} style={{ width: '100%' }}>
+        {/* Larghezza esplicita a OGNI livello (wrapper, vetro, riga) piu'
+            `space-between`: la catena di stretch si era gia' rotta due volte
+            su due percorsi diversi (BlurView e GlassView) — mai piu' implicita. */}
         <View
           style={{
             flexDirection: 'row',
             width: '100%',
+            justifyContent: 'space-between',
             paddingVertical: 10,
             paddingHorizontal: 4,
           }}
