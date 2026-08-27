@@ -28,6 +28,22 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-08-27 — Il giro di design sui riferimenti, e la modalità unica
+
+**Sessione**: [`workspace/sessione-2026-08-27.md`](../../workspace/sessione-2026-08-27.md).
+
+**Fatto**: modalità unica (D-39) · barra in basso con la lente di vetro che viaggia (D-40) · calendario rifatto sullo shot Exyte — testata sfumata, pillole, agenda a fasce orarie (D-41) · pagina evento rifatta sullo shot Shakuro — hero a tutto schermo e foglio (D-42) · pin della mappa e anteprima in sovraimpressione (D-43). **B-02 chiuso**, ma non per la ragione che sembrava. Nuovi componenti: `testata-calendario`, `pillola-evento`, `griglia-mese`, `agenda-giorno`, `anteprima-evento`.
+
+**Fatto di passaggio**: la maschera dei campi di Google Places è ora **doppia** — `places.photos` si chiede solo cercando ristoranti, che sono gli unici a usarne la foto. Google fattura al SKU più alto fra i campi chiesti, quindi chiederle sempre alzava il conto anche per la mappa, che le foto non le guarda.
+
+**Verificato**: `tsc` pulito, `eslint` senza errori, bundle **web** di 2767 moduli e bundle **iOS** di 3527 moduli — il secondo conta, perché è l'unico che compila `mappa-vera.native.tsx` e `vetro-nativo.native.ts`, che il web non vede mai. In console la palette unica con **zero** regole `prefers-color-scheme`. **Non verificato**: l'aspetto vero delle schermate — serve il giro sull'iPhone.
+
+**Poi, provando il design sull'iPhone**, sono emersi **B-08** (gli stili-funzione su `Pressable` non arrivano — tre correzioni fallite prima di trovarne la causa nella sorgente di NativeWind) e una serie di difetti di layout: griglia del mese sotto la barra, foglio dell'evento tagliato, liste orizzontali senza altezza dichiarata. Rifatto il visore foto come componente **unico** per evento e galleria, con zoom, filmstrip e chiusura trascinando in giù.
+
+**Poi il progetto Supabase è risultato in pausa** (l'app diceva solo «network request failed»), ed è stato ripristinato dall'utente: stesso ref, quindi dati e schema intatti — verificate tutte e 18 le tabelle. Rientrando a controllare che lo schema fosse sopravvissuto è saltato fuori **B-07**, un difetto di permessi vivo dal 2026-08-12 che i 54 test non vedevano — anzi, da cui **tre di essi dipendevano**. Corretto con `0014`, applicata e verificata: suite a **60 asserzioni, tutte verdi**.
+
+---
+
 ### 2026-08-12 — Avvio del progetto
 
 **Sessione**: [`workspace/sessione-2026-08-12.md`](../../workspace/sessione-2026-08-12.md).
@@ -81,6 +97,185 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Perché**: il dato è di categoria particolare (art. 9 GDPR) e la sua condivisione col partner cade esattamente sul confine di fiducia TB-2. L'obiettivo dichiarato del progetto è **imparare il processo**: farlo la prima volta *senza* dati di categoria particolare, e aggiungerli quando il resto funziona, **separa gli errori in due lotti invece di sommarli**. Il primo giro di pubblicazione insegna già abbastanza.
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
+
+### D-51 — L'elenco dei luoghi diventa la seconda vista della mappa
+**Chiesto dall'utente il 2026-08-27.**
+
+Un elenco di posti e una mappa di posti sono **due modi di guardare la stessa cosa**. Tenerli in due sezioni diverse obbligava a ricordare in quale delle due si fosse messo un posto, e a spostarsi fra sezioni per una domanda sola: *«dove siamo stati?»*. Ora è un interruttore in cima alla mappa — **Mappa / Elenco** — e Liste resta la sezione dei soli film.
+
+**Come è stato fatto, e perché è costato poco**: la schermata era già generica sul tipo — il tipo era uno *stato interno* scelto da un selettore. È bastato farlo diventare una **prop** ed estrarre il componente (`components/elenco-elementi.tsx`, più `components/scheda-elemento.tsx` per la scheda). Non c'è stato niente da riscrivere, solo da spostare.
+
+> Se il tipo fosse stato intrecciato col resto della schermata, questo passaggio sarebbe stato una riscrittura — con i suoi difetti nuovi. È il dividendo, pagato mesi dopo, di aver scritto una schermata generica quando i tipi erano due.
+
+⚠️ Il componente estratto **non porta più `Fondo` né `SafeAreaView`**: quelli li mette chi lo ospita, che è la schermata vera. Lasciarli dentro avrebbe prodotto due sfondi sovrapposti e una doppia area sicura — cioè un margine in alto che si somma a se stesso.
+
+**Il tondo in basso a destra della mappa diventa un «+».** Fa la stessa cosa di prima — segna il posto in cui sei — ma l'icona era un mirino, e in tutte le altre schermate quel tondo è un «+». Il gesto che si cerca in quell'angolo è *aggiungere*, non *localizzare*: un'icona diversa per lo stesso posto e lo stesso scopo costringe a ricordare che lì è un'eccezione. Per nome si aggiunge dall'elenco, che ora è a un tocco.
+
+### D-50 — Un «+» invece di un campo, e la mappa smette di fare due mestieri
+**Chiesto dall'utente il 2026-08-27.**
+
+**Nelle Liste, i luoghi si aggiungono con un «+» che galleggia**, non più con un bottone a tutta larghezza in fondo. La differenza col tab dei film non è capriccio: un film si **scrive**, quindi il campo di testo deve stare a portata di pollice ed è giusto che occupi una riga stabile; un luogo si **sceglie** fra quelli veri (D-37), quindi il gesto è *«apri la ricerca»* — un'azione, non un campo. Un bottone largo quanto lo schermo per una sola azione ruba una riga all'elenco a ogni scorrimento; un tondo non ruba niente.
+
+**Via la barra di ricerca dalla mappa.** Cercare un posto per nome è un'azione da *lista*, e in Liste c'è ora il suo «+»: tenerne una copia anche qui erano due ingressi per la stessa cosa, e soprattutto un campo di testo permanente addosso a una schermata che di spazio ne ha bisogno tutto. Sulla mappa restano i due gesti che **solo lì** hanno senso, perché parlano di *questo punto*: il tocco lungo e «segna dove sono».
+
+⚠️ La ricerca resta nel **ripiego web**, dove non esiste una mappa da toccare e sarebbe l'unico modo di aggiungere un posto.
+
+**Il foglio del posto nuovo ora sale con la tastiera.** Mancava il `KeyboardAvoidingView`: il campo del nome apre la tastiera da solo (`autoFocus`), e i tasti coprivano l'interruttore «ci siamo stati» e i due bottoni — cioè tutto quello che serve per finire. È lo stesso difetto già corretto nel form dell'evento il 2026-08-13, ricomparso in un foglio scritto dopo: **una correzione applicata a un punto non protegge gli altri**, e in questo progetto i fogli sono sei.
+
+### D-49 — Foto già nel form dell'evento, caricamento in parallelo, mappa sulla posizione
+**Chiesto dall'utente il 2026-08-27.**
+
+**Le foto si scelgono creando l'evento.** Chi registra una serata passata — una cena di ieri, un viaggio — ha le foto in mano *in quel momento*, e doverle aggiungere aprendo l'evento appena creato era un passaggio che nessuno chiedeva. Restano in attesa nel form e si caricano al salvataggio: una foto si attacca a un evento, e l'evento prima deve esistere. Caricarle subito avrebbe voluto dire o lasciarle orfane se poi si annulla, o **creare l'evento appena si sceglie la prima immagine** — cioè decidere al posto di chi sta ancora compilando.
+
+Se il caricamento fallisce l'evento resta: metà del lavoro salvata è meglio di niente, e le foto si riaggiungono dalla sua pagina.
+
+**Il caricamento era in fila indiana**, ed è il «molto lente a caricarsi»: dieci foto volevano dire dieci cicli comprimi-carica uno dopo l'altro, e l'attesa era la loro somma. Ora vanno a **tre per volta** — la compressione usa la CPU e il caricamento la rete, quindi mentre una comprime un'altra può già star salendo. Tre e non dieci: oltre si contendono banda e memoria (ogni immagine decompressa sta in RAM per intero) senza che il totale migliori. E l'avanzamento si dice: *«Carico le foto… 3 di 10»*, perché un'attesa muta sembra un blocco.
+
+⚠️ Un errore non ferma le foto del blocco già partite, ma ferma i blocchi successivi: se il tetto di 1 GB è pieno, insistere altre sette volte produce sette errori identici.
+
+### 🔴 La mappa parte dalla posizione attuale — e questo modifica D-05
+
+D-05 dice: *«la posizione non viene mai letta da sola»*. Questa funzione la legge da sola, quindi la decisione va presa esplicitamente invece che presa e basta.
+
+**Cosa NON cambia**, ed è tutto ciò per cui D-05 esisteva: la posizione **non viene scritta da nessuna parte, non viene mandata a nessuno, non esce dal telefono**. Serve solo a decidere dove puntare la telecamera della mappa e muore con la schermata. Nessun tracciamento, nessuna lettura in background, nessuna posizione condivisa col partner — il rischio che D-05 nominava (*«nessuno dei due può sapere dove si trova l'altro»*) resta chiuso.
+
+**Cosa cambia**: la lettera. *«mai letta da sola»* diventa *«mai registrata o condivisa da sola»*.
+
+⚠️ **Non si chiede il permesso solo per questo**: si guarda se è già stato concesso (per «segna dove sono adesso»), altrimenti la mappa parte dove partiva prima. Un'app che chiede la posizione appena apri una schermata, senza che tu abbia chiesto niente, insegna a negare il permesso — e il permesso serve davvero alla funzione che lo giustifica.
+
+### D-48 — Un pin solo, un elenco solo, uno stato solo
+**Chiesto dall'utente il 2026-08-27**, in un giro di tre correzioni che hanno la stessa forma: *lo stesso fatto raccontato in due posti che potevano divergere*.
+
+- **Un pin solo sulla mappa.** Per qualche ora colore e icona seguivano il genere di Google — ambra e posate dove si mangia, magenta e stella altrove. Distingueva, ma spezzava la mappa in categorie che nessuno aveva chiesto: guardando la mappa conta *dove siete stati*, non se in quel posto si mangiasse. Il genere resta nel dato, e chi vuole distinguere lo fa in lista. Il pin continua a dire l'unica cosa che cambia il modo di leggerlo: **se lì è successo qualcosa**.
+- **Un elenco solo nel campo "dove".** C'erano *due* file di pillole — i "posti" dalla mappa e i "ristoranti" dalla lista — che dopo 0017 erano gli stessi posti scritti due volte, con due selezioni separate che potevano perfino contraddirsi. Ora la fila è una e sceglierne uno imposta **entrambi** i legami dell'evento.
+- **Uno stato solo.** Il «pulsante visitato/non visitato non funziona bene» era questo: `elemento_lista.stato` e `luogo.stato` sono lo stesso fatto in due righe (0012), e le due funzioni ne scrivevano una a testa. Si spuntava un posto in lista e sulla mappa restava da visitare. Non era il bottone a non funzionare — funzionava a metà, ed è peggio, perché sembra casuale.
+
+⚠️ Sul `luogo` la transizione **non** tocca `visitato_il`: quella la mette il trigger dei punti (D-15), ed è ciò che impedisce di fabbricare punti spuntando e despuntando.
+
+**La copertina dei posti nati sulla mappa**: hanno nome e coordinate ma nessuna identità Google, quindi nessuna immagine possibile. Ora si cerca l'identità **per nome**. ⚠️ Solo il nome, nessuna coordinata: mandare anche il punto migliorerebbe molto la precisione, ma da lì esce solo testo (D-05), e quella regola non si piega per una copertina. Conseguenza dichiarata: su un nome generico la corrispondenza può essere sbagliata o assente — e allora è meglio nessuna immagine che quella di un altro posto.
+
+### D-47 — «Preferiti» diventa «Liste»
+**Deciso con l'utente il 2026-08-27**, dopo che gli avevo chiesto se il problema fosse il comportamento o il nome: *«Preferiti è una denominazione che può essere cambiata, non si riferisce a un sottogruppo»*.
+
+Il nome era **sbagliato, non solo brutto**: la sezione non contiene un sottoinsieme scelto, contiene *tutto* — ogni film segnato e ogni posto in cui siete stati o volete andare, compresi quelli che ci finiscono da soli attaccandoli a un evento (D-44). Chiamare "preferito" ciò che entra in automatico **promette una selezione che non esiste**, e chi legge si chiede dove sia finito il resto.
+
+«Liste» dice quello che è: due elenchi, Film e Luoghi, ciascuno col suo "da fare / fatto". L'icona passa da una **stella** — che dice "i miei preferiti" — a una **lista con le spunte**, che dice "le cose da fare e quelle fatte".
+
+**Debito dichiarato**: la rotta resta `/(tabs)/preferiti` e i file `preferiti.tsx` / `lib/preferiti.ts` conservano il vecchio nome. Rinominarli avrebbe toccato ogni `router.push` verso quella schermata per un guadagno solo estetico, e in una giornata in cui le modifiche meccaniche hanno già prodotto tre errori di sintassi non è il momento. Il nome interno e quello a schermo divergono, ed è scritto qui invece che scoperto fra sei mesi.
+
+### D-46 — Ogni posto della mappa è anche un luogo in lista, e la copertina si ripara da sé
+**Chiesto dall'utente il 2026-08-27.** Migrazione `0017`.
+
+**Il disallineamento**: un posto poteva nascere in due modi che non producevano la stessa cosa — dal campo "dove" di un evento nascevano *entrambe* le righe (`luogo` e `elemento_lista`), dalla mappa *solo* `luogo`. Finché la lista si chiamava "ristoranti" la differenza aveva senso; da D-45 la lista è dei **luoghi**, e un posto che sta sulla mappa ma non in lista è semplicemente un posto che manca — senza copertina, senza recensioni, senza "da fare / fatto". Da 0017 il rapporto è **uno a uno**, e `useLuoghi.aggiungi` crea entrambe le righe.
+
+Se l'inserimento in lista fallisce **non si annulla il luogo**: un posto sulla mappa senza riga in lista è un difetto lieve e riparabile (0017 sa rifarlo), mentre cancellare un posto appena segnato è una perdita.
+
+**La copertina di Google che non arrivava** aveva una causa precisa e istruttiva: per qualche ora, quel giorno, la maschera dei campi della ricerca generica **non chiedeva le foto** — l'ottimizzazione poi annullata in D-45. I luoghi aggiunti in quella finestra hanno `google_place_id` valorizzato e `foto_google` nullo, e ci restano: la ricerca non si rifà, e il dato non torna da solo.
+
+> 🔑 **Un'ottimizzazione che toglie un campo a una scrittura lascia dietro dati incompleti anche dopo essere stata annullata.** Il codice torna com'era; le righe scritte nel frattempo no. È il costo che non si vede quando si valuta un risparmio sulle chiamate.
+
+La riparazione va a prendere il nome-foto da **Place Details**, che accetta l'id. Costa una chiamata per luogo rotto, **una volta sola** — e un `Set` di quelli già tentati impedisce che un posto senza foto su Google resti per sempre nell'insieme dei "rotti", cioè una richiesta a pagamento in un ciclo che non converge.
+
+**Toccando un luogo** si apre ora l'elenco completo delle sue serate. Le pillole dentro la scheda restano e portano a **un** evento; l'elenco li mostra **tutti**, con la data — che è l'informazione che serve quando sono cinque.
+
+### D-45 — I "ristoranti" diventano **luoghi**, e un luogo mostra le foto delle sue serate
+**Chiesto dall'utente il 2026-08-27.** Migrazione `0016`.
+
+**L'allargamento**: `ristorante` **diventa** `luogo`, non gli si affianca. Due tipi che si comportano allo stesso modo — posto scelto da Google, identità, copertina, "da fare / fatto", recensioni di entrambi — sono un tipo solo con un attributo diverso; tenerli separati avrebbe voluto dire due elenchi e due percorsi di aggiunta che divergono alla prima modifica. Il tipo di Google resta in `genere`, che è **più ricco** di quel che si perde: prima "ristorante o no", ora `museum`, `city_park`, `fine_dining_restaurant`.
+
+**Le quattro regole del luogo**, come le ha dette l'utente:
+1. **non ancora visitato → immagine di Google**;
+2. **al luogo sono associate tutte le immagini di tutti i suoi eventi**;
+3. **se ha immagini, si vede l'immagine** (non quella di Google);
+4. **toccandolo si vedono i suoi eventi**.
+
+La 2 era il pezzo mancante, e non era ovvio: `copertinePerElemento` guardava le foto legate **direttamente** all'elemento (la copertina scelta a mano), mentre le foto di una serata nascono attaccate all'**evento**. Un posto dove eravate stati tre volte, con venti foto, mostrava ancora l'immagine di Google. `fotoDegliEventiPerElemento` percorre il legame `foto → evento → elemento` in **due letture in tutto** (PostgREST non fa sottoquery), non due per luogo: con dieci posti la differenza è fra 2 e 20 richieste.
+
+Ne esce una precedenza a tre livelli per la copertina: **scelta a mano** (è una decisione) → **ultima foto delle vostre serate** → **Google** (vale finché non ci siete ancora stati).
+
+**Ricadute che il cambio ha imposto, e che non erano nella richiesta**:
+- 🔴 **Doppio pin sulla mappa.** Un posto crea due righe — una in `luogo`, una in lista — e finché solo i ristoranti finivano in lista la sovrapposizione era l'eccezione. Diventata la regola, **ogni posto avrebbe avuto due pin sovrapposti**: uno col conto degli eventi e uno senza. La mappa ora salta i `luogo` già disegnati come luoghi della lista.
+- **Annullata un'ottimizzazione di poche ore prima**: avevo diviso il field mask di Google per non chiedere le foto sulle ricerche generiche, sulla premessa «solo i ristoranti diventano preferiti, quindi solo loro hanno bisogno di copertina». Il passaggio a "luoghi" ha eliminato la premessa: ora ogni posto ha bisogno della foto, e un risparmio pagato con elementi senza immagine non è un risparmio. **Un'ottimizzazione vive finché vive la premessa che la giustifica**, ed è il tipo di legame che nessuno rilegge quando cambia il modello.
+- Il pin segue il `genere`: ambra con le posate dove si mangia, magenta con la stella altrove.
+
+**Debito dichiarato**: dentro `app/(tabs)/mappa.tsx` è rimasta l'etichetta interna `tipo: 'ristorante'` nel tipo `Toccato`, e `RistoranteSuMappa` si chiama ancora così. Sono nomi locali che non toccano il database — ma sono stantii, e stanno qui invece che nascosti.
+
+### D-44 — Il ristorante si collega da solo all'evento, e si segna da solo quando la serata è passata
+**Chiesto dall'utente il 2026-08-27.** Migrazione `0015`.
+
+Scegliere un posto nel campo **"dove"** del nuovo evento può voler dire tre cose, e distinguerle è ciò che evita di rifare a mano altrove un lavoro appena fatto:
+
+1. **è un ristorante già nei preferiti** → si seleziona e basta. Riconosciuto per `google_place_id`, non per nome: due locali possono chiamarsi uguale, e lo stesso locale può essere stato salvato con un nome leggermente diverso;
+2. **è un ristorante nuovo** → entra da solo nei preferiti, con la foto di Google come copertina, e resta selezionato. Prima bisognava aprire i preferiti e cercarlo una seconda volta;
+3. **non è un posto dove si mangia** → si crea solo il luogo, come prima.
+
+Per distinguere il caso 2 serve il **tipo** del posto, quindi `places.primaryType` entra nel field mask. È un campo in più e i campi sono il prezzo: si paga perché senza, l'aggiunta automatica non è possibile. Le **foto** restano invece solo sulla ricerca dei ristoranti, che è l'unica a usarle. `eRistorante()` accetta l'intera famiglia (`bar`, `cafe`, `*_restaurant`…) e non il solo `restaurant`, che avrebbe lasciato fuori proprio i casi più comuni di una serata.
+
+**Il passaggio automatico a "visitato"** è una funzione, non un trigger, e la ragione è che non c'è niente da intercettare: al momento in cui un evento diventa passato **nessuno scrive** — è il tempo che passa. Restavano un lavoro pianificato o una passata fatta quando qualcuno guarda; si è scelta la seconda, perché aggiornare la riga alle 3 di notte non vale più che aggiornarla un istante prima che venga letta, e costa un pezzo di infrastruttura in più.
+
+È `security definer` perché la policy di `elemento_lista` è **solo-autore** ma la serata può averla messa in calendario il partner: coi privilegi del chiamante il ristorante si aggiornerebbe a volte sì e a volte no, senza che si possa capire perché. La funzione è delimitata da `e_membro_attivo`, ed è il primo controllo che fa. Permessi chiusi in partenza con `revoke ... from public, anon` — la lezione di B-07 applicata prima e non dopo.
+
+**Scrive due tabelle**: `elemento_lista.stato` per i preferiti e `luogo.stato` per la mappa. Sono lo stesso fatto in due posti da 0012, e lasciarne indietro uno darebbe un ristorante "provato" nella lista e ancora "da visitare" sulla mappa. **Non torna mai indietro**: se qualcuno rimette a mano un ristorante su "da provare", la passata dopo non lo ri-segna — guarda `fatto_il`, che è già valorizzato. Una correzione manuale disfatta da sola sarebbe peggio del problema.
+
+**Tolta la riga barrata** sui preferiti fatti: sbarrare un ristorante dove si è stati lo racconta come una voce cancellata da una lista di cose da fare, mentre è l'opposto — è un ricordo. Che sia fatto lo dicono già la spunta e la data.
+
+**Le copertine da Google erano già a posto** e non è stato necessario toccarle: `preferiti.tsx` usa `copertine[id] ?? urlFotoGoogle(foto_google)` da D-37 — la foto messa a mano vince, altrimenti c'è quella di Google. Aspettava solo la chiave.
+
+### D-43 — I pin della mappa dicono cosa è successo, e l'anteprima non copre la mappa
+**Chiesto dall'utente il 2026-08-27**: *"sulla mappa devono comparire i luoghi associati a un evento pinnati e premendo sul pin si deve aprire in sovraimpressione una piccola preview dell'evento."*
+
+- **I pin li disegniamo noi** (`components/mappa-vera.native.tsx`). Prima erano le puntine di sistema, distinte solo dal colore; ora un posto **con** eventi è un tondo pieno col numero addosso, uno **senza** è vuoto. Cambia il lavoro della mappa: da elenco di coordinate a mappa di cose accadute.
+- **Anteprima in sovraimpressione al posto del foglio** (`components/anteprima-evento.tsx`). *Perché è meglio*: un foglio modale copre la mappa, cioè toglie il contesto proprio nel momento in cui il contesto è il motivo per cui si sta guardando la mappa. La carta galleggia e lascia vedere dove sta quel posto rispetto agli altri. Se il posto ha più eventi, le frecce li scorrono senza chiudere niente.
+- **Il foglio non sparisce**: resta dietro il "…" dell'anteprima, perché contiene le **azioni sul posto** (segna visitato, elimina) — che sono un'altra cosa dal guardare cosa ci è successo. Sui ristoranti il "…" non c'è: un ristorante non si segna visitato, e un secondo posto da cui cancellarlo sarebbe un errore in attesa.
+- ⚠️ **Una lettura sola per tutti i pin, non una per tocco.** È obbligata: i pin devono sapere *prima* se hanno eventi, altrimenti sono tutti uguali. Chiedere al tocco avrebbe voluto dire pin indistinguibili più un'attesa a ogni apertura.
+- ⚠️ **`tracksViewChanges` va spento, ma non subito.** Con marker disegnati da noi, `react-native-maps` ridisegna la texture del pin a ogni fotogramma finché è acceso, e con dieci pin la mappa scatta. Spegnerlo al primo render però rischia il pin vuoto (texture presa prima che icone e testo abbiano misurato). Si lascia acceso 900 ms e poi si spegne: è il compromesso noto di questa libreria, ed è scritto qui perché fra sei mesi sembrerà un timeout arbitrario.
+
+### D-42 — La pagina evento: immagine a tutto schermo e foglio che la taglia
+**Riferimento**: lo shot *"Hotel Booking Mobile App Concept"* (Shakuro), portato dall'utente il 2026-08-27.
+
+🔴 **Rovescia metà di D-38.** D-38 aveva messo l'hero dell'evento **dentro una card** arrotondata coi margini (riferimento: lo yacht). Il riferimento nuovo fa l'opposto — l'immagine arriva ai bordi, e sotto le sale addosso un foglio bianco arrotondato che la taglia. Si è scelto il secondo, e la ragione non è "l'ultimo screenshot vince":
+- l'immagine di un evento è **un ricordo**, e un ricordo dentro una cornice coi margini si legge come una figurina; a tutto schermo si legge come *"eri lì"*;
+- la card resta invece giusta dove l'elemento è **uno fra tanti** in un elenco (le schede dei preferiti, le righe evento): lì la cornice serve a separare, e non si è toccata.
+
+Il resto del riferimento, adottato: **maniglia** in cima al foglio (due punti di altezza, ed è l'unico segnale che distingue il pannello dall'immagine senza aggiungere un bordo) · **striscia di miniature** con l'ultima velata che porta il conto delle altre, al posto della griglia a due colonne — su una pagina che ha già un'immagine grande in testa, una seconda griglia di immagini raddoppia il peso visivo senza aggiungere informazione · **i fatti come pillole col bordo** invece che righe icona+testo impilate: le righe occupavano una riga a testa e spingevano foto e commenti sotto la piega, mentre i fatti di un evento sono quattro parole ciascuno e stanno su due righe in tutto.
+
+**Sul foglio bianco il vetro non serve più**: i commenti diventano carte tenui col bordo. Un vetro sopra il bianco non ha niente da lasciar trasparire — è la stessa regola per cui le schermate usano `Fondo` invece di `bg-background`, applicata al contrario.
+
+### D-41 — Il calendario: testata sfumata, pillole al posto dei pallini, agenda a fasce orarie
+**Riferimento**: lo shot *"Calendar Mobile App – Animated Version"* (Exyte), portato dall'utente il 2026-08-27.
+
+- **Testata sfumata che si arrotonda sul bianco** (`components/testata-calendario.tsx`). Prima titolo, frecce, selettore di vista e iniziali dei giorni erano quattro righe che galleggiavano sullo stesso bianco del contenuto, e la griglia cominciava senza che niente dicesse dove. Il blocco colorato **è** il bordo superiore della griglia: sopra i comandi, sotto il calendario.
+- **Pillole invece di pallini** (`components/pillola-evento.tsx`). Un pallino dice *che c'è qualcosa*, una pillola dice **cosa**. Su un mese intero è la differenza fra toccare quindici giorni per ricordarsi cosa c'era e leggerlo scorrendo. Il fondo pastello viene dal **tipo** dell'evento, quindi il colore resta informazione e non decorazione.
+- **La griglia si misura, non si indovina**: quante pillole entrano in una cella dipende dall'altezza dello schermo. `GrigliaMese` fa `onLayout` e ne ricava riga e capienza; l'avanzo diventa "+N". Un numero fisso avrebbe tagliato sui telefoni piccoli e lasciato buchi su quelli grandi.
+- **La vista "giorni" diventa un'agenda a fasce orarie** (`components/agenda-giorno.tsx`), non più un elenco piatto. Un elenco dice *cosa* c'è; una fascia oraria dice **quando**, e soprattutto dice cosa c'è **in mezzo** — i buchi liberi del pomeriggio sono l'informazione che due persone cercano davvero in un calendario condiviso, e un elenco non può darla.
+- **Via l'elenco sotto la griglia del mese**: ripeteva ciò che ora sta nelle celle, e rubava alla griglia metà schermo.
+- Tre cose che nell'agenda non erano ovvie: **ciò che non ha un'ora non sta nella fascia** (metterlo alle 00:00 sarebbe una bugia leggibile: sta in una striscia sopra); **gli impegni sovrapposti si dividono la larghezza** per grappoli, altrimenti due cose alle 20:00 si coprono e una semplicemente non esiste a schermo; **la riga rossa dell'ora c'è solo se il giorno è oggi**.
+- ⚠️ **Il testo sulla testata è prugna, non bianco, e qui il riferimento non si copia.** Nello shot il titolo è bianco, ma il suo gradiente è molto più scuro del nostro: sui nostri pastelli il bianco dava circa 2:1 di contrasto, sotto il minimo perfino per il testo grande. Si è tenuta la *struttura* del riferimento e si è cambiato ciò che sul nostro colore non funzionava.
+- ⚠️ **Il selettore delle viste resta a parole, non a icone** — al contrario della barra in basso (D-40). "Mese" e "anno" sono due griglie, e due icone di griglia accanto non si distinguono. La regola vera non è "icone" o "parole": è *quante voci ci sono e quanto sono distinguibili*.
+
+### D-40 — La barra in basso: una lente di vetro che viaggia
+**Riferimento**: il video portato dall'utente il 2026-08-27 — una barra a pillola dove il segnalino della voce attiva non compare e sparisce, ma **scivola**, e mentre viaggia si deforma come una goccia.
+
+**Due strade, come per tutto il vetro di questa app:**
+1. **iOS 26 → `GlassContainer`** di `expo-glass-effect`: è la scatola che fa *fondere fra loro* i vetri che contiene quando si avvicinano. Pillola e lente sono due `GlassView` dentro lo stesso contenitore, quindi la deformazione a goccia la fa il sistema, con la rifrazione vera. Non è un'imitazione dell'effetto del video: è lo stesso effetto.
+2. **Altrove → una lastra chiara** con riflesso e bordo. **Non** un secondo vetro sfocato: due sfocature a schermo intero costano il doppio e sul ripiego non aggiungono niente che si veda.
+
+Il movimento è nostro in entrambi i casi: **una sola vista che si sposta**, non sei alonate che si accendono a turno — è la differenza fra *"è cambiata la selezione"* e *"la selezione si è spostata"*, e su sei voci quell'informazione vale più di qualunque animazione decorativa. Lo **stiramento è una molla a parte**, non una derivata della velocità: Animated non espone la velocità di una molla, e leggerla dal ponte JS a ogni fotogramma avrebbe buttato via `useNativeDriver`.
+
+⚠️ **Tolte le etichette.** Il riferimento non ne ha, e sotto una lente che si sposta un testo da 10 punti diventa rumore. **Il costo è reale e accettato**: con sei icone astratte non tutte si spiegano da sole — `Sparkles` per "Giochi" e `Star` per "Preferiti" non sono ovvie a chi apre l'app la prima volta. `accessibilityLabel` resta su ogni voce, quindi VoiceOver continua a leggerle per nome, e rimetterle è una riga. Se all'uso reale la barra risulta illeggibile, è questa la decisione da rovesciare per prima.
+
+### D-39 — Una modalità sola: il tema scuro non esiste più
+**Chiesto dall'utente il 2026-08-27**: *"NON ci deve essere modalità dark e light."*
+
+Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palette gemella e il flag `scuro` da `lib/tema.ts`, i rami condizionali nei sei file che li leggevano; `userInterfaceStyle` passa a `light` in `app.json`; `GlassView` prende `colorScheme="light"` **fisso** — senza, su un telefono in modalità notte iOS 26 renderebbe vetro scuro sotto un'interfaccia chiara.
+
+**Il guadagno vero non è meno codice**: è che le tinte scelte sono le uniche che qualcuno vedrà davvero. Fino a ieri metà del lavoro di taratura — quattro palette in un giorno, D-35/36/37/38 — finiva su schermate che nessuno stava guardando.
+
+**Verificato** nella console del browser il 2026-08-27: `--css-interop-darkMode` vale `class dark`, la radice non ha la classe `dark`, e nel CSS generato le regole `prefers-color-scheme` sono **zero**.
+
+⚠️ Non ha però chiuso **B-02** da sé, che era l'ipotesi di partenza: vedi la voce di B-02 per la causa vera.
+
+---
 
 ### D-38 — Quarta taratura: la palette "Barbie" e l'hero a card
 **Chiesto dall'utente il 2026-08-13 (notte), con due screenshot come riferimento.**
@@ -473,12 +668,185 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Verificato il 2026-08-12**, dopo l'applicazione di 0002, ripetendo **la stessa identica chiamata**: risponde `42501 permission denied for function assegna_punti` invece di entrare nella funzione. Verificato insieme che `crea_coppia` da anon è ora bloccata al livello dei permessi (la guardia interna resta come secondo strato) e che le tabelle rispondono ancora `[]` ad anon — cioè `e_membro_attivo` continua a servire le policy.
 **Lezione**: due erano già scritte nel processo — la verifica si fa **dall'esterno contro la realtà**, e la seconda riga di difesa (il FK, la guardia interna) è ciò che contiene il danno quando la prima manca. La nuova: **su Postgres, "revoke from anon" senza "revoke from public" non revoca niente.**
 
-### B-02 — Errore NativeWind "Cannot manually set color scheme" nella preview web (2026-08-12, APERTO)
+### B-02 — Errore NativeWind "Cannot manually set color scheme" nella preview web (2026-08-12, CHIUSO il 2026-08-27)
 **Sintomo**: nella console del browser, ripetuto a ogni render, `Error: Cannot manually set color scheme, as dark mode is set via a media query. Please use StyleSheet.setFlag('darkMode', 'class')`.
 **Cosa NON è**: non blocca il rendering. Verificato con gli stili calcolati che i token si applicano **correttamente in entrambe le modalità** — chiaro: carta crema `rgb(248,246,241)` + inchiostro `rgb(52,39,29)`; scuro: crema `rgb(237,232,222)` su marrone. Le route rendono, il font Fraunces si carica, la rete è pulita (200).
 **Causa**: interazione **web-only** fra `userInterfaceStyle: "automatic"` (che serve all'app **nativa** per seguire la modalità notte del sistema) e NativeWind in dark-mode `media` sul web: Expo prova a riflettere lo schema via `Appearance.setColorScheme`, e NativeWind lo rifiuta. Escluso StatusBar come fonte (reso solo-nativo, l'errore resta).
 **Perché lasciato aperto e non risolto stasera**: il web è **solo preview di sviluppo**; l'app vera è nativa, dove `Appearance` è nativo e questo errore NativeWind-web non si presenta. La correzione pulita (passare a dark-mode `class` e gestire il toggle da `useColorScheme`, riscrivendo `global.css` da `@media` a selettore `.dark`) è un refactoring del theming, non un lavoro di fine serata.
-⚠️ **Da fare prima di dichiararlo chiuso**: (1) verificare sull'**iPhone reale** che l'errore non compaia e che la modalità notte segua il sistema; (2) se si vuole la console web pulita, il refactoring dark-mode `class`. **Nessun gap silenzioso**: è dichiarato, non nascosto.
+✅ **Chiuso il 2026-08-27**, e la strada per arrivarci vale più della correzione.
+
+**Prima ipotesi, sbagliata**: tolta la modalità scura (D-39) l'errore doveva sparire da sé, visto che nasceva "dall'interazione fra `userInterfaceStyle: automatic` e il dark-mode a media query". Cancellati tutti i token scuri, messo `userInterfaceStyle: "light"`, riavviato Metro: **l'errore era identico**. Avere due modalità non c'entrava niente.
+
+**Causa vera**: `darkMode` di NativeWind era al predefinito **`media`**, e in quella modalità `react-native-css-interop` **rifiuta ogni impostazione manuale** dello schema (`runtime/web/color-scheme.js`: `if (darkMode === "media") throw`). Expo ne fa una a ogni render sul web, riflettendo `userInterfaceStyle` — quale che sia il suo valore.
+
+**Correzione**: `darkMode: 'class'` in `tailwind.config.js`. Non riapre la modalità notte: la classe `dark` non la mette nessuno, e in `global.css` non esistono più token scuri da applicare.
+
+⚠️ **Serve svuotare la cache di Metro**: il flag viaggia dentro il CSS generato, che Metro tiene in cache. Due riavvii "normali" hanno mostrato l'errore ancora, e sembrava che la correzione non funzionasse.
+
+**Verificato il 2026-08-27** nella console del browser, con un marcatore stampato prima del reload per non farsi ingannare dal buffer cumulativo — dopo il marcatore l'errore non compare più. Il flag `--css-interop-darkMode` vale `class dark`.
+
+**Due lezioni**. La prima: la spiegazione scritta il 2026-08-12 era *plausibile e sbagliata*, e sarebbe passata per vera se non si fosse riaperta la console **dopo** la correzione — una causa scritta con sicurezza in un documento non diventa vera per il fatto di essere scritta lì. La seconda: è quasi passata due volte, perché le prime riletture mostravano l'errore **vecchio** — il buffer della console non si svuota al reload. Una verifica che legge uno stato accumulato deve prima marcare dove comincia il pezzo che le interessa.
+
+### B-13 — Le schermate a tab non rileggono: la mappa teneva i pin cancellati (2026-08-27, CHIUSO)
+
+**Sintomo**: cancellando un luogo dalle Liste, la mappa continuava a disegnarne il pin.
+
+**Causa**: la terza occorrenza della **stessa forma** — in un navigatore a tab le schermate restano montate, e ognuna ha la propria copia degli hook. La mappa ha il suo `useLuoghi`, che rilegge solo quando cambia `coppiaId`; la cancellazione avveniva in un'altra schermata, e questa non aveva motivo di accorgersene.
+
+Era già stato B-09 (i preferiti che non vedevano i luoghi aggiunti dal form dell'evento) e, in altra veste, B-03 (la home che raccontava uno spazio che non esisteva più). **Tre schermate, tre volte lo stesso difetto**, perché la causa non è in nessuna delle tre: è che *«lo stato di questa schermata è aggiornato»* non è mai vero in un'app dove più schermate vivono insieme e scrivono sugli stessi dati.
+
+**Correzione**: `useFocusEffect` con `ricarica` — la callback dipende dal solo `coppiaId`, quindi è stabile e non innesca il ciclo di B-10.
+
+**Regola per le prossime schermate**: se una schermata legge dati che **un'altra schermata può scrivere**, deve rileggere al focus. Non è un'ottimizzazione da valutare, è la condizione perché mostri il vero.
+
+### B-14 — Il foglio delle serate non si apriva, e la diagnostica ha escluso metà delle ipotesi (2026-08-27, AGGIRATO)
+
+**Sintomo**: nelle Liste, toccando un luogo non si apriva l'elenco delle sue serate.
+
+Dopo due tentativi a vuoto — prima si sospettava il bersaglio invisibile, poi la mancanza di eventi collegati (che era B-12, reale ma diverso) — si è messa una riga di log sul tocco. È stata **decisiva in un colpo**:
+
+```
+[luogo] toccato Londra — serate: 0
+[luogo] toccato Londra — serate: 1     ← dopo aver collegato il luogo
+```
+
+Il tocco **arrivava**, il conteggio era **giusto**, lo stato veniva impostato. Quindi il difetto non era in nessuno dei posti dove lo si era cercato: era nel `Foglio` che non compariva.
+
+**Non è stata trovata la causa.** `components/foglio.tsx` funziona nel form del nuovo evento e non qui, e la differenza non è emersa. Si è scelto di **aggirare invece di insistere**: la schermata usa il `Modal` normale, che in quello stesso file apre già altri quattro fogli senza problemi.
+
+⚠️ **Resta un'incoerenza dichiarata**: due modi di aprire un foglio nella stessa app. È debito, non soluzione — ed è scritto qui perché chi lo troverà sappia che è una scelta e non una svista.
+
+**Lezione, la seconda oggi sullo stesso tema**: due correzioni ragionevoli di fila che non cambiano niente sono il segnale di smettere di correggere e mettere una misura. La riga di log è costata trenta secondi e ha escluso metà dello spazio delle ipotesi; le due correzioni prima ne erano costati molti di più senza escludere nulla.
+
+### B-12 — Un evento punta al posto in **due** modi, e ne guardavamo uno solo (2026-08-27, CHIUSO)
+
+🔑 **Una causa sola dietro tre sintomi diversi**, che sembravano tre bug indipendenti:
+
+* toccando un luogo non si apriva l'elenco delle serate (ne risultavano zero, quindi la riga non compariva nemmeno);
+* i luoghi non mostravano le foto delle serate, e restavano sull'immagine di Google;
+* sulla mappa un posto con serate alle spalle aveva il pin **vuoto**.
+
+**Causa**: un `evento` può puntare al posto con `elemento_id` — la scheda in lista, da 0012 — **oppure** con `luogo_id` — il posto sulla mappa, da 0008. Le tre query filtravano tutte per il primo (`.not('elemento_id','is',null)`, `.in('elemento_id', …)`), e **tutti gli eventi creati prima** che il campo "dove" impostasse entrambi hanno solo il secondo. Non è che i dati mancassero: si guardava dove non stavano.
+
+**Correzione**: le tre letture seguono ora entrambi i legami e li uniscono, con `elemento_id` che vince quando ci sono tutti e due — è il legame esplicito, l'altro è il ripiego storico.
+
+**Lezione**: quando si **aggiunge** un secondo modo di esprimere una relazione, il codice che legge il primo continua a funzionare — e resta corretto per i dati nuovi. Il difetto vive solo sui dati vecchi, cioè si vede tardi e sembra casuale: «a volte non compare». Un secondo legame introdotto senza una lettura che li unisca è un difetto a scoppio ritardato.
+
+### B-11 — I «luoghi che non esistono»: cancellati dalla mappa, sopravvivevano in lista (2026-08-27, CHIUSO)
+
+**Sintomo, riferito dall'utente**: nella lista dei luoghi compaiono posti che non esistono più.
+
+**Causa**: `elemento_lista.luogo_id` ha `on delete set null`. Cancellando un posto dalla **mappa**, la riga in lista non spariva — le si azzerava il riferimento e restava lì. Non un dato sbagliato: un dato **sopravvissuto**.
+
+`set null` era la scelta giusta quando è stata fatta, e resta giusta per le **foto** — una foto sopravvive al posto, è un ricordo e non un riferimento. Ma per la riga di lista, che del posto è la *scheda*, non lo è: da 0017 le due tabelle sono uno a uno, e una cancellazione che ne tocca una sola rompe l'invariante appena stabilito.
+
+**Correzione, in entrambi i versi**: cancellare dalla mappa toglie anche la riga in lista, cancellare dalla lista toglie anche il posto. La simmetria va tenuta da entrambe le parti — una regola che vale in una direzione sola non è una regola, è un caso particolare che qualcuno dimenticherà.
+
+L'ordine conta e non è simmetrico: si toglie prima la riga che dipende, poi quella da cui si dipende. Se la seconda cancellazione fallisce resta un posto senza scheda — riparabile, e comunque il male minore rispetto a una scheda che punta al vuoto.
+
+**I residui già in archivio** li ripulisce [`0018`](supabase/migrations/0018_pulizia_luoghi_fantasma.sql), con un criterio volutamente stretto: va via solo una riga che ha **solo un nome** e nient'altro (nessun posto, nessun evento, nessuna recensione, nessuna foto, nessun id Google). Un posto scritto a mano e mai collegato sopravvive se ha almeno una di quelle cose. Il file porta in fondo la stessa condizione in sola lettura: **si guarda prima di applicare**, perché cancella dati e non si torna indietro.
+
+**Lezione**: un `on delete set null` scelto per una tabella viene ereditato da tutte le altre che quella chiave la riusano, e continua a sembrare corretto anche quando il modello attorno è cambiato. Qui l'invariante uno-a-uno è arrivato **quattro migrazioni dopo** la chiave esterna che lo contraddiceva.
+
+### B-10 — "Maximum update depth exceeded" nei preferiti (2026-08-27, CHIUSO)
+
+**Introdotto da me** poche ore prima, correggendo B-09: avevo aggiunto `ricarica()` dentro il `useFocusEffect` che già chiamava `caricaCopertine()`.
+
+**Il ciclo**:
+
+```
+ricarica()  →  nuovo array `elementi`
+            →  `caricaCopertine` cambia identità (dipende da `elementi`)
+            →  cambia la callback del focus
+            →  l'effetto riparte  →  ricarica()  →  …
+```
+
+Prima l'effetto chiamava **solo** `caricaCopertine`, che non tocca `elementi`: nessun anello. È stato aggiungere l'altra chiamata a chiuderlo.
+
+**Correzione**: separare i due lavori secondo cosa li fa scattare. All'apertura della schermata `ricarica()` e `sincronizzaVisitati()`, che dipendono solo da `coppiaId` e quindi non si auto-rialimentano; in un `useEffect` normale `caricaCopertine()`, che reagisce agli elementi ed è la sua condizione naturale.
+
+**La regola**: *in un effetto di focus non vanno funzioni che dipendono da ciò che l'effetto stesso modifica.*
+
+**Verificato che non fosse altrove**: gli altri due `useFocusEffect` del progetto (`galleria`, `home`) dipendono da callback legate al solo `coppiaId`. Era solo il mio.
+
+### B-09 — «I luoghi non vengono aggiunti ai preferiti» — venivano aggiunti, non si vedevano (2026-08-27, CHIUSO)
+
+**Sintomo**: scegliendo un posto nel campo "dove" del nuovo evento, il luogo non compariva nella lista dei preferiti.
+
+**Riprodotto contro il database reale** con uno script che rifà esattamente le due scritture di `aggiungiLuogoPreferito`: luogo inserito, elemento inserito, riletto, tutto corretto. **Il backend era innocente.**
+
+**Causa**: `usePreferiti` rilegge l'elenco solo quando cambia `coppiaId`, e in un navigatore a **tab le schermate restano montate**. Il form dell'evento ha la *sua* istanza dell'hook e ricaricava quella; la schermata dei preferiti, montata da chissà quando, non rileggeva mai e mostrava l'elenco di quando era stata aperta la prima volta.
+
+**Correzione**: `ricarica()` dentro il `useFocusEffect` della schermata.
+
+**Lezione, che è la terza volta oggi che si presenta**: *non lo vedo* raccontato come *non c'è*. È stato B-03 (la home che raccontava uno spazio inesistente), è stato il conteggio dei membri dopo lo scioglimento in B-07, ed è questo. La forma ricorrente: **due copie dello stesso stato, di cui una non viene aggiornata** — e chi guarda non ha modo di distinguerla da un dato che manca davvero.
+
+### B-08 — Gli stili passati come funzione a `Pressable` non arrivano mai (2026-08-27, CHIUSO)
+
+🔑 **Il difetto più costoso finora: ha fatto fallire tre correzioni di fila, e ogni volta la diagnosi sembrava plausibile.**
+
+**Sintomi**, tutti sulla barra in basso, tutti sullo stesso componente:
+1. le sei voci **ammassate a sinistra** a larghezza di contenuto → diagnosticato come `flexGrow` che non si propaga dentro una vista nativa. Corretto con `width` esplicito;
+2. **ancora ammassate** → diagnosticato come misura sbagliata da `onLayout`. Corretto calcolando la larghezza dallo schermo, senza misurare;
+3. **impilate in colonna** lungo il bordo sinistro.
+
+Il terzo sintomo è quello che ha risolto il caso. `flexDirection` predefinito di React Native è **`column`**: sei elementi in colonna sono esattamente ciò che si ottiene quando lo stile **non viene applicato affatto**. Non era il flex, non era la misura, non era la vista nativa: era che lo stile non arrivava.
+
+**Causa, trovata nella sorgente della libreria** e non per deduzione — `node_modules/react-native-css-interop/dist/runtime/components.js:7`:
+
+```js
+cssInterop(Pressable, { className: "style" });
+```
+
+NativeWind **avvolge `Pressable`** (e `View`, `Text`, `Image`, `ScrollView`…) per far funzionare `className`, e lo fa mappando le classi **dentro `props.style`**. Nel farlo tratta `props.style` come un oggetto (`props.style?.width`, riga 327) e ci scrive dentro: uno `style` passato come **funzione** viene sovrascritto e non raggiunge mai il `Pressable` di React Native.
+
+**Dove faceva danno, e dove no** — ed è il motivo per cui è sopravvissuto tanto:
+
+| componente | cosa portava lo stile-funzione | visibile? |
+|---|---|---|
+| `barra-volante` | geometria delle sei voci | 🔴 rompeva tutto |
+| `TondoTestata` | il cerchio dietro l'icona | 🔴 tondi mai comparsi |
+| `Tondo` del visore | il cerchio scuro e l'area da premere | 🔴 «pulsanti troppo piccoli» |
+| `TondoVetro`, `BottoneVetro` | solo l'opacità del tocco | ⚪️ invisibile |
+
+Le ultime due nascondevano il difetto rendendolo innocuo dove si guardava di più.
+
+**Correzione**: nessuno `style` come funzione, in tutto il repo. **La geometria e l'aspetto stanno su una `View` con stile-oggetto**, il `Pressable` ci vive dentro senza stile, e il riscontro del tocco si fa con `onPressIn`/`onPressOut` più uno stato.
+
+**Lezione, che vale oltre React Native**: tre diagnosi diverse, tutte plausibili, tutte sbagliate, perché tutte davano per scontato che *lo stile venisse applicato* e discutevano solo di cosa contenesse. Il sintomo che ha sciolto il caso — la colonna — era informazione sul **valore predefinito**, cioè su cosa succede quando il proprio contributo è **assente**. Quando due correzioni ragionevoli di fila non cambiano niente, l'ipotesi da mettere in discussione non è il contenuto: è che il contenuto arrivi.
+
+### B-07 — Le funzioni di appaiamento erano eseguibili da un anonimo (2026-08-27, CHIUSO E VERIFICATO)
+
+**Trovato** mentre si verificava che lo schema fosse sopravvissuto alla pausa del progetto Supabase. Chiamando le funzioni RPC con la sola **chiave pubblicabile** e nessun utente, `crea_coppia` e `sciogli_coppia` rispondevano `42501 permission denied` — cioè fermate ai permessi, come devono. Ma le altre no:
+
+| funzione | risposta ad anon | cosa significa |
+|---|---|---|
+| `crea_invito()` | `P0001` «non sei in una coppia…» | è **entrata** nella funzione |
+| `apri_invito(text)` | `P0001` «non autenticato» | è entrata |
+| `conferma_invito(uuid)` | `P0001` «solo chi ha invitato…» | è entrata |
+| `revoca_invito(uuid)` | `P0001` «solo chi ha invitato…» | è entrata |
+| `ha_coppia_attiva(uuid)` | `false` | **ha risposto** |
+| `n_membri_attivi(uuid)` | `0` | **ha risposto** |
+
+**Causa**: è **B-01 allo specchio**. B-01 era *«revoke from anon senza revoke from public non revoca niente»*, perché Postgres concede EXECUTE a PUBLIC su ogni funzione nuova. La 0003 ha applicato quella lezione — c'è scritto nel suo commento, «revoke from public (non da anon)» — ma il difetto qui ha la forma opposta: Supabase imposta anche `alter default privileges … grant all on functions to anon, authenticated`, quindi ogni funzione nuova riceve un grant **diretto** ad anon, che `revoke from public` non tocca. Le due revoche vanno fatte **entrambe**, sempre.
+
+**Gravità, dichiarata onestamente e senza gonfiarla**:
+- Sulle quattro dell'invito **non c'è escalation**: le guardie interne reggono, tutte le strade finiscono in un raise. Il difetto è che la guardia diventa **l'unico strato**, che è precisamente il principio violato — quello scritto in `Rule/regole-sviluppo-sicuro.md` e ripetuto chiudendo B-01. Una guardia è una riga che un domani si riscrive; un permesso negato è una proprietà del database.
+- Sulle due di lettura è **una lettura non autenticata vera**. Sono `security definer`, quindi scavalcano la RLS per costruzione, e rispondevano a chiunque: *«questa persona sta in una coppia?»*, *«quanti membri ha questa coppia?»*. Serve un uuid valido, che non si indovina — ma un `utente_id` non è un segreto come un token: compare negli `autore_id` dei contenuti condivisi. **Rischio basso, ma reale, e di una categoria che non deve esistere.**
+
+**Correzione**: [`supabase/migrations/0014_permessi_inviti.sql`](supabase/migrations/0014_permessi_inviti.sql) — revoca esplicita `from public, anon` sulle quattro, e `from public, anon, authenticated` sulle due di lettura (le chiamano solo altre funzioni `security definer`, che girano coi privilegi del proprietario; il client non le ha mai chiamate — verificato, compaiono solo in `database.types.ts`). `e_membro_attivo` **non si tocca**, ed è deliberato: le policy RLS la invocano col ruolo del chiamante, e revocarla spegnerebbe la RLS invece di rafforzarla; per di più risponde solo sul chiamante, quindi a un anonimo dice sempre `false`, che non è un'informazione.
+
+✅ **Applicata dall'utente il 2026-08-27 e verificata contro il progetto reale.** Le sei funzioni rispondono ora `42501 permission denied` dove prima entravano o rispondevano. Verificata anche la **controprova che contava di più**: le tabelle continuano a rispondere `200 []` a un anonimo, cioè `e_membro_attivo` serve ancora le policy — una revoca troppo larga avrebbe spento la RLS invece di rafforzarla, ed è lo stesso controllo fatto chiudendo B-01.
+
+🔑 **Sistemando i test è emersa la cosa più interessante di tutta la vicenda.** Applicata la migrazione, **tre asserzioni sono diventate rosse**: usavano `n_membri_attivi` per contare i membri di una coppia. Cioè il test si appoggiava esattamente alla scorciatoia che il difetto apriva — verificava il dominio *attraverso un privilegio che non doveva esistere*. Un test può dipendere da un difetto senza che nessuno se ne accorga, e allora è quel difetto a tenerlo verde.
+
+Due delle tre sono state riscritte **più forti**: contano con una `select` normale su `membro_coppia`, che è la strada dell'app, quindi verificano insieme il dato e la policy che lo protegge. La terza — *"dopo lo scioglimento la coppia non ha membri attivi"* — **non è più asseribile**, ed è giusto così: `sciogli_coppia` fa uscire entrambi, quindi da fuori `0` significa sia «non ci sono» sia «non li vedo» (è B-03 di nuovo). Prima le distingueva solo grazie al difetto. Ora asserisce ciò che si vede davvero, e il residuo è **dichiarato** fra i casi non coperti, insieme alla ragione: servirebbe la `service_role`, che in questo repo non entra. Le conseguenze che contano restano coperte — dopo la rottura l'ex non legge, non scrive e non invita.
+
+**Suite: 60 asserzioni, tutte verdi** (erano 54).
+
+**Perché i 54 test non l'hanno visto**, che è la parte che vale di più. Il test copriva `anon non puo chiamare crea_coppia` — e passava, perché la 0002 revocava esplicitamente `from public, anon`. Le altre sei non erano coperte affatto. Ma c'è di peggio: un test scritto come *«la chiamata deve fallire»* sarebbe passato **verde sul difetto**, perché falliva davvero — solo con `P0001` invece che con `42501`. I casi aggiunti ora controllano il **codice**, non il fallimento, e il commento nel file spiega perché.
+
+**Lezione**: *fallisce* e *è vietata* non sono la stessa cosa, e un test che non le distingue certifica la prima credendo di aver verificato la seconda.
 
 ### B-03 — La home raccontava uno spazio che non esisteva, e "Esci" non usciva (2026-08-13, CHIUSO)
 **Sintomo, riferito dall'utente dopo il login sull'iPhone**: la home diceva *"Il tuo spazio è pronto — invita il tuo partner per continuare"*, ma premendo **Invita** rispondeva `non sei in una coppia: creane una prima di invitare`; **Esci** sembrava non fare nulla.
@@ -528,7 +896,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 ### Nome — deciso di non decidere (2026-08-12)
 Si parte come **"LifeCouple"**, con l'intenzione di cambiarlo eventualmente in corso d'opera. I quattro controlli (EUIPO classi 9 e 42, App Store, Play, dominio, handle) **restano da fare prima della pubblicazione**, non prima del codice.
 
-✅ **Identificativo del pacchetto deciso: `it.frbusato.lifecouple`** (D-20). L'utente è stato avvisato che non si cambia dopo la pubblicazione e ha scelto di legarlo comunque al nome del prodotto: è invisibile agli utenti, quindi un eventuale cambio di nome visualizzato non produce alcun danno — solo un identificativo che non combacia più, e questa nota spiega perché.
+✅ **Identificativo del pacchetto deciso: `com.lifecouple.app`** (D-20). *(Diceva `it.frbusato.lifecouple`: era il primo dei due passaggi di D-20, rimasto qui quando la decisione è cambiata. Corretto il 2026-08-27 — `app.json` e D-20 dicevano entrambi `com.lifecouple.app`.)* L'utente è stato avvisato che non si cambia dopo la pubblicazione e ha scelto di legarlo comunque al nome del prodotto: è invisibile agli utenti, quindi un eventuale cambio di nome visualizzato non produce alcun danno — solo un identificativo che non combacia più, e questa nota spiega perché.
 
 ### Avatar — piano dichiarato dall'utente il 2026-08-12
 L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambia D-09: la separazione stato/disegno resta, e il lavoro del designer entra come **renderer sostituibile**.
@@ -560,7 +928,12 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
 > **Le partite completate alimentano la creatura** (P-03): la ricompensa è la crescita condivisa, **non** un punteggio di compatibilità che resta.
 > **Dettaglio emerso il 2026-08-12 sulla mappa**: ogni luogo può avere **foto associate**. Lo schema lo prevede dal primo giorno — una foto può appartenere a un luogo — anche se l'interfaccia arriva dopo.
 
+### La chiave di Google Places — aggiunto il 2026-08-27
+- [ ] **Tetto di quota giornaliero + avviso di budget** su Google Cloud. Da fare **subito**, non prima di pubblicare: finché la chiave sta nel bundle è l'unica cosa che impedisce davvero un conto a sorpresa.
+- [ ] 🔴 **Spostare la chiave dietro una Edge Function di Supabase**, prima di utenti veri. Oggi vive in `EXPO_PUBLIC_GOOGLE_PLACES_KEY`, cioè **dentro il bundle**: chiunque scarichi l'app può estrarla, e `urlFotoGoogle` la mette anche nella *query string* delle immagini, dove finisce in cache e log. Le "application restrictions" di Google non chiudono il buco per una `fetch` scritta a mano — valgono per gli SDK nativi, che mandano da soli gli header d'identità, e chi ha copiato la chiave può fabbricarli. Con la funzione la chiave sta in un secret, si può limitare per utente autenticato, e si spegne senza ripubblicare l'app.
+
 ### Dopo l'MVP, non prima
+- [ ] Rimettere le etichette nella barra in basso, **se** all'uso reale le sei icone risultano illeggibili (D-40)
 - [ ] Notifiche push
 - [ ] Esportazione dei propri dati (portabilità, art. 20 GDPR)
 - [ ] Ricerca e filtri nelle liste
@@ -658,7 +1031,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-13 (sera, dopo il redesign).**
+**Aggiornato al 2026-08-27 (fine giornata: design, luoghi, Google Places).**
 
 **Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che parte. Zero risorse cloud, zero costi sostenuti.
 
@@ -668,7 +1041,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 **Configurazione applicata**: `name` LifeCouple · `slug` lifecouple · `version` **0.1.0** (1.0.0 su un progetto senza codice sarebbe una bugia) · `scheme` **`lifecouple`** — serve ai link di invito di D-14, è ciò che fa aprire l'app quando si tocca il link su WhatsApp · `ios.bundleIdentifier` e `android.package` **`com.lifecouple.app`** (D-20) · `supportsTablet: false`, perché un'app di coppia sul telefono non ha motivo di farsi recensire anche su iPad.
 
-**Comando per lavorarci**: `npm run web` dentro `Projects/LifeCouple` (o la configurazione `lifecouple-web` in `.claude/launch.json` del brain).
+**Comando per lavorarci**: `npm install` (il 2026-08-27 `node_modules` era rimasto indietro di due pacchetti — `expo-blur` e `expo-glass-effect` erano in `package.json` ma non installati), poi `npm run web` dentro `Projects/LifeCouple` (o la configurazione `lifecouple-web` in `.claude/launch.json` del brain).
 
 ✅ **Schema disegnato** il 2026-08-12 — 16 tabelle, regole RLS e le due funzioni Postgres, in [`Architecture.md`](docs/Architecture.md) §4.
 
@@ -712,14 +1085,28 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ✅ **Redesign "Quarzo rosa" col vetro liquido** (D-35, 2026-08-13 sera): palette rosa-bianco su token (prima taratura giudicata viola sull'iPhone e corretta), vetro nativo iOS 26 con ripiego a tre strati, toolbar volante che sparisce a tastiera aperta, galleria stile Foto con **cartelle** (`0011`), pagina evento con hero, foto che si allargano e ingranaggio a cinque azioni, ricerca luoghi **Photon/OSM** (senza posizione, per scelta), striscia giorni a scorrimento libero (B-06). Ristoranti sulla mappa e dentro gli eventi (D-36, `0012`), che corregge anche B-05.
 
+✅ **Quinto giro di design, sui riferimenti portati dall'utente** (2026-08-27, D-39/D-43): **una modalità sola** — il tema scuro non esiste più, e con lui se n'è andata metà della fatica di taratura · **barra in basso con la lente di vetro che viaggia**, su `GlassContainer` dove iOS 26 c'è · **calendario** con testata sfumata, pillole al posto dei pallini e agenda a fasce orarie · **pagina evento** con immagine a tutto schermo e foglio bianco che la taglia · **pin della mappa** che dicono quanti eventi hanno, e anteprima dell'evento in sovraimpressione invece del foglio. **B-02 chiuso** — la causa non era quella scritta il 2026-08-12.
+
+⚠️ **Tutto questo è verificato solo a compilazione**: `tsc` pulito, `eslint` senza errori, bundle web di 2763 moduli, palette unica confermata in console. **L'aspetto vero non l'ha visto nessuno**: le schermate rifatte stanno dietro il login, la mappa sul web non esiste e il vetro di sistema è solo iOS 26. È il primo punto della lista qui sotto per questo motivo.
+
 **Cosa manca** (in ordine):
-0. ~~Applicare `0013`~~ ✅ fatto il 2026-08-13 notte. Resta: **inserire la chiave** `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` (poi riavviare Metro): senza chiave la ricerca luoghi/ristoranti dichiara di non poter cercare (D-37).
-1. ~~Applicare `0012`~~ ✅ fatto il 2026-08-13 sera (54 test verdi dopo). **Rigenerare i tipi** resta (`lib/database.types.ts` ha blocchi a mano: 0011, 0012, 0013).
-2. **Rieseguire e estendere i test avversariali**: `npm run test:rls` dopo la 0012, più il caso di B-05 (raggiungibilità dei riferimenti dopo la rottura), oggi dichiarato e non coperto.
-3. **Riprovare sull'iPhone il giro completo**: palette, toolbar, vetro (su iOS 26 è quello di sistema), tastiera, striscia giorni, ricerca, importazione, foto e cartelle. B-02 da confermare chiuso su iOS.
+0. **Rigenerare i tipi**: `lib/database.types.ts` ha blocchi scritti a mano per 0011→0016 (`genere`, `aggiorna_ristoranti_visitati`). È la prima cosa: ogni migrazione nuova richiede di aggiungerli a mano finché non si fa.
+
+**Cosa è successo il 2026-08-27** (giornata lunga, tutto provato sull'iPhone con l'utente): design rifatto sui riferimenti (D-39→D-43), poi il modello dei luoghi riscritto tre volte sotto il feedback — da "ristoranti" a **luoghi** (D-45), ogni posto anche in lista (D-46), un pin/elenco/stato solo (D-48), e infine l'elenco dei luoghi **dentro la mappa** (D-51). Chiave Google Places attiva e verificata. Migrazioni 0014→0019 applicate.
+
+**Difetti chiusi**: B-07 (permessi), B-08 (stili-funzione su `Pressable`), B-09/B-13 (schermate a tab che non rileggono), B-10 (ciclo di render), B-11 (luoghi fantasma), B-12 (i due legami evento→luogo). B-14 **aggirato**, non risolto.
+
+⚠️ **Non ancora guardato sull'iPhone**: l'ultimo giro (D-50, D-51) — il «+» nelle Liste, la mappa senza barra di ricerca, l'interruttore Mappa/Elenco. Compila e i controlli passano, ma nessuno l'ha visto.
+
+1. 🔴 **Guardare il design nuovo sull'iPhone.** È il primo punto perché è l'unico che può invalidare i cinque successivi: cinque schermate rifatte sono state scritte e non ancora viste. Da controllare in quest'ordine — la **lente della barra** (su iOS 26 dovrebbe fondersi con la pillola; altrove è la lastra chiara), la **capienza delle celle del mese** (`GrigliaMese` misura da sé, ma il calcolo non è mai girato su uno schermo vero), l'**agenda a fasce orarie** con due impegni sovrapposti, il **foglio della pagina evento** sopra l'immagine, i **pin** e l'anteprima in sovraimpressione. La domanda su cui l'utente deve pronunciarsi: **le sei icone senza etichetta si capiscono?** (D-40 dice come rimetterle).
+1. **Inserire la chiave** `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` e riavviare Metro: senza, la ricerca luoghi/ristoranti dichiara di non poter cercare (D-37). Insieme alla chiave, **subito**, il tetto di quota e l'avviso di budget su Google Cloud — vedi il backlog §6, "La chiave di Google Places".
+2. **Rigenerare i tipi**: `lib/database.types.ts` ha ancora blocchi scritti a mano (0011, 0012, 0013).
+3. **Estendere i test avversariali** al caso di B-05 (raggiungibilità dei riferimenti dopo la rottura), oggi dichiarato e non coperto. ✅ La suite gira e passa: **60 asserzioni verdi** il 2026-08-27, `0014` compresa.
 4. **Decidere la forma del link d'invito** fra le tre strade qui sopra. Se (b) o (c), serve la route `app/invito/[token].tsx`.
 5. **Schermata di scioglimento e cancellazione account** (Apple): la funzione database c'è (`0004`→`0012`), il bottone no.
 6. Le funzioni nell'ordine di D-11 (invio sigillato, giochi, creatura).
+
+⚠️ **Il progetto Supabase gratuito va in pausa se resta fermo**, e mentre è in pausa **il suo DNS sparisce** — l'app non dice «backend in pausa», dice «network request failed», che è indistinguibile da un guasto di rete. Successo il 2026-08-27 dopo quattordici giorni di inattività; ripristinato dal dashboard senza perdere niente. È **R-02 che si materializza** nella sua forma più mite: il costo è stato basso solo perché lo schema vive in 14 migrazioni nel repo e non nei clic di qualcuno.
 
 ⚠️ **Prima di utenti veri** (invariato): riaccendere "Confirm email", strategia d'accesso definitiva, eliminare gli utenti di test, confermare la regione UE.
 Gli utenti di prova da eliminare dal dashboard sono ora: `rls-*@example.com`, più `diagnosi-invito@`, `solo-test@`, `duo-x@`, `duo-y@` (`@example.com`), creati il 2026-08-12 per la diagnosi del link e la verifica di D-25, e `diagnosi-solo-2@` … `diagnosi-solo-5@` e `prova-coppia-1@` / `prova-coppia-2@` (`@example.com`), creati il 2026-08-13 per riprodurre B-03 e provare D-26 e D-29. Diversi di questi hanno anche una **coppia** che resta nel database — `prova-coppia-*` ne ha una completa, con data di inizio e relativo evento.

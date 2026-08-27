@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SPAZIO_BARRA } from '@/components/barra-volante';
 import { Text } from '@/components/ui/text';
-import { fondo, useTema } from '@/lib/tema';
+import { FONDO } from '@/lib/tema';
 
 /**
  * Il fondo di ogni schermata: bianco in alto, rosa appena percettibile in basso.
@@ -23,10 +23,9 @@ import { fondo, useTema } from '@/lib/tema';
  * grigio sporco. La sfumatura e' cio' che fa esistere il vetro.
  */
 export function Fondo() {
-  const { scuro } = useTema();
   return (
     <LinearGradient
-      colors={fondo(scuro)}
+      colors={FONDO}
       locations={[0, 0.5, 1]}
       // Diagonale, come lo sfondo dello screenshot Barbie: azzurro che entra
       // dall'alto a sinistra, rosa che esce in basso a destra.

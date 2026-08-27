@@ -22,17 +22,15 @@ export function CercaLuogo({
   onScegli,
   placeholder,
   autoFocus,
-  soloRistoranti = false,
 }: {
   onScegli: (l: Trovato) => void;
   placeholder?: string;
   autoFocus?: boolean;
   /** Solo ristoranti veri: e' il vincolo dei preferiti (D-37). */
-  soloRistoranti?: boolean;
 }) {
   const { c } = useTema();
   const { query, setQuery, risultati, cercando, errore, pulisci } =
-    useRicercaLuoghi(soloRistoranti);
+    useRicercaLuoghi();
 
   return (
     <View className="gap-2">

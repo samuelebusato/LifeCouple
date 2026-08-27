@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
-import { CalendarDays, Heart, Image, Map, Sparkles, Star } from 'lucide-react-native';
-import { BarraVolante } from '@/components/barra-volante';
+import { CalendarDays, Heart, Image, ListChecks, Map, Sparkles } from 'lucide-react-native';
+import { BarraVolante, tratto } from '@/components/barra-volante';
 import { t } from '@/lib/i18n';
 
 /**
@@ -31,42 +31,57 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: t.tab.spazio,
-          tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Heart color={color} size={size} strokeWidth={tratto(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="calendario"
         options={{
           title: t.tab.calendario,
-          tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <CalendarDays color={color} size={size} strokeWidth={tratto(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="giochi"
         options={{
           title: t.tab.giochi,
-          tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Sparkles color={color} size={size} strokeWidth={tratto(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="mappa"
         options={{
           title: t.tab.mappa,
-          tabBarIcon: ({ color, size }) => <Map color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Map color={color} size={size} strokeWidth={tratto(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="preferiti"
         options={{
           title: t.tab.preferiti,
-          tabBarIcon: ({ color, size }) => <Star color={color} size={size} />,
+          // L'icona segue il nome: una stella diceva "i miei preferiti", una
+          // lista con le spunte dice "le cose da fare e quelle fatte" — che e'
+          // cio' che la sezione contiene davvero.
+          tabBarIcon: ({ color, size, focused }) => (
+            <ListChecks color={color} size={size} strokeWidth={tratto(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="galleria"
         options={{
           title: t.tab.galleria,
-          tabBarIcon: ({ color, size }) => <Image color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Image color={color} size={size} strokeWidth={tratto(focused)} />
+          ),
         }}
       />
     </Tabs>

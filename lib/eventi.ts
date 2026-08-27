@@ -85,11 +85,17 @@ export function useEventi(coppiaId: string | null) {
         elementoId?: string | null;
       },
       ricaricaCoppia: () => Promise<StatoCoppia>
-    ): Promise<string | null> => {
+      // ⚠️ Restituisce anche l'**id** del nuovo evento, non solo l'esito.
+      // Serve a chi crea un evento con delle foto gia' scelte: le foto si
+      // attaccano a un evento, e l'evento prima deve esistere. Senza l'id
+      // bisognerebbe rileggere l'elenco e indovinare qual e' — cioe' fidarsi
+      // che sia il piu' recente, che con due persone che scrivono insieme non
+      // e' una garanzia.
+    ): Promise<{ errore: string | null; id?: string }> => {
       const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
-      if (!esito.coppiaId) return esito.errore;
+      if (!esito.coppiaId) return { errore: esito.errore };
 
-      const { error } = await supabase.from('evento').insert({
+      const { data, error } = await supabase.from('evento').insert({
         coppia_id: esito.coppiaId,
         titolo: dati.titolo.trim(),
         inizio: dati.inizio.toISOString(),
@@ -99,10 +105,10 @@ export function useEventi(coppiaId: string | null) {
         nota: dati.nota?.trim() || null,
         luogo_id: dati.luogoId ?? null,
         elemento_id: dati.elementoId ?? null,
-      });
-      if (error) return error.message;
+      }).select('id').single();
+      if (error) return { errore: error.message };
       await ricarica();
-      return null;
+      return { errore: null, id: data.id };
     },
     [coppiaId, ricarica]
   );

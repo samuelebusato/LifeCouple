@@ -5,26 +5,27 @@ import { Text } from '@/components/ui/text';
 import { CartaVetro } from '@/components/ui/vetro';
 import { cn } from '@/lib/utils';
 import type { Evento } from '@/lib/eventi';
-import { useTema } from '@/lib/tema';
+import { C, pastelli, useTema } from '@/lib/tema';
 import { lingua, t } from '@/lib/i18n';
 
-/** Colore e icona dicono il tipo prima di leggere: il calendario si scorre, non si studia. */
-export function useAspetto(e: Evento) {
-  const { c, scuro } = useTema();
-  if (e.speciale) return { Icona: Sparkles, colore: c.accento };
-  if (e.tipo === 'romantico') return { Icona: Heart, colore: c.accento };
-  if (e.tipo === 'vacanza') return { Icona: Palmtree, colore: scuro ? '#7fb894' : '#4f7a5f' };
-  return { Icona: CalendarCheck, colore: c.tenue };
-}
-
-/** Versione senza hook, per chi disegna fuori da un componente (pallini del mese). */
-export const aspetto = (e: Evento, scuro = false) => {
-  const accento = scuro ? '#f25fbc' : '#e4259e';
-  if (e.speciale) return { Icona: Sparkles, colore: accento };
-  if (e.tipo === 'romantico') return { Icona: Heart, colore: accento };
-  if (e.tipo === 'vacanza') return { Icona: Palmtree, colore: scuro ? '#7fb894' : '#4f7a5f' };
-  return { Icona: CalendarCheck, colore: scuro ? '#b1a0a3' : '#816a6f' };
+/**
+ * Colore, icona e **pastello** di un evento: il tipo si riconosce prima di
+ * leggere, perche' il calendario si scorre, non si studia.
+ *
+ * Una funzione sola, senza hook, e senza il parametro `scuro` (D-39: la
+ * modalita' e' una). Il pastello serve alle pillole della griglia del mese e
+ * alle carte dell'agenda: fondo tenue + testo scuro + barretta satura, dalla
+ * tabella in `lib/tema.ts`.
+ */
+export const aspetto = (e: Evento) => {
+  if (e.speciale) return { Icona: Sparkles, colore: C.accento, pastello: pastelli.speciale };
+  if (e.tipo === 'romantico') return { Icona: Heart, colore: C.accento, pastello: pastelli.romantico };
+  if (e.tipo === 'vacanza') return { Icona: Palmtree, colore: '#4f7a5f', pastello: pastelli.vacanza };
+  return { Icona: CalendarCheck, colore: C.tenue, pastello: pastelli.impegno };
 };
+
+/** Alias storico: c'erano due funzioni identiche, una con hook e una senza. */
+export const useAspetto = aspetto;
 
 function quando(e: Evento) {
   const da = new Date(e.inizio);

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Pressable, StyleSheet, Platform, type ViewStyle, type StyleProp } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TextClassContext } from '@/components/ui/text';
+import { Text, TextClassContext } from '@/components/ui/text';
 import { useTema } from '@/lib/tema';
 
 /**
@@ -40,6 +40,12 @@ type VetroProps = {
   ombra?: boolean;
   /** Velatura rosa invece che neutra: per le superfici che devono farsi notare. */
   tinto?: boolean;
+  /**
+   * Il vetro di sistema reagisce al tocco (solo iOS 26). Si accende sulle
+   * superfici che SONO un comando — la barra, i bottoni — non sulle carte:
+   * una carta che si deforma sotto il dito sembra rotta, non viva.
+   */
+  interattivo?: boolean;
 };
 
 export function Vetro({
@@ -49,8 +55,9 @@ export function Vetro({
   intensita,
   ombra = true,
   tinto = false,
+  interattivo = false,
 }: VetroProps) {
-  const { vetro, scuro, c } = useTema();
+  const { vetro } = useTema();
 
   // L'ombra non puo' stare sulla stessa vista che ritaglia (`overflow: hidden`):
   // su iOS verrebbe ritagliata insieme al contenuto. Quindi due viste annidate.
@@ -73,7 +80,12 @@ export function Vetro({
         <GlassView
           style={{ borderRadius: raggio, overflow: 'hidden' as const, width: '100%' as const }}
           glassEffectStyle="regular"
-          tintColor={tinto ? (scuro ? 'rgba(242,95,188,0.35)' : 'rgba(228,37,158,0.28)') : undefined}
+          // ⚠️ `colorScheme` FISSO a chiaro (D-39): senza, su un telefono in
+          // modalita' notte iOS 26 renderebbe vetro scuro sotto un'interfaccia
+          // chiara — l'app ha una modalita' sola, il vetro deve saperlo.
+          colorScheme="light"
+          isInteractive={interattivo}
+          tintColor={tinto ? 'rgba(228,37,158,0.28)' : undefined}
         >
           {children}
         </GlassView>
@@ -92,9 +104,7 @@ export function Vetro({
         <LinearGradient
           colors={
             tinto
-              ? scuro
-                ? ['rgba(242,95,188,0.30)', 'rgba(242,95,188,0.12)']
-                : ['rgba(255,255,255,0.62)', 'rgba(252,205,233,0.48)']
+              ? ['rgba(255,255,255,0.62)', 'rgba(252,205,233,0.48)']
               : (vetro.velo as unknown as [string, string])
           }
           style={StyleSheet.absoluteFill}
@@ -120,7 +130,7 @@ export function Vetro({
 }
 
 /** C'e' il Liquid Glass di sistema? Esposto per chi deve adattare i contrasti. */
-export { VETRO_NATIVO } from '@/components/ui/vetro-nativo';
+export { VETRO_NATIVO, GlassView, GlassContainer } from '@/components/ui/vetro-nativo';
 
 /**
  * Il bottone di vetro.
@@ -157,14 +167,7 @@ export function BottoneVetro({
         : 'text-base font-medium text-foreground';
 
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        { opacity: disabled ? 0.45 : pressed ? 0.82 : 1, transform: [{ scale: pressed ? 0.985 : 1 }] },
-        style,
-      ]}
-    >
+    <Pressable onPress={onPress} disabled={disabled} style={[{ opacity: disabled ? 0.45 : 1 }, style]}>
       <Vetro raggio={raggio} tinto={variante === 'accento'} ombra={!disabled}>
         <TextClassContext.Provider value={testo}>
           <View
@@ -185,7 +188,91 @@ export function BottoneVetro({
   );
 }
 
-/** Bottone tondo di vetro: per le azioni che stanno sopra il contenuto. */
+/**
+ * Il bottone **pieno**: per l'azione principale di un foglio, quella che si
+ * puo' fare o non si puo' fare.
+ *
+ * Perche' non basta `BottoneVetro variante="accento"`: quello resta vetro
+ * chiaro in entrambi gli stati, e fra attivo e disattivo cambia solo un filo di
+ * opacita'. Su un form dove il salvataggio dipende da un campo compilato,
+ * quella differenza non si legge — e non si capisce che manca qualcosa.
+ * Qui il colore **e' lo stato**: magenta pieno quando si puo' agire, grigio
+ * chiaro quando no.
+ */
+export function BottonePieno({
+  testo,
+  onPress,
+  disabled,
+  altezza = 58,
+  style,
+}: {
+  testo: string;
+  onPress?: () => void;
+  disabled?: boolean;
+  altezza?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { c } = useTema();
+  const [premuto, setPremuto] = React.useState(false);
+  return (
+    <View
+      style={[
+        {
+          height: altezza,
+          borderRadius: 26,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: disabled ? '#efe6ec' : c.accento,
+          opacity: premuto && !disabled ? 0.86 : 1,
+          shadowColor: disabled ? 'transparent' : 'rgba(180,20,120,0.35)',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 1,
+          shadowRadius: 14,
+          elevation: disabled ? 0 : 6,
+        },
+        style,
+      ]}
+    >
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        onPressIn={() => setPremuto(true)}
+        onPressOut={() => setPremuto(false)}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!disabled }}
+      >
+        <View
+          style={{
+            height: altezza,
+            paddingHorizontal: 24,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: '700',
+              color: disabled ? c.tenue : c.suAccento,
+            }}
+          >
+            {testo}
+          </Text>
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+/**
+ * Bottone tondo di vetro: per le azioni che stanno sopra il contenuto.
+ *
+ * ⚠️ Stile-**oggetto**, non funzione: in questo progetto uno stile passato come
+ * funzione a `Pressable` non viene applicato (la storia sta in
+ * `components/barra-volante.tsx`). Qui il danno era invisibile — si perdeva
+ * solo il riscontro del tocco — ma un difetto invisibile che si propaga per
+ * copia e' peggio di uno che si vede.
+ */
 export function TondoVetro({
   children,
   onPress,
@@ -202,14 +289,7 @@ export function TondoVetro({
   tinto?: boolean;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        { opacity: disabled ? 0.45 : pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.94 : 1 }] },
-        style,
-      ]}
-    >
+    <Pressable onPress={onPress} disabled={disabled} style={[{ opacity: disabled ? 0.45 : 1 }, style]}>
       <Vetro raggio={lato / 2} tinto={tinto}>
         <View style={{ width: lato, height: lato, alignItems: 'center', justifyContent: 'center' }}>
           {children}

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Alert,
   View,
   Image,
   ActivityIndicator,
@@ -17,14 +18,14 @@ import {
   ImagePlus,
   Plus,
   Trash2,
-  X,
   FolderInput,
 } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
+import { VisoreFoto } from '@/components/visore-foto';
 import { Input } from '@/components/ui/input';
 import { Vetro, CartaVetro, TondoVetro, BottoneVetro } from '@/components/ui/vetro';
 import { Fondo, ScorrevoleSchermata } from '@/components/schermata';
-import { SPAZIO_BARRA } from '@/components/barra-volante';
+import { SOPRA_BARRA } from '@/components/barra-volante';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
@@ -82,7 +83,15 @@ export default function Galleria() {
   const [errore, setErrore] = React.useState<string | null>(null);
   const [creando, setCreando] = React.useState(false);
   const [nome, setNome] = React.useState('');
-  const [aperta, setAperta] = React.useState<Scatto | null>(null);
+  /**
+   * Quale foto e' aperta, come **indice** e non come oggetto.
+   *
+   * Prima era lo scatto singolo, e il visore mostrava quello e basta: dalla
+   * galleria non si poteva sfogliare, dall'evento si'. Erano due visori
+   * diversi. Ora e' uno solo (`components/visore-foto.tsx`) e vuole sapere da
+   * dove partire dentro l'elenco.
+   */
+  const [aperta, setAperta] = React.useState<number | null>(null);
   const [spostando, setSpostando] = React.useState<Scatto | null>(null);
 
   const ricarica = React.useCallback(async () => {
@@ -357,8 +366,8 @@ export default function Galleria() {
             )}
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
-              {visibili.map((s) => (
-                <Pressable key={s.id} onPress={() => setAperta(s)}>
+              {visibili.map((s, i) => (
+                <Pressable key={s.id} onPress={() => setAperta(i)}>
                   <View style={{ width: lato, height: lato, backgroundColor: 'rgba(0,0,0,0.05)' }}>
                     {url[s.chiave_storage] ? (
                       <Image
@@ -380,7 +389,7 @@ export default function Galleria() {
 
         {/* --- aggiungi: vetro, sopra la barra volante ---------------------- */}
         {Platform.OS !== 'web' && (
-          <View style={{ position: 'absolute', right: 20, bottom: SPAZIO_BARRA - 8 }}>
+          <View style={{ position: 'absolute', right: 20, bottom: SOPRA_BARRA }}>
             <TondoVetro lato={58} onPress={aggiungi} disabled={attesa}>
               {attesa ? (
                 <ActivityIndicator color={c.accento} />
@@ -445,55 +454,54 @@ export default function Galleria() {
       </Modal>
 
       {/* --- la foto a schermo pieno -------------------------------------- */}
-      <Modal visible={!!aperta} transparent animationType="fade" onRequestClose={() => setAperta(null)}>
-        <View className="flex-1" style={{ backgroundColor: 'rgba(12,6,9,0.94)' }}>
-          <SafeAreaView className="flex-1">
-            {aperta && url[aperta.chiave_storage] && (
-              <Image
-                source={{ uri: url[aperta.chiave_storage] }}
-                style={{ flex: 1, width: '100%' }}
-                resizeMode="contain"
-              />
-            )}
-            <View className="flex-row items-center justify-between px-5 pb-3">
-              <TondoVetro lato={48} tinto={false} onPress={() => setAperta(null)}>
-                <X color={c.testo} size={20} />
-              </TondoVetro>
-              <View className="flex-row gap-3">
-                {/* Spostare e' un update, e la policy e' solo-autore (0001):
-                    offrire il gesto sulle foto dell'altro produrrebbe solo un
-                    fallimento silenzioso. */}
-                {aperta?.autore_id === session?.user.id && (
-                  <TondoVetro
-                    lato={48}
-                    tinto={false}
-                    onPress={() => {
-                      setSpostando(aperta);
-                      setAperta(null);
-                    }}
-                  >
-                    <FolderInput color={c.testo} size={20} />
-                  </TondoVetro>
-                )}
-                {aperta?.autore_id === session?.user.id && (
-                  <TondoVetro
-                    lato={48}
-                    tinto={false}
-                    onPress={async () => {
-                      const s = aperta;
-                      setAperta(null);
-                      if (s) await cancellaFoto(s.id, s.chiave_storage);
-                      await ricarica();
-                    }}
-                  >
-                    <Trash2 color={c.pericolo} size={20} />
-                  </TondoVetro>
-                )}
-              </View>
-            </View>
-          </SafeAreaView>
-        </View>
-      </Modal>
+      {/* --- IL VISORE: lo stesso della pagina evento --------------------
+          Le azioni cambiano — qui si sposta e si elimina, li' si stacca
+          dall'evento e si elimina — ma il visore e' il medesimo, ed e' cio' che
+          rende le due schermate coerenti senza doverle riallineare a mano.
+
+          ⚠️ **Qui "elimina" elimina davvero**, anche dagli eventi: la galleria
+          e' il posto dove la foto vive. Dentro un evento la stessa icona non
+          farebbe la stessa cosa, e per questo li' ce ne sono due. */}
+      <VisoreFoto
+        foto={visibili}
+        url={url}
+        indice={aperta}
+        mioId={session?.user.id}
+        azioni={[
+          {
+            chiave: 'sposta',
+            etichetta: t.galleria.spostaIn,
+            Icona: FolderInput,
+            soloAutore: true,
+            fai: (f) => {
+              const scatto = visibili.find((x) => x.id === f.id) ?? null;
+              setAperta(null);
+              setSpostando(scatto);
+            },
+          },
+          {
+            chiave: 'elimina',
+            etichetta: t.evento.eliminaFoto,
+            Icona: Trash2,
+            distruttiva: true,
+            soloAutore: true,
+            fai: (f) =>
+              Alert.alert(t.evento.eliminaFoto, t.evento.confermaEliminaFoto, [
+                { text: t.calendario.annulla, style: 'cancel' },
+                {
+                  text: t.calendario.elimina,
+                  style: 'destructive',
+                  onPress: async () => {
+                    setAperta(null);
+                    await cancellaFoto(f.id, f.chiave_storage);
+                    await ricarica();
+                  },
+                },
+              ]),
+          },
+        ]}
+        onChiudi={() => setAperta(null)}
+      />
 
       {/* --- foglio: sposta in una cartella -------------------------------- */}
       <Modal

@@ -49,6 +49,30 @@ async function coppiaDi(c) {
   return id;
 }
 
+/**
+ * Quanti membri attivi ha una coppia, **contati passando dalla RLS**.
+ *
+ * Prima questi conteggi usavano `n_membri_attivi`, che e' `security definer` e
+ * quindi scavalca la RLS per costruzione. Funzionava, ma era il test che si
+ * appoggiava proprio alla scorciatoia chiusa da B-07 — e chiuderla ha fatto
+ * fallire tre asserzioni che credevano di verificare il dominio e verificavano
+ * un privilegio.
+ *
+ * Contare con una select normale e' anche **piu' forte**: e' la stessa strada
+ * che percorre l'app, quindi verifica insieme il dato e la policy che lo
+ * protegge. Vale pero' solo per chi e' ancora membro: da fuori la risposta e'
+ * `0` sia se i membri non ci sono sia se non si possono vedere, e le due cose
+ * non vanno confuse (e' la lezione di B-03).
+ */
+async function membriAttivi(client, cid) {
+  const { data } = await client
+    .from('membro_coppia')
+    .select('utente_id')
+    .eq('coppia_id', cid)
+    .is('uscito_il', null);
+  return data?.length ?? 0;
+}
+
 let falliti = 0;
 const esito = (nome, ok, dettaglio = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${nome}${dettaglio ? ` — ${dettaglio}` : ''}`);
@@ -70,6 +94,50 @@ const coppiaB = await coppiaDi(b1);
   esito('anon non legge nemmeno le soglie', s?.length === 0);
   const { error } = await anon.rpc('crea_coppia');
   esito('anon non puo chiamare crea_coppia', error?.code === '42501', error?.message);
+}
+
+// --- anonimo: le funzioni di appaiamento (B-07) -------------------------------
+// Questi casi mancavano, ed e' il motivo per cui B-07 e' vissuto indisturbato
+// dal 2026-08-12 al 2026-08-27: il test copriva `crea_coppia` — chiusa bene
+// dalla 0002, che revocava esplicitamente `from public, anon` — e dava per
+// buone le altre, chiuse invece con `revoke from public` soltanto.
+//
+// ⚠️ Si controlla il **codice 42501**, non il fatto che la chiamata fallisca.
+// Fallivano anche prima: con `P0001`, cioe' fermate dalla guardia interna
+// invece che dai permessi. Un test su "ha dato errore" sarebbe passato verde
+// sul difetto — ed e' esattamente l'errore che questo commento esiste per non
+// far ripetere.
+{
+  const chiuse = [
+    ['crea_invito', {}],
+    ['apri_invito', { p_token: 'token-inventato' }],
+    ['conferma_invito', { p_invito_id: '00000000-0000-0000-0000-000000000000' }],
+    ['revoca_invito', { p_invito_id: '00000000-0000-0000-0000-000000000000' }],
+  ];
+  for (const [nome, args] of chiuse) {
+    const { error } = await anon.rpc(nome, args);
+    esito(
+      `anon fermata ai PERMESSI su ${nome} (non dalla guardia interna)`,
+      error?.code === '42501',
+      `atteso 42501, ricevuto ${error?.code ?? 'nessun errore'}: ${error?.message ?? ''}`
+    );
+  }
+
+  // Le due `security definer` che scavalcano la RLS per costruzione: a un
+  // anonimo non devono nemmeno rispondere. Prima restituivano `false` e `0`,
+  // cioe' un oracolo su `membro_coppia` per chiunque avesse la chiave pubblica.
+  const oracoli = [
+    ['ha_coppia_attiva', { uid: '00000000-0000-0000-0000-000000000000' }],
+    ['n_membri_attivi', { cid: '00000000-0000-0000-0000-000000000000' }],
+  ];
+  for (const [nome, args] of oracoli) {
+    const { error } = await anon.rpc(nome, args);
+    esito(
+      `anon non puo interrogare ${nome}`,
+      error?.code === '42501',
+      `atteso 42501, ricevuto ${error?.code ?? 'nessun errore'}: ${error?.message ?? ''}`
+    );
+  }
 }
 
 // --- identita' e legame --------------------------------------------------------
@@ -223,7 +291,9 @@ let luogoId;
   // l'estraneo intercetta il link e lo apre: NON deve entrare, solo mettere in attesa
   const { data: invId, error: eApri } = await estraneo.rpc('apri_invito', { p_token: token });
   esito('aprire il link NON fa entrare (solo attesa conferma)', !eApri && !!invId, eApri?.message);
-  const { data: membriDopoApertura } = await a2.rpc('n_membri_attivi', { cid: await coppiaDi(a2) });
+  // a2 e' ancora membro della propria coppia, quindi puo' contarla lui stesso:
+  // e' l'asserzione centrale di D-14 — il link intercettato NON fa entrare.
+  const membriDopoApertura = await membriAttivi(a2, await coppiaDi(a2));
   esito('dopo l apertura la coppia ha ancora 1 membro', membriDopoApertura === 1, `membri=${membriDopoApertura}`);
 
   // l'estraneo NON puo autoconfermarsi
@@ -245,8 +315,8 @@ let luogoId;
   const { data: inv2 } = await partner.rpc('apri_invito', { p_token: token2 });
   const { data: coppiaFormata, error: eConf } = await a2.rpc('conferma_invito', { p_invito_id: inv2 });
   esito('il flusso corretto forma la coppia', !eConf && !!coppiaFormata, eConf?.message);
-  const { data: membriFinali } = await a2.rpc('n_membri_attivi', { cid: coppiaFormata });
-  esito('la coppia ora ha 2 membri', membriFinali === 2);
+  const membriFinali = await membriAttivi(a2, coppiaFormata);
+  esito('la coppia ora ha 2 membri', membriFinali === 2, `membri=${membriFinali}`);
 
   const { data: partnerVede } = await partner.from('luogo').select('*').eq('coppia_id', coppiaFormata);
   esito('il partner appaiato legge i contenuti della coppia', Array.isArray(partnerVede));
@@ -306,8 +376,26 @@ let luogoId;
   const { error: eSci } = await s1.rpc('sciogli_coppia');
   esito('S1 scioglie la coppia', !eSci, eSci?.message);
 
-  const { data: membriDopo } = await s1.rpc('n_membri_attivi', { cid });
-  esito('dopo lo scioglimento la coppia non ha membri attivi', membriDopo === 0, `membri=${membriDopo}`);
+  // ⚠️ Qui il conteggio **non e' osservabile**, e va detto invece che aggirato.
+  // `sciogli_coppia` mette `uscito_il` a TUTTI i membri, quindi dopo la rottura
+  // nessuno dei due vede piu' `membro_coppia` per quella coppia: una select
+  // torna 0 sia perche' i membri attivi non ci sono sia perche' non si possono
+  // vedere. Sono due cose diverse (B-03), e questa asserzione non le distingue.
+  //
+  // Prima la distingueva solo perche' `n_membri_attivi` scavalcava la RLS —
+  // cioe' grazie al difetto B-07. Verificarlo di nuovo richiederebbe la chiave
+  // service_role, che in questo repo non deve entrare. Si asserisce quindi
+  // cio' che si vede davvero, e il residuo sta fra i casi dichiarati non
+  // coperti in fondo.
+  //
+  // Il fatto che conta e' comunque coperto, e piu' avanti: dopo la rottura
+  // nessuno dei due legge, scrive o invita su quella coppia.
+  const membriVistiDaS1 = await membriAttivi(s1, cid);
+  esito(
+    'dopo lo scioglimento S1 non vede piu nessun membro attivo',
+    membriVistiDaS1 === 0,
+    `visti=${membriVistiDaS1}`
+  );
 
   // D-04: cio' che ha caricato l'altro sparisce dalla vista
   const { data: fotoViste1 } = await s1.from('foto').select('*').eq('coppia_id', cid);
@@ -377,6 +465,11 @@ let luogoId;
 console.log('\n--- Dichiarati NON coperti (nessun gap silenzioso) ---');
 console.log('- file nello storage delle foto: la riga si cancella, il file no — non c e ancora storage');
 console.log('- tetto cumulativo 1 GB: richiederebbe ~100 insert; verificata la sola guardia per-file');
+console.log(
+  '- conteggio dei membri DOPO lo scioglimento: dall esterno 0 significa sia "non ci sono"\n' +
+    '  sia "non li vedo". Servirebbe la service_role, che non entra in questo repo.\n' +
+    '  Coperte invece le conseguenze: l ex non legge, non scrive e non invita.'
+);
 
 console.log(`\n${falliti === 0 ? 'TUTTI I TEST PASSANO' : `${falliti} TEST FALLITI`}`);
 process.exit(falliti === 0 ? 0 : 1);

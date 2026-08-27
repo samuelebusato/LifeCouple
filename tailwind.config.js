@@ -3,6 +3,17 @@ module.exports = {
   // Solo le cartelle con componenti nostri: tenere stretto il glob accorcia i build
   content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  // ⚠️ `class` e non il predefinito `media`, ed e' la correzione di **B-02**.
+  //
+  // Con `media`, NativeWind lega il tema scuro a `prefers-color-scheme` e
+  // **rifiuta** ogni tentativo di impostarlo a mano: Expo, che riflette
+  // `userInterfaceStyle` chiamando `Appearance.setColorScheme`, si prendeva un
+  // "Cannot manually set color scheme" a ogni render sul web. Con `class` la
+  // modalita' non e' piu' una media query e la chiamata di Expo e' lecita.
+  //
+  // Non riapre la modalita' notte (D-39): la classe `dark` non viene messa da
+  // nessuno, e in `global.css` non esistono piu' token scuri da applicare.
+  darkMode: 'class',
   theme: {
     extend: {
       // Fraunces resta anche in "Quarzo rosa": un serif con contrasto alto e'

@@ -10,6 +10,7 @@ import {
   Fraunces_600SemiBold,
   Fraunces_700Bold,
 } from '@expo-google-fonts/fraunces';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '@/lib/auth';
 
 SplashScreen.preventAutoHideAsync();
@@ -52,10 +53,21 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <GuardiaSessione />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }} />
-      {Platform.OS !== 'web' && <StatusBar style="auto" />}
-    </AuthProvider>
+    // ⚠️ `GestureHandlerRootView` deve avvolgere **tutta** l'app, ed expo-router
+    // non lo mette da solo: senza, i gesti di `react-native-gesture-handler`
+    // semplicemente non arrivano — non danno errore, non fanno niente.
+    //
+    // Serve da quando i due gesti che devono essere fluidi (chiudere una foto
+    // trascinandola giu', trascinare il selettore della barra) girano sul
+    // **thread della UI** con Reanimated invece che sul ponte JavaScript.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <GuardiaSessione />
+        <Stack
+          screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}
+        />
+        {Platform.OS !== 'web' && <StatusBar style="auto" />}
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

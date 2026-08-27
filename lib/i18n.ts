@@ -88,7 +88,17 @@ const it = {
     calendario: 'Calendario',
     giochi: 'Giochi',
     mappa: 'Mappa',
-    preferiti: 'Preferiti',
+    /**
+     * ⚠️ Si chiamava «Preferiti», e il nome era **sbagliato**: la sezione non
+     * contiene un sottoinsieme scelto, contiene *tutto* — ogni film segnato e
+     * ogni posto in cui siete stati o volete andare, compresi quelli che ci
+     * finiscono da soli attaccandoli a un evento. Chiamare "preferito" cio' che
+     * entra in automatico promette una selezione che non c'e'.
+     *
+     * «Liste» dice quello che e': due elenchi, Film e Luoghi, ciascuno con il
+     * suo "da fare / fatto".
+     */
+    preferiti: 'Liste',
     galleria: 'Galleria',
   },
   riepilogo: {
@@ -111,6 +121,8 @@ const it = {
   } as Record<string, string>,
   mappa: {
     comeSiAggiunge: 'Tieni premuto sulla mappa per segnare un posto',
+    /** L'interruttore fra la mappa e l'elenco dei luoghi. */
+    viste: { mappa: 'Mappa', elenco: 'Elenco' },
     nuovoTitolo: 'Un posto nuovo',
     placeholderNome: 'Come lo chiamate?',
     ciSiamoStati: 'Ci siamo già stati',
@@ -119,6 +131,8 @@ const it = {
     segnaVisitato: 'Ci siamo stati',
     segnaDaVisitare: 'Rimettilo fra i desideri',
     nessunEvento: 'Nessun evento legato a questo posto, per ora.',
+    /** Il “…” dell'anteprima: apre le azioni sul posto. */
+    azioniPosto: 'Azioni sul posto',
     permessoNegato: 'Senza il permesso di posizione non possiamo segnare dove sei.',
     cerca: 'Cerca un posto…',
     cercaNota: 'La ricerca manda solo quello che scrivi, mai dove sei.',
@@ -159,6 +173,13 @@ const it = {
     dove: 'Dove',
     nessunLuogo: 'Nessun posto segnato per questo evento.',
     foto: 'Foto',
+    dettagli: 'Dettagli',
+    togliDallEvento: 'Togli dall’evento',
+    confermaTogli: 'La foto resta nella galleria: viene solo staccata da questo evento.',
+    eliminaFoto: 'Elimina foto',
+    confermaEliminaFoto: 'La foto viene eliminata davvero, anche dalla galleria. Non si recupera.',
+    /** Il conto sulle miniature che non entrano nella striscia. */
+    altreFoto: (n: number): string => `+${n}`,
     fotoInArrivo: 'Ancora nessuna foto di questo momento.',
     aggiungiFoto: 'Aggiungi foto',
     aggiungiDescrizione: 'Aggiungi descrizione',
@@ -187,12 +208,14 @@ const it = {
     galleriaManca: 'manca lo spazio di archiviazione',
   },
   preferiti: {
-    tipi: { film: 'Film', ristorante: 'Ristoranti' },
+    tipi: { film: 'Film', luogo: 'Luoghi' },
     aggiungiCopertina: 'Aggiungi una copertina',
     cambiaCopertina: 'Cambia copertina',
     aggiungiPosto: 'Aggiungi il posto',
-    cercaRistorante: 'Cerca un ristorante',
+    cercaRistorante: 'Cerca un posto',
     daFare: 'Da fare',
+    /** La riga che apre l'elenco delle serate di un luogo. */
+    serateQui: (n: number): string => (n === 1 ? 'Una serata qui' : `${n} serate qui`),
     fatti: 'Già fatti',
     fatto: 'fatto',
     recensisci: 'Scrivi la tua recensione',
@@ -201,11 +224,11 @@ const it = {
     placeholderRecensione: 'Com’è andata?',
     placeholder: {
       film: 'Un film da vedere…',
-      ristorante: 'Un posto dove andare…',
+      luogo: 'Un posto dove andare…',
     },
     vuoto: {
       film: 'Nessun film in lista, per ora.',
-      ristorante: 'Nessun posto in lista, per ora.',
+      luogo: 'Nessun posto in lista, per ora.',
     },
   },
   importa: {
@@ -243,6 +266,15 @@ const it = {
     titolo: 'Calendario',
     viste: { giorni: 'Giorni', mese: 'Mese', anno: 'Anno', eventi: 'Eventi' },
     tuttiGliEventi: 'Tutti gli eventi',
+    /** Le foto scelte nel form, prima di salvare. */
+    fotoScelte: (n: number): string => (n === 1 ? '1 foto scelta' : `${n} foto scelte`),
+    caricamentoFoto: (f: number, tot: number): string => `Carico le foto… ${f} di ${tot}`,
+    /** L'avanzo in una cella del mese quando le pillole non ci stanno tutte. */
+    altri: (n: number): string => `+${n}`,
+    /** L'agenda del giorno: la fascia in cima, per cio' che non ha un'ora. */
+    senzaOrario: 'Tutto il giorno',
+    agendaVuota: 'Nessun impegno in questo giorno',
+    adesso: 'Adesso',
     conto: {
       oggi: 'oggi',
       domani: 'domani',
@@ -262,6 +294,8 @@ const it = {
     modifica: 'Modifica',
     nessunPosto: 'Nessun posto',
     postoAggiunto: (nome: string) => `«${nome}» è ora fra i vostri posti: scegliilo qui sotto.`,
+    /** Il posto scelto era un ristorante: e' entrato da solo nei preferiti. */
+    ristoranteAggiunto: (nome: string): string => `«${nome}» è entrato anche fra i vostri luoghi.`,
     ristorante: 'Ristorante',
     nessunRistorante: 'Nessuno',
     aggiungi: 'Aggiungi',
@@ -364,7 +398,7 @@ const en: Dizionario = {
     calendario: 'Calendar',
     giochi: 'Games',
     mappa: 'Map',
-    preferiti: 'Favourites',
+    preferiti: 'Lists',
     galleria: 'Gallery',
   },
   riepilogo: {
@@ -387,6 +421,7 @@ const en: Dizionario = {
   } as Record<string, string>,
   mappa: {
     comeSiAggiunge: 'Press and hold on the map to pin a place',
+    viste: { mappa: 'Map', elenco: 'List' },
     nuovoTitolo: 'A new place',
     placeholderNome: 'What do you call it?',
     ciSiamoStati: 'We’ve already been',
@@ -395,6 +430,7 @@ const en: Dizionario = {
     segnaVisitato: 'We’ve been here',
     segnaDaVisitare: 'Back to the wish list',
     nessunEvento: 'Nothing tied to this place yet.',
+    azioniPosto: 'Place actions',
     permessoNegato: 'Without location permission we can’t pin where you are.',
     cerca: 'Search for a place…',
     cercaNota: 'The search only sends what you type, never where you are.',
@@ -435,6 +471,12 @@ const en: Dizionario = {
     dove: 'Where',
     nessunLuogo: 'No place pinned for this event.',
     foto: 'Photos',
+    dettagli: 'Details',
+    togliDallEvento: 'Remove from event',
+    confermaTogli: 'The photo stays in the gallery: it is only detached from this event.',
+    eliminaFoto: 'Delete photo',
+    confermaEliminaFoto: 'The photo is deleted for good, from the gallery too. There is no undo.',
+    altreFoto: (n: number): string => `+${n}`,
     fotoInArrivo: 'No photos of this moment yet.',
     aggiungiFoto: 'Add photos',
     aggiungiDescrizione: 'Add a note',
@@ -463,12 +505,13 @@ const en: Dizionario = {
     galleriaManca: 'storage is missing',
   },
   preferiti: {
-    tipi: { film: 'Films', ristorante: 'Restaurants' },
+    tipi: { film: 'Films', luogo: 'Places' },
     aggiungiCopertina: 'Add a cover',
     cambiaCopertina: 'Change cover',
     aggiungiPosto: 'Add the place',
-    cercaRistorante: 'Find a restaurant',
+    cercaRistorante: 'Find a place',
     daFare: 'To do',
+    serateQui: (n: number): string => (n === 1 ? 'One evening here' : `${n} evenings here`),
     fatti: 'Done',
     fatto: 'done',
     recensisci: 'Write your review',
@@ -477,11 +520,11 @@ const en: Dizionario = {
     placeholderRecensione: 'How was it?',
     placeholder: {
       film: 'A film to watch…',
-      ristorante: 'A place to try…',
+      luogo: 'A place to try…',
     },
     vuoto: {
       film: 'No films on the list yet.',
-      ristorante: 'No places on the list yet.',
+      luogo: 'No places on the list yet.',
     },
   },
   importa: {
@@ -516,6 +559,12 @@ const en: Dizionario = {
     titolo: 'Calendar',
     viste: { giorni: 'Days', mese: 'Month', anno: 'Year', eventi: 'Events' },
     tuttiGliEventi: 'All events',
+    fotoScelte: (n: number): string => (n === 1 ? '1 photo selected' : `${n} photos selected`),
+    caricamentoFoto: (f: number, tot: number): string => `Uploading… ${f} of ${tot}`,
+    altri: (n: number): string => `+${n}`,
+    senzaOrario: 'All day',
+    agendaVuota: 'Nothing planned this day',
+    adesso: 'Now',
     conto: {
       oggi: 'today',
       domani: 'tomorrow',
@@ -535,6 +584,7 @@ const en: Dizionario = {
     modifica: 'Edit',
     nessunPosto: 'No place',
     postoAggiunto: (nome: string) => `“${nome}” is now one of your places: pick it below.`,
+    ristoranteAggiunto: (n: string): string => `${n} added to your places`,
     ristorante: 'Restaurant',
     nessunRistorante: 'None',
     aggiungi: 'Add',

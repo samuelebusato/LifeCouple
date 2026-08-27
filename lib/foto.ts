@@ -37,6 +37,20 @@ async function comprimi(uri: string) {
   return reso.saveAsync({ compress: QUALITA, format: ImageManipulator.SaveFormat.JPEG });
 }
 
+/**
+ * Quante foto si comprimono e caricano **insieme**.
+ *
+ * ⚠️ Prima erano in fila indiana: dieci foto volevano dire dieci cicli
+ * comprimi-carica uno dopo l'altro, e l'attesa era la loro somma — e' il
+ * «molto lente a caricarsi». La compressione usa la CPU e il caricamento la
+ * rete: mentre una comprime, un'altra puo' gia' star salendo.
+ *
+ * Tre e non dieci: oltre, si contendono la banda e la memoria (ogni immagine
+ * decompressa sta in RAM per intero) senza che il totale migliori. Su una rete
+ * lenta il collo di bottiglia diventa la banda comunque.
+ */
+const INSIEME = 3;
+
 export async function caricaFoto(
   coppiaId: string,
   immagini: { uri: string }[],
@@ -45,10 +59,15 @@ export async function caricaFoto(
     luogoId?: string | null;
     cartellaId?: string | null;
     elementoId?: string | null;
-  }
+  },
+  /** Chiamato dopo ogni foto: serve a dire "3 di 10" invece di far aspettare. */
+  avanzamento?: (fatte: number, totale: number) => void
 ): Promise<{ caricate: number; errore: string | null }> {
   let caricate = 0;
-  for (const img of immagini) {
+  let primoErrore: string | null = null;
+
+  /** Una foto sola: comprimi, carica, scrivi la riga. */
+  const una = async (img: { uri: string }): Promise<string | null> => {
     try {
       const piccola = await comprimi(img.uri);
       const risposta = await fetch(piccola.uri);
@@ -58,7 +77,7 @@ export async function caricaFoto(
       const su = await supabase.storage
         .from('foto')
         .upload(chiave, dati, { contentType: 'image/jpeg', upsert: false });
-      if (su.error) return { caricate, errore: su.error.message };
+      if (su.error) return su.error.message;
 
       // La riga arriva **dopo** il file: se fallisse l'inserimento (per esempio
       // per il tetto di 1 GB) resterebbe un file orfano, che e' meno grave di
@@ -76,14 +95,28 @@ export async function caricaFoto(
       });
       if (error) {
         await supabase.storage.from('foto').remove([chiave]);
-        return { caricate, errore: error.message };
+        return error.message;
       }
-      caricate++;
+      return null;
     } catch (e) {
-      return { caricate, errore: String(e) };
+      return String(e);
     }
+  };
+
+  // A blocchi di `INSIEME`. Un errore **non** ferma le altre del blocco — sono
+  // gia' partite — ma ferma i blocchi successivi: se il tetto di 1 GB e' pieno,
+  // insistere altre sette volte produce sette errori identici.
+  for (let i = 0; i < immagini.length; i += INSIEME) {
+    const blocco = immagini.slice(i, i + INSIEME);
+    const esiti = await Promise.all(blocco.map(una));
+    for (const e of esiti) {
+      if (e) primoErrore ??= e;
+      else caricate++;
+    }
+    avanzamento?.(Math.min(i + blocco.length, immagini.length), immagini.length);
+    if (primoErrore) break;
   }
-  return { caricate, errore: null };
+  return { caricate, errore: primoErrore };
 }
 
 /**
@@ -92,9 +125,26 @@ export async function caricaFoto(
  */
 export async function indirizziFirmati(chiavi: string[]) {
   if (chiavi.length === 0) return {} as Record<string, string>;
-  const { data } = await supabase.storage.from('foto').createSignedUrls(chiavi, 3600);
+
+  // ⚠️ **Un'ora era troppo poco.** Le anteprime nei preferiti si caricavano
+  // "a volte": chi tiene l'app aperta, o torna su una schermata gia' montata
+  // dopo un po', si ritrovava indirizzi scaduti e riquadri vuoti. Otto ore
+  // coprono una giornata d'uso senza allungare la finestra oltre il ragionevole
+  // — il bucket resta privato, e questi indirizzi non escono dal telefono.
+  const DURATA = 8 * 3600;
+
+  // ⚠️ E a **blocchi**. `createSignedUrls` con centinaia di chiavi in una
+  // richiesta sola e' il punto in cui la risposta puo' tornare parziale: gli
+  // indirizzi mancanti diventano immagini che non compaiono, in modo
+  // apparentemente casuale — che e' esattamente il sintomo riferito.
+  const BLOCCO = 60;
   const m: Record<string, string> = {};
-  for (const r of data ?? []) if (r.path && r.signedUrl) m[r.path] = r.signedUrl;
+  for (let i = 0; i < chiavi.length; i += BLOCCO) {
+    const { data } = await supabase.storage
+      .from('foto')
+      .createSignedUrls(chiavi.slice(i, i + BLOCCO), DURATA);
+    for (const r of data ?? []) if (r.path && r.signedUrl) m[r.path] = r.signedUrl;
+  }
   return m;
 }
 
@@ -160,8 +210,126 @@ export async function copertinePerElemento(elementiIds: string[]) {
  * file orfano — invisibile, perche' il bucket e' privato e nessuna riga lo
  * indica — che e' il male minore rispetto a una riga che punta al vuoto.
  */
+/**
+ * Tutte le foto **degli eventi** di ogni luogo della lista.
+ *
+ * Chiesto dall'utente il 2026-08-27: «ai luoghi sono associate tutte le
+ * immagini di tutti gli eventi associati a quei luoghi».
+ *
+ * ## Perche' non basta `copertinePerElemento`
+ *
+ * Quella guarda le foto legate **direttamente** all'elemento (`elemento_id`),
+ * cioe' la copertina scelta a mano. Le foto di una serata invece nascono
+ * attaccate all'**evento** (`evento_id`), e nessuno le collegava al luogo: un
+ * posto dove eravate stati tre volte, con venti foto, mostrava ancora
+ * l'immagine di Google.
+ *
+ * ## Due letture, non una per luogo
+ *
+ * PostgREST non fa sottoquery, quindi il legame `foto → evento → elemento` si
+ * percorre in due passi: prima gli eventi dei luoghi, poi le foto di quegli
+ * eventi. Sono **due richieste in tutto**, non due per luogo — con dieci posti
+ * in lista la differenza e' fra 2 e 20.
+ *
+ * Ordinate dalla piu' recente: la copertina di un posto e' l'ultima volta che
+ * ci siete stati, non la prima.
+ */
+export async function fotoDegliEventiPerElemento(
+  luoghi: { id: string; luogo_id: string | null }[]
+) {
+  const vuoto = {} as Record<string, string[]>;
+  if (luoghi.length === 0) return vuoto;
+
+  // 1. quali eventi appartengono a quali luoghi
+  //
+  // ⚠️ **Due legami, non uno.** Un evento puo' puntare al posto in due modi:
+  // `elemento_id` (la scheda in lista, da 0012) oppure `luogo_id` (il posto
+  // sulla mappa, da 0008). Gli eventi creati prima che il campo "dove"
+  // impostasse entrambi hanno **solo** il secondo — e cercandoli per il primo
+  // risultavano zero. E' la ragione per cui un posto con tre serate alle spalle
+  // mostrava l'immagine di Google e nessuna serata: non e' che le foto non
+  // c'erano, e' che non si guardava dove stavano.
+  const idElementi = luoghi.map((l) => l.id);
+  const idPosti = luoghi.map((l) => l.luogo_id).filter((x): x is string => !!x);
+  const perPosto = new Map<string, string>();
+  for (const l of luoghi) if (l.luogo_id) perPosto.set(l.luogo_id, l.id);
+
+  const { data: eventi } = await supabase
+    .from('evento')
+    .select('id, elemento_id, luogo_id')
+    .or(
+      [
+        idElementi.length ? `elemento_id.in.(${idElementi.join(',')})` : null,
+        idPosti.length ? `luogo_id.in.(${idPosti.join(',')})` : null,
+      ]
+        .filter(Boolean)
+        .join(',')
+    );
+  if (!eventi || eventi.length === 0) return vuoto;
+
+  const luogoDiEvento = new Map<string, string>();
+  for (const e of eventi) {
+    // `elemento_id` vince: e' il legame esplicito.
+    const id = e.elemento_id ?? (e.luogo_id ? perPosto.get(e.luogo_id) : undefined);
+    if (id) luogoDiEvento.set(e.id, id);
+  }
+
+  // 2. le foto di quegli eventi
+  const { data: foto } = await supabase
+    .from('foto')
+    .select('evento_id, chiave_storage, creato_il')
+    .in('evento_id', [...luogoDiEvento.keys()])
+    .order('creato_il', { ascending: false });
+  if (!foto || foto.length === 0) return vuoto;
+
+  // Non tutte: la striscia ne mostra sei e la copertina una. Firmarne
+  // centinaia per mostrarne sei e' lavoro e attesa per niente — e allunga la
+  // richiesta proprio dove tornava parziale.
+  const MAX_PER_LUOGO = 12;
+  const conta: Record<string, number> = {};
+  const scelte = foto.filter((f) => {
+    const idLuogo = f.evento_id ? luogoDiEvento.get(f.evento_id) : undefined;
+    if (!idLuogo) return false;
+    conta[idLuogo] = (conta[idLuogo] ?? 0) + 1;
+    return conta[idLuogo] <= MAX_PER_LUOGO;
+  });
+
+  const firmati = await indirizziFirmati(scelte.map((f) => f.chiave_storage));
+  const perLuogo: Record<string, string[]> = {};
+  for (const f of scelte) {
+    const idLuogo = f.evento_id ? luogoDiEvento.get(f.evento_id) : undefined;
+    const url = firmati[f.chiave_storage];
+    if (!idLuogo || !url) continue;
+    (perLuogo[idLuogo] ??= []).push(url);
+  }
+  return perLuogo;
+}
+
 export async function cancellaFoto(id: string, chiave?: string) {
   if (chiave) await supabase.storage.from('foto').remove([chiave]);
   const { error } = await supabase.from('foto').delete().eq('id', id);
+  return error?.message ?? null;
+}
+
+/**
+ * Togliere una foto **da un evento** senza cancellarla.
+ *
+ * ⚠️ Non e' la stessa cosa di `cancellaFoto`, e la differenza e' una decisione
+ * di prodotto, non un dettaglio (chiesta dall'utente il 2026-08-27):
+ *
+ *   dalla **galleria** → si elimina davvero: sparisce anche dagli eventi,
+ *                        perche' la galleria e' dove la foto *vive*;
+ *   da un **evento**   → si stacca soltanto: resta in galleria, perche'
+ *                        «questa foto non c'entra con questa serata» non vuol
+ *                        dire «questa foto non deve esistere».
+ *
+ * Confonderle sarebbe la peggiore delle due direzioni: chi voleva riordinare un
+ * evento si ritroverebbe un ricordo cancellato, e non c'e' cestino da cui
+ * ripescarlo.
+ *
+ * Il file nello storage non si tocca: la riga resta, e punta ancora a lui.
+ */
+export async function staccaDaEvento(id: string) {
+  const { error } = await supabase.from('foto').update({ evento_id: null }).eq('id', id);
   return error?.message ?? null;
 }

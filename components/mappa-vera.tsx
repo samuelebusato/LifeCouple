@@ -1,11 +1,22 @@
 import type { Luogo } from '@/lib/luoghi';
 
-/** Un ristorante con le coordinate del suo posto (0012): disegnabile. */
+/**
+ * Un **luogo dei preferiti** con le coordinate del suo posto.
+ *
+ * ⚠️ Questo e' il file che **TypeScript** risolve (`mappa-vera.tsx`), mentre
+ * Metro sul telefono prende `mappa-vera.native.tsx`. I due tipi vanno tenuti
+ * uguali a mano: se divergono, il controllo dei tipi approva codice che sul
+ * telefono non regge.
+ */
 export type RistoranteSuMappa = {
   id: string;
   titolo: string;
   lat: number;
   lng: number;
+  /** Il tipo primario di Google: dice che pin disegnare (0016). */
+  genere?: string | null;
+  /** La riga `luogo` collegata: serve a non disegnare due pin sullo stesso posto. */
+  luogoId?: string | null;
 };
 
 /**
@@ -20,6 +31,8 @@ export function MappaVera(_: {
   centro: { latitude: number; longitude: number };
   luoghi: Luogo[];
   ristoranti?: RistoranteSuMappa[];
+  eventiPerLuogo?: Record<string, number>;
+  eventiPerRistorante?: Record<string, number>;
   spazioSotto?: number;
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;

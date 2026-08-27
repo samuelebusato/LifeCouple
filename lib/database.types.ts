@@ -183,6 +183,7 @@ export type Database = {
           creato_il: string
           fatto_il: string | null
           foto_google: string | null
+          genere: string | null
           google_place_id: string | null
           id: string
           luogo_id: string | null
@@ -196,6 +197,7 @@ export type Database = {
           creato_il?: string
           fatto_il?: string | null
           foto_google?: string | null
+          genere?: string | null
           google_place_id?: string | null
           id?: string
           luogo_id?: string | null
@@ -209,6 +211,7 @@ export type Database = {
           creato_il?: string
           fatto_il?: string | null
           foto_google?: string | null
+          genere?: string | null
           google_place_id?: string | null
           id?: string
           luogo_id?: string | null
@@ -749,6 +752,11 @@ export type Database = {
         Returns: undefined
       }
       n_membri_attivi: { Args: { cid: string }; Returns: number }
+      // ⚠️ Blocco scritto a mano (0015), come quelli di 0011/0012/0013: questo
+      // file va rigenerato dallo schema reale, ed e' in coda al PUNTO DI
+      // RIPRESA. Finche' non lo si fa, ogni funzione nuova va aggiunta qui o il
+      // client non la vede.
+      aggiorna_ristoranti_visitati: { Args: never; Returns: number }
       revoca_invito: { Args: { p_invito_id: string }; Returns: undefined }
       sciogli_coppia: { Args: never; Returns: undefined }
     }

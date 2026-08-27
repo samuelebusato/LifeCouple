@@ -7,4 +7,5 @@ import type * as React from 'react';
  * (Gemello di `vetro-nativo.native.ts` — vedi il perche' la'.)
  */
 export const GlassView: React.ComponentType<any> | null = null;
+export const GlassContainer: React.ComponentType<any> | null = null;
 export const VETRO_NATIVO = false;

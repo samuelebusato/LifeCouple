@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /*
- * LifeCouple — "Quarzo rosa", terza taratura (2026-08-13, sera).
+ * LifeCouple — "Quarzo rosa / Barbie", modalita' UNICA (D-39, 2026-08-27).
  *
  * Riferimento: lo screenshot portato dall'utente — pagina **bianca**, carte
  * bianche, testo quasi nero, il colore solo sugli accenti. Le prime due
@@ -12,6 +12,10 @@
  *
  * I token si definiscono QUI, una volta. I letterali che i moduli nativi
  * pretendono stanno in `lib/tema.ts`.
+ *
+ * ⚠️ **Nessun blocco `@media (prefers-color-scheme: dark)`**: l'app ha una sola
+ * modalita' (D-39). Non riaggiungerlo. (B-02 invece si chiude altrove: e' il
+ * `darkMode: 'class'` di `tailwind.config.js` — vedi il commento la'.)
  */
 @layer base {
   /*
@@ -56,43 +60,5 @@
     --border: 320 25% 91%;
     --input: 320 25% 91%;
     --ring: 322 78% 52%;
-  }
-
-  /* Notte: neutra e profonda, magenta chiaro sugli accenti. */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --rosa-50: 322 12% 15%;
-      --rosa-100: 322 14% 19%;
-      --rosa-200: 322 18% 25%;
-      --rosa-300: 322 28% 35%;
-      --rosa-400: 322 45% 48%;
-      --rosa-500: 322 60% 60%;
-      --rosa-600: 322 75% 66%;
-      --rosa-700: 323 80% 76%;
-      --rosa-800: 324 85% 86%;
-      --rosa-900: 325 92% 94%;
-
-      --background: 322 12% 7%;
-      --foreground: 325 20% 95%;
-      --card: 322 10% 11%;
-      --card-foreground: 325 20% 95%;
-
-      --primary: 322 85% 66%;
-      --primary-foreground: 322 12% 8%;
-
-      --secondary: 218 15% 18%;
-      --secondary-foreground: 215 25% 85%;
-      --muted: 322 10% 16%;
-      --muted-foreground: 322 8% 64%;
-      --accent: 322 18% 22%;
-      --accent-foreground: 324 40% 90%;
-
-      --destructive: 4 70% 60%;
-      --destructive-foreground: 322 12% 8%;
-
-      --border: 322 10% 20%;
-      --input: 322 10% 20%;
-      --ring: 322 85% 66%;
-    }
   }
 }

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   View,
+  Image,
   ScrollView,
   FlatList,
   Modal,
@@ -13,26 +14,32 @@ import {
   Dimensions,
   PanResponder,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { CalendarPlus, ImagePlus, Plus, X } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RigaEvento, aspetto } from '@/components/riga-evento';
+import {
+  TestataCalendario,
+  TondoTestata,
+  InizialiGiorni,
+} from '@/components/testata-calendario';
+import { GrigliaMese } from '@/components/griglia-mese';
+import { Foglio } from '@/components/foglio';
+import { AgendaGiorno } from '@/components/agenda-giorno';
 import { CercaLuogo } from '@/components/cerca-luogo';
-import { BottoneVetro, CartaVetro, TondoVetro, Vetro } from '@/components/ui/vetro';
+import { BottoneVetro, BottonePieno, TondoVetro } from '@/components/ui/vetro';
 import { Fondo } from '@/components/schermata';
-import { SPAZIO_BARRA } from '@/components/barra-volante';
+import { SPAZIO_BARRA, SOPRA_BARRA } from '@/components/barra-volante';
 import { useTastiera } from '@/lib/tastiera';
-import { useTema } from '@/lib/tema';
+import { useTema, SU_TESTATA, SU_TESTATA_TENUE } from '@/lib/tema';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
-import { useLuoghi } from '@/lib/luoghi';
 import { usePreferiti } from '@/lib/preferiti';
-import { anteprimePerEvento } from '@/lib/foto';
+import { anteprimePerEvento, caricaFoto, scegliFoto } from '@/lib/foto';
 import {
   useEventi,
   eventiDelGiorno,
@@ -76,55 +83,134 @@ const VELOCITA = 0.4;
 const RAGGIO_STRISCIA = 365;
 const LARGHEZZA_CELLA = LARGHEZZA / 7;
 
-/** Una cella della griglia: numero, e i pallini di cio' che succede quel giorno. */
-function Cella({
+/**
+ * Una cella della **striscia dei giorni**, quella che vive dentro la testata
+ * sfumata nella vista agenda.
+ *
+ * Non e' piu' la stessa cella della griglia del mese: quella e' andata in
+ * `components/griglia-mese.tsx` e mostra le pillole, questa sta sopra un fondo
+ * colorato e deve restare minuscola. Tenerle separate evita il componente
+ * "cella" pieno di `if` che serviva due posti e nessuno dei due bene.
+ */
+function CellaStriscia({
   giorno,
   selezionato,
   oggi,
-  fuori,
   eventi,
   onPress,
 }: {
   giorno: Date;
   selezionato: boolean;
   oggi: boolean;
-  fuori: boolean;
   eventi: Evento[];
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} className="flex-1 items-center py-1.5">
+    <Pressable onPress={onPress} style={{ alignItems: 'center', paddingVertical: 2 }}>
+      <Text
+        style={{
+          fontSize: 10,
+          textTransform: 'uppercase',
+          color: SU_TESTATA_TENUE,
+          marginBottom: 2,
+        }}
+      >
+        {giorno.getDate() === 1
+          ? giorno.toLocaleDateString(lingua, { month: 'short' })
+          : giorno.toLocaleDateString(lingua, { weekday: 'short' })}
+      </Text>
       <View
-        className={cn(
-          'h-9 w-9 items-center justify-center rounded-full',
-          selezionato && 'bg-primary',
-          !selezionato && oggi && 'border border-primary'
-        )}
+        style={{
+          height: 34,
+          width: 34,
+          borderRadius: 17,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: selezionato ? '#ffffff' : 'transparent',
+          borderWidth: !selezionato && oggi ? 1.5 : 0,
+          borderColor: SU_TESTATA,
+        }}
       >
         <Text
-          className={cn(
-            'text-base',
-            selezionato
-              ? 'text-primary-foreground'
-              : fuori
-                ? 'text-muted-foreground/40'
-                : 'text-foreground'
-          )}
+          style={{
+            fontSize: 15,
+            fontWeight: selezionato || oggi ? '700' : '500',
+            color: selezionato ? '#c2157f' : SU_TESTATA,
+          }}
         >
           {giorno.getDate()}
         </Text>
       </View>
-      {/* Un pallino per evento, fino a tre: il colore dice gia' di che si tratta. */}
-      <View className="mt-1 h-1.5 flex-row gap-0.5">
+      {/* Sotto la striscia restano i pallini: qui non c'e' spazio per le
+          pillole, e comunque il programma completo sta subito sotto. */}
+      <View style={{ height: 6, flexDirection: 'row', gap: 2, marginTop: 3 }}>
         {eventi.slice(0, 3).map((e) => (
           <View
             key={e.id}
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: selezionato ? 'transparent' : aspetto(e).colore }}
+            style={{
+              height: 4,
+              width: 4,
+              borderRadius: 2,
+              backgroundColor: selezionato ? 'rgba(255,255,255,0.9)' : aspetto(e).pastello.barra,
+            }}
           />
         ))}
       </View>
     </Pressable>
+  );
+}
+
+/**
+ * Il selettore delle quattro viste, dentro la testata.
+ *
+ * ⚠️ **Etichette, non icone.** Il riferimento usa tondini con simboli, e qui
+ * non funzionerebbe: "mese" e "anno" sono due griglie, e due icone di griglia
+ * una accanto all'altra non si distinguono. Le quattro parole occupano una
+ * riga e non lasciano dubbi — e' lo stesso ragionamento fatto al contrario per
+ * la barra in basso, dove le voci sono sei e le parole diventavano rumore.
+ */
+function SelettoreVista({
+  vista,
+  onVista,
+}: {
+  vista: Vista;
+  onVista: (v: Vista) => void;
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        marginHorizontal: 14,
+        marginTop: 8,
+        padding: 4,
+        borderRadius: 17,
+        backgroundColor: 'rgba(255,255,255,0.30)',
+      }}
+    >
+      {VISTE.map((v) => (
+        <Pressable
+          key={v}
+          onPress={() => onVista(v)}
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            paddingVertical: 7,
+            borderRadius: 13,
+            backgroundColor: vista === v ? 'rgba(255,255,255,0.92)' : 'transparent',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: vista === v ? '700' : '500',
+              color: vista === v ? '#c2157f' : SU_TESTATA_TENUE,
+            }}
+          >
+            {t.calendario.viste[v]}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
@@ -136,11 +222,10 @@ export default function Calendario() {
   // I posti servono qui per legare un evento a un luogo: e' cio' che lo fa
   // comparire anche sulla mappa (D-33). `aggiungi` serve alla ricerca: un posto
   // scelto fra i risultati va prima creato, poi legato.
-  const { luoghi, aggiungi: aggiungiLuogo } = useLuoghi(coppiaId);
   // I ristoranti dei preferiti: un evento puo' averne uno (0012).
-  const { elementi } = usePreferiti(coppiaId);
+  const { elementi, aggiungiLuogoPreferito } = usePreferiti(coppiaId);
   const ristoranti = React.useMemo(
-    () => elementi.filter((e) => e.tipo === 'ristorante'),
+    () => elementi.filter((e) => e.tipo === 'luogo'),
     [elementi]
   );
 
@@ -167,6 +252,19 @@ export default function Calendario() {
   const [elementoId, setElementoId] = React.useState<string | null>(null);
   /** Nome del posto appena creato dalla ricerca: serve solo a dirlo a schermo. */
   const [luogoCercato, setLuogoCercato] = React.useState<string | null>(null);
+  /** Idem, ma quando il posto scelto era un ristorante ed e' entrato nei preferiti. */
+  const [ristoranteAggiunto, setRistoranteAggiunto] = React.useState<string | null>(null);
+  /**
+   * Le foto scelte **prima** che l'evento esista.
+   *
+   * Restano qui finche' non si salva: una foto si attacca a un evento, e
+   * l'evento prima dev'essere creato. Caricarle subito significherebbe o
+   * lasciarle orfane se poi si annulla, o creare l'evento appena si sceglie la
+   * prima immagine — cioe' decidere al posto di chi sta ancora compilando.
+   */
+  const [fotoNuove, setFotoNuove] = React.useState<{ uri: string }[]>([]);
+  /** "3 di 10" durante il caricamento: un'attesa muta sembra un blocco. */
+  const [caricamento, setCaricamento] = React.useState<string | null>(null);
   const tema = useTema();
   const { aperta: tastieraAperta } = useTastiera();
   const [attesa, setAttesa] = React.useState(false);
@@ -323,6 +421,10 @@ export default function Calendario() {
     setTestoData(perCampoTesto(base));
     setTestoRitorno(perCampoTesto(dopo));
     setErroreForm(null);
+    setLuogoCercato(null);
+    setRistoranteAggiunto(null);
+    setFotoNuove([]);
+    setCaricamento(null);
     setAperto(true);
   }
 
@@ -350,99 +452,100 @@ export default function Calendario() {
     };
 
     setAttesa(true);
-    const err = inModifica
-      ? await aggiorna(inModifica.id, dati)
-      : await aggiungi(dati, ricaricaCoppia);
+    let idEvento = inModifica?.id;
+    if (inModifica) {
+      const err = await aggiorna(inModifica.id, dati);
+      if (err) {
+        setAttesa(false);
+        return setErroreForm(err);
+      }
+    } else {
+      const esito = await aggiungi(dati, ricaricaCoppia);
+      if (esito.errore) {
+        setAttesa(false);
+        return setErroreForm(esito.errore);
+      }
+      idEvento = esito.id;
+    }
+
+    // Le foto **dopo** l'evento: prima deve esistere qualcosa a cui attaccarle.
+    // Se il caricamento fallisce l'evento resta — meta' del lavoro salvata e'
+    // meglio di niente, e le foto si riaggiungono dalla sua pagina.
+    if (fotoNuove.length > 0 && idEvento && coppiaId) {
+      const esito = await caricaFoto(
+        coppiaId,
+        fotoNuove,
+        { eventoId: idEvento, luogoId: luogoId ?? null, elementoId: elementoId ?? null },
+        (fatte, totale) => setCaricamento(t.calendario.caricamentoFoto(fatte, totale))
+      );
+      setCaricamento(null);
+      if (esito.errore) {
+        setAttesa(false);
+        return setErroreForm(esito.errore);
+      }
+    }
+
     setAttesa(false);
-    if (err) return setErroreForm(err);
     setGiorno(inizioGiorno(data)); // si va a vedere dove e' finito
     setAperto(false);
     setInModifica(null);
+    setFotoNuove([]);
   }
 
   return (
     <View className="flex-1">
       <Fondo />
-      <SafeAreaView className="flex-1" edges={['top']}>
-      <View className="flex-row items-center justify-end px-6 pt-2">
-        <Pressable
-          onPress={() => router.push('/importa')}
-          hitSlop={8}
-          className="flex-row items-center gap-2"
-        >
-          <CalendarPlus color={tema.c.tenue} size={20} />
-          <Text className="text-sm text-muted-foreground">{t.importa.apri}</Text>
-        </Pressable>
-      </View>
 
-      {/* Il selettore della vista sta fuori dallo scorrimento: e' un comando,
-          non contenuto, e non deve scappare via col dito. */}
-      <View className="flex-row gap-2 px-6 pb-1 pt-2">
-        {VISTE.map((v) => (
-          <Pressable
-            key={v}
-            onPress={() => setVista(v)}
-            className={cn(
-              'flex-1 items-center rounded-full py-2',
-              vista === v ? 'bg-primary' : 'bg-card'
-            )}
+      {/* --- la testata sfumata: comandi sopra, calendario sotto ----------- */}
+      <TestataCalendario
+        titolo={
+          vista === 'eventi' ? t.calendario.tuttiGliEventi : titoloPeriodo(giorno, vista, lingua)
+        }
+        // Il nome del mese si maiuscola, la frase "tutti gli eventi" no.
+        capitalizza={vista !== 'eventi'}
+        onIndietro={vista === 'eventi' ? undefined : () => vai(-1)}
+        onAvanti={vista === 'eventi' ? undefined : () => vai(1)}
+        onTitolo={vista === 'eventi' ? undefined : () => setGiorno(oggi)}
+        sinistra={
+          <TondoTestata onPress={() => router.push('/importa')} accessibilityLabel={t.importa.apri}>
+            <CalendarPlus color={SU_TESTATA} size={17} />
+          </TondoTestata>
+        }
+        destra={
+          // Il numero di oggi come bottone: e' il gesto che si cerca piu'
+          // spesso in un calendario, e scriverlo invece di disegnarlo dice
+          // anche **che giorno e'** senza spendere una riga in piu'.
+          <TondoTestata
+            onPress={() => {
+              setGiorno(oggi);
+              if (vista === 'anno' || vista === 'eventi') setVista('mese');
+            }}
+            accessibilityLabel={t.calendario.conto.oggi}
           >
-            <Text
-              className={cn(
-                'text-sm',
-                vista === v ? 'text-primary-foreground' : 'text-muted-foreground'
-              )}
-            >
-              {t.calendario.viste[v]}
+            <Text style={{ fontSize: 14, fontWeight: '700', color: SU_TESTATA }}>
+              {oggi.getDate()}
             </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <Animated.View
-        {...pan.panHandlers}
-        style={{ transform: [{ translateX: spostamento }] }}
-        className="pb-1"
+          </TondoTestata>
+        }
       >
-        {/* Nella vista dei soli eventi non c'e' un periodo da scorrere: le
-            frecce sparirebbero comunque senza niente da fare. */}
-        {vista === 'eventi' ? (
-          <View className="items-center px-6 py-2">
-            <Text className="font-serif-bold text-2xl text-foreground">
-              {t.calendario.tuttiGliEventi}
-            </Text>
-          </View>
-        ) : (
-          <View className="flex-row items-center justify-between px-6 py-2">
-            <Pressable onPress={() => vai(-1)} hitSlop={12}>
-              <ChevronLeft color={tema.c.tenue} size={26} />
-            </Pressable>
-            <Pressable onPress={() => setGiorno(oggi)}>
-              <Text className="font-serif-bold text-2xl capitalize text-foreground">
-                {titoloPeriodo(giorno, vista, lingua)}
-              </Text>
-            </Pressable>
-            <Pressable onPress={() => vai(1)} hitSlop={12}>
-              <ChevronRight color={tema.c.tenue} size={26} />
-            </Pressable>
-          </View>
-        )}
+        <SelettoreVista vista={vista} onVista={setVista} />
+
+        {vista === 'mese' && <InizialiGiorni etichette={etichette} />}
 
         {vista === 'giorni' && (
           /* Striscia continua: si scorre di quanto si vuole, non di sette in
              sette — le frecce saltano la settimana, il dito va dove gli pare.
-             Qui nessun giorno e' "fuori": sbiadire gli altri mesi ha senso in
-             una griglia mensile, in una striscia che li attraversa tutti
-             renderebbe illeggibile meta' dei numeri. */
+             B-06: con lo ScrollView era uno scrollTo a timeout zero, che sul
+             telefono partiva PRIMA che la striscia fosse misurata. La FlatList
+             con getItemLayout sa le posizioni SENZA misurare. */
           <FlatList
             ref={striscia}
             data={settimana}
             horizontal
             showsHorizontalScrollIndicator={false}
             // Altezza FISSA: senza, su iOS la lista orizzontale contendeva lo
-            // spazio verticale con l'elenco sottostante e i numeri finivano
-            // coperti. Un'altezza dichiarata non ha niente da negoziare.
-            style={{ height: 84, flexGrow: 0 }}
+            // spazio verticale col contenuto sotto e i numeri finivano coperti.
+            style={{ height: 76, flexGrow: 0, marginTop: 6 }}
             contentContainerStyle={{ alignItems: 'flex-start' }}
             keyExtractor={(d) => d.toISOString()}
             getItemLayout={(_, i) => ({
@@ -458,123 +561,35 @@ export default function Calendario() {
             onScrollToIndexFailed={() => {}}
             renderItem={({ item: d }) => (
               <View style={{ width: LARGHEZZA_CELLA }}>
-                <Text className="text-center text-xs uppercase text-muted-foreground">
-                  {d.getDate() === 1
-                    ? d.toLocaleDateString(lingua, { month: 'short' })
-                    : d.toLocaleDateString(lingua, { weekday: 'short' })}
-                </Text>
-                <Cella
+                <CellaStriscia
                   giorno={d}
                   selezionato={stessoGiorno(d, giorno)}
                   oggi={stessoGiorno(d, oggi)}
-                  fuori={false}
                   eventi={eventiDelGiorno(eventi, d)}
                   /* Nella striscia si **naviga fra i giorni**: toccarne uno lo
-                     sceglie e il suo programma compare qui sotto, nella stessa
-                     schermata. Un foglio che si apre sarebbe un passaggio di
-                     troppo per un gesto che si ripete decine di volte. */
+                     sceglie e la sua agenda compare qui sotto. Un foglio che si
+                     apre sarebbe un passaggio di troppo per un gesto che si
+                     ripete decine di volte. */
                   onPress={() => setGiorno(d)}
                 />
               </View>
             )}
           />
         )}
+      </TestataCalendario>
 
-        {vista === 'anno' && (
-          /* L'anno serve a **ritrovare**: dove stanno le vacanze, in che mese
-             cadeva quella cosa. Non serve il dettaglio dei giorni, serve il
-             peso di ogni mese — quante cose, e di che colore. */
-          <View className="flex-row flex-wrap px-3">
-            {mesiDellAnno(giorno).map((m) => {
-              const suoi = eventiDelMese(eventi, m);
-              return (
-                <Pressable
-                  key={m.toISOString()}
-                  className="w-1/3 p-1.5"
-                  onPress={() => {
-                    setGiorno(m);
-                    setVista('mese');
-                  }}
-                >
-                  <View
-                    className={cn(
-                      'items-center gap-1 rounded-2xl bg-card p-3',
-                      stessoMese(m, oggi) && 'border border-primary'
-                    )}
-                  >
-                    <Text className="font-serif text-base capitalize text-foreground">
-                      {m.toLocaleDateString(lingua, { month: 'long' })}
-                    </Text>
-                    <Text className="text-[10px] text-muted-foreground">
-                      {suoi.length === 0
-                        ? t.calendario.nessunImpegno
-                        : suoi.length === 1
-                          ? t.calendario.unImpegno
-                          : t.calendario.impegni(suoi.length)}
-                    </Text>
-                    <View className="h-1.5 flex-row gap-0.5">
-                      {suoi.slice(0, 5).map((e) => (
-                        <View
-                          key={e.id}
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: aspetto(e).colore }}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-
-        {vista === 'mese' && (
-          <View className="px-4">
-            <View className="flex-row">
-              {etichette.map((g) => (
-                <Text
-                  key={g}
-                  className="flex-1 text-center text-xs uppercase text-muted-foreground"
-                >
-                  {g}
-                </Text>
-              ))}
-            </View>
-            {Array.from({ length: 6 }, (_, r) => (
-              <View key={r} className="flex-row">
-                {griglia.slice(r * 7, r * 7 + 7).map((d) => (
-                  <Cella
-                    key={d.toISOString()}
-                    giorno={d}
-                    selezionato={stessoGiorno(d, giorno)}
-                    oggi={stessoGiorno(d, oggi)}
-                    fuori={!stessoMese(d, giorno)}
-                    eventi={eventiDelGiorno(eventi, d)}
-                    onPress={() => tocca(d)}
-                  />
-                ))}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {vista !== 'eventi' && (
-          <Pressable onPress={() => setDettaglio(giorno)}>
-            <Text className="px-6 pb-2 pt-4 text-xs uppercase tracking-wide text-muted-foreground">
-              {giorno.toLocaleDateString(lingua, { weekday: 'long', day: 'numeric', month: 'long' })}
-            </Text>
-          </Pressable>
-        )}
-      </Animated.View>
-
+      {/* --- il corpo ------------------------------------------------------ */}
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color={tema.c.accento} />
         </View>
       ) : (
-        <ScrollView contentContainerClassName="gap-3 px-6 pb-32">
+        <Animated.View
+          {...pan.panHandlers}
+          style={{ flex: 1, transform: [{ translateX: spostamento }] }}
+        >
           {errore && (
-            <View className="w-full gap-2 rounded-2xl bg-card p-4">
+            <View className="mx-5 mt-3 gap-2 rounded-2xl bg-card p-4">
               <Text className="text-sm text-destructive">{errore}</Text>
               <Button variant="outline" onPress={() => ricarica()}>
                 <Text>{t.home.riprova}</Text>
@@ -582,21 +597,105 @@ export default function Calendario() {
             </View>
           )}
 
-          {!errore && (vista === 'eventi' ? eventi.length === 0 : delGiorno.length === 0) && (
-            <View className="items-center gap-2 py-10">
-              <Text className="font-serif text-lg text-foreground">{t.calendario.vuotoTitolo}</Text>
-              <Text className="max-w-xs text-center text-sm text-muted-foreground">
-                {t.calendario.vuotoTesto}
-              </Text>
+          {vista === 'mese' && (
+            // ⚠️ Lo spazio della barra va riservato **qui**, non dentro la
+            // griglia: `GrigliaMese` divide per sei l'altezza che riceve, e se
+            // riceve anche la fascia coperta dalla pillola le righe vengono
+            // troppo alte E l'ultima settimana finisce sotto il vetro. Sul
+            // telefono si vedeva esattamente cosi': righe enormi e il 31
+            // nascosto.
+            <View style={{ flex: 1, paddingBottom: SPAZIO_BARRA }}>
+            <GrigliaMese
+              griglia={griglia}
+              mese={giorno}
+              giorno={giorno}
+              oggi={oggi}
+              eventiDi={(d) => eventiDelGiorno(eventi, d)}
+              onTocca={tocca}
+              onEvento={(e) => router.push({ pathname: '/evento/[id]', params: { id: e.id } })}
+            />
             </View>
           )}
 
-          {/* Vista "eventi": niente giorni, solo le cose — quelle che devono
-              venire in ordine di arrivo, quelle passate dalla piu' recente.
-              Ognuna dice **quanto manca** o **quanto e' passata**, che e' la
-              domanda vera quando si guarda un elenco cosi'. */}
-          {vista === 'eventi'
-            ? [...inArrivo, ...passati].map((e, i) => (
+          {vista === 'giorni' && (
+            <AgendaGiorno
+              giorno={giorno}
+              eventi={delGiorno}
+              spazioFondo={SPAZIO_BARRA}
+              onEvento={(e) => router.push({ pathname: '/evento/[id]', params: { id: e.id } })}
+            />
+          )}
+
+          {vista === 'anno' && (
+            /* L'anno serve a **ritrovare**: dove stanno le vacanze, in che mese
+               cadeva quella cosa. Non serve il dettaglio dei giorni, serve il
+               peso di ogni mese — quante cose, e di che colore. */
+            <ScrollView contentContainerStyle={{ paddingBottom: SPAZIO_BARRA, paddingTop: 8 }}>
+              <View className="flex-row flex-wrap px-3">
+                {mesiDellAnno(giorno).map((m) => {
+                  const suoi = eventiDelMese(eventi, m);
+                  return (
+                    <Pressable
+                      key={m.toISOString()}
+                      className="w-1/3 p-1.5"
+                      onPress={() => {
+                        setGiorno(m);
+                        setVista('mese');
+                      }}
+                    >
+                      <View
+                        className={cn(
+                          'items-center gap-1 rounded-2xl bg-card p-3',
+                          stessoMese(m, oggi) && 'border border-primary'
+                        )}
+                      >
+                        <Text className="font-serif text-base capitalize text-foreground">
+                          {m.toLocaleDateString(lingua, { month: 'long' })}
+                        </Text>
+                        <Text className="text-[10px] text-muted-foreground">
+                          {suoi.length === 0
+                            ? t.calendario.nessunImpegno
+                            : suoi.length === 1
+                              ? t.calendario.unImpegno
+                              : t.calendario.impegni(suoi.length)}
+                        </Text>
+                        <View className="h-1.5 flex-row gap-0.5">
+                          {suoi.slice(0, 5).map((e) => (
+                            <View
+                              key={e.id}
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{ backgroundColor: aspetto(e).pastello.barra }}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          )}
+
+          {vista === 'eventi' && (
+            /* Niente giorni, solo le cose — quelle che devono venire in ordine
+               di arrivo, quelle passate dalla piu' recente. Ognuna dice
+               **quanto manca** o **quanto e' passata**, che e' la domanda vera
+               quando si guarda un elenco cosi'. */
+            <ScrollView
+              contentContainerClassName="gap-3 px-5 pt-3"
+              contentContainerStyle={{ paddingBottom: SPAZIO_BARRA }}
+            >
+              {eventi.length === 0 && (
+                <View className="items-center gap-2 py-10">
+                  <Text className="font-serif text-lg text-foreground">
+                    {t.calendario.vuotoTitolo}
+                  </Text>
+                  <Text className="max-w-xs text-center text-sm text-muted-foreground">
+                    {t.calendario.vuotoTesto}
+                  </Text>
+                </View>
+              )}
+              {[...inArrivo, ...passati].map((e, i) => (
                 <View key={e.id} className="gap-2">
                   {i === 0 && inArrivo.length > 0 && (
                     <Text className="pt-2 text-xs uppercase tracking-wide text-muted-foreground">
@@ -617,21 +716,15 @@ export default function Calendario() {
                     anteprima={anteprime[e.id]}
                   />
                 </View>
-              ))
-            : delGiorno.map((e) => (
-                <RigaEvento
-                  key={e.id}
-                  e={e}
-                  mio={e.autore_id === session?.user.id}
-                  onElimina={() => elimina(e.id)}
-                  onPress={() => router.push({ pathname: '/evento/[id]', params: { id: e.id } })}
-                />
               ))}
-        </ScrollView>
+            </ScrollView>
+          )}
+        </Animated.View>
       )}
 
+
       {!tastieraAperta && (
-        <View style={{ position: 'absolute', right: 20, bottom: SPAZIO_BARRA - 8 }}>
+        <View style={{ position: 'absolute', right: 20, bottom: SOPRA_BARRA }}>
           <TondoVetro lato={58} onPress={() => apriForm()}>
             <Plus color={tema.c.accento} size={26} />
           </TondoVetro>
@@ -689,22 +782,21 @@ export default function Calendario() {
         </View>
       </Modal>
 
-      {/* Lo scorrimento dal basso e' giusto sul telefono. Sul web resta senza
-          animazione: li' e' preview di sviluppo, e un'animazione che dipende da
-          requestAnimationFrame rende la chiusura non verificabile in una scheda
-          che non compone frame. */}
-      <Modal
-        visible={aperto}
-        animationType={Platform.OS === 'web' ? 'none' : 'slide'}
-        transparent
-        onRequestClose={() => setAperto(false)}
-      >
+      {/* Il foglio del nuovo evento.
+          Usa `Foglio` invece di `animationType="slide"`: il Modal di sistema
+          animava **anche la velatura scura**, che quindi scivolava su insieme al
+          pannello come un blocco unico. Ora la velatura sfuma sul posto e il
+          pannello sale con una molla — le due cose separate, come su ogni foglio
+          di sistema. Dettagli in `components/foglio.tsx`. */}
+      <Foglio visibile={aperto} onChiudi={() => setAperto(false)}>
         {/* La tastiera copriva il form: il foglio sale con lei, e il contenuto
             scorre, cosi' la nota resta visibile mentre la si scrive. */}
+        {/* ⚠️ `flex-1` deve restare: il pannello sotto usa `max-h-[88%]`, e una
+            percentuale ha bisogno di un genitore con un'altezza definita. Senza,
+            il tetto dell'88% non si applica e un form lungo esce dallo schermo. */}
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 justify-end"
-          style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
         >
           <View className="max-h-[88%] rounded-t-3xl bg-card">
             <ScrollView
@@ -806,74 +898,78 @@ export default function Calendario() {
                * posti che un indirizzo non ce l'hanno. */}
               <View className="gap-2">
                 <Text className="text-sm text-muted-foreground">{t.evento.dove}</Text>
+                {/* Scegliere un posto qui puo' voler dire **tre cose diverse**,
+                    e distinguerle e' cio' che evita all'utente di rifare a mano
+                    altrove un lavoro gia' fatto (richiesta del 2026-08-27).
+
+                    1. E' un posto **gia' fra i vostri luoghi** → si seleziona e
+                       basta. Riconosciuto per `google_place_id`, che e'
+                       l'identita' vera del posto: due locali possono chiamarsi
+                       uguale, e lo stesso locale puo' essere stato salvato con
+                       un nome leggermente diverso.
+                    2. E' un posto **nuovo** → entra da solo fra i luoghi, con la
+                       sua foto di Google come copertina, e resta selezionato.
+                       Prima bisognava aprire i preferiti e cercarlo una seconda
+                       volta.
+
+                    ⚠️ Con 0016 **non c'e' piu' un terzo caso**. Prima solo i
+                    ristoranti entravano in lista e tutto il resto diventava un
+                    luogo muto sulla mappa; ora ogni posto scelto e' un luogo a
+                    pieno titolo, con copertina e recensioni. Il tipo di Google
+                    resta in `genere` e serve all'icona, non a decidere chi
+                    merita di stare in lista. */}
                 <CercaLuogo
                   onScegli={async (trovato) => {
-                    const err = await aggiungiLuogo(
-                      { lat: trovato.lat, lng: trovato.lng, nome: trovato.nome, visitato: false },
-                      ricaricaCoppia
-                    );
-                    if (err) return setErroreForm(err);
-                    // Il posto appena creato non e' ancora nell'elenco locale:
-                    // lo si ritrova al giro seguente, e intanto lo si segna
-                    // come scelto per nome — l'utente ha appena detto che e' li'.
-                    setLuogoCercato(trovato.nome);
+                    setErroreForm(null);
+
+                    // (1) gia' fra i preferiti?
+                    const gia = trovato.placeId
+                      ? ristoranti.find((r) => r.google_place_id === trovato.placeId)
+                      : undefined;
+                    if (gia) {
+                      setElementoId(gia.id);
+                      if (gia.luogo_id) setLuogoId(gia.luogo_id);
+                      setLuogoCercato(null);
+                      setRistoranteAggiunto(null);
+                      return;
+                    }
+
+                    // (2) posto nuovo: entra nei luoghi, con la sua copertina
+                    const esito = await aggiungiLuogoPreferito(trovato, ricaricaCoppia);
+                    if (esito.errore) return setErroreForm(esito.errore);
+                    if (esito.elementoId) setElementoId(esito.elementoId);
+                    if (esito.luogoId) setLuogoId(esito.luogoId);
+                    setLuogoCercato(null);
+                    setRistoranteAggiunto(trovato.nome);
                   }}
                 />
+                {!!ristoranteAggiunto && (
+                  <Text className="text-xs text-primary">
+                    {t.calendario.ristoranteAggiunto(ristoranteAggiunto)}
+                  </Text>
+                )}
                 {!!luogoCercato && (
                   <Text className="text-xs text-primary">
                     {t.calendario.postoAggiunto(luogoCercato)}
                   </Text>
                 )}
-                {luoghi.length > 0 && (
+                {/* --- l'elenco dei luoghi già vostri -------------------------
+                    ⚠️ **Uno solo.** Fino a poco fa qui c'erano *due* file di
+                    pillole: i "posti" (dalla mappa) e i "ristoranti" (dalla
+                    lista). Erano due elenchi della stessa cosa, e dopo 0017 —
+                    che rende luogo e riga di lista uno a uno — erano proprio gli
+                    stessi posti scritti due volte, con due selezioni separate
+                    che potevano perfino contraddirsi.
+                    Ora la fila è una, viene dalla lista, e sceglierne uno
+                    imposta **entrambi** i legami dell'evento: `elemento_id`
+                    (la scheda) e `luogo_id` (la mappa). */}
+                {ristoranti.length > 0 && (
                   <View className="flex-row flex-wrap gap-2">
                     <Pressable
-                      onPress={() => setLuogoId(null)}
-                      className={cn(
-                        'rounded-full px-3 py-2',
-                        luogoId === null ? 'bg-primary' : 'bg-card'
-                      )}
-                    >
-                      <Text
-                        className={cn(
-                          'text-xs',
-                          luogoId === null ? 'text-primary-foreground' : 'text-muted-foreground'
-                        )}
-                      >
-                        {t.calendario.nessunPosto}
-                      </Text>
-                    </Pressable>
-                    {luoghi.map((l) => (
-                      <Pressable
-                        key={l.id}
-                        onPress={() => setLuogoId(l.id)}
-                        className={cn(
-                          'rounded-full px-3 py-2',
-                          luogoId === l.id ? 'bg-primary' : 'bg-card'
-                        )}
-                      >
-                        <Text
-                          className={cn(
-                            'text-xs',
-                            luogoId === l.id ? 'text-primary-foreground' : 'text-muted-foreground'
-                          )}
-                        >
-                          {l.nome}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-              </View>
-
-              {/* Il ristorante della serata (0012): si sceglie fra quelli dei
-                  preferiti. Toccarlo dalla mappa o dai preferiti riportera'
-                  qui — l'evento resta il centro (D-33). */}
-              {ristoranti.length > 0 && (
-                <View className="gap-2">
-                  <Text className="text-sm text-muted-foreground">{t.calendario.ristorante}</Text>
-                  <View className="flex-row flex-wrap gap-2">
-                    <Pressable
-                      onPress={() => setElementoId(null)}
+                      onPress={() => {
+                        setElementoId(null);
+                        setLuogoId(null);
+                      }}
                       className={cn(
                         'rounded-full px-3 py-2',
                         elementoId === null ? 'bg-primary' : 'bg-card'
@@ -885,13 +981,16 @@ export default function Calendario() {
                           elementoId === null ? 'text-primary-foreground' : 'text-muted-foreground'
                         )}
                       >
-                        {t.calendario.nessunRistorante}
+                        {t.calendario.nessunPosto}
                       </Text>
                     </Pressable>
                     {ristoranti.map((r) => (
                       <Pressable
                         key={r.id}
-                        onPress={() => setElementoId(r.id)}
+                        onPress={() => {
+                          setElementoId(r.id);
+                          setLuogoId(r.luogo_id ?? null);
+                        }}
                         className={cn(
                           'rounded-full px-3 py-2',
                           elementoId === r.id ? 'bg-primary' : 'bg-card'
@@ -910,6 +1009,84 @@ export default function Calendario() {
                       </Pressable>
                     ))}
                   </View>
+                )}
+              </View>
+
+
+              {/* --- le foto della serata ------------------------------------
+                  Si scelgono qui e si caricano al salvataggio: chi crea un
+                  evento passato — una cena di ieri, un viaggio — ha le foto in
+                  mano in quel momento, e costringerlo ad aprire l'evento appena
+                  creato per aggiungerle era un passaggio che nessuno chiedeva. */}
+              {Platform.OS !== 'web' && (
+                <View className="gap-2">
+                  <Text className="text-sm text-muted-foreground">{t.evento.foto}</Text>
+                  <Pressable
+                    onPress={async () => {
+                      const scelta = await scegliFoto();
+                      if (scelta.negato) return setErroreForm(t.galleria.permessoNegato);
+                      if (scelta.immagini.length > 0) {
+                        setFotoNuove((f) => [...f, ...scelta.immagini.map((i) => ({ uri: i.uri }))]);
+                      }
+                    }}
+                    className="flex-row items-center gap-2 rounded-2xl px-3 py-3"
+                    style={{ backgroundColor: tema.c.alone }}
+                  >
+                    <ImagePlus color={tema.c.accento} size={18} />
+                    <Text className="text-sm font-medium" style={{ color: tema.c.accento }}>
+                      {fotoNuove.length === 0
+                        ? t.evento.aggiungiFoto
+                        : t.calendario.fotoScelte(fotoNuove.length)}
+                    </Text>
+                  </Pressable>
+                  {fotoNuove.length > 0 && (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      // Altezza dichiarata: una lista orizzontale dentro una
+                      // colonna che non la dichiara si prende spazio in piu'.
+                      style={{ height: 76, flexGrow: 0 }}
+                      contentContainerStyle={{ gap: 6, alignItems: 'center' }}
+                    >
+                      {fotoNuove.map((f, i) => (
+                        <Pressable
+                          key={`${f.uri}-${i}`}
+                          onPress={() => setFotoNuove((v) => v.filter((_, j) => j !== i))}
+                        >
+                          <View
+                            style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden' }}
+                          >
+                            <Image
+                              source={{ uri: f.uri }}
+                              style={{ width: '100%', height: '100%' }}
+                              resizeMode="cover"
+                            />
+                            {/* Toccare una miniatura la toglie: e' il gesto
+                                atteso, e prima del salvataggio non c'e' niente
+                                da confermare — non e' ancora stato caricato. */}
+                            <View
+                              style={{
+                                position: 'absolute',
+                                right: 3,
+                                top: 3,
+                                width: 18,
+                                height: 18,
+                                borderRadius: 9,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'rgba(0,0,0,0.55)',
+                              }}
+                            >
+                              <X color="#ffffff" size={12} />
+                            </View>
+                          </View>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  )}
+                  {!!caricamento && (
+                    <Text className="text-xs text-primary">{caricamento}</Text>
+                  )}
                 </View>
               )}
 
@@ -917,14 +1094,17 @@ export default function Calendario() {
 
               {erroreForm && <Text className="text-sm text-destructive">{erroreForm}</Text>}
 
-              <BottoneVetro
-                variante="accento"
-                altezza={58}
+              {/* ⚠️ **Pieno quando si puo' salvare, vetro quando no.**
+                  Da vetro tinto il bottone restava chiaro in entrambi gli stati
+                  e l'unica differenza era un filo di opacita': non si capiva se
+                  mancasse qualcosa. Il magenta pieno dice "adesso si puo'"
+                  prima ancora di leggere l'etichetta, e il grigio dice
+                  altrettanto chiaramente il contrario. */}
+              <BottonePieno
+                testo={attesa ? t.onboarding.attesa : t.calendario.salva}
                 disabled={attesa || titolo.trim().length === 0}
                 onPress={salva}
-              >
-                <Text>{attesa ? t.onboarding.attesa : t.calendario.salva}</Text>
-              </BottoneVetro>
+              />
               <BottoneVetro altezza={48} onPress={() => setAperto(false)}>
                 <Text>{t.calendario.annulla}</Text>
               </BottoneVetro>
@@ -934,20 +1114,9 @@ export default function Calendario() {
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
-      </SafeAreaView>
+      </Foglio>
     </View>
   );
-}
-
-/** Data e ora per esteso nel pop-up: qui c'e' spazio, e serve chiarezza. */
-function quandoPerEsteso(e: Evento) {
-  const da = new Date(e.inizio);
-  const f = (d: Date) =>
-    d.toLocaleDateString(lingua, { weekday: 'long', day: 'numeric', month: 'long' });
-  if (e.fine) return `${f(da)} → ${f(new Date(e.fine))}`;
-  if (e.tutto_il_giorno) return `${f(da)} · ${t.calendario.tuttoIlGiorno}`;
-  return `${f(da)} · ${da.toLocaleTimeString(lingua, { hour: '2-digit', minute: '2-digit' })}`;
 }
 
 /** `AAAA-MM-GG HH:MM` — formato del campo testo usato solo sul web. */
