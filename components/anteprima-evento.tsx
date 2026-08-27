@@ -1,8 +1,17 @@
 import * as React from 'react';
-import { View, Pressable, Image, Animated, StyleSheet } from 'react-native';
+import { View, Pressable, Image, StyleSheet } from 'react-native';
+import Riani, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withSequence,
+} from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight, MapPin, MoreHorizontal, X } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { CartaVetro } from '@/components/ui/vetro';
+import { Premibile } from '@/components/ui/premibile';
+import { molla, durata } from '@/lib/movimento';
 import { aspetto } from '@/components/riga-evento';
 import type { Evento } from '@/lib/eventi';
 import { useTema } from '@/lib/tema';
@@ -26,6 +35,27 @@ import { lingua, t } from '@/lib/i18n';
  * ⚠️ **Non e' un `Modal`.** Un modale su iOS prende tutto lo schermo e blocca i
  * gesti della mappa sotto: la carta e' una vista assoluta, e la mappa continua
  * a rispondere al dito attorno a lei.
+ *
+ * ## Chi anima cosa (2026-08-27)
+ *
+ * **L'entrata e l'uscita non sono piu' qui**: le possiede `Comparsa`, in
+ * `components/ui/comparsa.tsx`, che e' anche l'unica in grado di ritardare lo
+ * smontaggio — cosa che questo componente, che sparisce insieme al suo stato,
+ * non puo' fare da solo. Prima l'entrata era qui e l'uscita non esisteva
+ * affatto: la carta arrivava con una molla e se ne andava tagliata.
+ *
+ * Quello che resta qui e' l'unico movimento che **solo questo componente** puo'
+ * conoscere: il **guizzo al cambio di contenuto**. Succede due volte — toccando
+ * un altro pin mentre la carta e' gia' aperta, e scorrendo fra piu' serate
+ * dello stesso posto con le frecce. In entrambi i casi la carta resta dov'e' e
+ * cambia solo cio' che dice: senza un segnale, il testo si sostituisce e
+ * basta, e a colpo d'occhio non si distingue da un testo che non e' cambiato —
+ * che sulle frecce vuol dire non sapere se il tocco e' arrivato.
+ *
+ * ⚠️ **Non al primo render.** Se il guizzo partisse anche alla comparsa, si
+ * sommerebbe all'entrata di `Comparsa` e la carta arriverebbe con due
+ * movimenti sovrapposti — che non si legge come piu' ricco, si legge come
+ * sfasato.
  */
 export function AnteprimaEvento({
   titoloLuogo,
@@ -50,21 +80,36 @@ export function AnteprimaEvento({
 }) {
   const { c } = useTema();
   const [i, setI] = React.useState(0);
-  const salita = React.useRef(new Animated.Value(0)).current;
 
   // La carta cambia contenuto quando si tocca un altro pin: l'indice torna a
   // zero, altrimenti si aprirebbe sul terzo evento di un posto che ne ha uno.
   const chiave = eventi.map((e) => e.id).join(',') + titoloLuogo;
   React.useEffect(() => {
     setI(0);
-    salita.setValue(0);
-    Animated.spring(salita, {
-      toValue: 1,
-      useNativeDriver: true,
-      damping: 18,
-      stiffness: 200,
-    }).start();
-  }, [chiave, salita]);
+  }, [chiave]);
+
+  /** Il guizzo: 1 = a riposo, sotto 1 = sta cambiando. */
+  const guizzo = useSharedValue(1);
+  /** Il primo giro non guizza: li' l'entrata la fa `Comparsa`. */
+  const primo = React.useRef(true);
+  React.useEffect(() => {
+    if (primo.current) {
+      primo.current = false;
+      return;
+    }
+    // Prima si sgonfia in fretta, poi torna con una molla: e' il verso giusto —
+    // il vecchio contenuto se ne va, il nuovo arriva. Al contrario sembrerebbe
+    // un rimbalzo senza causa.
+    guizzo.value = withSequence(
+      withTiming(0, { duration: durata.lampo }),
+      withSpring(1, molla.entrata)
+    );
+  }, [chiave, i, guizzo]);
+
+  const stileGuizzo = useAnimatedStyle(() => ({
+    opacity: 0.35 + 0.65 * guizzo.value,
+    transform: [{ scale: 0.97 + 0.03 * guizzo.value }],
+  }));
 
   const e = eventi[i];
   const copertina = e ? copertine[e.id] : undefined;
@@ -82,17 +127,7 @@ export function AnteprimaEvento({
     : null;
 
   return (
-    <Animated.View
-      style={[
-        {
-          opacity: salita,
-          transform: [
-            { translateY: salita.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
-          ],
-        },
-        style,
-      ]}
-    >
+    <Riani.View style={[stileGuizzo, style]}>
       <CartaVetro raggio={26}>
         <Pressable
           disabled={!e}
@@ -138,14 +173,29 @@ export function AnteprimaEvento({
             )}
           </View>
 
+          {/* ⚠️ Icone nude di 18 punti dentro una carta che si tocca tutta:
+              senza un cedimento sotto il dito, l'unico modo per sapere di aver
+              preso la "x" e non la carta era il fatto che qualcosa fosse
+              successo — cioe' dopo. Qui la scala e' generosa (0.82) proprio
+              perche' l'oggetto e' minuscolo. */}
           <View style={{ alignItems: 'center', gap: 6 }}>
-            <Pressable onPress={onChiudi} hitSlop={10} accessibilityLabel={t.calendario.chiudi}>
+            <Premibile
+              onPress={onChiudi}
+              hitSlop={10}
+              scala={0.82}
+              accessibilityLabel={t.calendario.chiudi}
+            >
               <X color={c.tenue} size={18} />
-            </Pressable>
+            </Premibile>
             {!!onDettagli && (
-              <Pressable onPress={onDettagli} hitSlop={10} accessibilityLabel={t.mappa.azioniPosto}>
+              <Premibile
+                onPress={onDettagli}
+                hitSlop={10}
+                scala={0.82}
+                accessibilityLabel={t.mappa.azioniPosto}
+              >
                 <MoreHorizontal color={c.tenue} size={18} />
-              </Pressable>
+              </Premibile>
             )}
           </View>
         </Pressable>
@@ -164,21 +214,31 @@ export function AnteprimaEvento({
               borderTopColor: 'rgba(129,110,123,0.18)',
             }}
           >
-            <Pressable
+            {/* Le frecce cambiano il contenuto **restando ferme**: il tatto
+                "scelta" e il guizzo della carta sono, insieme, tutto cio' che
+                dice che il tocco e' arrivato. */}
+            <Premibile
               onPress={() => setI((x) => (x - 1 + eventi.length) % eventi.length)}
               hitSlop={10}
+              scala={0.82}
+              aptico="scelta"
             >
               <ChevronLeft color={c.accento} size={20} />
-            </Pressable>
+            </Premibile>
             <Text style={{ fontSize: 12, color: c.tenue }}>
               {i + 1} / {eventi.length}
             </Text>
-            <Pressable onPress={() => setI((x) => (x + 1) % eventi.length)} hitSlop={10}>
+            <Premibile
+              onPress={() => setI((x) => (x + 1) % eventi.length)}
+              hitSlop={10}
+              scala={0.82}
+              aptico="scelta"
+            >
               <ChevronRight color={c.accento} size={20} />
-            </Pressable>
+            </Premibile>
           </View>
         )}
       </CartaVetro>
-    </Animated.View>
+    </Riani.View>
   );
 }

@@ -120,7 +120,6 @@ const it = {
     telepatia: 'Telepatia',
   } as Record<string, string>,
   mappa: {
-    comeSiAggiunge: 'Tieni premuto sulla mappa per segnare un posto',
     /** L'interruttore fra la mappa e l'elenco dei luoghi. */
     viste: { mappa: 'Mappa', elenco: 'Elenco' },
     nuovoTitolo: 'Un posto nuovo',
@@ -185,13 +184,20 @@ const it = {
     aggiungiDescrizione: 'Aggiungi descrizione',
     cambiaData: 'Cambia data',
     cambiaLuogo: 'Cambia luogo',
+    cambiaTipo: 'Cambia tag',
+    commenti: 'Commenti',
+    /**
+     * ⚠️ Il vuoto dice **chi puo' scrivere**, e lo dice solo quando non c'e'
+     * ancora niente: e' l'unico momento in cui l'informazione serve. Una riga
+     * fissa che spiega una funzione e' un'istruzione permanente addosso alla
+     * schermata — la stessa cosa tolta dalla mappa poche ore prima (D-52).
+     */
+    nessunCommento: 'Ancora niente. Potete scrivere tutti e due, quando volete.',
+    scrivi: 'Scrivi un commento…',
+    invia: 'Invia',
     confermaElimina: 'Eliminarlo davvero? Sparisce per entrambi, con i suoi commenti.',
     soloAutore: 'Solo chi l’ha creato può modificarlo o eliminarlo.',
     nFoto: (n: number): string => (n === 1 ? '1 foto' : `${n} foto`),
-    commenti: 'Parole',
-    nessunCommento: 'Ancora niente. Scrivete qualcosa che vorrete rileggere.',
-    scrivi: 'Aggiungi una parola…',
-    invia: 'Invia',
   },
   sezioni: {
     giochiTitolo: 'I giochi arrivano',
@@ -264,8 +270,9 @@ const it = {
   },
   calendario: {
     titolo: 'Calendario',
-    viste: { giorni: 'Giorni', mese: 'Mese', anno: 'Anno', eventi: 'Eventi' },
-    tuttiGliEventi: 'Tutti gli eventi',
+    viste: { giorni: 'Giorni', mese: 'Mese', anno: 'Anno', diario: 'Diario' },
+    /** Il titolo della vista diario. Riprende la promessa fatta in benvenuto. */
+    tuttiGliEventi: 'Il vostro diario',
     /** Le foto scelte nel form, prima di salvare. */
     fotoScelte: (n: number): string => (n === 1 ? '1 foto scelta' : `${n} foto scelte`),
     caricamentoFoto: (f: number, tot: number): string => `Carico le foto… ${f} di ${tot}`,
@@ -420,7 +427,6 @@ const en: Dizionario = {
     telepatia: 'Telepathy',
   } as Record<string, string>,
   mappa: {
-    comeSiAggiunge: 'Press and hold on the map to pin a place',
     viste: { mappa: 'Map', elenco: 'List' },
     nuovoTitolo: 'A new place',
     placeholderNome: 'What do you call it?',
@@ -482,13 +488,14 @@ const en: Dizionario = {
     aggiungiDescrizione: 'Add a note',
     cambiaData: 'Change date',
     cambiaLuogo: 'Change place',
+    cambiaTipo: 'Change tag',
+    commenti: 'Comments',
+    nessunCommento: 'Nothing yet. You can both write, whenever you like.',
+    scrivi: 'Write a comment…',
+    invia: 'Send',
     confermaElimina: 'Really delete it? It disappears for both of you, with its comments.',
     soloAutore: 'Only the person who created it can change or delete it.',
     nFoto: (n: number): string => (n === 1 ? '1 photo' : `${n} photos`),
-    commenti: 'Words',
-    nessunCommento: 'Nothing yet. Write something you’ll want to read again.',
-    scrivi: 'Add a word…',
-    invia: 'Send',
   },
   sezioni: {
     giochiTitolo: 'Games are coming',
@@ -557,8 +564,8 @@ const en: Dizionario = {
   },
   calendario: {
     titolo: 'Calendar',
-    viste: { giorni: 'Days', mese: 'Month', anno: 'Year', eventi: 'Events' },
-    tuttiGliEventi: 'All events',
+    viste: { giorni: 'Days', mese: 'Month', anno: 'Year', diario: 'Diary' },
+    tuttiGliEventi: 'Your diary',
     fotoScelte: (n: number): string => (n === 1 ? '1 photo selected' : `${n} photos selected`),
     caricamentoFoto: (f: number, tot: number): string => `Uploading… ${f} of ${tot}`,
     altri: (n: number): string => `+${n}`,

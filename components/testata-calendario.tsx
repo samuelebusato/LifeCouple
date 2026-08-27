@@ -1,9 +1,18 @@
 import * as React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Riani, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withSequence,
+} from 'react-native-reanimated';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
+import { Premibile } from '@/components/ui/premibile';
+import { molla, durata } from '@/lib/movimento';
 import { FONDO_TESTATA, SU_TESTATA, SU_TESTATA_TENUE } from '@/lib/tema';
 
 /**
@@ -22,10 +31,24 @@ import { FONDO_TESTATA, SU_TESTATA, SU_TESTATA_TENUE } from '@/lib/tema';
  *
  * I bottoni tondi (sinistra/destra) li passa chi la usa: la testata non sa
  * cosa vogliano dire, sa solo dove vanno.
+ *
+ * ## Il titolo **arriva dal lato giusto** (2026-08-27)
+ *
+ * Cambiando periodo, il contenuto sotto scivola gia' — quello lo fa la
+ * schermata — mentre il titolo si sostituiva sul posto: due elementi che
+ * raccontano lo stesso movimento, uno in movimento e uno fermo. Ora il titolo
+ * esce dalla parte da cui stai andando ed entra dall'altra, come il contenuto.
+ *
+ * ⚠️ **L'animazione e' legata alla stringa, non al gesto.** Scorrendo un giorno
+ * per volta nella vista agenda il titolo dice l'intervallo della *settimana*,
+ * che per sei giorni su sette **non cambia**: se il movimento seguisse il gesto,
+ * il titolo si agiterebbe per non dire niente di nuovo. Reagendo al testo, si
+ * muove solo quando c'e' davvero qualcosa di diverso da leggere.
  */
 export function TestataCalendario({
   titolo,
   capitalizza = true,
+  verso = 0,
   onIndietro,
   onAvanti,
   onTitolo,
@@ -34,6 +57,8 @@ export function TestataCalendario({
   children,
 }: {
   titolo: string;
+  /** Da che parte si sta andando: 1 avanti, -1 indietro, 0 salto secco. */
+  verso?: number;
   /**
    * `capitalize` su un titolo di piu' parole maiuscola **ogni** parola: "agosto
    * 2026" diventa giustamente "Agosto 2026", ma "tutti gli eventi" diventava
@@ -51,6 +76,38 @@ export function TestataCalendario({
   /** Cio' che sta in fondo al blocco: iniziali dei giorni, o striscia dei giorni. */
   children?: React.ReactNode;
 }) {
+  /** 1 = fermo al suo posto. Sotto 1: sta cambiando. */
+  const cambio = useSharedValue(1);
+  /** Il verso **al momento del cambio**: letto qui, non nello stile animato. */
+  const direzione = React.useRef(0);
+  const primo = React.useRef(true);
+
+  React.useEffect(() => {
+    if (primo.current) {
+      primo.current = false;
+      return;
+    }
+    direzione.current = verso;
+    cambio.value = withSequence(
+      withTiming(0, { duration: durata.lampo }),
+      withSpring(1, molla.entrata)
+    );
+    // Volutamente **senza `verso`** fra le dipendenze: il verso e' un contorno
+    // del cambio, non una sua causa. Con lui, cambiare direzione senza cambiare
+    // titolo farebbe ripartire l'animazione a vuoto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titolo, cambio]);
+
+  const stileTitolo = useAnimatedStyle(() => ({
+    opacity: cambio.value,
+    transform: [
+      // Esce verso il lato da cui si viene e rientra al centro. A verso 0 —
+      // "torna a oggi", cambio di vista — resta una dissolvenza sul posto:
+      // non c'e' nessuna direzione da raccontare.
+      { translateX: (1 - cambio.value) * 22 * direzione.current },
+    ],
+  }));
+
   return (
     <LinearGradient
       colors={FONDO_TESTATA}
@@ -86,32 +143,37 @@ export function TestataCalendario({
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 1 }}>
             {onIndietro && (
-              <Pressable onPress={onIndietro} hitSlop={10}>
+              <Premibile onPress={onIndietro} hitSlop={10} scala={0.8} aptico="scelta">
                 <ChevronLeft color={SU_TESTATA_TENUE} size={22} />
-              </Pressable>
+              </Premibile>
             )}
-            <Pressable
+            <Premibile
               onPress={onTitolo}
               hitSlop={8}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}
+              scala={0.94}
+              style={{ flexShrink: 1 }}
             >
-              <Text
-                numberOfLines={1}
-                className="font-serif-bold"
-                style={{
-                  fontSize: 22,
-                  color: SU_TESTATA,
-                  textTransform: capitalizza ? 'capitalize' : 'none',
-                }}
+              <Riani.View
+                style={[{ flexDirection: 'row', alignItems: 'center', gap: 2 }, stileTitolo]}
               >
-                {titolo}
-              </Text>
-              {!!onTitolo && <ChevronDown color={SU_TESTATA_TENUE} size={16} />}
-            </Pressable>
+                <Text
+                  numberOfLines={1}
+                  className="font-serif-bold"
+                  style={{
+                    fontSize: 22,
+                    color: SU_TESTATA,
+                    textTransform: capitalizza ? 'capitalize' : 'none',
+                  }}
+                >
+                  {titolo}
+                </Text>
+                {!!onTitolo && <ChevronDown color={SU_TESTATA_TENUE} size={16} />}
+              </Riani.View>
+            </Premibile>
             {onAvanti && (
-              <Pressable onPress={onAvanti} hitSlop={10}>
+              <Premibile onPress={onAvanti} hitSlop={10} scala={0.8} aptico="scelta">
                 <ChevronRight color={SU_TESTATA_TENUE} size={22} />
-              </Pressable>
+              </Premibile>
             )}
           </View>
 
@@ -151,6 +213,11 @@ export function TestataCalendario({
  * screenshot del 2026-08-27 il "27" e l'icona di importazione erano glifi nudi
  * sulla sfumatura. E' lo stesso difetto che ha tenuto storta la barra in basso
  * per tre stesure — vedi `components/barra-volante.tsx`.
+ *
+ * Il riscontro del tocco era un'opacita' fatta a mano con uno stato locale;
+ * ora e' `Premibile`, come ogni altro comando dell'app. Non e' pulizia fine a
+ * se stessa: due comandi che cedono in modo diverso a un centimetro di distanza
+ * si notano, e questo sta accanto al selettore delle viste.
  */
 export function TondoTestata({
   children,
@@ -163,35 +230,23 @@ export function TondoTestata({
   attivo?: boolean;
   accessibilityLabel?: string;
 }) {
-  const [premuto, setPremuto] = React.useState(false);
   return (
-    <View
-      style={{
-        width: 34,
-        height: 34,
-        borderRadius: 17,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: attivo ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.30)',
-        borderWidth: StyleSheet.hairlineWidth * 2,
-        borderColor: 'rgba(255,255,255,0.55)',
-        opacity: premuto ? 0.6 : 1,
-      }}
-    >
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => setPremuto(true)}
-        onPressOut={() => setPremuto(false)}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityState={attivo ? { selected: true } : {}}
-        hitSlop={10}
+    <Premibile onPress={onPress} hitSlop={10} scala={0.86} accessibilityLabel={accessibilityLabel}>
+      <View
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 17,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: attivo ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.30)',
+          borderWidth: StyleSheet.hairlineWidth * 2,
+          borderColor: 'rgba(255,255,255,0.55)',
+        }}
       >
-        <View style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
-          {children}
-        </View>
-      </Pressable>
-    </View>
+        {children}
+      </View>
+    </Premibile>
   );
 }
 

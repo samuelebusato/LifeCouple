@@ -36,7 +36,6 @@ export function MappaVera(_: {
   spazioSotto?: number;
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;
-  onPuntoNuovo: (p: { lat: number; lng: number }) => void;
 }) {
   return null;
 }

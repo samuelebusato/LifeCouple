@@ -17,24 +17,43 @@ import { t } from '@/lib/i18n';
  * L'attribuzione a OpenStreetMap non e' decorativa: e' la condizione della
  * licenza ODbL con cui quei dati si possono usare. Sta sotto i risultati,
  * dove i risultati si vedono.
+ *
+ * ## `dentroUnFoglio` (2026-08-27)
+ *
+ * I due punti in cui vive **non sono lo stesso posto**, e per il vetro la
+ * differenza e' tutto:
+ *
+ * - sulla **mappa** il campo galleggia sopra la mappa: sotto c'e' qualcosa da
+ *   guardare, ed e' il caso per cui il vetro esiste;
+ * - dentro il **foglio del nuovo evento** e i pannelli delle Liste, sotto non
+ *   c'e' contenuto ma la **velatura scura** del modale. La sfocatura mescola
+ *   quel buio e la tendina dei risultati si legge sporca — «sembra in ombra»,
+ *   parole dell'utente.
+ *
+ * Chi lo usa dichiara dove lo mette, e la superficie si adegua. Non lo si puo'
+ * dedurre da qui: un componente non sa in che albero e' stato montato.
  */
 export function CercaLuogo({
   onScegli,
   placeholder,
   autoFocus,
+  dentroUnFoglio = false,
 }: {
   onScegli: (l: Trovato) => void;
   placeholder?: string;
   autoFocus?: boolean;
+  /** Sta dentro un foglio o un modale? Allora il vetro prende una base chiara. */
+  dentroUnFoglio?: boolean;
   /** Solo ristoranti veri: e' il vincolo dei preferiti (D-37). */
 }) {
   const { c } = useTema();
+  const fondo = dentroUnFoglio ? 'pieno' : 'niente';
   const { query, setQuery, risultati, cercando, errore, pulisci } =
     useRicercaLuoghi();
 
   return (
     <View className="gap-2">
-      <Vetro raggio={22}>
+      <Vetro raggio={22} fondo={fondo}>
         <View className="flex-row items-center gap-2 px-4" style={{ height: 52 }}>
           <Search color={c.tenue} size={18} />
           <TextInput
@@ -57,7 +76,7 @@ export function CercaLuogo({
       </Vetro>
 
       {(risultati.length > 0 || !!errore) && (
-        <Vetro raggio={22}>
+        <Vetro raggio={22} fondo={fondo}>
           <View className="p-1">
             {!!errore && (
               <Text className="px-3 py-3 text-sm text-destructive">{errore}</Text>

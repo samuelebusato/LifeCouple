@@ -26,16 +26,18 @@ import {
   Pencil,
   Settings,
   ImageMinus,
+  Check,
   Tag,
   Trash2,
   UserRound,
-  UtensilsCrossed,
   X,
 } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BottoneVetro, CartaVetro, TondoVetro, Vetro } from '@/components/ui/vetro';
+import { Premibile } from '@/components/ui/premibile';
+import { Comparsa } from '@/components/ui/comparsa';
 import { Fondo } from '@/components/schermata';
 import { CercaLuogo } from '@/components/cerca-luogo';
 import { aspetto } from '@/components/riga-evento';
@@ -46,7 +48,8 @@ import { useCoppia } from '@/lib/coppia';
 import { usePreferiti } from '@/lib/preferiti';
 import { useEventoDettaglio } from '@/lib/evento-dettaglio';
 import { caricaFoto, cancellaFoto, indirizziFirmati, scegliFoto, staccaDaEvento } from '@/lib/foto';
-import type { TipoEvento } from '@/lib/eventi';
+import { TIPI, type TipoEvento } from '@/lib/eventi';
+import { cascata } from '@/lib/movimento';
 import { lingua, t } from '@/lib/i18n';
 
 /**
@@ -87,9 +90,8 @@ export default function PaginaEvento() {
   const {
     evento,
     luogo,
-    ristorante,
-    commenti,
     foto,
+    commenti,
     loading,
     errore,
     ricarica,
@@ -101,15 +103,18 @@ export default function PaginaEvento() {
 
   const tema = useTema();
   const insets = useSafeAreaInsets();
-  const [testo, setTesto] = React.useState('');
   const [url, setUrl] = React.useState<Record<string, string>>({});
   const [caricando, setCaricando] = React.useState(false);
+  /** Il commento che si sta scrivendo, e l'attesa del suo invio. */
+  const [testo, setTesto] = React.useState('');
   const [attesa, setAttesa] = React.useState(false);
   const [erroreForm, setErroreForm] = React.useState<string | null>(null);
 
   // --- l'ingranaggio e i suoi fogli -----------------------------------------
   const [ventaglio, setVentaglio] = React.useState(false);
-  const [foglio, setFoglio] = React.useState<null | 'descrizione' | 'data' | 'luogo' | 'elimina'>(null);
+  const [foglio, setFoglio] = React.useState<
+    null | 'descrizione' | 'data' | 'luogo' | 'tipo' | 'elimina'
+  >(null);
   const [bozzaNota, setBozzaNota] = React.useState('');
   const [bozzaData, setBozzaData] = React.useState(new Date());
   const [bozzaFine, setBozzaFine] = React.useState(new Date());
@@ -262,6 +267,14 @@ export default function PaginaEvento() {
 
   const copertina = foto[0] ? url[foto[0].chiave_storage] : undefined;
 
+  /**
+   * Manda il commento.
+   *
+   * ⚠️ Il campo si svuota **solo se l'invio e' andato a buon fine**. Svuotarlo
+   * comunque perderebbe cio' che era stato scritto proprio nel caso in cui
+   * serve di piu' — quando la rete non c'e' — e non c'e' nessun modo di
+   * riaverlo.
+   */
   async function invia() {
     setErroreForm(null);
     setAttesa(true);
@@ -316,6 +329,15 @@ export default function PaginaEvento() {
             fai: () => {
               setVentaglio(false);
               setFoglio('luogo');
+            },
+          },
+          {
+            chiave: 'tipo',
+            etichetta: t.evento.cambiaTipo,
+            Icona: Tag,
+            fai: () => {
+              setVentaglio(false);
+              setFoglio('tipo');
             },
           },
           {
@@ -577,13 +599,12 @@ export default function PaginaEvento() {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <Fatto Icona={CalendarDays} testo={dataEstesa} />
                 <Fatto Icona={Clock} testo={oraEstesa} />
-                {!!ristorante && (
-                  <Fatto
-                    Icona={UtensilsCrossed}
-                    testo={ristorante.titolo}
-                    colore={tema.c.ambra}
-                  />
-                )}
+                {/* ⚠️ **Niente pillola del posto qui** (2026-08-27, richiesta
+                    dell'utente). Il posto sta gia' **sotto il titolo**, in
+                    cima alla pagina, con la sua icona e il tocco che porta
+                    alla mappa. Ripeterlo trenta righe piu' in basso non
+                    aggiungeva niente: costringeva solo a chiedersi se i due
+                    dicessero la stessa cosa. Dicevano la stessa cosa. */}
                 {!!evento.categoria && <Fatto Icona={Tag} testo={evento.categoria} />}
                 <Fatto
                   Icona={UserRound}
@@ -601,7 +622,28 @@ export default function PaginaEvento() {
             )}
 
 
-            {/* --- LE PAROLE -------------------------------------------------- */}
+            {/* --- I COMMENTI --------------------------------------------------
+                Chiesti dall'utente il 2026-08-27: *«agli eventi voglio che ci
+                sia la possibilita' di lasciare dei commenti da parte di
+                entrambi i partner»*.
+
+                ⚠️ **E' la stessa sezione che poche ore prima si chiamava
+                «Parole» ed era stata tolta.** Il nome era il problema: "Parole"
+                non diceva che quello fosse il posto dove ci si scrive, e
+                toglierla significava togliere i commenti senza che si vedesse
+                che erano commenti. Ora si chiama con il suo nome.
+
+                ⚠️ **Entrambi possono scrivere, e non e' una gentilezza di
+                questa schermata: e' il database.** La policy `commento_insert`
+                (migrazione 0008) chiede `e_membro_attivo(coppia_id)` — cioe'
+                *un* membro della coppia, non l'autore dell'evento — e
+                `autore_id = auth.uid()`, che rende impossibile scrivere a nome
+                dell'altro. E' la differenza esplicita fra l'evento e i suoi
+                commenti: **l'evento e' di chi l'ha scritto, i commenti sono di
+                tutti e due.** Cancellare, invece, resta solo i propri
+                (`commento_delete`), e qui il cestino compare di conseguenza —
+                non per nascondere un errore, ma per non offrire un gesto che
+                il database rifiuterebbe. */}
             <View className="gap-2">
               <Text className="text-xs uppercase tracking-wide text-muted-foreground">
                 {t.evento.commenti}
@@ -613,39 +655,49 @@ export default function PaginaEvento() {
 
               {/* Su un foglio bianco il vetro non ha niente da lasciar
                   trasparire: qui i commenti sono carte tenui col bordo, che e'
-                  cio' che il riferimento usa per i blocchi secondari. */}
-              {commenti.map((c) => (
-                <View
-                  key={c.id}
-                  style={{
-                    backgroundColor: '#fdf7fb',
-                    borderRadius: 20,
-                    borderWidth: StyleSheet.hairlineWidth * 2,
-                    borderColor: tema.c.linea,
-                  }}
-                >
-                  <View className="gap-1 p-4">
-                    <Text className="text-base text-foreground">{c.testo}</Text>
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-xs text-muted-foreground">
-                        {c.autore_id === session?.user.id
-                          ? t.calendario.daTe
-                          : t.calendario.dalPartner}
-                        {' · '}
-                        {new Date(c.creato_il).toLocaleDateString(lingua, {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </Text>
-                      {c.autore_id === session?.user.id && (
-                        <Pressable onPress={() => cancellaCommento(c.id)} hitSlop={8}>
-                          <Trash2 color={tema.c.pericolo} size={16} />
-                        </Pressable>
-                      )}
+                  cio' che il riferimento usa per i blocchi secondari.
+
+                  Entrano **a onda** come ogni altro elenco dell'app (D-53): il
+                  ritardo ha gia' il suo tetto dentro `cascata`, quindi un filo
+                  di trenta commenti non diventa un'attesa. */}
+              {commenti.map((commento, n) => {
+                const mioCommento = commento.autore_id === session?.user.id;
+                return (
+                  <Comparsa key={commento.id} visibile ritardo={cascata(n)} scarto={12} scala={0.98}>
+                    <View
+                      style={{
+                        backgroundColor: '#fdf7fb',
+                        borderRadius: 20,
+                        borderWidth: StyleSheet.hairlineWidth * 2,
+                        borderColor: tema.c.linea,
+                      }}
+                    >
+                      <View className="gap-1 p-4">
+                        <Text className="text-base text-foreground">{commento.testo}</Text>
+                        <View className="flex-row items-center justify-between">
+                          <Text className="text-xs text-muted-foreground">
+                            {mioCommento ? t.calendario.daTe : t.calendario.dalPartner}
+                            {' · '}
+                            {new Date(commento.creato_il).toLocaleDateString(lingua, {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </Text>
+                          {mioCommento && (
+                            <Premibile
+                              onPress={() => cancellaCommento(commento.id)}
+                              hitSlop={8}
+                              scala={0.82}
+                            >
+                              <Trash2 color={tema.c.pericolo} size={16} />
+                            </Premibile>
+                          )}
+                        </View>
+                      </View>
                     </View>
-                  </View>
-                </View>
-              ))}
+                  </Comparsa>
+                );
+              })}
 
               <View className="flex-row items-center gap-2 pt-1">
                 <Input
@@ -655,8 +707,13 @@ export default function PaginaEvento() {
                   placeholder={t.evento.scrivi}
                   onSubmitEditing={invia}
                   returnKeyType="send"
+                  accessibilityLabel={t.evento.scrivi}
                 />
-                <TondoVetro lato={52} onPress={invia} disabled={attesa || testo.trim().length === 0}>
+                <TondoVetro
+                  lato={52}
+                  onPress={invia}
+                  disabled={attesa || testo.trim().length === 0}
+                >
                   {attesa ? (
                     <ActivityIndicator color={tema.c.accento} />
                   ) : (
@@ -735,7 +792,9 @@ export default function PaginaEvento() {
           className="flex-1 justify-end"
           style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
         >
-          <CartaVetro raggio={30} style={{ margin: 8 }}>
+          {/* `fondo="pieno"`: sotto c'e' la velatura scura del modale, e senza
+              base il vetro la sfoca e si legge «in ombra». */}
+          <CartaVetro raggio={30} fondo="pieno" style={{ margin: 8 }}>
             <SafeAreaView edges={['bottom']}>
               <View className="gap-4 p-6">
                 {foglio === 'descrizione' && (
@@ -819,6 +878,90 @@ export default function PaginaEvento() {
                   </>
                 )}
 
+                {foglio === 'tipo' && (
+                  <>
+                    <Text className="font-serif-bold text-2xl text-foreground">
+                      {t.evento.cambiaTipo}
+                    </Text>
+                    {/* Ogni tag col **suo** colore e la **sua** icona, presi da
+                        `aspetto()` invece che riscritti qui: e' la stessa
+                        funzione che colora le pillole del calendario e i pin,
+                        quindi il verde della vacanza e' un verde solo in tutta
+                        l'app. Una seconda tabella di colori qui sarebbe
+                        divergente al primo ritocco. */}
+                    <View style={{ gap: 10 }}>
+                      {TIPI.map((x) => {
+                        const suo = aspetto({ ...evento, tipo: x, speciale: null });
+                        const scelto = (evento.tipo ?? 'impegno') === x;
+                        return (
+                          <Premibile
+                            key={x}
+                            scala={0.975}
+                            onPress={async () => {
+                              if (scelto) return setFoglio(null);
+                              /**
+                               * ⚠️ **La vacanza ha una forma diversa**: e' un
+                               * intervallo a giornate intere, non un istante
+                               * (vedi `salva()` in `app/(tabs)/calendario.tsx`).
+                               * Passando a vacanza si porta dietro il minimo
+                               * che la rende coerente — una fine, che in
+                               * mancanza d'altro e' il giorno stesso, e le
+                               * giornate intere. La data di ritorno vera si
+                               * mette poi con «Cambia data».
+                               *
+                               * ⚠️ Uscendo da vacanza **non si cancella
+                               * niente**: la fine resta dov'e'. Azzerarla
+                               * sarebbe distruggere una data che l'utente
+                               * aveva scelto, per un cambio di tag — e
+                               * ricambiare idea non la riporterebbe indietro.
+                               */
+                              const extra =
+                                x === 'vacanza'
+                                  ? {
+                                      fine: evento.fine ?? evento.inizio,
+                                      tutto_il_giorno: true,
+                                    }
+                                  : {};
+                              const err = await aggiorna({ tipo: x, ...extra });
+                              if (err) return setErroreForm(err);
+                              setFoglio(null);
+                            }}
+                          >
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 12,
+                                padding: 14,
+                                borderRadius: 18,
+                                backgroundColor: suo.pastello.fondo,
+                                borderWidth: scelto ? 2 : StyleSheet.hairlineWidth * 2,
+                                borderColor: scelto ? suo.pastello.testo : 'transparent',
+                              }}
+                            >
+                              <suo.Icona color={suo.pastello.testo} size={20} />
+                              <Text
+                                style={{
+                                  flex: 1,
+                                  fontSize: 16,
+                                  fontWeight: scelto ? '700' : '500',
+                                  color: suo.pastello.testo,
+                                }}
+                              >
+                                {t.calendario.tipi[x]}
+                              </Text>
+                              {scelto && <Check color={suo.pastello.testo} size={18} />}
+                            </View>
+                          </Premibile>
+                        );
+                      })}
+                    </View>
+                    <BottoneVetro altezza={48} onPress={() => setFoglio(null)}>
+                      <Text>{t.calendario.annulla}</Text>
+                    </BottoneVetro>
+                  </>
+                )}
+
                 {foglio === 'luogo' && (
                   <>
                     <Text className="font-serif-bold text-2xl text-foreground">
@@ -835,6 +978,7 @@ export default function PaginaEvento() {
                         per un verso solo — quelli che poi non comparivano
                         toccando il luogo (B-12). */}
                     <CercaLuogo
+                      dentroUnFoglio
                       onScegli={async (trovato) => {
                         const gia = trovato.placeId
                           ? luoghiLista.find((l) => l.google_place_id === trovato.placeId)

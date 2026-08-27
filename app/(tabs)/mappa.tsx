@@ -10,12 +10,15 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import Riani, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { MapPin, Plus, Trash2, UtensilsCrossed } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { BottoneVetro, CartaVetro, TondoVetro, Vetro } from '@/components/ui/vetro';
+import { Premibile } from '@/components/ui/premibile';
+import { Comparsa } from '@/components/ui/comparsa';
 import { CercaLuogo } from '@/components/cerca-luogo';
 import { Fondo } from '@/components/schermata';
 import { SPAZIO_BARRA, SOPRA_BARRA } from '@/components/barra-volante';
@@ -30,16 +33,23 @@ import { anteprimePerEvento } from '@/lib/foto';
 import type { Evento } from '@/lib/eventi';
 import { useTastiera } from '@/lib/tastiera';
 import { useTema } from '@/lib/tema';
+import { molla, durata } from '@/lib/movimento';
 import { t } from '@/lib/i18n';
 
 /**
  * La mappa: gli stessi eventi del calendario, guardati **nello spazio** (D-33).
  *
  * ⚠️ D-05, la decisione che vale piu' di ogni funzione: **nessun tracciamento**.
- * Un posto entra qui con un tocco lungo sulla mappa, con un "segna dove sono
- * adesso" premuto apposta, oppure cercandolo per nome; la posizione non viene
- * mai letta da sola, e nessuno dei due puo' sapere dove si trova l'altro in
- * questo momento.
+ * Un posto entra qui con un "segna dove sono adesso" premuto apposta, oppure
+ * cercandolo per nome dall'elenco; la posizione non viene mai letta da sola, e
+ * nessuno dei due puo' sapere dove si trova l'altro in questo momento.
+ *
+ * ⚠️ **Il tocco lungo non aggiunge piu' niente** (2026-08-27, richiesta
+ * dell'utente). Era l'unico gesto dell'app che andava spiegato con un
+ * cartellino permanente sopra la mappa — e un gesto che ha bisogno di
+ * un'istruzione fissa accanto non e' scoperto, e' tollerato. Il perche'
+ * tecnico (il tocco lungo litiga col trascinamento della mappa) sta in
+ * components/mappa-vera.native.tsx.
  *
  * La **ricerca** non intacca questa regola: manda a Google il testo digitato e
  * nient'altro — nemmeno per ordinare i risultati per vicinanza, che pure li
@@ -107,6 +117,16 @@ function DettagliLuogo({
   );
 }
 
+/**
+ * La geometria dell'interruttore Mappa/Elenco, **decisa e non misurata**.
+ *
+ * 92 punti tengono comodamente sia "Elenco" sia "List" a corpo 14 in grassetto,
+ * con l'aria attorno che serve perche' la pillola non sembri una fascetta
+ * stretta sul testo.
+ */
+const VOCE_VISTA = 92;
+const ALTEZZA_VISTA = 32;
+
 /** Cosa e' stato toccato: un posto della coppia, o un ristorante. */
 type Toccato =
   | { tipo: 'luogo'; luogo: Luogo }
@@ -140,6 +160,18 @@ export default function Mappa() {
 
   /** Il pin toccato: apre l'anteprima in sovraimpressione. */
   const [toccato, setToccato] = React.useState<Toccato | null>(null);
+  /**
+   * L'**ultimo** pin toccato, che sopravvive alla chiusura.
+   *
+   * ⚠️ Serve perche' l'anteprima ora **esce** invece di sparire, e per i ~150ms
+   * dell'uscita deve avere ancora qualcosa da disegnare: leggendo `toccato`,
+   * gia' tornato `null`, la carta si svuoterebbe di colpo e poi svanirebbe
+   * vuota — peggio del taglio secco che si voleva togliere.
+   */
+  const [mostrato, setMostrato] = React.useState<Toccato | null>(null);
+  React.useEffect(() => {
+    if (toccato) setMostrato(toccato);
+  }, [toccato]);
   /** Il foglio delle azioni sul posto, dietro il "…" dell'anteprima. */
   const [dettagli, setDettagli] = React.useState<Luogo | null>(null);
 
@@ -334,11 +366,65 @@ export default function Mappa() {
       ? { latitude: luoghi[0].lat, longitude: luoghi[0].lng }
       : { latitude: 45.4642, longitude: 9.19 });
 
-  const eventiToccati = !toccato
+  // ⚠️ Da `mostrato` e non da `toccato`: durante l'uscita dell'anteprima il
+  // secondo e' gia' `null`, e la carta si svuoterebbe prima di sparire.
+  const eventiMostrati = !mostrato
     ? []
-    : toccato.tipo === 'luogo'
-      ? (perLuogo[toccato.luogo.id] ?? [])
-      : (perRistorante[toccato.ristorante.id] ?? []);
+    : mostrato.tipo === 'luogo'
+      ? (perLuogo[mostrato.luogo.id] ?? [])
+      : (perRistorante[mostrato.ristorante.id] ?? []);
+
+  /**
+   * ## Il movimento di questa schermata
+   *
+   * **La pillola dell'interruttore scivola** invece di riaccendersi dall'altra
+   * parte. E' la stessa idea della lente nella barra volante, e per lo stesso
+   * motivo: un fondo che si spegne qui e si accende li' sono due eventi
+   * separati, e sta a chi guarda dedurre che siano lo stesso oggetto; uno che
+   * scorre *e'* lo stesso oggetto, e non c'e' niente da dedurre.
+   *
+   * ⚠️ **Larghezza fissa, niente `onLayout`.** E' la lezione gia' pagata dalla
+   * barra volante: li' la misura tornava un numero che sul telefono non era
+   * quello vero, e la correzione e' stata togliere la misura, non aggiustarla.
+   * Qui la geometria e' nota — due voci di larghezza decisa — quindi la pillola
+   * e le voci leggono **lo stesso numero**, e disallinearsi e' impossibile
+   * invece che improbabile.
+   */
+  const scivoloVista = useSharedValue(vista === 'mappa' ? 0 : 1);
+  React.useEffect(() => {
+    scivoloVista.value = withSpring(vista === 'mappa' ? 0 : 1, molla.scivolo);
+  }, [vista, scivoloVista]);
+  const stilePillola = useAnimatedStyle(() => ({
+    transform: [{ translateX: scivoloVista.value * VOCE_VISTA }],
+  }));
+
+  /**
+   * Il contenuto che **entra** quando si cambia vista: una dissolvenza, e
+   * nient'altro.
+   *
+   * ⚠️ **Il contenitore non si sposta**, ed e' una scelta contro l'istinto —
+   * far scorrere lateralmente le due viste sembra la cosa ovvia da fare su un
+   * interruttore. Non lo e', qui, per due motivi diversi che portano allo
+   * stesso posto:
+   *
+   * - **la mappa e' una vista nativa**, e traslare il contenitore di una vista
+   *   nativa e' il tipo di cosa che si comporta in un modo su iOS e in un altro
+   *   su Android;
+   * - **l'elenco ha gia' il suo movimento**: le schede entrano a onda dal basso
+   *   (vedi `components/elenco-elementi.tsx`). Un contenitore che scivola da
+   *   destra mentre il suo contenuto sale dal basso sono due direzioni diverse
+   *   nello stesso momento, e il risultato non si legge come piu' ricco: si
+   *   legge come confuso.
+   *
+   * Il movimento c'e' comunque, e sta dove serve: la pillola che scorre e le
+   * schede che salgono. La dissolvenza e' solo il cambio di scena fra i due.
+   */
+  const entrata = useSharedValue(1);
+  React.useEffect(() => {
+    entrata.value = 0;
+    entrata.value = withTiming(1, { duration: durata.media });
+  }, [vista, entrata]);
+  const stileVista = useAnimatedStyle(() => ({ opacity: entrata.value }));
 
   const apriEvento = (id: string) => {
     setToccato(null);
@@ -359,28 +445,53 @@ export default function Mappa() {
           style={{ position: 'absolute', left: 0, right: 0, top: 0, zIndex: 20 }}
         >
           <Vetro raggio={20} style={{ alignSelf: 'center', marginTop: 4 }}>
-            <View className="flex-row p-1">
+            <View style={{ flexDirection: 'row', padding: 4 }}>
+              {/* La pillola sta **sotto** le due voci e si sposta: e' l'unico
+                  elemento che si muove, e le voci restano ferme dove sono. */}
+              <Riani.View
+                pointerEvents="none"
+                style={[
+                  {
+                    position: 'absolute',
+                    left: 4,
+                    top: 4,
+                    width: VOCE_VISTA,
+                    height: ALTEZZA_VISTA,
+                    borderRadius: 16,
+                    backgroundColor: c.aloneForte,
+                  },
+                  stilePillola,
+                ]}
+              />
               {(['mappa', 'elenco'] as const).map((v) => (
-                <Pressable
+                <Premibile
                   key={v}
                   onPress={() => setVista(v)}
-                  style={{
-                    paddingHorizontal: 18,
-                    paddingVertical: 7,
-                    borderRadius: 16,
-                    backgroundColor: vista === v ? c.aloneForte : 'transparent',
-                  }}
+                  // "Scelta" e non "tocco": e' il tatto dei selettori di
+                  // sistema, piu' secco, e dice *ho cambiato* invece di
+                  // *ho premuto*.
+                  aptico="scelta"
+                  scala={0.94}
+                  style={{ width: VOCE_VISTA }}
                 >
-                  <Text
-                    className="text-sm"
+                  <View
                     style={{
-                      color: vista === v ? c.accento : c.tenue,
-                      fontWeight: vista === v ? '700' : '500',
+                      height: ALTEZZA_VISTA,
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    {t.mappa.viste[v]}
-                  </Text>
-                </Pressable>
+                    <Text
+                      className="text-sm"
+                      style={{
+                        color: vista === v ? c.accento : c.tenue,
+                        fontWeight: vista === v ? '700' : '500',
+                      }}
+                    >
+                      {t.mappa.viste[v]}
+                    </Text>
+                  </View>
+                </Premibile>
               ))}
             </View>
           </Vetro>
@@ -388,11 +499,13 @@ export default function Mappa() {
       )}
 
       {MAPPA_DISPONIBILE && vista === 'elenco' ? (
-        <SafeAreaView className="flex-1" edges={['top']}>
-          {/* Lo spazio in cima lascia passare l'interruttore, che galleggia. */}
-          <View style={{ height: 52 }} />
-          <ElencoElementi tipo="luogo" />
-        </SafeAreaView>
+        <Riani.View style={[{ flex: 1 }, stileVista]}>
+          <SafeAreaView className="flex-1" edges={['top']}>
+            {/* Lo spazio in cima lascia passare l'interruttore, che galleggia. */}
+            <View style={{ height: 52 }} />
+            <ElencoElementi tipo="luogo" />
+          </SafeAreaView>
+        </Riani.View>
       ) : !MAPPA_DISPONIBILE ? (
         // react-native-maps non esiste sul web: li' resta l'elenco, che e'
         // comunque il modo in cui si arriva agli eventi di un posto.
@@ -460,7 +573,7 @@ export default function Mappa() {
           </View>
         </SafeAreaView>
       ) : (
-        <View className="flex-1">
+        <Riani.View style={[{ flex: 1 }, stileVista]}>
           <MappaVera
             centro={centroMappa}
             luoghi={luoghiSoli}
@@ -472,29 +585,17 @@ export default function Mappa() {
             spazioSotto={SPAZIO_BARRA - 20 + (toccato ? 110 : 0)}
             onLuogo={(l) => setToccato({ tipo: 'luogo', luogo: l })}
             onRistorante={(r) => setToccato({ tipo: 'ristorante', ristorante: r })}
-            onPuntoNuovo={(p) => {
-              setNuovo(p);
-              setNome('');
-              setVisitato(true);
-            }}
           />
 
-          {/* ⚠️ **Niente barra di ricerca qui** (2026-08-27).
-              Cercare un posto per nome e' un'azione da *lista*, e in Liste c'e'
-              ora il suo "+". Tenerne una copia anche qui significava due
-              ingressi per la stessa cosa, e soprattutto un campo di testo
+          {/* ⚠️ **Niente barra di ricerca e niente cartellino qui**
+              (2026-08-27). Cercare un posto per nome e' un'azione da *lista*, e
+              in Liste c'e' ora il suo "+": tenerne una copia anche qui
+              significava due ingressi per la stessa cosa, e un campo di testo
               permanente addosso alla mappa — che di spazio ne ha bisogno tutto.
-              Sulla mappa restano i due gesti che solo qui hanno senso, perche'
-              parlano di *questo punto*: il tocco lungo e «segna dove sono». */}
-          <SafeAreaView edges={['top']} style={{ position: 'absolute', left: 14, right: 14 }}>
-            {!tastieraAperta && !toccato && (
-              <Vetro raggio={16} ombra={false} style={{ alignSelf: 'center' }}>
-                <Text className="px-3 py-1.5 text-[11px] text-muted-foreground">
-                  {t.mappa.comeSiAggiunge}
-                </Text>
-              </Vetro>
-            )}
-          </SafeAreaView>
+              Col tocco lungo e' sparito anche il cartellino che lo spiegava, e
+              con lui l'ultima scritta fissa sopra la mappa. Quel che resta e' il
+              gesto che solo qui ha senso, perche' parla di *questo punto*:
+              «segna dove sono», dietro il «+». */}
 
           {/* ⚠️ Un **«+»**, non un mirino (2026-08-27).
               Il tondo in basso a destra fa la stessa cosa in tutte le schermate
@@ -507,35 +608,53 @@ export default function Mappa() {
               adesso — e' l'unico modo di aggiungere che abbia senso *sulla
               mappa*, perche' parla di questo punto. Per nome si aggiunge
               dall'elenco, che e' a un tocco da qui. */}
-          {!tastieraAperta && !toccato && (
-            <View style={{ position: 'absolute', right: 20, bottom: SOPRA_BARRA }}>
-              <TondoVetro lato={58} onPress={segnaDoveSono}>
-                <Plus color={c.accento} size={26} />
-              </TondoVetro>
-            </View>
-          )}
-        </View>
+          {/* ⚠️ Il «+» **esce invece di sparire**: se ne va verso il basso
+              proprio mentre l'anteprima arriva da li'. Prima era un
+              `{condizione && …}` secco, cioe' un fotogramma tagliato nel punto
+              esatto in cui l'occhio si trova — perche' e' li' che il dito ha
+              appena toccato il pin. */}
+          <Comparsa
+            visibile={!tastieraAperta && !toccato}
+            scarto={18}
+            scala={0.8}
+            style={{ position: 'absolute', right: 20, bottom: SOPRA_BARRA }}
+          >
+            <TondoVetro lato={58} onPress={segnaDoveSono}>
+              <Plus color={c.accento} size={26} />
+            </TondoVetro>
+          </Comparsa>
+        </Riani.View>
       )}
 
-      {/* --- l'anteprima in sovraimpressione ------------------------------- */}
-      {toccato && (
-        <AnteprimaEvento
-          titoloLuogo={toccato.tipo === 'luogo' ? toccato.luogo.nome : toccato.ristorante.titolo}
-          eventi={eventiToccati}
-          copertine={copertine}
-          onApri={(e) => apriEvento(e.id)}
-          // Il "…" c'e' solo sui posti: un ristorante non si segna visitato e
-          // non si elimina da qui — vive nei preferiti, e sarebbe un secondo
-          // posto da cui cancellarlo.
-          onDettagli={
-            toccato.tipo === 'luogo'
-              ? ((posto) => () => setDettagli(posto))(toccato.luogo)
-              : undefined
-          }
-          onChiudi={() => setToccato(null)}
-          style={{ position: 'absolute', left: 14, right: 14, bottom: SOPRA_BARRA }}
-        />
-      )}
+      {/* --- l'anteprima in sovraimpressione -------------------------------
+          Entra e **esce** dal basso: `Comparsa` la tiene montata finche' l'uscita
+          non e' finita, e il contenuto lo legge da `mostrato` — che sopravvive
+          alla chiusura — invece che da `toccato`, che e' gia' `null`. */}
+      <Comparsa
+        visibile={!!toccato}
+        scarto={24}
+        style={{ position: 'absolute', left: 14, right: 14, bottom: SOPRA_BARRA }}
+      >
+        {mostrato && (
+          <AnteprimaEvento
+            titoloLuogo={
+              mostrato.tipo === 'luogo' ? mostrato.luogo.nome : mostrato.ristorante.titolo
+            }
+            eventi={eventiMostrati}
+            copertine={copertine}
+            onApri={(e) => apriEvento(e.id)}
+            // Il "…" c'e' solo sui posti: un ristorante non si segna visitato e
+            // non si elimina da qui — vive nei preferiti, e sarebbe un secondo
+            // posto da cui cancellarlo.
+            onDettagli={
+              mostrato.tipo === 'luogo'
+                ? ((posto) => () => setDettagli(posto))(mostrato.luogo)
+                : undefined
+            }
+            onChiudi={() => setToccato(null)}
+          />
+        )}
+      </Comparsa>
 
       {loading && (
         <View className="absolute inset-x-0 top-1/2 items-center">
@@ -552,7 +671,7 @@ export default function Mappa() {
       >
         <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}>
           {dettagli && (
-            <CartaVetro raggio={30} style={{ margin: 8 }}>
+            <CartaVetro raggio={30} fondo="pieno" style={{ margin: 8 }}>
               <SafeAreaView edges={['bottom']}>
                 <DettagliLuogo
                   luogo={dettagli}
@@ -613,7 +732,7 @@ export default function Mappa() {
           className="flex-1 justify-end"
           style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
         >
-          <CartaVetro raggio={30} style={{ margin: 8 }}>
+          <CartaVetro raggio={30} fondo="pieno" style={{ margin: 8 }}>
             <SafeAreaView edges={['bottom']}>
               <View className="gap-4 p-6">
                 <Text className="font-serif-bold text-2xl text-foreground">

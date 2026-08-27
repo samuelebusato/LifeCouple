@@ -1,9 +1,17 @@
 import * as React from 'react';
-import { View, Pressable, StyleSheet, Platform, type ViewStyle, type StyleProp } from 'react-native';
+import { View, StyleSheet, Platform, type ViewStyle, type StyleProp } from 'react-native';
+import Riani, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolateColor,
+} from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Text, TextClassContext } from '@/components/ui/text';
+import { TextClassContext } from '@/components/ui/text';
+import { Premibile } from '@/components/ui/premibile';
 import { useTema } from '@/lib/tema';
+import { durata } from '@/lib/movimento';
 
 /**
  * Il vetro liquido: superficie, bottone, carta.
@@ -22,6 +30,28 @@ import { useTema } from '@/lib/tema';
  * Il quarto ingrediente e' fuori di qui ed e' il **fondo**: un vetro sopra una
  * tinta piatta non ha niente da lasciar trasparire. Per questo le schermate
  * usano `Fondo` (lib/tema.ts) invece di `bg-background`.
+ *
+ * ## La base sotto il vetro (`fondo`, 2026-08-27)
+ *
+ * Il vetro mostra **cio' che ha sotto**. E' la sua ragione d'essere, ed e'
+ * anche il suo modo di rompersi, in due forme che sembrano diverse e sono la
+ * stessa:
+ *
+ * 1. **«Sembra in ombra».** Dentro un foglio modale sotto il vetro non c'e'
+ *    contenuto: c'e' la **velatura scura** del modale (`rgba(20,8,14,0.4)`).
+ *    La sfocatura mescola quel buio, e una superficie pensata chiara si legge
+ *    sporca. Non e' un bug della sfocatura: e' vetro messo dove non c'era
+ *    niente di bello da guardarci attraverso.
+ * 2. **«E' sparito il riquadro, restano le icone».** Se il materiale di sistema
+ *    non viene disegnato — e su iOS il vetro e' una vista **nativa**, che ha
+ *    i suoi motivi per non disegnarsi — sotto non resta nulla, perche' non
+ *    c'era nulla. Gli elementi sopra restano, la superficie no.
+ *
+ * `fondo` mette **qualcosa sotto**, e decide come il vetro fallisce invece di
+ * scoprirlo: `'pieno'` per il vetro dentro un foglio (base chiara opaca, il
+ * buio non arriva piu'), `'sicuro'` per il vetro che galleggia sul contenuto
+ * (una velatura appena percettibile: invisibile quando il materiale c'e', ed
+ * e' tutto cio' che resta quando non c'e').
  */
 
 // La scelta nativo/fallback vive in `vetro-nativo(.native).ts`: file per
@@ -41,6 +71,16 @@ type VetroProps = {
   /** Velatura rosa invece che neutra: per le superfici che devono farsi notare. */
   tinto?: boolean;
   /**
+   * Cosa c'e' **sotto** gli strati di vetro. Vedi il commento in testa al file.
+   *
+   * - `'niente'` (predefinito): nulla. Il vetro e' davvero trasparente.
+   * - `'sicuro'`: una velatura chiarissima. Non cambia l'aspetto quando il
+   *   materiale viene disegnato; e' la superficie di riserva quando non lo e'.
+   * - `'pieno'`: base chiara **opaca**. Per il vetro **dentro un foglio**, dove
+   *   sotto c'e' solo la velatura scura del modale.
+   */
+  fondo?: 'niente' | 'sicuro' | 'pieno';
+  /**
    * Il vetro di sistema reagisce al tocco (solo iOS 26). Si accende sulle
    * superfici che SONO un comando — la barra, i bottoni — non sulle carte:
    * una carta che si deforma sotto il dito sembra rotta, non viva.
@@ -55,9 +95,28 @@ export function Vetro({
   intensita,
   ombra = true,
   tinto = false,
+  fondo = 'niente',
   interattivo = false,
 }: VetroProps) {
   const { vetro } = useTema();
+
+  /**
+   * ⚠️ **Bianco, non il colore della carta.** Sotto una velatura gia' chiara
+   * (0.52) e un riflesso, qualunque tinta si smorza: il compito di questa vista
+   * non e' dare un colore, e' impedire che passi il buio.
+   */
+  const colorePiano =
+    fondo === 'pieno'
+      ? 'rgba(255,255,255,0.94)'
+      : fondo === 'sicuro'
+        ? 'rgba(255,255,255,0.22)'
+        : null;
+  const piano = colorePiano ? (
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFillObject, { backgroundColor: colorePiano }]}
+    />
+  ) : null;
 
   // L'ombra non puo' stare sulla stessa vista che ritaglia (`overflow: hidden`):
   // su iOS verrebbe ritagliata insieme al contenuto. Quindi due viste annidate.
@@ -74,6 +133,19 @@ export function Vetro({
   if (vetroNativo && GlassView) {
     return (
       <View style={[stileOmbra, { borderRadius: raggio }, style]}>
+        {/* ⚠️ Il piano sta **fuori** dal `GlassView` e dietro di lui, non
+            dentro: dentro sarebbe un figlio *sopra* il materiale e lo
+            coprirebbe: qui deve stare sotto, perche' e' cio' che il vetro
+            guarda — e cio' che resta se il vetro non viene disegnato. */}
+        {colorePiano && (
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              { borderRadius: raggio, backgroundColor: colorePiano },
+            ]}
+          />
+        )}
         {/* width 100% ESPLICITO: GlassView e' una vista nativa e non sempre
             partecipa allo stretch di Yoga — era una delle cause della barra
             con le voci ammassate su un lato. */}
@@ -96,11 +168,16 @@ export function Vetro({
   return (
     <View style={[stileOmbra, { borderRadius: raggio }, style]}>
       <View style={{ borderRadius: raggio, overflow: 'hidden', width: '100%' }}>
-        <BlurView
-          intensity={intensita ?? vetro.intensita}
-          tint={vetro.tinta}
-          style={StyleSheet.absoluteFill}
-        />
+        {piano}
+        {/* ⚠️ Con la base **opaca** la sfocatura non ha piu' niente da sfocare:
+            si salta, ed e' una vista nativa in meno per ogni foglio aperto. */}
+        {fondo !== 'pieno' && (
+          <BlurView
+            intensity={intensita ?? vetro.intensita}
+            tint={vetro.tinta}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <LinearGradient
           colors={
             tinto
@@ -167,7 +244,15 @@ export function BottoneVetro({
         : 'text-base font-medium text-foreground';
 
   return (
-    <Pressable onPress={onPress} disabled={disabled} style={[{ opacity: disabled ? 0.45 : 1 }, style]}>
+    <Premibile
+      onPress={onPress}
+      disabled={disabled}
+      // Un bottone a piena larghezza che cede del 4% si deforma in modo
+      // vistoso: piu' l'oggetto e' largo, piu' la stessa percentuale diventa
+      // spostamento in punti. Qui bastano due punti e mezzo per farlo sentire.
+      scala={0.975}
+      style={[{ opacity: disabled ? 0.45 : 1 }, style]}
+    >
       <Vetro raggio={raggio} tinto={variante === 'accento'} ombra={!disabled}>
         <TextClassContext.Provider value={testo}>
           <View
@@ -184,7 +269,7 @@ export function BottoneVetro({
           </View>
         </TextClassContext.Provider>
       </Vetro>
-    </Pressable>
+    </Premibile>
   );
 }
 
@@ -198,6 +283,20 @@ export function BottoneVetro({
  * quella differenza non si legge — e non si capisce che manca qualcosa.
  * Qui il colore **e' lo stato**: magenta pieno quando si puo' agire, grigio
  * chiaro quando no.
+ *
+ * ## Il colore ci **arriva**, non ci salta (2026-08-27)
+ *
+ * Il passaggio grigio→magenta e' sfumato invece che istantaneo, ed e' l'unica
+ * animazione di questa libreria che non serve a dare riscontro a un tocco ma a
+ * **farsi notare senza essere guardata**. Chi compila il titolo di un evento
+ * sta guardando il campo di testo, non il bottone in fondo: un colore che
+ * cambia di scatto fuori dal punto in cui hai gli occhi non lo vedi, un colore
+ * che si accende nell'arco di due decimi lo prendi con la coda dell'occhio. E'
+ * il momento in cui il foglio smette di dire "manca qualcosa".
+ *
+ * Sfumano insieme fondo, ombra e **colore del testo**: far virare il fondo
+ * lasciando che l'etichetta scatti da grigia a bianca a meta' strada e' peggio
+ * di non animare niente — si nota la giuntura invece della transizione.
  */
 export function BottonePieno({
   testo,
@@ -213,54 +312,55 @@ export function BottonePieno({
   style?: StyleProp<ViewStyle>;
 }) {
   const { c } = useTema();
-  const [premuto, setPremuto] = React.useState(false);
+
+  /** 0 = spento (non si puo' agire), 1 = acceso. */
+  const acceso = useSharedValue(disabled ? 0 : 1);
+  React.useEffect(() => {
+    acceso.value = withTiming(disabled ? 0 : 1, { duration: durata.media });
+  }, [disabled, acceso]);
+
+  const stileFondo = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(acceso.value, [0, 1], ['#efe6ec', c.accento]),
+    // L'ombra e' meta' del "pieno": un rettangolo magenta senza stacco dal
+    // foglio sembra un'etichetta, non un bottone.
+    shadowOpacity: acceso.value,
+    elevation: acceso.value * 6,
+  }));
+  const stileTesto = useAnimatedStyle(() => ({
+    color: interpolateColor(acceso.value, [0, 1], [c.tenue, c.suAccento]),
+  }));
+
   return (
-    <View
-      style={[
-        {
-          height: altezza,
-          borderRadius: 26,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: disabled ? '#efe6ec' : c.accento,
-          opacity: premuto && !disabled ? 0.86 : 1,
-          shadowColor: disabled ? 'transparent' : 'rgba(180,20,120,0.35)',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 1,
-          shadowRadius: 14,
-          elevation: disabled ? 0 : 6,
-        },
-        style,
-      ]}
+    <Premibile
+      onPress={onPress}
+      disabled={disabled}
+      // Come il bottone di vetro: e' largo quanto il foglio, e una scala
+      // vistosa su un oggetto largo si legge come una deformazione.
+      scala={0.975}
+      style={style}
     >
-      <Pressable
-        onPress={onPress}
-        disabled={disabled}
-        onPressIn={() => setPremuto(true)}
-        onPressOut={() => setPremuto(false)}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !!disabled }}
-      >
-        <View
-          style={{
+      <Riani.View
+        style={[
+          {
             height: altezza,
+            borderRadius: 26,
             paddingHorizontal: 24,
             alignItems: 'center',
             justifyContent: 'center',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '700',
-              color: disabled ? c.tenue : c.suAccento,
-            }}
-          >
-            {testo}
-          </Text>
-        </View>
-      </Pressable>
-    </View>
+            shadowColor: 'rgba(180,20,120,0.35)',
+            shadowOffset: { width: 0, height: 6 },
+            shadowRadius: 14,
+          },
+          stileFondo,
+        ]}
+      >
+        {/* ⚠️ `Riani.Text` e non il `Text` dell'app: il colore va animato sul
+            thread della UI, e qui non si perde niente — le uniche classi che il
+            nostro `Text` avrebbe messo (`text-base text-foreground`) sono gia'
+            entrambe soprascritte dallo stile esplicito. */}
+        <Riani.Text style={[{ fontSize: 16, fontWeight: '700' }, stileTesto]}>{testo}</Riani.Text>
+      </Riani.View>
+    </Premibile>
   );
 }
 
@@ -289,13 +389,21 @@ export function TondoVetro({
   tinto?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} disabled={disabled} style={[{ opacity: disabled ? 0.45 : 1 }, style]}>
+    <Premibile
+      onPress={onPress}
+      disabled={disabled}
+      // Il tondo e' piccolo e sta da solo sopra il contenuto: qui il cedimento
+      // puo' essere pieno, ed e' l'unico modo che ha per dire "toccato" —
+      // sotto non c'e' nessuna schermata che cambia all'istante.
+      scala={0.9}
+      style={[{ opacity: disabled ? 0.45 : 1 }, style]}
+    >
       <Vetro raggio={lato / 2} tinto={tinto}>
         <View style={{ width: lato, height: lato, alignItems: 'center', justifyContent: 'center' }}>
           {children}
         </View>
       </Vetro>
-    </Pressable>
+    </Premibile>
   );
 }
 
@@ -304,20 +412,34 @@ export function TondoVetro({
  *
  * Sfoca meno di un bottone: una superficie grande con la stessa sfocatura di
  * un bottone diventa una parete opaca e il fondo sparisce.
+ *
+ * ⚠️ **Dentro un foglio va sempre `fondo="pieno"`.** Una carta di vetro sopra
+ * la velatura scura di un modale sfoca il buio, e si legge «in ombra» — che e'
+ * esattamente il difetto riferito dall'utente il 2026-08-27 sul pannello dei
+ * posti nuovi. La regola sta qui e non nella testa di chi scrive la prossima
+ * schermata: **vetro dentro un foglio ⇒ `fondo="pieno"`**.
  */
 export function CartaVetro({
   children,
   style,
   raggio = 30,
   ombra = true,
+  fondo = 'niente',
 }: {
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   raggio?: number;
   ombra?: boolean;
+  fondo?: 'niente' | 'sicuro' | 'pieno';
 }) {
   return (
-    <Vetro raggio={raggio} intensita={Platform.OS === 'ios' ? 34 : 44} ombra={ombra} style={style}>
+    <Vetro
+      raggio={raggio}
+      intensita={Platform.OS === 'ios' ? 34 : 44}
+      ombra={ombra}
+      fondo={fondo}
+      style={style}
+    >
       {children}
     </Vetro>
   );

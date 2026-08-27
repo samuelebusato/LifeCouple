@@ -19,6 +19,7 @@ import {
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { CartaVetro, BottoneVetro, TondoVetro } from '@/components/ui/vetro';
+import { Comparsa } from '@/components/ui/comparsa';
 import { SPAZIO_BARRA, SOPRA_BARRA } from '@/components/barra-volante';
 import { CercaLuogo } from '@/components/cerca-luogo';
 import { VisoreFoto } from '@/components/visore-foto';
@@ -33,6 +34,7 @@ import { usePreferiti, type Elemento, type TipoElemento } from '@/lib/preferiti'
 import { urlFotoGoogle } from '@/lib/ricerca-luoghi';
 import { useTastiera } from '@/lib/tastiera';
 import { useTema } from '@/lib/tema';
+import { cascata } from '@/lib/movimento';
 import { lingua, t } from '@/lib/i18n';
 
 
@@ -50,6 +52,20 @@ import { lingua, t } from '@/lib/i18n';
  * niente da riscrivere, solo da spostare. Se il tipo fosse stato intrecciato
  * col resto, questo passaggio sarebbe stato una riscrittura con i suoi difetti
  * nuovi.
+ *
+ * ## Le schede arrivano a **onda** (2026-08-27)
+ *
+ * Entrano dal basso una dopo l'altra invece che tutte nello stesso fotogramma.
+ * Il ritardo ha un tetto (`cascata` in `lib/movimento.ts`): con venti posti in
+ * lista, senza tetto l'ultima scheda partirebbe quasi un secondo dopo la prima
+ * e chi scorre subito vedrebbe righe accendersi **sotto il dito che scorre** —
+ * che non si legge come cura, si legge come un'app che non sta dietro.
+ *
+ * ⚠️ **L'onda riparte a ogni montaggio**, ed e' voluto: nella mappa questo
+ * elenco viene smontato ogni volta che si torna alla vista mappa, quindi
+ * l'interruttore Mappa/Elenco *ha sempre* la sua onda. Nella scheda Liste, che
+ * resta montata, succede invece una volta sola — che e' altrettanto giusto,
+ * perche' li' non c'e' nessun cambio di vista da accompagnare.
  */
 
 export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
@@ -265,38 +281,43 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                   {t.preferiti.daFare}
                 </Text>
               )}
-              {daFare.map((e) => (
-                <Scheda
-                  key={e.id}
-                  e={e}
-                  mioId={session?.user.id}
-                  // La copertina di un luogo, in ordine di precedenza:
-                  //   1. quella **scelta a mano**, perche' e' una decisione;
-                  //   2. l'ultima foto delle vostre **serate** li' — «se un
-                  //      luogo ha immagini associate allora viene visualizzata
-                  //      l'immagine»;
-                  //   3. quella di **Google**, che vale finche' non ci siete
-                  //      ancora stati.
-                  copertina={
-                    copertine[e.id] ??
-                    fotoLuoghi[e.id]?.[0] ??
-                    (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
-                  }
-                  foto={fotoLuoghi[e.id]}
-                  onFoto={(i) => setFotoAperte({ id: e.id, da: i })}
-                  onApri={
-                    e.tipo === 'luogo'
-                      ? () => setSerateDi(e)
-                      : undefined
-                  }
-                  eventi={eventiPer[e.id]}
-                  onFatto={(f) => segnaFatto(e.id, f)}
-                  onRecensisci={(v, txt) => recensisci(e, v, txt)}
-                  onElimina={() => elimina(e.id)}
-                  onCopertina={() => copertinaPer(e.id)}
-                  onPosto={() => setPostoPer(e)}
-                  onEvento={(idE) => router.push({ pathname: '/evento/[id]', params: { id: idE } })}
-                />
+              {/* `n` e non `i`: dentro la scheda `i` e' gia' l'indice della
+                  foto in `onFoto`, e riusarlo qui lo coprirebbe con un altro
+                  significato a due righe di distanza. */}
+              {daFare.map((e, n) => (
+                <Comparsa key={e.id} visibile ritardo={cascata(n)} scarto={16} scala={0.97}>
+                  <Scheda
+                    key={e.id}
+                    e={e}
+                    mioId={session?.user.id}
+                    // La copertina di un luogo, in ordine di precedenza:
+                    //   1. quella **scelta a mano**, perche' e' una decisione;
+                    //   2. l'ultima foto delle vostre **serate** li' — «se un
+                    //      luogo ha immagini associate allora viene visualizzata
+                    //      l'immagine»;
+                    //   3. quella di **Google**, che vale finche' non ci siete
+                    //      ancora stati.
+                    copertina={
+                      copertine[e.id] ??
+                      fotoLuoghi[e.id]?.[0] ??
+                      (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
+                    }
+                    foto={fotoLuoghi[e.id]}
+                    onFoto={(i) => setFotoAperte({ id: e.id, da: i })}
+                    onApri={
+                      e.tipo === 'luogo'
+                        ? () => setSerateDi(e)
+                        : undefined
+                    }
+                    eventi={eventiPer[e.id]}
+                    onFatto={(f) => segnaFatto(e.id, f)}
+                    onRecensisci={(v, txt) => recensisci(e, v, txt)}
+                    onElimina={() => elimina(e.id)}
+                    onCopertina={() => copertinaPer(e.id)}
+                    onPosto={() => setPostoPer(e)}
+                    onEvento={(idE) => router.push({ pathname: '/evento/[id]', params: { id: idE } })}
+                  />
+                </Comparsa>
               ))}
 
               {fatti.length > 0 && (
@@ -304,38 +325,49 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                   {t.preferiti.fatti}
                 </Text>
               )}
-              {fatti.map((e) => (
-                <Scheda
+              {/* L'onda **continua** da dove l'ha lasciata la sezione sopra:
+                  due cascate che ripartono da zero si leggono come due elenchi
+                  separati, e invece e' uno solo diviso in due titoli. */}
+              {fatti.map((e, n) => (
+                <Comparsa
                   key={e.id}
-                  e={e}
-                  mioId={session?.user.id}
-                  // La copertina di un luogo, in ordine di precedenza:
-                  //   1. quella **scelta a mano**, perche' e' una decisione;
-                  //   2. l'ultima foto delle vostre **serate** li' — «se un
-                  //      luogo ha immagini associate allora viene visualizzata
-                  //      l'immagine»;
-                  //   3. quella di **Google**, che vale finche' non ci siete
-                  //      ancora stati.
-                  copertina={
-                    copertine[e.id] ??
-                    fotoLuoghi[e.id]?.[0] ??
-                    (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
-                  }
-                  foto={fotoLuoghi[e.id]}
-                  onFoto={(i) => setFotoAperte({ id: e.id, da: i })}
-                  onApri={
-                    e.tipo === 'luogo'
-                      ? () => setSerateDi(e)
-                      : undefined
-                  }
-                  eventi={eventiPer[e.id]}
-                  onFatto={(f) => segnaFatto(e.id, f)}
-                  onRecensisci={(v, txt) => recensisci(e, v, txt)}
-                  onElimina={() => elimina(e.id)}
-                  onCopertina={() => copertinaPer(e.id)}
-                  onPosto={() => setPostoPer(e)}
-                  onEvento={(idE) => router.push({ pathname: '/evento/[id]', params: { id: idE } })}
-                />
+                  visibile
+                  ritardo={cascata(daFare.length + n)}
+                  scarto={16}
+                  scala={0.97}
+                >
+                  <Scheda
+                    key={e.id}
+                    e={e}
+                    mioId={session?.user.id}
+                    // La copertina di un luogo, in ordine di precedenza:
+                    //   1. quella **scelta a mano**, perche' e' una decisione;
+                    //   2. l'ultima foto delle vostre **serate** li' — «se un
+                    //      luogo ha immagini associate allora viene visualizzata
+                    //      l'immagine»;
+                    //   3. quella di **Google**, che vale finche' non ci siete
+                    //      ancora stati.
+                    copertina={
+                      copertine[e.id] ??
+                      fotoLuoghi[e.id]?.[0] ??
+                      (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
+                    }
+                    foto={fotoLuoghi[e.id]}
+                    onFoto={(i) => setFotoAperte({ id: e.id, da: i })}
+                    onApri={
+                      e.tipo === 'luogo'
+                        ? () => setSerateDi(e)
+                        : undefined
+                    }
+                    eventi={eventiPer[e.id]}
+                    onFatto={(f) => segnaFatto(e.id, f)}
+                    onRecensisci={(v, txt) => recensisci(e, v, txt)}
+                    onElimina={() => elimina(e.id)}
+                    onCopertina={() => copertinaPer(e.id)}
+                    onPosto={() => setPostoPer(e)}
+                    onEvento={(idE) => router.push({ pathname: '/evento/[id]', params: { id: idE } })}
+                  />
+                </Comparsa>
               ))}
             </ScrollView>
           )}
@@ -411,7 +443,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
           className="flex-1 justify-end"
           style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
         >
-          <CartaVetro raggio={32} style={{ margin: 8 }}>
+          <CartaVetro raggio={32} fondo="pieno" style={{ margin: 8 }}>
             <SafeAreaView edges={['bottom']}>
               <View className="gap-4 p-6">
                 <View className="flex-row items-center justify-between">
@@ -423,6 +455,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                   </Pressable>
                 </View>
                 <CercaLuogo
+                  dentroUnFoglio
                   autoFocus
                   placeholder={t.preferiti.placeholder.luogo}
                   onScegli={async (trovato) => {
@@ -449,7 +482,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
           className="flex-1 justify-end"
           style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
         >
-          <CartaVetro raggio={30} style={{ margin: 8 }}>
+          <CartaVetro raggio={30} fondo="pieno" style={{ margin: 8 }}>
             <SafeAreaView edges={['bottom']}>
               <View className="gap-4 p-6">
                 <View className="flex-row items-center justify-between">
@@ -462,6 +495,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                 </View>
                 <Text className="text-sm text-muted-foreground">{t.mappa.cercaNota}</Text>
                 <CercaLuogo
+                  dentroUnFoglio
                   autoFocus
                   onScegli={async (trovato) => {
                     if (!postoPer) return;

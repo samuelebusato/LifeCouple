@@ -16,7 +16,17 @@
  * La vista "giorno" e' stata tolta il 2026-08-13: apriva un giorno alla volta
  * facendo il lavoro che ora fa il foglio di dettaglio, meglio e da ovunque.
  */
-export type Vista = 'giorni' | 'mese' | 'anno' | 'eventi';
+/**
+ * Le quattro viste del calendario.
+ *
+ * ⚠️ `diario` si chiamava `eventi` fino al 2026-08-27. Il nome e' cambiato
+ * **anche nel codice** e non solo nell'etichetta: una vista che l'utente chiama
+ * "diario" e il codice chiama "eventi" costringe a tradurre mentalmente a ogni
+ * lettura, ed e' il tipo di divergenza che dopo tre mesi nessuno ricorda piu'
+ * di che cosa sia. Essendo un'unione, il compilatore ha trovato da solo tutti
+ * i punti da cambiare.
+ */
+export type Vista = 'giorni' | 'mese' | 'anno' | 'diario';
 
 /**
  * Giorni civili fra oggi e una data: positivo se deve venire, negativo se e'

@@ -41,6 +41,17 @@ export type RistoranteSuMappa = {
  * "i luoghi associati a un evento pinnati" — e cambia il lavoro della mappa: da
  * elenco di coordinate a mappa di cose accadute.
  *
+ * ## Niente tocco lungo (2026-08-27)
+ *
+ * La mappa **non aggiunge piu' un posto** quando ci si tiene premuto sopra.
+ * Era un gesto invisibile — l'unico modo di scoprirlo era il cartellino che lo
+ * spiegava, cioe' un'istruzione permanente addosso alla mappa per una funzione
+ * che nessuno avrebbe indovinato — e per di piu' **collideva col mezzo**: su
+ * una mappa il dito ci resta sopra di continuo, per trascinare e per zumare, e
+ * un tocco fermo un attimo di troppo apriva un foglio che nessuno aveva
+ * chiesto. Restano i due ingressi espliciti: il «+», che aggiunge il punto in
+ * cui sei, e la ricerca per nome nell'elenco.
+ *
  * ⚠️ **`tracksViewChanges` va spento**, ma non subito. Con i marker disegnati
  * da noi, react-native-maps ridisegna la texture del pin a **ogni fotogramma**
  * finche' e' acceso: con dieci pin la mappa diventa scattosa. Spegnerlo al
@@ -129,7 +140,6 @@ export function MappaVera({
   spazioSotto = 0,
   onLuogo,
   onRistorante,
-  onPuntoNuovo,
 }: {
   centro: { latitude: number; longitude: number };
   luoghi: Luogo[];
@@ -142,7 +152,6 @@ export function MappaVera({
   spazioSotto?: number;
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;
-  onPuntoNuovo: (p: { lat: number; lng: number }) => void;
 }) {
   const [traccia, setTraccia] = React.useState(true);
   React.useEffect(() => {
@@ -158,10 +167,6 @@ export function MappaVera({
       // `region` controllata renderebbe la mappa un pendolo che torna sempre al
       // centro; per "vai al risultato cercato" basta la key sul centro (sotto).
       key={`${centro.latitude.toFixed(4)},${centro.longitude.toFixed(4)}`}
-      onLongPress={(e) => {
-        const { latitude, longitude } = e.nativeEvent.coordinate;
-        onPuntoNuovo({ lat: latitude, lng: longitude });
-      }}
     >
       {luoghi.map((l) => {
         const n = eventiPerLuogo[l.id] ?? 0;

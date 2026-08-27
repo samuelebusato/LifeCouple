@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { View, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalendarDays, Film, Image as ImageIcon, MapPin, Sparkles } from 'lucide-react-native';
@@ -8,6 +8,8 @@ import { Insieme } from '@/components/insieme';
 import { ServePartner } from '@/components/serve-partner';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { Premibile } from '@/components/ui/premibile';
+import { Comparsa } from '@/components/ui/comparsa';
 import { Fondo } from '@/components/schermata';
 import { SPAZIO_BARRA } from '@/components/barra-volante';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +17,7 @@ import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
 import { useRiepilogo } from '@/lib/riepilogo';
 import { useTema } from '@/lib/tema';
+import { cascata } from '@/lib/movimento';
 import { lingua, t } from '@/lib/i18n';
 
 /**
@@ -28,6 +31,19 @@ import { lingua, t } from '@/lib/i18n';
  * ancora stata scritta, dice cosa ci sara' invece di uno zero che sembra un
  * dato. Su una schermata che si guarda ogni giorno, un numero inventato e'
  * peggio di un vuoto onesto.
+ *
+ * ## I riquadri arrivano a **onda** (2026-08-27)
+ *
+ * Entrano uno dopo l'altro, ~45ms l'uno dall'altro, invece che tutti insieme.
+ * Non e' decorazione: e' cio' che dice **in che ordine leggerli**. Cinque
+ * riquadri che compaiono nello stesso fotogramma sono un muro, e l'occhio parte
+ * da dove capita; cinque che arrivano in sequenza si leggono nell'ordine in cui
+ * sono arrivati, che e' quello in cui sono stati messi.
+ *
+ * ⚠️ Succede **una volta sola**, all'apertura dell'app. Tornando qui da
+ * un'altra scheda la schermata resta montata (navigatore a tab), quindi non si
+ * ri-anima: un'onda a ogni ritorno diventerebbe un'attesa fra se' e il numero
+ * che si e' venuti a leggere.
  */
 
 function Riquadro({
@@ -37,6 +53,7 @@ function Riquadro({
   nota,
   onPress,
   largo,
+  indice = 0,
 }: {
   Icona: React.ComponentType<{ color?: string; size?: number }>;
   etichetta: string;
@@ -44,43 +61,57 @@ function Riquadro({
   nota?: string;
   onPress?: () => void;
   largo?: boolean;
+  /** Il posto nella fila: decide il ritardo dell'entrata a onda. */
+  indice?: number;
 }) {
   const { c, vetro } = useTema();
   return (
-    <Pressable onPress={onPress} className={largo ? 'w-full p-1.5' : 'w-1/2 p-1.5'}>
-      {/* I riquadri della home restano **carta piena**, non vetro: sono gia' il
-          contenuto principale della schermata, e un vetro sopra un fondo
-          sfumato, ripetuto cinque volte, diventa nebbia. Il vetro sta sui
-          comandi che galleggiano, non su cio' che si legge. */}
-      <View
-        className="min-h-[118px] gap-1 rounded-3xl bg-card p-4"
-        style={{
-          shadowColor: vetro.ombra,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.6,
-          shadowRadius: 14,
-          elevation: 4,
-        }}
-      >
+    <Comparsa
+      visibile
+      ritardo={cascata(indice)}
+      scarto={18}
+      scala={0.94}
+      // ⚠️ La larghezza sta **qui**, non piu' sul `Pressable`: e' questa vista
+      // a essere figlia del `flex-wrap`, e senza il 50% i riquadri
+      // tornerebbero uno per riga. Non e' una classe perche' `Comparsa` prende
+      // uno stile — il suo mestiere e' animare, non conoscere NativeWind.
+      style={{ width: largo ? '100%' : '50%', padding: 6 }}
+    >
+      <Premibile onPress={onPress} scala={0.965}>
+        {/* I riquadri della home restano **carta piena**, non vetro: sono gia' il
+            contenuto principale della schermata, e un vetro sopra un fondo
+            sfumato, ripetuto cinque volte, diventa nebbia. Il vetro sta sui
+            comandi che galleggiano, non su cio' che si legge. */}
         <View
-          className="h-9 w-9 items-center justify-center rounded-2xl"
-          style={{ backgroundColor: c.alone }}
+          className="min-h-[118px] gap-1 rounded-3xl bg-card p-4"
+          style={{
+            shadowColor: vetro.ombra,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.6,
+            shadowRadius: 14,
+            elevation: 4,
+          }}
         >
-          <Icona color={c.accento} size={18} />
-        </View>
-        <Text className="pt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-          {etichetta}
-        </Text>
-        <Text className="font-serif text-xl text-foreground" numberOfLines={2}>
-          {valore}
-        </Text>
-        {!!nota && (
-          <Text className="text-xs text-muted-foreground" numberOfLines={1}>
-            {nota}
+          <View
+            className="h-9 w-9 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: c.alone }}
+          >
+            <Icona color={c.accento} size={18} />
+          </View>
+          <Text className="pt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            {etichetta}
           </Text>
-        )}
-      </View>
-    </Pressable>
+          <Text className="font-serif text-xl text-foreground" numberOfLines={2}>
+            {valore}
+          </Text>
+          {!!nota && (
+            <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+              {nota}
+            </Text>
+          )}
+        </View>
+      </Premibile>
+    </Comparsa>
   );
 }
 
@@ -155,7 +186,12 @@ export default function Home() {
       >
         {completa ? (
           <>
-            <Insieme insiemeDal={insiemeDal} ricarica={ricarica} />
+            {/* Il contatore dei giorni apre l'onda: e' il primo posto in cui
+                l'occhio si posa, ed e' giusto che sia anche il primo ad
+                arrivare. */}
+            <Comparsa visibile scarto={20} scala={0.95} style={{ width: '100%' }}>
+              <Insieme insiemeDal={insiemeDal} ricarica={ricarica} />
+            </Comparsa>
 
             <View className="w-full flex-row flex-wrap">
               <Riquadro
@@ -165,6 +201,7 @@ export default function Home() {
                 nota={quandoProssimo ?? undefined}
                 onPress={() => router.push('/calendario')}
                 largo
+                indice={1}
               />
               <Riquadro
                 Icona={MapPin}
@@ -172,12 +209,14 @@ export default function Home() {
                 valore={String(r.postiVisitati)}
                 nota={t.riepilogo.postiNota}
                 onPress={() => router.push('/mappa')}
+                indice={2}
               />
               <Riquadro
                 Icona={Film}
                 etichetta={t.riepilogo.ultimoFilm}
                 valore={r.ultimoFilm ? r.ultimoFilm.titolo : t.riepilogo.nessunFilm}
                 onPress={() => router.push('/preferiti')}
+                indice={3}
               />
               <Riquadro
                 Icona={Sparkles}
@@ -187,12 +226,14 @@ export default function Home() {
                 }
                 nota={r.ultimaPartita ? t.giochi[r.ultimaPartita.gioco] : undefined}
                 onPress={() => router.push('/giochi')}
+                indice={4}
               />
               <Riquadro
                 Icona={ImageIcon}
                 etichetta={t.riepilogo.galleria}
                 valore={r.fotoACaso ? t.riepilogo.unRicordo : t.riepilogo.nessunaFoto}
                 onPress={() => router.push('/galleria')}
+                indice={5}
               />
             </View>
           </>

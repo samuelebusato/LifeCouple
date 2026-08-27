@@ -21,6 +21,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Vetro, GlassView, GlassContainer } from '@/components/ui/vetro';
 import { useTastiera } from '@/lib/tastiera';
 import { useTema } from '@/lib/tema';
+import { molla, durata } from '@/lib/movimento';
 
 /**
  * La barra delle funzioni, **volante**: una pillola di vetro staccata dai bordi
@@ -223,7 +224,45 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
     console.log(`[barra] schermo=${schermo} passo=${passo.toFixed(1)} voci=${voci}`);
   }, [schermo, passo, voci]);
 
-  if (aperta) return null;
+  /**
+   * ## La barra **si sposta**, non sparisce (2026-08-27)
+   *
+   * Prima qui c'era `if (aperta) return null`: a tastiera aperta la barra
+   * veniva tolta di scena, e con lei si smontavano le viste **native** del
+   * vetro (`GlassContainer`/`GlassView` su iOS 26, `BlurView` altrove). Due
+   * problemi in uno:
+   *
+   * 1. **Visivamente** era un taglio: la barra non se ne andava, cessava di
+   *    esistere in un fotogramma — proprio mentre l'occhio e' in basso, dove
+   *    sta comparendo la tastiera.
+   * 2. 🔴 **Ed e' il sospetto principale per il difetto riferito dall'utente il
+   *    2026-08-27**: *«apro e richiudo il pannello dei luoghi e il riquadro
+   *    della barra sparisce, restano solo le icone»*. Il pannello ha un campo
+   *    con `autoFocus`, quindi apre la tastiera, quindi faceva smontare e
+   *    rimontare il vetro; le icone stanno in un'altra vista e non ne
+   *    risentivano. Un materiale di sistema che non si ridisegna dopo essere
+   *    stato ricreato e' un classico su iOS, e qui la ricreazione avveniva a
+   *    ogni apertura di tastiera.
+   *
+   * Ora scende e torna. Il vetro **resta montato tutto il tempo**, quindi non
+   * c'e' niente da ricreare. `pointerEvents` si spegne mentre e' fuori, o si
+   * intercetterebbero tocchi destinati alla tastiera.
+   *
+   * ⚠️ **Non e' una diagnosi confermata**, ed e' scritto perche' si sappia: la
+   * causa vera non e' stata isolata su un dispositivo. Per questo insieme a
+   * questa correzione c'e' anche il **piano di riserva** sotto — cosi' se il
+   * sospetto fosse sbagliato, il riquadro non puo' comunque sparire.
+   */
+  const via = useSharedValue(0);
+  React.useEffect(() => {
+    via.value = aperta
+      ? withTiming(1, { duration: durata.uscita })
+      : withSpring(0, molla.scivolo);
+  }, [aperta, via]);
+  const stileBarra = useAnimatedStyle(() => ({
+    opacity: 1 - via.value,
+    transform: [{ translateY: via.value * (ALTEZZA + insets.bottom + 24) }],
+  }));
 
   /** L'ingombro della lente: identico sulle due strade. */
   const posaLente = {
@@ -243,24 +282,49 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
   const Lastra = GlassView;
 
   return (
-    <View
+    <Riani.View
       // `box-none` e non `none`: i tocchi devono passare **attorno** alla
       // pillola (il contenuto sotto resta raggiungibile) ma non attraverso.
-      pointerEvents="box-none"
-      style={{
-        position: 'absolute',
-        left: LATO,
-        right: LATO,
-        bottom: Math.max(insets.bottom, 10) + 6,
-        shadowColor: vetro.ombra,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 1,
-        shadowRadius: 24,
-        elevation: 12,
-      }}
+      // A tastiera aperta si spegne del tutto: e' fuori campo, e cio' che e'
+      // fuori campo non deve rubare tocchi.
+      pointerEvents={aperta ? 'none' : 'box-none'}
+      style={[
+        {
+          position: 'absolute',
+          left: LATO,
+          right: LATO,
+          bottom: Math.max(insets.bottom, 10) + 6,
+          shadowColor: vetro.ombra,
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 1,
+          shadowRadius: 24,
+          elevation: 12,
+        },
+        stileBarra,
+      ]}
     >
       <GestureDetector gesture={trascina}>
       <View style={{ width: '100%', height: ALTEZZA }}>
+        {/* ⚠️ **Il piano di riserva: il riquadro non puo' sparire.**
+            Sotto il vetro c'e' sempre una velatura chiarissima e un anello di
+            luce. Quando il materiale di sistema viene disegnato — cioe' quasi
+            sempre — questi due non si distinguono: 0,16 di bianco sotto un
+            vetro e' invisibile. Quando **non** viene disegnato, sono tutto
+            quello che resta, e la barra passa da «sparita» a «un po' meno
+            bella». E' la stessa regola di `components/ui/comparsa.tsx`: il
+            modo in cui una decorazione fallisce va **deciso**, non scoperto.
+            Qui vale il doppio, perche' il vetro e' una vista **nativa** e non
+            risponde a noi. */}
+        <View
+          pointerEvents="none"
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            borderRadius: ALTEZZA / 2,
+            backgroundColor: 'rgba(255,255,255,0.16)',
+            borderWidth: StyleSheet.hairlineWidth * 2,
+            borderColor: 'rgba(255,255,255,0.45)',
+          }}
+        />
         {Scatola && Lastra ? (
           // --- iOS 26: pillola e lente ------------------------------------
           // ⚠️ `spacing` era 30, ed e' probabilmente cio' che sull'iPhone
@@ -476,7 +540,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
         </View>
       </View>
       </GestureDetector>
-    </View>
+    </Riani.View>
   );
 }
 

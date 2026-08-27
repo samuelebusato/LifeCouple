@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Evento } from '@/lib/eventi';
+import type { Evento, TipoEvento } from '@/lib/eventi';
 
 export type Commento = {
   id: string;
@@ -134,6 +134,10 @@ export function useEventoDettaglio(id: string | undefined) {
         fine: string | null;
         luogo_id: string | null;
         elemento_id: string | null;
+        /** Il tag dell'evento: impegno, romantico, vacanza. */
+        tipo: TipoEvento;
+        /** Segue il tipo: una vacanza e' sempre a giornate intere. */
+        tutto_il_giorno: boolean;
       }>
     ): Promise<string | null> => {
       if (!evento) return null;

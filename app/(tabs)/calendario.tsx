@@ -13,7 +13,13 @@ import {
   Animated,
   Dimensions,
   PanResponder,
+  useWindowDimensions,
 } from 'react-native';
+import Riani, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CalendarPlus, ImagePlus, Plus, X } from 'lucide-react-native';
@@ -31,10 +37,12 @@ import { Foglio } from '@/components/foglio';
 import { AgendaGiorno } from '@/components/agenda-giorno';
 import { CercaLuogo } from '@/components/cerca-luogo';
 import { BottoneVetro, BottonePieno, TondoVetro } from '@/components/ui/vetro';
+import { Premibile } from '@/components/ui/premibile';
 import { Fondo } from '@/components/schermata';
 import { SPAZIO_BARRA, SOPRA_BARRA } from '@/components/barra-volante';
 import { useTastiera } from '@/lib/tastiera';
 import { useTema, SU_TESTATA, SU_TESTATA_TENUE } from '@/lib/tema';
+import { molla } from '@/lib/movimento';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
@@ -64,7 +72,7 @@ import {
 } from '@/lib/date';
 import { lingua, t } from '@/lib/i18n';
 
-const VISTE: Vista[] = ['giorni', 'mese', 'anno', 'eventi'];
+const VISTE: Vista[] = ['giorni', 'mese', 'anno', 'diario'];
 
 /** "oggi", "domani", "fra 4 giorni", "2 giorni fa": il conto che serve davvero. */
 function contatoreGiorni(e: Evento) {
@@ -82,6 +90,9 @@ const VELOCITA = 0.4;
  *  la FlatList monta solo cio' che si vede, quindi 730 celle costano quanto 10. */
 const RAGGIO_STRISCIA = 365;
 const LARGHEZZA_CELLA = LARGHEZZA / 7;
+/** Altezza di una voce del selettore delle viste — e della pillola che ci scorre
+ *  sotto. Un numero solo per tutti e due: disallinearli e' impossibile. */
+const ALTEZZA_VOCE = 30;
 
 /**
  * Una cella della **striscia dei giorni**, quella che vive dentro la testata
@@ -105,8 +116,33 @@ function CellaStriscia({
   eventi: Evento[];
   onPress: () => void;
 }) {
+  /**
+   * Il tondo bianco della selezione **si posa** invece di accendersi.
+   *
+   * ⚠️ E' un disco a parte dietro il numero, non il fondo della vista che lo
+   * contiene: un colore di fondo che va da `transparent` a bianco passa per il
+   * grigio, mentre un disco bianco che cresce da 0,6 a 1 con l'opacita' resta
+   * bianco per tutto il tragitto. La differenza si vede, ed e' sporca.
+   *
+   * Costa poco anche a 730 celle: la `FlatList` ne monta una decina per volta,
+   * quindi i valori animati vivi sono una decina.
+   */
+  const scelto = useSharedValue(selezionato ? 1 : 0);
+  React.useEffect(() => {
+    scelto.value = withSpring(selezionato ? 1 : 0, molla.scivolo);
+  }, [selezionato, scelto]);
+  const stileDisco = useAnimatedStyle(() => ({
+    opacity: scelto.value,
+    transform: [{ scale: 0.6 + 0.4 * scelto.value }],
+  }));
+
   return (
-    <Pressable onPress={onPress} style={{ alignItems: 'center', paddingVertical: 2 }}>
+    <Premibile
+      onPress={onPress}
+      scala={0.88}
+      aptico="scelta"
+      style={{ alignItems: 'center', paddingVertical: 2 }}
+    >
       <Text
         style={{
           fontSize: 10,
@@ -126,11 +162,25 @@ function CellaStriscia({
           borderRadius: 17,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: selezionato ? '#ffffff' : 'transparent',
           borderWidth: !selezionato && oggi ? 1.5 : 0,
           borderColor: SU_TESTATA,
         }}
       >
+        <Riani.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: 0,
+              borderRadius: 17,
+              backgroundColor: '#ffffff',
+            },
+            stileDisco,
+          ]}
+        />
         <Text
           style={{
             fontSize: 15,
@@ -156,7 +206,7 @@ function CellaStriscia({
           />
         ))}
       </View>
-    </Pressable>
+    </Premibile>
   );
 }
 
@@ -176,6 +226,31 @@ function SelettoreVista({
   vista: Vista;
   onVista: (v: Vista) => void;
 }) {
+  /**
+   * La pillola **scivola** da una vista all'altra invece di riaccendersi
+   * dall'altra parte. E' la stessa idea della lente nella barra in basso e
+   * dell'interruttore sulla mappa: un fondo che si spegne qui e si accende li'
+   * sono due eventi, e sta a chi guarda dedurre che siano lo stesso oggetto;
+   * uno che scorre **e'** lo stesso oggetto.
+   *
+   * ⚠️ **La larghezza si calcola, non si misura.** `useWindowDimensions` e' un
+   * numero vero e vivo; `onLayout` in questo progetto ha gia' restituito, sul
+   * telefono, numeri che non erano quelli veri — e' la storia di
+   * `components/barra-volante.tsx`. La geometria qui e' nota per intero:
+   * margini 14 per lato, imbottitura 4, quattro voci uguali.
+   */
+  const { width: schermo } = useWindowDimensions();
+  const voce = Math.max(0, (schermo - 14 * 2 - 4 * 2) / VISTE.length);
+  const scelta = VISTE.indexOf(vista);
+
+  const posizione = useSharedValue(scelta);
+  React.useEffect(() => {
+    posizione.value = withSpring(scelta, molla.scivolo);
+  }, [scelta, posizione]);
+  const stilePillola = useAnimatedStyle(() => ({
+    transform: [{ translateX: posizione.value * voce }],
+  }));
+
   return (
     <View
       style={{
@@ -187,28 +262,41 @@ function SelettoreVista({
         backgroundColor: 'rgba(255,255,255,0.30)',
       }}
     >
+      <Riani.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            left: 4,
+            top: 4,
+            width: voce,
+            height: ALTEZZA_VOCE,
+            borderRadius: 13,
+            backgroundColor: 'rgba(255,255,255,0.92)',
+          },
+          stilePillola,
+        ]}
+      />
       {VISTE.map((v) => (
-        <Pressable
+        <Premibile
           key={v}
           onPress={() => onVista(v)}
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            paddingVertical: 7,
-            borderRadius: 13,
-            backgroundColor: vista === v ? 'rgba(255,255,255,0.92)' : 'transparent',
-          }}
+          scala={0.93}
+          aptico="scelta"
+          style={{ width: voce }}
         >
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: vista === v ? '700' : '500',
-              color: vista === v ? '#c2157f' : SU_TESTATA_TENUE,
-            }}
-          >
-            {t.calendario.viste[v]}
-          </Text>
-        </Pressable>
+          <View style={{ height: ALTEZZA_VOCE, alignItems: 'center', justifyContent: 'center' }}>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: vista === v ? '700' : '500',
+                color: vista === v ? '#c2157f' : SU_TESTATA_TENUE,
+              }}
+            >
+              {t.calendario.viste[v]}
+            </Text>
+          </View>
+        </Premibile>
       ))}
     </View>
   );
@@ -273,7 +361,7 @@ export default function Calendario() {
   const oggi = inizioGiorno(new Date());
   const delGiorno = React.useMemo(() => eventiDelGiorno(eventi, giorno), [eventi, giorno]);
 
-  // Per la vista dei soli eventi: cio' che deve venire in ordine di arrivo, e
+  // Per il diario: cio' che deve venire in ordine di arrivo, e
   // cio' che e' passato dal piu' recente. Una vacanza si considera "in arrivo"
   // finche' non e' finita, non finche' non e' cominciata.
   const inArrivo = React.useMemo(
@@ -320,13 +408,25 @@ export default function Calendario() {
   // nulla, e la striscia restava ferma a 60 giorni fa — "i giorni nascosti".
   // La FlatList con getItemLayout sa le posizioni SENZA misurare: lo scroll e'
   // deterministico anche al primo fotogramma.
+  /**
+   * ⚠️ **Il primo posizionamento e' secco, i successivi scorrono.**
+   *
+   * B-06 imponeva `animated: false`: all'apertura la striscia deve **essere
+   * gia'** sul giorno giusto, e un'animazione al primo fotogramma o non parte o
+   * si vede partire da 60 giorni fa. Ma da quando il giorno cambia anche col
+   * dito (un giorno per trascinamento), lo stesso salto secco fa **sobbalzare**
+   * la striscia a ogni gesto: il contenuto sotto scivola dolcemente e la
+   * striscia sopra teletrasporta. Dopo la prima volta si scorre.
+   */
+  const giaPosata = React.useRef(false);
   React.useEffect(() => {
     if (vista !== 'giorni') return;
     striscia.current?.scrollToIndex({
       index: Math.max(0, indiceGiorno),
       viewOffset: 3 * LARGHEZZA_CELLA,
-      animated: false,
+      animated: giaPosata.current,
     });
+    giaPosata.current = true;
   }, [vista, indiceGiorno]);
   const apertoDaParametro = React.useRef<string | null>(null);
   React.useEffect(() => {
@@ -341,7 +441,7 @@ export default function Calendario() {
   // Le anteprime servono solo alla vista "eventi", ed e' li' che si chiedono:
   // altrove sarebbero richieste di rete per immagini che nessuno guarda.
   const [anteprime, setAnteprime] = React.useState<Record<string, string>>({});
-  const idsElenco = vista === 'eventi' ? eventi.map((e) => e.id).join(',') : '';
+  const idsElenco = vista === 'diario' ? eventi.map((e) => e.id).join(',') : '';
   React.useEffect(() => {
     if (!idsElenco) return;
     anteprimePerEvento(idsElenco.split(',')).then(setAnteprime);
@@ -363,38 +463,89 @@ export default function Calendario() {
    * l'animazione non completasse. **Lo stato non deve mai dipendere dal
    * completamento di un'animazione**, che puo' essere interrotta o disattivata.
    */
-  const vai = React.useCallback(
-    (verso: 1 | -1) => {
-      setGiorno((g) => scorri(g, vista, verso));
-      spostamento.setValue(verso * LARGHEZZA * 0.35);
+  /**
+   * Il verso dell'ultimo spostamento: serve alla **testata**, perche' il titolo
+   * entri dallo stesso lato da cui entra il contenuto. Zero per i salti che una
+   * direzione non ce l'hanno — "torna a oggi", cambio di vista.
+   */
+  const [verso, setVerso] = React.useState(0);
+
+  /** Il contenuto nuovo entra dal lato giusto. Comune ai due modi di spostarsi. */
+  const scivola = React.useCallback(
+    (v: 1 | -1) => {
+      setVerso(v);
+      spostamento.setValue(v * LARGHEZZA * 0.35);
       Animated.timing(spostamento, {
         toValue: 0,
         duration: 170,
         useNativeDriver: true,
       }).start();
     },
-    [spostamento, vista]
+    [spostamento]
   );
 
-  // Nella settimana si scorre a mano lungo la striscia dei giorni: il gesto
-  // orizzontale appartiene a lei, non al cambio di periodo.
+  const vai = React.useCallback(
+    (verso: 1 | -1) => {
+      setGiorno((g) => scorri(g, vista, verso));
+      scivola(verso);
+    },
+    [scivola, vista]
+  );
+
+  /**
+   * Un **giorno** avanti o indietro — richiesta dell'utente del 2026-08-27:
+   * *«nella sezione giorni, scorrendo a destra/sinistra si passa al giorno
+   * successivo/precedente»*.
+   *
+   * ⚠️ Non e' `vai`, e la differenza e' voluta: `scorri(d, 'giorni', v)` salta
+   * **una settimana**, che e' cio' che fanno le frecce in testata e cio' che
+   * dice il titolo (l'intervallo della settimana). Ora le due cose si dividono
+   * il lavoro secondo la regola che questa schermata segue gia' per la
+   * striscia: **le frecce saltano la settimana, il dito va dove gli pare.**
+   */
+  const vaiGiorno = React.useCallback(
+    (v: 1 | -1) => {
+      setGiorno((g) => aggiungiGiorni(g, v));
+      scivola(v);
+    },
+    [scivola]
+  );
+
+  /**
+   * Il trascinamento orizzontale del **corpo** della schermata.
+   *
+   * ⚠️ Prima era spento nella vista agenda (`vista !== 'giorni'`), col
+   * ragionamento che il gesto orizzontale appartenesse alla striscia dei
+   * giorni. Il ragionamento era sbagliato di un piano: la striscia sta nella
+   * **testata**, questo gesto sta sul **corpo**, e sono due aree che non si
+   * toccano. Il risultato era che nell'unica vista dove scorrere di lato ha il
+   * significato piu' ovvio — un giorno avanti — non succedeva niente.
+   *
+   * Il passo cambia con la vista: **un giorno** nell'agenda, il periodo intero
+   * altrove.
+   *
+   * La soglia sul rapporto `dx/dy` e' cio' che permette la convivenza con lo
+   * scorrimento verticale sotto (l'agenda e' una lista che si scorre): finche'
+   * il dito va piu' in giu' che di lato, il gesto resta della lista.
+   */
   const pan = React.useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, g) =>
-          vista !== 'giorni' &&
-          Math.abs(g.dx) > 12 &&
-          Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+          Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
         onPanResponderMove: (_, g) => spostamento.setValue(g.dx),
         onPanResponderRelease: (_, g) => {
-          if (g.dx < -SOGLIA || g.vx < -VELOCITA) vai(1);
-          else if (g.dx > SOGLIA || g.vx > VELOCITA) vai(-1);
+          const avanti = g.dx < -SOGLIA || g.vx < -VELOCITA;
+          const indietro = g.dx > SOGLIA || g.vx > VELOCITA;
+          const passo = vista === 'giorni' ? vaiGiorno : vai;
+          if (avanti) passo(1);
+          else if (indietro) passo(-1);
           else Animated.spring(spostamento, { toValue: 0, useNativeDriver: true }).start();
         },
         onPanResponderTerminate: () =>
           Animated.spring(spostamento, { toValue: 0, useNativeDriver: true }).start(),
       }),
-    [spostamento, vai, vista]
+    [spostamento, vai, vaiGiorno, vista]
   );
 
   /** Primo tocco sceglie il giorno, secondo tocco lo apre: come sui calendari veri. */
@@ -499,13 +650,22 @@ export default function Calendario() {
       {/* --- la testata sfumata: comandi sopra, calendario sotto ----------- */}
       <TestataCalendario
         titolo={
-          vista === 'eventi' ? t.calendario.tuttiGliEventi : titoloPeriodo(giorno, vista, lingua)
+          vista === 'diario' ? t.calendario.tuttiGliEventi : titoloPeriodo(giorno, vista, lingua)
         }
-        // Il nome del mese si maiuscola, la frase "tutti gli eventi" no.
-        capitalizza={vista !== 'eventi'}
-        onIndietro={vista === 'eventi' ? undefined : () => vai(-1)}
-        onAvanti={vista === 'eventi' ? undefined : () => vai(1)}
-        onTitolo={vista === 'eventi' ? undefined : () => setGiorno(oggi)}
+        // Il nome del mese si maiuscola, "il vostro diario" no.
+        capitalizza={vista !== 'diario'}
+        verso={verso}
+        onIndietro={vista === 'diario' ? undefined : () => vai(-1)}
+        onAvanti={vista === 'diario' ? undefined : () => vai(1)}
+        onTitolo={
+          vista === 'diario'
+            ? undefined
+            : () => {
+                // Un salto, non uno scorrimento: il titolo sfuma sul posto.
+                setVerso(0);
+                setGiorno(oggi);
+              }
+        }
         sinistra={
           <TondoTestata onPress={() => router.push('/importa')} accessibilityLabel={t.importa.apri}>
             <CalendarPlus color={SU_TESTATA} size={17} />
@@ -518,7 +678,7 @@ export default function Calendario() {
           <TondoTestata
             onPress={() => {
               setGiorno(oggi);
-              if (vista === 'anno' || vista === 'eventi') setVista('mese');
+              if (vista === 'anno' || vista === 'diario') setVista('mese');
             }}
             accessibilityLabel={t.calendario.conto.oggi}
           >
@@ -528,7 +688,13 @@ export default function Calendario() {
           </TondoTestata>
         }
       >
-        <SelettoreVista vista={vista} onVista={setVista} />
+        <SelettoreVista
+          vista={vista}
+          onVista={(v) => {
+            setVerso(0);
+            setVista(v);
+          }}
+        />
 
         {vista === 'mese' && <InizialiGiorni etichette={etichette} />}
 
@@ -676,11 +842,19 @@ export default function Calendario() {
             </ScrollView>
           )}
 
-          {vista === 'eventi' && (
-            /* Niente giorni, solo le cose — quelle che devono venire in ordine
-               di arrivo, quelle passate dalla piu' recente. Ognuna dice
-               **quanto manca** o **quanto e' passata**, che e' la domanda vera
-               quando si guarda un elenco cosi'. */
+          {vista === 'diario' && (
+            /* Il **diario**: niente giorni, solo le cose — quelle che devono
+               venire in ordine di arrivo, quelle passate dalla piu' recente.
+               Ognuna dice **quanto manca** o **quanto e' passata**, che e' la
+               domanda vera quando si guarda un elenco cosi'.
+
+               ⚠️ Si chiamava "Eventi" fino al 2026-08-27. Il nome nuovo non e'
+               solo un'etichetta piu' bella: "eventi" descriveva il **contenuto**
+               della lista, che e' esattamente cio' che le altre tre viste
+               mostrano — e quindi non distingueva niente. "Diario" descrive il
+               **modo di guardarli**: tutti in fila, senza griglia, dal piu'
+               vicino al piu' lontano. Ed e' la parola che l'app usa di se'
+               stessa fin dalla schermata di benvenuto. */
             <ScrollView
               contentContainerClassName="gap-3 px-5 pt-3"
               contentContainerStyle={{ paddingBottom: SPAZIO_BARRA }}
@@ -919,6 +1093,7 @@ export default function Calendario() {
                     resta in `genere` e serve all'icona, non a decidere chi
                     merita di stare in lista. */}
                 <CercaLuogo
+                  dentroUnFoglio
                   onScegli={async (trovato) => {
                     setErroreForm(null);
 
