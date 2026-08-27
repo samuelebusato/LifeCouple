@@ -6,6 +6,18 @@ Metodo e struttura obbligatoria: [`Rule/regole-sviluppo-sicuro.md`](../../../Rul
 
 ---
 
+## 0-bis. Due righe cambiate rispetto al 2026-08-12, e perché
+
+⚠️ **D-05 è stata modificata il 2026-08-27, non aggirata.** La lettera diceva *«la posizione non viene mai letta»*; ora la mappa **si apre dove sei**, quindi la legge — una volta sola, all'apertura della schermata, e **solo se il permesso era già stato concesso** per un'altra funzione (non lo chiede apposta: un'app che chiede la posizione appena apri una schermata insegna a negare il permesso).
+
+La **sostanza** di D-05 resta intatta, ed è quella che il threat model deve proteggere: quella posizione **non viene scritta da nessuna parte, non viene mandata a nessuno, non esce dal telefono** e muore con la schermata. Serve solo a decidere dove puntare la telecamera della mappa. La lettera diventa quindi: *«mai **registrata** o **condivisa**»*.
+
+⚠️ **Il tocco lungo sulla mappa non esiste più** (D-52, 2026-08-27). Non era una minaccia — era un modo in più di inserire un luogo, ed era volontario come gli altri — ma la riga «Mappa» qui sotto elencava i modi di inserimento, e ora sono due invece di tre.
+
+> Perché stanno scritte: una regola che si piega senza che nessuno lo scriva **smette di essere una regola alla seconda volta**. Il threat model è il posto dove la piega si vede.
+
+---
+
 ## 1. Classificazione dei dati (passo 2 del framework)
 
 | Dato | Sensibilità | Perché | Protezione richiesta |
@@ -43,7 +55,7 @@ Metodo e struttura obbligatoria: [`Rule/regole-sviluppo-sicuro.md`](../../../Rul
 | Account | **S** | Il partner accede all'account dell'altro conoscendone la password, o dal telefono lasciato sbloccato | Controllo totale sui contenuti dell'altro | Fuori dalla portata tecnica dell'app. **Gap dichiarato**: si mitiga solo parzialmente con notifica di nuovo accesso e blocco biometrico locale · **da fare** |
 | Qualunque contenuto | **T** | Un partner cancella foto, recensioni, luoghi o elementi caricati dall'altro, per ritorsione | Perdita irreversibile di dati altrui | **Solo l'autore modifica o cancella — per ogni tipo di contenuto** (D-21). La ritorsione è **strutturalmente impossibile**: si può svuotare solo ciò che si è caricato · **da fare** |
 | Contenuti condivisi | **R** | *"Non sono stato io a cancellarle"* | Nessun modo di stabilire cosa è successo | Registro append-only delle azioni distruttive, con autore e data · **da fare** |
-| Mappa | **I** | La cronologia dei luoghi viene usata per ricostruire dove l'altro è stato e quando | **Sorveglianza del partner** — le app di coppia sono un vettore documentato di *intimate partner surveillance* | **D-05: nessuna posizione in tempo reale né automatica.** Ogni luogo è inserito volontariamente e a posteriori dal suo autore · **decisa, da implementare** |
+| Mappa | **I** | La cronologia dei luoghi viene usata per ricostruire dove l'altro è stato e quando | **Sorveglianza del partner** — le app di coppia sono un vettore documentato di *intimate partner surveillance* | **D-05: nessuna posizione registrata né condivisa.** Ogni luogo entra con un gesto esplicito del suo autore: il «+» che segna il punto in cui sei, o la ricerca per nome. Niente posizione in background, niente cronologia automatica, e **nessuno dei due può sapere dove si trova l'altro adesso** · **implementata** (`app/(tabs)/mappa.tsx`, `lib/luoghi.ts`) |
 | Giochi (invio sigillato) | **I** | Il partner interroga direttamente l'API col **proprio token valido** e legge la risposta dell'altro **prima** della rivelazione | Il gioco è rotto in silenzio, e chi bara non lascia traccia. Non basta nasconderla nell'interfaccia | Le risposte stanno in una tabella che l'altro **non può leggere in nessun caso**; il confronto avviene in una **funzione Postgres** che restituisce il risultato solo quando entrambi hanno inviato (D-12) · **da fare** |
 | Obbligo o verità | **E** | La meccanica *"chi passa di più perde"* diventa uno strumento per insistere su un contenuto che l'altro non vuole affrontare | L'app si schiera dalla parte della pressione, proprio sul confine che dovrebbe presidiare | La mitigazione è **sul contenuto**, non sulla meccanica: banco filtrato per D-08, più nessun obbligo con atti fisici e nessuna verità su relazioni precedenti (D-13) · **da fare** |
 | Coppia sciolta | **E** | Dopo la rottura l'ex-partner continua a vedere foto e luoghi dell'altro | Il caso peggiore dell'intero sistema: accesso permanente a materiale intimo di chi non lo vuole più concedere | `uscito_il` su `membro_coppia` e policy RLS che leggono l'**appartenenza attiva**, non l'appartenenza storica (D-04) · **da fare** |

@@ -81,6 +81,28 @@ Scelto sotto due vincoli espliciti dell'utente: **scrivere meno codice possibile
 
 **Dove va speso il tempo risparmiato** (decisione di progetto, non consiglio generico): componenti standard presi dalla libreria **senza toccarli** — form, bottoni, input, sheet — perché sono il 70% delle schermate e nessuno li guarda; tutto il tempo risparmiato su **tre schermate**: mappa dei ricordi, griglia foto, apertura. Più due cose che costano quasi nulla e cambiano la percezione più della libreria scelta: **token definiti prima** (una scala tipografica, una di spazio, due accenti) e un **font non di sistema** via `@expo-google-fonts`.
 
+
+### 3-ter. Cosa è cambiato costruendolo davvero (verificato il 2026-08-27)
+
+La tabella qui sopra è **la decisione del 2026-08-12**, presa prima di scrivere codice, e resta scritta com'era. Questa sezione dice **com'è andata**: tre librerie previste non sono mai entrate, e una quarta è stata usata in modo diverso da come era stata immaginata. Sono divergenze fra piano e realtà — dichiararle è obbligatorio (`regole-sviluppo-sicuro.md`, principio 7: nessun gap silenzioso), perché una tabella di stack che elenca librerie assenti fa perdere mezz'ora a chiunque la legga per capire dove sono.
+
+| Previsto | Realtà al 2026-08-27 | Perché |
+|---|---|---|
+| **Moti** (API dichiarativa sopra Reanimated) | **Mai installato.** Si usa **Reanimated 4 direttamente**, più uno strato di movimento nostro | Moti risolve *«scrivere un'animazione in una prop»*. Il problema vero, emerso costruendo, era un altro: **far muovere tutta l'app allo stesso modo**. Una prop dichiarativa non impedisce a due schermate di usare due molle diverse; un file di token sì. Vedi D-53 |
+| **TanStack Query** | **Mai installato.** I dati stanno in hook nostri (`lib/eventi.ts`, `lib/luoghi.ts`, `lib/preferiti.ts`, `lib/evento-dettaglio.ts`) | Non è stata una scelta: è successo. Ogni hook è nato per una schermata, e quando si è visto che facevano tutti la stessa cosa, funzionavano già. **È un debito, non un merito** — vedi §7.5 |
+| **FlashList** | **Mai installata.** Si usa `FlatList` | Non è mai servita. Le liste vere hanno le decine di elementi, non le migliaia; l'unica lunga — la striscia dei giorni, 730 celle — regge benissimo con `getItemLayout`, che le dà le posizioni **senza misurare** (ed è ciò che ha chiuso B-06) |
+| **`supabase gen types typescript`** | Usato, ma `lib/database.types.ts` ha **blocchi scritti a mano** per le migrazioni 0011→0016 | Debito noto e primo punto del PUNTO DI RIPRESA in `History.md`. Ogni migrazione nuova va aggiunta a mano finché non si rigenera |
+
+**Lo strato di movimento** che ha preso il posto di Moti (D-53, 2026-08-27):
+
+| File | Responsabilità |
+|---|---|
+| `lib/movimento.ts` | I **token**: tre molle (`tocco` rigida, `entrata` morbida, `scivolo` in mezzo), le durate per ciò che sfuma, la cascata col suo tetto, il riscontro tattile |
+| `components/ui/premibile.tsx` | Il cedimento sotto il dito, uguale per ogni comando dell'app |
+| `components/ui/comparsa.tsx` | Entrata **e uscita**, con smontaggio ritardato — la metà che manca sempre |
+
+> **Perché sta in architettura e non solo in `History.md`**: è la stessa scelta di `lib/tema.ts` per i colori, e ha la stessa conseguenza strutturale. Un componente nuovo che si anima da sé è libero di divergere; uno che legge da qui non può. La regola operativa è: **nessun `withSpring` con numeri scritti sul posto** — se serve una molla nuova, si aggiunge a `lib/movimento.ts` con la sua ragione.
+
 ---
 
 ## 4. Il modello dati, e perché la sua forma è una decisione di sicurezza
@@ -277,3 +299,5 @@ L'utente ha deciso di implementare **la creatura per ultima**. Sequenza che ne d
 2. **Portabilità**: auth, dati e file su un solo fornitore. Migrare significa riscrivere l'autorizzazione, non solo spostare righe.
 3. **Nessuna moderazione dei contenuti.** Un'app che ospita foto private caricate da utenti terzi ha, prima o poi, un problema di contenuti. Oggi non esiste alcun meccanismo: è un gap **dichiarato**, non risolto.
 4. **Il tetto di spazio foto non è fissato** (`—`). Finché non lo è, il costo massimo del progetto è ignoto — cioè V2 non è verificabile.
+5. **Lo stato del server è in hook scritti a mano**, non in una libreria di data-fetching (§3-ter). Ogni hook rifà a modo suo caricamento, errore, ricarica e invalidazione: da qui vengono B-09, B-10 e B-13 — tre difetti con la **stessa forma**, *due copie dello stesso stato di cui una non viene aggiornata*. La regola che li tiene a bada — «se una schermata legge dati che un'altra può scrivere, deve rileggere al focus» — è **disciplina, non struttura**: vale finché qualcuno se la ricorda. È il debito con la probabilità più alta di produrre il prossimo difetto.
+6. **La sezione «Commenti» è tornata dopo essere stata tolta nella stessa giornata** (D-56 → D-57). Non è un debito di codice ma di **nomi**: si chiamava «Parole», e un nome che non dice cosa fa una cosa fa prendere decisioni sbagliate su di essa. Vale come promemoria per ogni etichetta futura.

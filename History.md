@@ -28,6 +28,26 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-08-27 (seconda sessione) — Via il tocco lungo, e l'app impara a muoversi
+
+**Sessione**: [`workspace/sessione-2026-08-27-movimento.md`](../../workspace/sessione-2026-08-27-movimento.md).
+
+**Chiesto dall'utente**: togliere dalla mappa la funzione «tieni premuto per aggiungere un posto» e la scritta che la spiegava; e migliorare la UX con delle animazioni, «effetti spostamento per esempio».
+
+**Fatto, primo giro**: **D-52** (via il tocco lungo) e **D-53** (uno strato di movimento condiviso, invece di animazioni sparse).
+
+**Fatto, secondo giro** — dopo che l'utente ha guardato l'app sull'iPhone: **D-54** (il calendario si muove, e nella vista agenda si scorre di un giorno), **D-55** (la base sotto il vetro: una prop, e la regola che chiude il «sembra in ombra»), **D-56** (la pagina evento si sfoltisce, e il tag si cambia dall'ingranaggio), più **B-15** — il riquadro della barra che spariva, mitigato senza aver isolato la causa.
+
+**Fatto, terzo giro**: **D-57** — la vista «Eventi» diventa **«Diario»** (rinominata anche nel tipo `Vista`, non solo nell'etichetta), e i **commenti tornano** sugli eventi col loro nome vero. Nessuna migrazione: la tabella era stata lasciata intatta apposta in D-56. Tre file nuovi: [`lib/movimento.ts`](lib/movimento.ts) — i token di molle, durate e cascate, che stanno a `tema.ts` come il movimento sta al colore — [`components/ui/premibile.tsx`](components/ui/premibile.tsx) e [`components/ui/comparsa.tsx`](components/ui/comparsa.tsx).
+
+**Dove si vede**: ogni comando di vetro dell'app ora **cede sotto il dito** e vibra sull'azione (prima non davano riscontro di nessun tipo) · il bottone pieno **si accende** in magenta invece di scattarci · sulla mappa la pillola Mappa/Elenco **scivola**, il «+» e l'anteprima **entrano ed escono** invece di apparire e sparire, e l'anteprima **guizza** quando cambia contenuto · home e liste entrano **a onda**.
+
+**Verificato**: `tsc` pulito, `eslint` senza errori, bundle web di **3221 moduli** senza errori, console del browser pulita, e — contro la realtà, non contro «compila» — il `transform` di Reanimated **davvero applicato** al nodo del bottone (`matrix(1,0,0,1,0,0)` a riposo, non `none`) con geometria **identica** a prima dell'incapsulamento (344×58 a x=32, invariata). Questa era la lezione di B-08: uno stile che si dà per applicato e non lo è.
+
+⚠️ **Non verificato: le animazioni in movimento.** Nella preview il pannello del browser non componeva fotogrammi, quindi `requestAnimationFrame` era fermo e sul web Reanimated non poteva girare: 0 fotogrammi campionati. Sul telefono l'animazione gira sul thread della UI, che è un'altra implementazione. **Serve il giro sull'iPhone** — vedi il PUNTO DI RIPRESA.
+
+---
+
 ### 2026-08-27 — Il giro di design sui riferimenti, e la modalità unica
 
 **Sessione**: [`workspace/sessione-2026-08-27.md`](../../workspace/sessione-2026-08-27.md).
@@ -98,6 +118,126 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-57 — «Eventi» diventa «Diario», e i commenti tornano col loro nome
+**Chiesto dall'utente il 2026-08-27**, poche ore dopo D-56.
+
+#### La vista si chiama Diario
+
+*«Invece di "eventi" chiama la parte "diario"».* Il nome nuovo non è solo più bello: **«eventi» descriveva il contenuto della lista**, che è esattamente ciò che mostrano anche le altre tre viste — e quindi non distingueva niente. **«Diario» descrive il modo di guardarli**: tutti in fila, senza griglia, dal più vicino al più lontano. Ed è la parola che l'app usa di sé stessa fin dalla schermata di benvenuto («il vostro diario condiviso»), quindi il titolo della vista è ora *«Il vostro diario»* invece di *«Tutti gli eventi»*.
+
+⚠️ **Rinominato anche nel codice**, non solo l'etichetta: `Vista` è `'giorni' | 'mese' | 'anno' | 'diario'`. Una vista che l'utente chiama "diario" e il codice chiama "eventi" costringe a tradurre a ogni lettura, ed è il tipo di divergenza che dopo tre mesi nessuno ricorda più. Essendo un'unione di stringhe, **il compilatore ha trovato da solo tutti i punti da cambiare** — che è la ragione per cui una rinomina del genere costa dieci minuti invece di essere un rischio.
+
+#### I commenti tornano
+
+*«Agli eventi voglio che ci sia la possibilità di lasciare dei commenti da parte di entrambi i partner».*
+
+🔑 **È la stessa sezione che poche ore prima, in D-56, era stata tolta perché si chiamava «Parole».** Vale la pena scriverlo per intero, perché la lezione non è sull'indecisione dell'utente: **era il nome a essere sbagliato.** "Parole" non diceva che quello fosse il posto dove scriversi qualcosa, quindi toglierla è sembrata una potatura di una sezione decorativa invece che la rimozione dei commenti. Un nome che non dice cosa fa una cosa non è un problema estetico: **fa prendere decisioni sbagliate su di essa.** Ora si chiama «Commenti».
+
+**Ripristino a costo quasi zero**, ed è il dividendo della scelta fatta in D-56: la tabella `commento`, le sue policy e le funzioni `commenta`/`cancellaCommento` erano state lasciate dov'erano. Nessuna migrazione, nessun dato perso, e i commenti eventualmente già scritti sono ancora lì. *Se avessi cancellato anche il resto, questa richiesta sarebbe costata una migrazione e i vecchi commenti sarebbero spariti per sempre.*
+
+**«Da parte di entrambi i partner» era già vero, e non per gentilezza di questa schermata: per il database.** La policy `commento_insert` della migrazione `0008` chiede `e_membro_attivo(coppia_id)` — cioè *un* membro della coppia, non l'autore dell'evento — e `autore_id = auth.uid()`, che rende impossibile scrivere a nome dell'altro. È una differenza voluta e vale la pena enunciarla:
+
+> **L'evento è di chi l'ha scritto, i commenti sono di tutti e due.** Modificare o eliminare l'evento resta dell'autore (policy di `0001`); commentarlo no. Cancellare un commento, invece, torna a essere solo i propri (`commento_delete`), e il cestino compare di conseguenza — non per nascondere un errore, ma per non offrire un gesto che il database rifiuterebbe.
+
+⚠️ **Il campo si svuota solo se l'invio è riuscito.** Svuotarlo comunque perderebbe ciò che era stato scritto proprio nel caso in cui serve di più — quando la rete non c'è — e non ci sarebbe nessun modo di riaverlo.
+
+⚠️ **Il vuoto dice chi può scrivere**, e lo dice solo quando non c'è ancora niente: *«Potete scrivere tutti e due, quando volete.»* È l'unico momento in cui quell'informazione serve. Una riga fissa che spiega la funzione sarebbe un'istruzione permanente addosso alla schermata — la stessa cosa tolta dalla mappa poche ore prima con D-52.
+
+### D-56 — La pagina dell'evento si sfoltisce, e il tag si cambia
+**Chiesto dall'utente il 2026-08-27**, guardandola sull'iPhone. Tre cose, e due sono **sottrazioni**.
+
+**Via la pillola del posto dai «Dettagli».** Il posto sta già **sotto il titolo**, in cima alla pagina, con la sua icona e il tocco che porta alla mappa. Ripeterlo trenta righe più in basso, in mezzo a data, ora e «l'hai messo tu», non aggiungeva un'informazione: costringeva a chiedersi se le due righe dicessero la stessa cosa. Dicevano la stessa cosa.
+
+> È il secondo doppione tolto oggi, dopo il cartellino del tocco lungo. Il filo è lo stesso: **due modi di dire la stessa cosa non sono ridondanza utile, sono un dubbio da risolvere ogni volta che si guarda la schermata.**
+
+**Via la sezione «Parole»** — il filo di commenti in fondo, col suo campo di scrittura.
+
+> ⚠️ **Superata poche ore dopo da [D-57](#d-57--eventi-diventa-diario-e-i-commenti-tornano-col-loro-nome)**: l'utente ha chiesto i commenti sugli eventi, che erano esattamente questa sezione sotto un nome che non lo diceva. È tornata, col nome «Commenti». Questa decisione resta scritta perché la lezione è nella coppia: **un nome che non dice cosa fa una cosa fa prendere decisioni sbagliate su di essa** — e perché è il motivo per cui non aver cancellato la tabella è servito davvero.
+
+⚠️ **Cosa non è stato toccato, e va saputo**: la tabella `commento`, le sue politiche RLS e le funzioni `commenta`/`cancellaCommento` in [`lib/evento-dettaglio.ts`](lib/evento-dettaglio.ts) **restano dove sono**. Nessuna migrazione. È sparita la schermata, non il dato: i commenti già scritti sono ancora nel database e tornerebbero visibili rimettendo la sezione. *Perché non ho cancellato anche il resto*: una tabella si svuota in un momento e non si riempie mai più, e nessuno ha chiesto di buttare via quello che c'era dentro.
+
+**Il tag si cambia dall'ingranaggio.** Nuova voce «Cambia tag» e un foglio con i tre tag, **ognuno col suo colore e la sua icona presi da `aspetto()`** invece che riscritti lì: è la stessa funzione che colora le pillole del calendario e i pin della mappa, quindi il verde della vacanza è un verde solo in tutta l'app. Una seconda tabella di colori sarebbe divergente al primo ritocco.
+
+⚠️ **La vacanza ha una forma diversa dagli altri tag**, e il foglio lo sa: non è un istante ma un **intervallo a giornate intere** (vedi `salva()` in `app/(tabs)/calendario.tsx`). Passando a vacanza si porta dietro il minimo che la renda coerente — una fine, che in mancanza d'altro è il giorno stesso, e `tutto_il_giorno`. La data di ritorno vera si mette poi con «Cambia data».
+
+⚠️ **Uscendo da vacanza non si cancella niente.** La fine resta dov'è. Azzerarla sarebbe distruggere una data che l'utente aveva scelto, per un cambio di tag — e ricambiare idea non la riporterebbe indietro. **Una modifica che sembra reversibile non deve avere effetti che non lo sono.**
+
+### D-55 — Una base sotto il vetro, e la regola che ne segue
+**Da due difetti riferiti dall'utente il 2026-08-27**, che sembravano diversi ed erano **lo stesso**: *«alcune parti sembrano in ombra — la tendina di ricerca dei luoghi e il pop up per aggiungere luoghi»* e *«il riquadro della toolbar sparisce lasciando solo le icone»*.
+
+**La causa comune**: il vetro mostra ciò che ha sotto. È la sua ragione d'essere, ed è anche il suo modo di rompersi.
+
+1. **Dentro un foglio modale sotto il vetro non c'è contenuto**: c'è la **velatura scura** del modale (`rgba(20,8,14,0.4)`). La sfocatura mescola quel buio, e una superficie pensata chiara si legge sporca. Non è un difetto della sfocatura: è vetro messo dove non c'era niente di bello da guardarci attraverso.
+2. **Se il materiale non viene disegnato, sotto non resta nulla** — perché non c'era nulla. Gli elementi sopra restano, la superficie no. Su iOS il vetro è una vista **nativa**: ha i suoi motivi per non disegnarsi, e non risponde a noi.
+
+**La correzione** è una prop `fondo` su `Vetro`, che mette qualcosa sotto e **decide come il vetro fallisce invece di scoprirlo**:
+
+- `'pieno'` — base chiara opaca, per il vetro dentro un foglio. Il buio non arriva più. Con la base opaca la sfocatura non ha più niente da sfocare e **si salta**: una vista nativa in meno per ogni foglio aperto.
+- `'sicuro'` — velatura chiarissima (0,16–0,22 di bianco). Invisibile quando il materiale c'è; è tutto ciò che resta quando non c'è.
+
+🔑 **La regola che ne esce, e che vale per ogni schermata futura**: **vetro dentro un foglio ⇒ `fondo="pieno"`**. Sta scritta nel commento di `CartaVetro`, non nella testa di chi scriverà la prossima schermata.
+
+> È la stessa idea già applicata a `components/ui/comparsa.tsx` poche ore prima: *il modo in cui una decorazione fallisce va deciso, non scoperto.* Qui vale il doppio, perché il vetro è codice di sistema e non nostro.
+
+**Applicata a**: la tendina di `components/cerca-luogo.tsx` (con una prop `dentroUnFoglio`, perché lo stesso componente vive in due posti diversi e solo uno è dentro un foglio — un componente non può sapere in che albero è stato montato), le carte dei fogli in `app/(tabs)/mappa.tsx`, `components/elenco-elementi.tsx` e `app/evento/[id].tsx`, e la barra volante in versione `'sicuro'`.
+
+### D-54 — Il calendario si muove, e nella vista agenda si scorre di un giorno
+**Chiesto dall'utente il 2026-08-27**: *«aggiungi delle animazioni anche al calendario […] in particolare per quanto riguarda l'header»* e *«nella sezione giorni vorrei che scrollando verso destra/sinistra si passasse al giorno successivo/precedente»*.
+
+**La testata.** La pillola del selettore delle viste **scivola** invece di riaccendersi dall'altra parte — terza volta che si applica la stessa idea, dopo la lente della barra in basso e l'interruttore della mappa, e ormai è il modo in cui questa app dice «ho cambiato scelta». I tondi e le frecce cedono sotto il dito come ogni altro comando (`Premibile`, D-53), al posto dell'opacità fatta a mano che avevano. Nella striscia dei giorni il tondo bianco della selezione **si posa** invece di accendersi.
+
+⚠️ Il disco della selezione è **una vista a parte dietro il numero**, non il colore di fondo della cella: un fondo che va da `transparent` a bianco **passa per il grigio**, mentre un disco bianco che cresce resta bianco per tutto il tragitto. La differenza si vede, ed è sporca.
+
+**Il titolo arriva dal lato giusto.** Cambiando periodo il contenuto sotto scivolava già, e il titolo si sostituiva sul posto: due elementi che raccontano lo stesso movimento, uno in movimento e uno fermo.
+
+⚠️ **L'animazione è legata alla stringa, non al gesto**, ed è il dettaglio che la rende giusta invece che fastidiosa: scorrendo un giorno per volta il titolo dice l'intervallo della *settimana*, che per sei giorni su sette **non cambia**. Se seguisse il gesto, si agiterebbe per non dire niente di nuovo.
+
+**Lo scorrimento a giorni.** Il gesto orizzontale era **spento** nella vista agenda (`vista !== 'giorni'`), col ragionamento che appartenesse alla striscia dei giorni. Il ragionamento era sbagliato di un piano: la striscia sta nella **testata**, il gesto sta sul **corpo**, e sono due aree che non si toccano. Il risultato era che nell'unica vista dove scorrere di lato ha il significato più ovvio — un giorno avanti — non succedeva niente.
+
+Ora il passo cambia con la vista: **un giorno** nell'agenda, il periodo intero altrove. Le frecce in testata continuano a saltare la **settimana**, ed è voluto: è la stessa divisione che questa schermata segue già per la striscia — *le frecce saltano la settimana, il dito va dove gli pare*.
+
+⚠️ **La striscia ora scorre invece di teletrasportare**, ma solo **dopo la prima volta**. B-06 imponeva il salto secco: all'apertura la striscia deve *essere già* sul giorno giusto, e un'animazione al primo fotogramma o non parte o si vede partire da 60 giorni fa. Ma con il giorno che cambia a ogni trascinamento, lo stesso salto secco faceva sobbalzare la striscia mentre il contenuto sotto scivolava dolcemente. Primo posizionamento secco, successivi animati.
+
+### D-53 — Il movimento diventa uno strato, non una decorazione sparsa
+**Chiesto dall'utente il 2026-08-27** («rendi la UX migliore aggiungendo delle animazioni, come effetti spostamento per esempio»).
+
+**Il problema vero non era la mancanza di animazioni: era la mancanza di riscontro.** Prima di questa sessione, un `BottoneVetro` premuto non faceva **nulla** — nessuna scala, nessun colore, nessuna vibrazione. Su un'interfaccia fatta di vetro, che per definizione non ha un rilievo da schiacciare, questo si legge come *«il tocco non è arrivato»*, e la reazione istintiva è **toccare una seconda volta**. Un'app che si fa toccare due volte per ogni azione sembra lenta anche quando è velocissima.
+
+**Perché uno strato condiviso e non animazioni caso per caso.** Le molle stanno tutte in [`lib/movimento.ts`](lib/movimento.ts) per lo stesso motivo per cui i colori stanno in `tema.ts` — ma con una ragione **più forte**: due magenta leggermente diversi si notano solo se stanno vicini, due molle leggermente diverse si notano sempre, perché il confronto avviene col ricordo di trenta secondi fa. Una carta che sale con `damping 18` e un'altra con `damping 24` non sembrano due scelte: sembrano un difetto.
+
+**I tre pezzi**:
+- `lib/movimento.ts` — tre molle (`tocco` rigidissima, `entrata` morbida, `scivolo` in mezzo), le durate per ciò che sfuma, e la **cascata col tetto**.
+- `components/ui/premibile.tsx` — il cedimento sotto il dito, in un posto solo perché è l'unico modo perché tutti i comandi cedano della stessa quantità.
+- `components/ui/comparsa.tsx` — entrata **e uscita**, con lo smontaggio ritardato.
+
+**Le regole che ne sono uscite, e che valgono da qui in avanti**:
+
+1. **L'uscita è la metà che manca sempre.** Quasi ovunque nell'app l'entrata esisteva in qualche forma e l'uscita no: al giro dopo la condizione diventava falsa e React smontava. Il risultato è un movimento asimmetrico — entra con un peso, sparisce come un fotogramma tagliato — che si legge come un salto, e nel caso peggiore come un errore (*«è sparito? l'ho chiuso io?»*). Il pezzo che serviva non era l'animazione: era **smontare dopo invece che prima**.
+2. **L'uscita è più corta dell'entrata, e senza molla.** Chi entra ha un peso da mostrare; chi esce si sta solo togliendo di mezzo, e chi l'ha chiuso guarda già altrove. Una molla in uscita fa *rimbalzare via* l'oggetto: sembra scherzoso, ed è il classico dettaglio che fa sembrare un'app poco seria.
+3. **Il tatto conferma un fatto, non un contatto.** La vibrazione sta su `onPress` e non su `onPressIn`: sfiorando una scheda per iniziare a scorrere, `onPressIn` scatta comunque, e l'app vibrerebbe a ogni scorrimento per un'azione mai avvenuta. La scala, che invece è riscontro del *contatto*, resta su `onPressIn`, dove deve stare per sembrare immediata.
+4. **Le cascate hanno un tetto.** Con 45ms di ritardo e venti schede, l'ultima parte quasi un secondo dopo: chi scorre subito vede righe accendersi **sotto il dito**, che non si legge come cura ma come un'app che non sta dietro. Oltre sei elementi il ritardo si ferma.
+5. 🔑 **Il modo in cui una decorazione fallisce va deciso, non scoperto.** `Comparsa` parte da opacità zero: se l'animazione non partisse, ciò che avvolge resterebbe **invisibile per sempre**, e sulla home sarebbe la schermata principale in bianco. Non è un'ipotesi di scuola — **è esattamente la forma di B-14**, un foglio che non compariva e la cui causa non è mai stata trovata. Perciò c'è una rete: passato abbondantemente il tempo dell'entrata, se il valore non è arrivato a 1 ci arriva di colpo. **Si perde l'animazione, non il contenuto.**
+
+**Alternative scartate**:
+- *Animare col `pressed` di `Pressable`*: impossibile qui — in questo progetto uno stile passato come **funzione** a `Pressable` non viene applicato (B-08). Reanimated non è un ripiego: il movimento gira sul thread della UI e non si inceppa mentre React monta ciò che il tocco ha aperto.
+- *Far scorrere lateralmente le due viste della mappa*, che su un interruttore sembra la cosa ovvia. Scartata per due motivi che portano allo stesso posto: la mappa è una **vista nativa** e traslarne il contenitore si comporta diversamente fra iOS e Android; e l'elenco ha già il suo movimento — le schede che salgono. Un contenitore che scivola da destra mentre il contenuto sale dal basso sono **due direzioni diverse nello stesso istante**, e non si legge come più ricco: si legge come confuso.
+- *Portare i due `Modal` della mappa dentro `components/foglio.tsx`*, che sarebbe la scelta coerente visto che `Foglio` esiste proprio per togliere la brusca animazione di sistema. **Scartata per B-14**: quel componente ha un modo di fallire non spiegato, e infilarlo in altre due schermate significherebbe moltiplicare un difetto che non sappiamo riconoscere. L'incoerenza dichiarata di B-14 resta, e resta debito.
+- *Animare i pin della mappa*: scartata per `tracksViewChanges` — con i marker disegnati da noi, react-native-maps ne ridisegna la texture a ogni fotogramma finché è acceso, e un pin animato lo terrebbe acceso per sempre.
+
+### D-52 — La mappa non aggiunge più un posto col tocco lungo
+**Chiesto dall'utente il 2026-08-27.** ⚠️ **Modifica D-50**, che sulla mappa lasciava «i due gesti che parlano di questo punto: il tocco lungo e "segna dove sono"». I gesti restano **uno**.
+
+**Perché il gesto non meritava di restare**, al di là della richiesta:
+
+- **Era invisibile.** L'unico modo di scoprirlo era il cartellino che lo spiegava — cioè un'istruzione **permanente** appiccicata sopra la mappa. Un gesto che ha bisogno di un'etichetta fissa accanto non è *scoperto*: è *tollerato*. E l'etichetta costava spazio a una schermata che di spazio ne ha bisogno tutto.
+- **Litigava col mezzo.** Su una mappa il dito ci resta sopra di continuo — per trascinare, per zumare, per fermarsi un attimo a leggere. Un tocco fermo un istante di troppo apriva un foglio *«un posto nuovo»* che nessuno aveva chiesto: un falso positivo su un gesto che nessuno stava facendo apposta.
+
+**Cosa resta, e perché basta**: il **«+»** in basso a destra, che aggiunge il punto in cui sei — l'unico modo di aggiungere che parli davvero di *questo posto* — e la **ricerca per nome** nell'elenco, a un tocco dall'interruttore. Due ingressi espliciti al posto di uno esplicito più uno segreto.
+
+**Toccato**: rimossi `onLongPress` e la prop `onPuntoNuovo` da `components/mappa-vera.native.tsx` — la prop serviva **solo** a quel gesto, e lasciarla sarebbe stata un'API morta che il prossimo lettore prende per viva; allineato lo stub web `components/mappa-vera.tsx` (i due tipi si tengono uguali a mano, lo dice il file stesso); tolti il cartellino e la stringa `comeSiAggiunge` da `lib/i18n.ts` in **entrambe** le lingue.
+
+> Con quel cartellino se n'è andata **l'ultima scritta fissa sopra la mappa**. Non era l'obiettivo, ma è il risultato che conta di più: la mappa ora mostra solo la mappa.
+
 ### D-51 — L'elenco dei luoghi diventa la seconda vista della mappa
 **Chiesto dall'utente il 2026-08-27.**
 
@@ -117,6 +257,8 @@ Un elenco di posti e una mappa di posti sono **due modi di guardare la stessa co
 **Nelle Liste, i luoghi si aggiungono con un «+» che galleggia**, non più con un bottone a tutta larghezza in fondo. La differenza col tab dei film non è capriccio: un film si **scrive**, quindi il campo di testo deve stare a portata di pollice ed è giusto che occupi una riga stabile; un luogo si **sceglie** fra quelli veri (D-37), quindi il gesto è *«apri la ricerca»* — un'azione, non un campo. Un bottone largo quanto lo schermo per una sola azione ruba una riga all'elenco a ogni scorrimento; un tondo non ruba niente.
 
 **Via la barra di ricerca dalla mappa.** Cercare un posto per nome è un'azione da *lista*, e in Liste c'è ora il suo «+»: tenerne una copia anche qui erano due ingressi per la stessa cosa, e soprattutto un campo di testo permanente addosso a una schermata che di spazio ne ha bisogno tutto. Sulla mappa restano i due gesti che **solo lì** hanno senso, perché parlano di *questo punto*: il tocco lungo e «segna dove sono».
+
+> ⚠️ **Superata in parte da [D-52](#d-52--la-mappa-non-aggiunge-più-un-posto-col-tocco-lungo)** (2026-08-27, stessa giornata): il tocco lungo è stato **tolto**, e i gesti sulla mappa sono ora uno solo. Il resto di questa decisione — via il campo di ricerca, il «+» al posto del bottone largo — resta valido. La riga qui sopra si legge come *era*, non come *è*.
 
 ⚠️ La ricerca resta nel **ripiego web**, dove non esiste una mappa da toccare e sarebbe l'unico modo di aggiungere un posto.
 
@@ -687,6 +829,23 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 **Due lezioni**. La prima: la spiegazione scritta il 2026-08-12 era *plausibile e sbagliata*, e sarebbe passata per vera se non si fosse riaperta la console **dopo** la correzione — una causa scritta con sicurezza in un documento non diventa vera per il fatto di essere scritta lì. La seconda: è quasi passata due volte, perché le prime riletture mostravano l'errore **vecchio** — il buffer della console non si svuota al reload. Una verifica che legge uno stato accumulato deve prima marcare dove comincia il pezzo che le interessa.
 
+### B-15 — Il riquadro della barra spariva, restavano le icone (2026-08-27, MITIGATO — causa non isolata)
+
+**Sintomo, riferito dall'utente**: *«in alcuni casi (come quando apro poi richiudo il pulsante per aggiungere luoghi) il riquadro della toolbar sparisce lasciando solo le icone»*.
+
+**Cosa si sa per certo**: la superficie della barra e le sue icone sono **due viste sorelle**, non annidate. Il difetto colpisce solo la prima, che è anche l'unica **nativa** (`GlassContainer`/`GlassView` su iOS 26, `BlurView` altrove). Le icone sono React puro, e infatti non ne risentono. Questo restringe il problema al vetro, non al resto della barra.
+
+**Il sospetto**: fino a oggi la barra faceva `if (aperta) return null` — a tastiera aperta veniva tolta di scena, e con lei le viste native del vetro venivano **distrutte e ricreate**. Il pannello dei luoghi ha un campo con `autoFocus`, quindi apre la tastiera, quindi passava esattamente di lì. Un materiale di sistema che non si ridisegna dopo essere stato ricreato è un classico su iOS.
+
+**Cosa è stato fatto — due cose, e la seconda non dipende dalla prima**:
+
+1. **La barra si sposta invece di sparire.** Scende con una molla e torna; il vetro **resta montato tutto il tempo**, quindi non c'è più niente da ricreare. Se il sospetto è giusto, il difetto non ha più occasione di verificarsi. Come effetto secondario è anche molto meglio da guardare: prima la barra non se ne andava, *cessava di esistere* in un fotogramma — proprio mentre l'occhio è in basso, dove sta salendo la tastiera.
+2. 🔑 **Un piano di riserva sotto il vetro**, che vale **anche se il sospetto è sbagliato**: una velatura chiarissima e un anello di luce, sempre presenti, sotto il materiale di sistema. Quando il vetro viene disegnato non si distinguono — 0,16 di bianco sotto un vetro è invisibile. Quando **non** viene disegnato sono tutto quello che resta, e la barra passa da «sparita» a «un po' meno bella».
+
+⚠️ **Perché è segnato MITIGATO e non CHIUSO**: la causa non è stata isolata su un dispositivo, e non lo sarà finché il difetto non si ripresenta — o resta assente abbastanza a lungo da poterlo dire. Segnarlo chiuso sarebbe dichiarare una cosa che non è stata verificata.
+
+**Lezione**, ed è la stessa di B-14 applicata **prima** invece che dopo: due correzioni ragionevoli che non si possono verificare valgono meno di una che rende il fallimento innocuo. Più in generale: una superficie **nativa** non risponde a noi. Ovunque una vista di sistema sia l'unico strato fra il contenuto e il nulla, quel nulla è un esito possibile, e va deciso in anticipo.
+
 ### B-13 — Le schermate a tab non rileggono: la mappa teneva i pin cancellati (2026-08-27, CHIUSO)
 
 **Sintomo**: cancellando un luogo dalle Liste, la mappa continuava a disegnarne il pin.
@@ -1031,7 +1190,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-27 (fine giornata: design, luoghi, Google Places).**
+**Aggiornato al 2026-08-27 (seconda sessione, terzo giro: Diario e commenti).**
 
 **Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che parte. Zero risorse cloud, zero costi sostenuti.
 
@@ -1097,6 +1256,25 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 **Difetti chiusi**: B-07 (permessi), B-08 (stili-funzione su `Pressable`), B-09/B-13 (schermate a tab che non rileggono), B-10 (ciclo di render), B-11 (luoghi fantasma), B-12 (i due legami evento→luogo). B-14 **aggirato**, non risolto.
 
 ⚠️ **Non ancora guardato sull'iPhone**: l'ultimo giro (D-50, D-51) — il «+» nelle Liste, la mappa senza barra di ricerca, l'interruttore Mappa/Elenco. Compila e i controlli passano, ma nessuno l'ha visto.
+
+**Cosa è successo nella seconda sessione del 2026-08-27**, in due giri.
+
+*Primo giro*: tolto il **tocco lungo** dalla mappa e il cartellino che lo spiegava (**D-52**), e introdotto uno **strato di movimento condiviso** (**D-53**) — `lib/movimento.ts`, `components/ui/premibile.tsx`, `components/ui/comparsa.tsx`. Ogni comando di vetro ora cede sotto il dito e vibra sull'azione; sulla mappa la pillola Mappa/Elenco scivola, il «+» e l'anteprima entrano ed escono; home e liste entrano a onda.
+
+*Secondo giro*, dopo che l'utente ha guardato l'app sull'iPhone: **D-54** (il calendario si muove — testata, titolo direzionale, striscia — e nella vista agenda si scorre di **un giorno** per trascinamento), **D-55** (la prop `fondo` sotto il vetro, che chiude il «sembra in ombra» dei fogli), **D-56** (via la pillola del posto e la sezione «Parole» dalla pagina evento; il tag si cambia dall'ingranaggio) e **B-15** (il riquadro della barra che spariva).
+
+*Terzo giro*: **D-57** — la vista «Eventi» si chiama **«Diario»** (rinominata anche nel tipo `Vista`) e i **commenti tornano** sugli eventi. Nessuna migrazione: la tabella `commento` era stata lasciata intatta apposta, e questa richiesta è il motivo per cui è stato giusto.
+
+🔴 **Da guardare sull'iPhone, in questo ordine.** Nessuna di queste cose è stata vista muoversi: nella preview il pannello del browser non componeva fotogrammi, quindi `requestAnimationFrame` era fermo e Reanimated sul web non poteva girare.
+
+   a. **I due difetti riferiti dall'utente, per primi** — sono gli unici punti in cui si sa che qualcosa era rotto: il pannello «aggiungi luoghi» e la tendina di ricerca dentro «aggiungi evento» **non devono più sembrare in ombra**; e aprendo/richiudendo quel pannello **il riquadro della barra deve restare**. Se sparisse ancora, vedi B-15: la causa non è isolata, ma il piano di riserva dovrebbe lasciare una pillola chiara invece del nulla — quindi il sintomo cambierebbe forma, e *come* cambia è l'informazione che serve.
+   b. **Il calendario**: la pillola del selettore scivola e si ferma allineata; il titolo entra dal lato giusto cambiando mese; nella vista **Giorni** il trascinamento orizzontale sposta di **un giorno** e la striscia lo segue scorrendo.
+   c. **La pagina evento**: fra i «Dettagli» non c'è più la pillola del posto; in fondo c'è la sezione **«Commenti»**, che deve accettare la scrittura **da tutti e due** (provarla con entrambi gli account: è la cosa nuova, ed è l'unica che tocca il database in scrittura da una policy diversa dalle solite); l'ingranaggio ha **«Cambia tag»** con i tre tag colorati. Provare anche il passaggio **a vacanza** su un evento che non ha una fine: deve diventare a giornate intere senza rompersi.
+   c-bis. **Il calendario, quarta voce**: si chiama **Diario** e il suo titolo è «Il vostro diario».
+   d. **Il cedimento dei bottoni** ovunque, e la vibrazione **una volta sola** sull'azione — mai scorrendo un elenco.
+   e. **La cascata della home**: i cinque riquadri arrivano a onda e restano **larghi metà schermo** (il 50% è passato dal `Pressable` al contenitore animato: è il punto che più facilmente si rompe).
+
+⚠️ **Se qualcosa comparisse vuoto o invisibile**, il primo sospetto è `components/ui/comparsa.tsx` — è l'unico pezzo nuovo che parte da opacità zero. Ha una rete che lo forza a 1 dopo 1,2s (D-53, regola 5), quindi il sintomo sarebbe «compare in ritardo e di colpo», non «non compare mai». Il secondo sospetto è B-14, che ha la stessa forma e non è mai stato spiegato.
 
 1. 🔴 **Guardare il design nuovo sull'iPhone.** È il primo punto perché è l'unico che può invalidare i cinque successivi: cinque schermate rifatte sono state scritte e non ancora viste. Da controllare in quest'ordine — la **lente della barra** (su iOS 26 dovrebbe fondersi con la pillola; altrove è la lastra chiara), la **capienza delle celle del mese** (`GrigliaMese` misura da sé, ma il calcolo non è mai girato su uno schermo vero), l'**agenda a fasce orarie** con due impegni sovrapposti, il **foglio della pagina evento** sopra l'immagine, i **pin** e l'anteprima in sovraimpressione. La domanda su cui l'utente deve pronunciarsi: **le sei icone senza etichetta si capiscono?** (D-40 dice come rimetterle).
 1. **Inserire la chiave** `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` e riavviare Metro: senza, la ricerca luoghi/ristoranti dichiara di non poter cercare (D-37). Insieme alla chiave, **subito**, il tetto di quota e l'avviso di budget su Google Cloud — vedi il backlog §6, "La chiave di Google Places".
