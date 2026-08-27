@@ -321,7 +321,16 @@ export default function Calendario() {
   // foglio di modifica e' uno solo, e vive dove si creano gli eventi.
   const { modifica } = useLocalSearchParams<{ modifica?: string }>();
 
-  const [vista, setVista] = React.useState<Vista>('mese');
+  /**
+   * Si apre sul **Diario**, non sul mese (D-58).
+   *
+   * Il mese e' la vista che risponde a «quando succede?», ed e' quella giusta
+   * mentre si organizza. Ma la maggior parte delle aperture non organizza
+   * niente: guarda cosa c'e' stato. Il mese, per quello, e' la vista peggiore
+   * delle quattro — mostra dei pallini colorati e costringe a un tocco in piu'
+   * per leggere una riga di testo che il Diario mostra da sola.
+   */
+  const [vista, setVista] = React.useState<Vista>('diario');
   const [giorno, setGiorno] = React.useState(() => inizioGiorno(new Date()));
   const [dettaglio, setDettaglio] = React.useState<Date | null>(null);
   /** L'evento che si sta modificando: il foglio e' lo stesso della creazione. */

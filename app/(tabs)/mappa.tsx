@@ -316,27 +316,58 @@ export default function Mappa() {
    * — «mai letta da sola» diventa «mai *registrata* o *condivisa* da sola» — ed
    * e' registrato come decisione invece che fatto di soppiatto.
    *
-   * ⚠️ **Non si chiede il permesso solo per questo.** Si guarda se e' gia'
-   * stato concesso (per «segna dove sono adesso»): se non lo e', la mappa parte
-   * dove partiva prima. Un'app che chiede la posizione appena apri una
-   * schermata, senza che tu abbia chiesto niente, insegna a negare il permesso.
+   * ⚠️ **Il permesso si chiede** (D-59, scelta dell'utente il 2026-08-27).
+   * Prima non si chiedeva: si usava la posizione solo se il permesso era gia'
+   * stato concesso da «segna dove sono adesso». Il risultato era che per chi
+   * quel bottone non l'aveva mai premuto la funzione **non esisteva**, e non
+   * c'era modo di accorgersene — la mappa si apriva a Milano come se andasse
+   * bene cosi'.
+   *
+   * 🔑 **E si richiede a ogni apertura, non una volta sola.** Il permesso puo'
+   * essere negato e concesso **dopo, dalle Impostazioni di iOS**: e' un dato
+   * che una *cosa fuori dall'app* puo' cambiare mentre la schermata resta
+   * montata. E' esattamente la forma di B-09/B-13 — *due copie dello stesso
+   * stato, di cui una non viene aggiornata* — con iOS al posto dell'altra
+   * schermata. Da cui `useFocusEffect`: si rilegge lo stato vero al focus,
+   * cosi' il ritorno dalle Impostazioni funziona da solo, senza riavviare.
+   *
+   * ⚠️ **`canAskAgain` decide se mostrare il dialogo, e non e' una rifinitura**:
+   * su iOS il dialogo di sistema si presenta **una volta sola**. Dopo un
+   * rifiuto `requestForegroundPermissionsAsync` ritorna subito negato senza
+   * mostrare niente — chiamarlo a ogni apertura non riproverebbe, girerebbe
+   * a vuoto.
    */
-  const [partenzaFatta, setPartenzaFatta] = React.useState(false);
-  React.useEffect(() => {
-    if (partenzaFatta || centro) return;
-    (async () => {
-      setPartenzaFatta(true);
-      const p = await Location.getForegroundPermissionsAsync();
-      if (!p.granted) return;
-      try {
-        const dove = await Location.getLastKnownPositionAsync();
-        const usa = dove ?? (await Location.getCurrentPositionAsync({}));
-        if (usa) setCentro({ latitude: usa.coords.latitude, longitude: usa.coords.longitude });
-      } catch {
-        // Nessuna posizione disponibile: la mappa parte dove partiva prima.
-      }
-    })();
-  }, [partenzaFatta, centro]);
+  const centrataQui = React.useRef(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      let vivo = true;
+      (async () => {
+        // Solo la prima volta per sessione di schermata: dopo, la telecamera
+        // e' dove l'utente l'ha lasciata e riportarla addosso sarebbe uno
+        // strappo, non un aiuto.
+        if (centrataQui.current) return;
+
+        let stato = await Location.getForegroundPermissionsAsync();
+        if (!stato.granted && stato.canAskAgain) {
+          stato = await Location.requestForegroundPermissionsAsync();
+        }
+        if (!vivo || !stato.granted) return;
+
+        try {
+          const dove = await Location.getLastKnownPositionAsync();
+          const usa = dove ?? (await Location.getCurrentPositionAsync({}));
+          if (!vivo || !usa) return;
+          centrataQui.current = true;
+          setCentro({ latitude: usa.coords.latitude, longitude: usa.coords.longitude });
+        } catch {
+          // Nessuna posizione disponibile: la mappa parte dove partiva prima.
+        }
+      })();
+      return () => {
+        vivo = false;
+      };
+    }, [])
+  );
 
   /** Un gesto esplicito, una lettura sola: nessuna posizione in background. */
   async function segnaDoveSono() {

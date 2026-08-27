@@ -118,6 +118,33 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Cosa resta valido da subito**: i vincoli scritti in P-02 e in `threat-model.md` §3-bis non decadono, si applicheranno quando la funzione entrerà. In particolare la **revoca silenziosa** e il **linguaggio mai fertilità/contraccezione**.
 **Conseguenza da rispettare nel frattempo** → vedi D-08: se il ciclo è rimandato per motivi di art. 9, **nessun'altra funzione deve reintrodurre dati di art. 9 dalla porta di servizio**.
 
+### D-59 — La mappa chiede il permesso di posizione, e lo richiede a ogni apertura
+**Chiesto dall'utente il 2026-08-27**: *«quando apro la mappa vorrei fosse posizionata sulla posizione attuale»*.
+
+**Contesto — la funzione c'era già e non funzionava per nessuno.** Il centraggio sulla posizione era stato scritto il 2026-08-27 insieme alla modifica di D-05, ma dietro un cancello: si leggeva la posizione **solo se il permesso era già stato concesso**, e l'unico modo di concederlo era premere «segna dove sono adesso». Chi quel bottone non l'aveva mai toccato vedeva la mappa aprirsi a Milano — cioè vedeva il comportamento di *prima* della funzione, senza niente che glielo spiegasse.
+🔑 **È il modo di fallire peggiore di tutti**: non un errore, ma una funzione che tace. Il codice sembrava a posto rileggendolo, e infatti nessuno se n'era accorto in due sessioni.
+
+**Opzioni presentate all'utente**: (a) una schermata di spiegazione prima del dialogo di sistema, una volta sola; (b) il dialogo di sistema e basta; (c) lasciare com'era.
+**Scelta dell'utente**: **(b)**, *«io userei il permesso iOS. Se poi viene rifiutato e accettato in un secondo momento dalle impostazioni allora torna il funzionamento normale»*.
+**Costo accettato, ed era l'argomento di (a)**: un permesso chiesto senza un motivo davanti si nega più spesso, e su iOS il dialogo si presenta **una volta sola**. La ragione per cui il costo è accettabile è tutta nella seconda metà della richiesta: la strada del recupero esiste ed è stata resa funzionante.
+
+🔑 **La parte che vale più del dialogo: si rilegge il permesso a ogni apertura, non una volta sola.**
+Il permesso può essere negato e concesso **dopo, dalle Impostazioni di iOS**. È un pezzo di stato che *una cosa fuori dall'app* può cambiare mentre la schermata resta montata — ed è **esattamente la forma di B-09/B-13**, *due copie dello stesso stato di cui una non viene aggiornata*, con iOS al posto dell'altra schermata. La regola scritta il 2026-08-27 (*se una schermata legge dati che un'altra può scrivere, deve rileggere al focus*) si applica identica: da `React.useEffect` a **`useFocusEffect`**. Senza questo, «lo concedo dalle Impostazioni e torno» avrebbe richiesto di **riavviare l'app**, e nessuno l'avrebbe collegato al permesso.
+
+**Dettaglio che non è una rifinitura**: si guarda `canAskAgain` prima di chiedere. Dopo un rifiuto, su iOS `requestForegroundPermissionsAsync` **non mostra più niente** e ritorna subito negato: chiamarlo a ogni focus girerebbe a vuoto invece di riprovare. Il recupero passa dalle Impostazioni, non da una seconda richiesta.
+
+**Un centraggio solo per sessione di schermata** (`centrataQui`, una ref): dalla seconda volta in poi la telecamera è dove l'utente l'ha lasciata, e riportarla addosso a ogni ritorno sarebbe uno strappo, non un aiuto.
+
+**Nessun impatto su D-05**, che era già stata modificata il 2026-08-27 e non cambia qui: la posizione **non viene scritta, non viene mandata a nessuno, non esce dal telefono** — decide dove puntare la telecamera e muore con la schermata. Cambia *quando si chiede il permesso*, non cosa se ne fa.
+
+### D-58 — Il calendario si apre sul Diario, non sul mese
+**Chiesto dall'utente il 2026-08-27**, subito dopo D-57 che il Diario l'aveva creato.
+
+**Perché**: il mese risponde a *«quando succede?»*, ed è la vista giusta mentre si **organizza**. Ma la maggior parte delle aperture non organizza niente: guarda **cosa c'è stato**. Per quella domanda il mese è la peggiore delle quattro viste — mostra pallini colorati e chiede un tocco in più per arrivare a una riga di testo che il Diario mostra da sola.
+**Perché ora e non prima**: prima di D-57 questa vista si chiamava «Eventi» e sembrava *una lista fra le altre*. Rinominarla in «Diario» ha reso evidente che è **il modo principale di guardare i propri ricordi**, non una quarta opzione — ed è la seconda volta in due giorni che un nome sbagliato faceva prendere decisioni sbagliate sulla cosa che nominava (la prima è «Parole», in D-57).
+**Conseguenza da tenere d'occhio**: la vista Diario carica le **anteprime delle foto** degli eventi, che il mese non chiede. Aprire il calendario ora costa quelle richieste **sempre**, non solo quando si va sul Diario. Sul dispositivo dell'utente non è stato misurato: se l'apertura risultasse lenta, è il primo posto dove guardare.
+**Alternativa scartata**: ricordare l'ultima vista usata. Costa una preferenza da salvare e leggere, e rende l'apertura imprevedibile — la stessa app si apre diversa a seconda di cosa hai fatto la volta prima.
+
 ### D-57 — «Eventi» diventa «Diario», e i commenti tornano col loro nome
 **Chiesto dall'utente il 2026-08-27**, poche ore dopo D-56.
 
@@ -1196,7 +1223,16 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-27 (seconda sessione, terzo giro: Diario e commenti).**
+**Aggiornato al 2026-08-27 (terza sessione: chiave Google nel `.env`, D-58, D-59, backlog 11-bis).**
+
+🔴 **Prima di tutto il resto: l'app non è ancora stata aperta sull'iPhone.** Il QR è stato prodotto nella terza sessione ma non usato, quindi **niente** di quanto scritto il 2026-08-27 — animazioni D-52→D-57, i due difetti riferiti, B-15, più D-58 e D-59 di oggi — è mai stato visto girare. La lista ordinata di cosa guardare è più in basso; **D-59 in particolare non è verificabile in nessun altro modo**, perché il dialogo di posizione e la mappa nativa non esistono nella preview web.
+
+✅ **Chiave Google Places inserita nel `.env`** (terza sessione del 2026-08-27) e **verificata nel bundle iOS**, insieme a URL e anon key. Questo chiude il punto 1 della lista qui sotto e accende la ricerca luoghi/ristoranti di D-37.
+⚠️ **E rende attuale un debito che era teorico**: la chiave ora vive nel bundle. Il **proxy dietro una Edge Function** e il **tetto di quota + avviso di budget** su Google Cloud vanno fatti **prima di utenti veri**, non prima della pubblicazione.
+
+✅ **D-58** — il calendario si apre sul **Diario**, non sul mese. ⚠️ Conseguenza non misurata: il Diario carica le anteprime delle foto, quindi ora quelle richieste partono a **ogni** apertura del calendario. Se l'apertura è lenta sul telefono, è il primo posto dove guardare.
+✅ **D-59** — la mappa **chiede** il permesso di posizione (dialogo iOS diretto, scelta dell'utente) e lo **rilegge a ogni focus**, così concederlo dalle Impostazioni dopo un rifiuto funziona senza riavviare. ⚠️ Il caso di prova vero è stretto: iOS di solito riavvia l'app quando si cambia un permesso dalle Impostazioni, e il riavvio maschererebbe il merito di `useFocusEffect` — per vederlo bisogna tornare **senza** che l'app si sia riavviata.
+🔑 **Perché D-59 esisteva già e non funzionava per nessuno**: leggeva la posizione solo se il permesso era *già* concesso, e l'unico modo di concederlo era «segna dove sono adesso». Non un errore — **una funzione che tace**, sopravvissuta a due sessioni e a una rilettura del codice.
 
 **Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che parte. Zero risorse cloud, zero costi sostenuti.
 
@@ -1283,7 +1319,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 ⚠️ **Se qualcosa comparisse vuoto o invisibile**, il primo sospetto è `components/ui/comparsa.tsx` — è l'unico pezzo nuovo che parte da opacità zero. Ha una rete che lo forza a 1 dopo 1,2s (D-53, regola 5), quindi il sintomo sarebbe «compare in ritardo e di colpo», non «non compare mai». Il secondo sospetto è B-14, che ha la stessa forma e non è mai stato spiegato.
 
 1. 🔴 **Guardare il design nuovo sull'iPhone.** È il primo punto perché è l'unico che può invalidare i cinque successivi: cinque schermate rifatte sono state scritte e non ancora viste. Da controllare in quest'ordine — la **lente della barra** (su iOS 26 dovrebbe fondersi con la pillola; altrove è la lastra chiara), la **capienza delle celle del mese** (`GrigliaMese` misura da sé, ma il calcolo non è mai girato su uno schermo vero), l'**agenda a fasce orarie** con due impegni sovrapposti, il **foglio della pagina evento** sopra l'immagine, i **pin** e l'anteprima in sovraimpressione. La domanda su cui l'utente deve pronunciarsi: **le sei icone senza etichetta si capiscono?** (D-40 dice come rimetterle).
-1. **Inserire la chiave** `EXPO_PUBLIC_GOOGLE_PLACES_KEY` nel `.env` e riavviare Metro: senza, la ricerca luoghi/ristoranti dichiara di non poter cercare (D-37). Insieme alla chiave, **subito**, il tetto di quota e l'avviso di budget su Google Cloud — vedi il backlog §6, "La chiave di Google Places".
+1. ✅ **Chiave `EXPO_PUBLIC_GOOGLE_PLACES_KEY` inserita** nel `.env` il 2026-08-27 (terza sessione) e verificata dentro il bundle iOS: la ricerca luoghi/ristoranti di D-37 ora ha di che cercare. ⚠️ **Resta da fare la metà che protegge**: il tetto di quota e l'avviso di budget su Google Cloud, più il proxy dietro una Edge Function prima di utenti veri — vedi il backlog §6, "La chiave di Google Places". La chiave è nel bundle: era un rischio annunciato, ora è un rischio attivo.
 2. **Rigenerare i tipi**: `lib/database.types.ts` ha ancora blocchi scritti a mano (0011, 0012, 0013).
 3. **Estendere i test avversariali** al caso di B-05 (raggiungibilità dei riferimenti dopo la rottura), oggi dichiarato e non coperto. ✅ La suite gira e passa: **60 asserzioni verdi** il 2026-08-27, `0014` compresa.
 4. **Decidere la forma del link d'invito** fra le tre strade qui sopra. Se (b) o (c), serve la route `app/invito/[token].tsx`.
