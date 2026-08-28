@@ -78,8 +78,30 @@ export function TestataCalendario({
 }) {
   /** 1 = fermo al suo posto. Sotto 1: sta cambiando. */
   const cambio = useSharedValue(1);
-  /** Il verso **al momento del cambio**: letto qui, non nello stile animato. */
-  const direzione = React.useRef(0);
+  /**
+   * Il verso **al momento del cambio**: -1 indietro, +1 avanti, 0 nessuna
+   * direzione (il «torna a oggi», o un cambio di vista).
+   *
+   * ⚠️ **Un `useSharedValue`, non un `React.useRef`** — ed è la correzione di
+   * B-17. Questo valore viene scritto sul thread JS (nell'effetto qui sotto) e
+   * **letto dentro un worklet** (`stileTitolo`). Reanimated, quando un worklet
+   * cattura un oggetto normale, ne serializza una copia: il worklet leggeva
+   * quindi una `direzione` che non era quella che l'effetto aggiornava, e
+   * poteva essere **vecchia**. Conseguenza visibile: il titolo che entra dal
+   * lato sbagliato — cioè proprio la funzione per cui questo valore esiste.
+   *
+   * 🔑 Il commento che stava qui diceva *«letto qui, non nello stile animato»*,
+   * che è la descrizione corretta di ciò che il codice **doveva** fare, scritta
+   * accanto al codice che faceva l'opposto. Una rilettura si ferma davanti a
+   * una spiegazione plausibile: **il commento faceva da scudo all'errore.** È
+   * la stessa forma del difetto chiuso da D-60 in `cerca-luogo.tsx`.
+   *
+   * Un valore condiviso è fatto per essere letto e scritto dai due lati: il
+   * worklet ne vede sempre il valore corrente, e l'avviso
+   * «Tried to modify key `current` of an object which has been already passed
+   * to a worklet» sparisce insieme alla causa.
+   */
+  const direzione = useSharedValue(0);
   const primo = React.useRef(true);
 
   React.useEffect(() => {
@@ -87,7 +109,7 @@ export function TestataCalendario({
       primo.current = false;
       return;
     }
-    direzione.current = verso;
+    direzione.value = verso;
     cambio.value = withSequence(
       withTiming(0, { duration: durata.lampo }),
       withSpring(1, molla.entrata)
@@ -104,7 +126,7 @@ export function TestataCalendario({
       // Esce verso il lato da cui si viene e rientra al centro. A verso 0 —
       // "torna a oggi", cambio di vista — resta una dissolvenza sul posto:
       // non c'e' nessuna direzione da raccontare.
-      { translateX: (1 - cambio.value) * 22 * direzione.current },
+      { translateX: (1 - cambio.value) * 22 * direzione.value },
     ],
   }));
 

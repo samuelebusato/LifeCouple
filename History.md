@@ -40,7 +40,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 🔑 **I due difetti rimasti erano la conferma di D-55, non la sua smentita**: quella decisione aveva descritto *esattamente* questi due modi di rompersi del vetro, e aveva sbagliato solo il modo di applicarli — a carico di chi chiama invece che dedotto dall'albero. Da lì **D-60** e **D-61**, e le due voci **B-16** e **B-17**.
 
-**Fatto**: **D-60** (il contesto del vetro: la base non si dichiara più a mano, e niente vetro dentro il vetro), **D-61** (niente materiale nativo creato a opacità zero), **D-62** (l'hub dei giochi). Trovato e **non** corretto **B-17**, che è di ieri e sta nella testata del calendario.
+**Fatto**: **D-60** (il contesto del vetro: la base non si dichiara più a mano, e niente vetro dentro il vetro), **D-61** (niente materiale nativo creato a opacità zero), **D-62** (l'hub dei giochi). Trovato **B-17**, che è di ieri e sta nella testata del calendario — corretto poi a fine giornata, su richiesta dell'utente.
 
 **Secondo giro, dopo che l'utente ha guardato l'hub sull'iPhone**: *«nell'interfaccia mappa dei luoghi non riesco ad aggiungere luoghi: scrivo ma non mi si apre la tendina con i consigli»*, e *«la parte bassa dell'hub giochi mi sembra un po' schiacciata»*.
 
@@ -1109,7 +1109,7 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 **Verificato**: che l'API risponda è stato provato **davvero**, chiamando Places con la chiave del `.env` — HTTP 200 con risultati veri — prima di cercare il difetto nell'interfaccia. Senza quella prova la diagnosi sarebbe partita dal posto sbagliato.
 
-### B-17 — La testata del calendario legge un `ref` dentro un worklet (2026-08-28, APERTO — trovato, non corretto)
+### B-17 — La testata del calendario legge un `ref` dentro un worklet (2026-08-28, CHIUSO)
 
 **Sintomo**: nei log di Metro, a ogni apertura dell'app sull'iPhone, `WARN [Worklets] Tried to modify key `current` of an object which has been already passed to a worklet`.
 
@@ -1119,7 +1119,13 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 **Conseguenza**: il worklet tiene una **copia serializzata** del ref, quindi il verso che usa può essere **vecchio** — cioè il titolo del calendario può entrare **dal lato sbagliato**. È esattamente la funzione introdotta ieri con D-54 («titolo che entra dal lato giusto»), e resta fra le cose *non verificate sul telefono*.
 
-**Non corretto oggi**: è di ieri, non è fra i due difetti riferiti, e la sessione era già su altro. **La correzione è piccola**: `direzione` deve essere un `useSharedValue`, non un `ref` — è l'unico modo perché il worklet ne veda il valore corrente.
+**Corretto** su richiesta dell'utente, a fine giornata: `direzione` è un `useSharedValue`, scritto con `.value` e letto con `.value` dentro lo stile animato. Un valore condiviso è fatto per essere letto e scritto dai due lati.
+
+⚠️ **E il commento è stato riscritto**, non solo il codice. Quello vecchio diceva *«letto qui, non nello stile animato»*: la descrizione corretta di ciò che il codice **doveva** fare, accanto al codice che faceva l'opposto. Lasciarlo lì avrebbe protetto il prossimo errore esattamente come ha protetto questo.
+
+🔑 **Ed è stato cercato altrove**, perché un difetto di questa forma non ha ragione di essere unico: uno scorrimento di tutto `app/`, `components/` e `lib/` per ogni `.current` letto dentro un worklet (`useAnimatedStyle`, `useAnimatedProps`, `useAnimatedReaction`, `useDerivedValue`, `useAnimatedScrollHandler`) non ha trovato **nessun altro punto**. *Trovato un difetto per forma, si cerca la forma, non il difetto.*
+
+**Verificato**: `tsc` e `eslint` puliti, e nel bundle iOS `direzione.value` compare tre volte mentre `direzione.current` zero. ⚠️ Non verificato sul telefono: che il titolo entri dal lato giusto si vede solo scorrendo i mesi, e l'avviso di Reanimated sparirà dai log di Metro alla prima apertura vera.
 
 **Perché è stato trovato**: leggendo il log di Metro mentre si verificava altro. ⚠️ E la prima occorrenza è **precedente** alle modifiche di oggi, il che è l'unica ragione per cui non è stato scambiato per una regressione: quando si trova un avviso, la prima domanda è *da quando c'è*, non *cosa ho appena toccato*.
 
@@ -1579,11 +1585,11 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 2. **Il «+» della mappa** (D-61 / B-16). ⚠️ Il caso di prova è preciso: **chiudere del tutto l'app e riaprirla**, non ricaricare — il difetto aveva quella finestra sola.
 3. **L'hub dei giochi**, ora a **quattro** carte (D-65: «indovina il disegno» in fondo, verde): la parte bassa **respira** ora (D-62, coda) — puntini, comandi, riga di stato e barra non devono più toccarsi — e ⚠️ lo **zoom** non deve essere tagliato sopra e sotto premendo «Gioca»: è il motivo dei 48 punti di pista in più. Poi il resto, mai visto: scorrimento fra le carte, puntini che si allungano, i due fogli, e il cartellino «serve il partner» al posto dei comandi se si è soli.
 4. **L'aggiunta di un posto, che ora è una sola** (D-64). Il «+» della mappa apre **lo stesso foglio** di Liste: non c'è più «Come lo chiamate?», non c'è più «segna dove sono». Da provare, in ordine: *(a)* il «+» **della mappa** e il «+» **di Liste** devono aprire la stessa identica cosa; *(b)* tre lettere → **la tendina**, e sotto le tre la riga che dice di scriverne ancora (B-18); *(c)* scelto un posto, deve comparire **subito il pin** sulla mappa (è la `ricarica` passata al foglio); *(d)* ⚠️ **e in Liste quello stesso posto deve avere la copertina** — è B-19, ed è l'unica metà che sulla mappa non si vede.
-5. **Tutto il resto del 2026-08-27**, che il primo giro non ha coperto: il calendario (pillola allineata, titolo direzionale — ⚠️ vedi **B-17**, potrebbe entrare dal lato sbagliato, ed è un difetto vero non ancora corretto —, scorrimento a giorni), la pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home, D-58/D-59.
+5. **Tutto il resto del 2026-08-27**, che il primo giro non ha coperto: il calendario (pillola allineata, **titolo direzionale** — B-17 è stato corretto ma la prova è guardarlo: scorri due mesi avanti e due indietro, il titolo deve entrare dal lato da cui vieni —, scorrimento a giorni), la pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home, D-58/D-59.
 
 ⚠️ **I permessi non si provano in Expo Go** (B-20): il dialogo usa l'`Info.plist` di Expo Go, non il nostro. Tutto ciò che sta nei `plugins` di `app.json` — testi dei permessi, chiavi dichiarate — resta **non verificato** finché non si fa un build vero. È la prima cosa da ricontrollare il giorno in cui se ne farà uno.
 
-⚠️ **B-17 è aperto e la correzione è nota**: `direzione` in `components/testata-calendario.tsx` dev'essere un `useSharedValue` e non un `React.useRef`, perché oggi un worklet ne legge una copia serializzata.
+✅ **B-17 chiuso**: `direzione` in `components/testata-calendario.tsx` è ora un `useSharedValue`. Cercata anche la **forma** del difetto in tutto il codice — nessun altro `.current` letto dentro un worklet. ⚠️ Non verificato sul telefono: si vede solo scorrendo i mesi, e l'avviso di Reanimated sparirà dai log di Metro alla prima apertura.
 
 🔴 **Non deciso, e blocca il prossimo pezzo dei giochi**: **come si formula la Classifica** (D-62). *Chi ha vinto più volte* è una graduatoria persistente fra le due persone, e P-03 dice che il punteggio non deve diventare un verdetto sulla relazione. Va deciso prima di scriverne il conteggio.
 
