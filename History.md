@@ -28,6 +28,28 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-08-29 — Il giro di verifica: tutto ciò che era scritto e mai visto girare
+
+**Chiesto dall'utente**: nessuno sviluppo. Un giro di verifica sull'iPhone di tutte le novità del 2026-08-27 e del 2026-08-28, e l'aggiornamento della documentazione con l'esito.
+
+**Esito, riferito dall'utente**: *«eccezion fatta per i giochi, ho controllato tutte le novità direttamente da iPhone e sembra funzionare tutto correttamente»*.
+
+Cadono quindi i punti **1, 2, 4 e 5** della lista «cosa guardare al prossimo giro» del PUNTO DI RIPRESA del 2026-08-28:
+- ✅ **il pannello «aggiungi un luogo»** non è più in ombra (**D-60**). E la diagnosi era giusta **in pieno**, non a metà: la correzione copriva sia il caso dei bottoni nidificati nel vetro della carta sia il caso della carta stessa, e restava scritto che *se fosse rimasto in ombra la lettura di D-55 sarebbe stata sbagliata alla radice*. Non è rimasto.
+- ✅ **il «+» della mappa** ha il suo tondo (**B-16**, corretto con **D-61**): il vetro non nasce più dentro un livello a opacità zero.
+- ✅ **l'aggiunta di un posto è una sola** (**D-64**): stesso foglio dal «+» della mappa e dal «+» di Liste, il campo di ricerca non tace più (**B-18**) e il posto nasce identico dalle due strade (**B-19**).
+- ✅ **tutto il resto del 2026-08-27**, che il primo giro non aveva coperto: calendario, pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home, **D-58** e **D-59**. E con loro **B-17**, il verso del titolo del calendario.
+
+🔴 **Restano fuori i giochi**, ed è ora l'**unico** fronte dell'app mai visto girare: né l'hub (**D-62**, **D-65**) né le due partite (**D-66**, **D-67**).
+
+⚠️ **Che verifica è, e che verifica non è.** È un giro d'uso: l'app è stata usata e non si è visto niente di rotto. Non è l'esecuzione punto per punto dei casi di prova stretti — e per quattro difetti quei casi erano scritti apposta, perché un giro normale **non li attraversa**: **B-16** voleva l'app *chiusa del tutto e riaperta*, non ricaricata; **B-19** voleva il controllo *in Liste*, che è la metà che sulla mappa non si vede; **B-17** voleva *due mesi avanti e due indietro*; **D-59** voleva un rientro *senza che iOS abbia riavviato l'app*. Sono stati chiesti esplicitamente e non è arrivata risposta, quindi restano **non confermati singolarmente**.
+
+*La conseguenza pratica, che è l'unica che conta*: se uno di questi quattro si ripresenta, **non va letto come una regressione**. È la finestra stretta che il giro non ha attraversato, e la prima mossa è riprovarla col suo caso di prova — non cercare una causa nuova in codice che nel frattempo nessuno ha toccato.
+
+🔑 **La lezione è quella di ieri, applicata dal lato opposto.** Il 2026-08-28 il difetto era stato scrivere «verificato» dove era stato *scritto* e non provato (**B-23**). Oggi la tentazione rovesciata è scrivere «verificato» dove è stato *usato* e non *esercitato*. È la stessa scorciatoia con due facce: **la parola «verificato» vale quanto il caso di prova che ha dietro**, e quando il caso di prova non si conosce si dichiara, non si arrotonda.
+
+**Sessione**: [`workspace/sessione-2026-08-29.md`](../../workspace/sessione-2026-08-29.md).
+
 ### 2026-08-28 — Il primo giro sull'iPhone, e l'hub dei giochi
 
 **Chiesto dall'utente**: aprire l'app sull'iPhone e chiudere i difetti rimasti; poi implementare **solo l'hub dei giochi**, ispirato a due riferimenti (lo stile «toon» del primo, l'organizzazione a carte scorrevoli del secondo), con «Classifica» e «Gioca» sotto, e animazioni di scorrimento e di zoom.
@@ -54,7 +76,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ⚠️ **Non verificato**: l'hub non è stato visto girare. La preview web non ci arriva — il cancello di sessione porta alla schermata d'ingresso e l'accesso è via codice email — quindi restano `tsc`, `eslint`, e i due bundle (iOS 15,2 MB e web 12,3 MB, entrambi 200) coi nuovi simboli verificati per stringa.
 
-**Sessione**: —.
+**Sessione**: [`workspace/sessione-2026-08-28.md`](../../workspace/sessione-2026-08-28.md).
 
 ### 2026-08-27 (seconda sessione) — Via il tocco lungo, e l'app impara a muoversi
 
@@ -999,7 +1021,7 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
-### B-23 — Una partita non si poteva abbandonare, e il permesso mancante taceva (2026-08-28, CORRETTO con 0021 — da applicare)
+### B-23 — Una partita non si poteva abbandonare, e il permesso mancante taceva (2026-08-28, CHIUSO — 0021 applicata il 2026-08-28)
 
 **Trovato** perché l'utente ha chiesto di fermare le partite attive. Ho lanciato la pulizia sugli account di prova, l'output diceva «abbandonata» quattro volte, e **ho ricontrollato**: quattro partite ancora vive.
 
@@ -1092,6 +1114,8 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 🔑 **La lezione sta nel modo in cui è stato trovato**: la richiesta era *«lo stesso funzionamento di aggiungi luogo in elenco»*, e la lettura pigra è «la stessa tendina». Quella giusta è **lo stesso risultato**. Due strade che creano la stessa entità in due modi diversi sono un difetto, anche quando entrambe funzionano.
 
+✅ **Giro sull'iPhone del 2026-08-29**: l'aggiunta di un posto funziona da entrambe le strade. ⚠️ Non è confermato che sia stata aperta la scheda **in Liste**, che è la metà del difetto invisibile dalla mappa: il pin compare comunque, con o senza copertina.
+
 ### B-18 — Il campo di ricerca dei luoghi taceva, e il silenzio si legge come un guasto (2026-08-28, CHIUSO)
 
 **Sintomo, riferito dall'utente**: *«scrivo ma non mi si apre la tendina con i consigli»*.
@@ -1109,6 +1133,8 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 **Verificato**: che l'API risponda è stato provato **davvero**, chiamando Places con la chiave del `.env` — HTTP 200 con risultati veri — prima di cercare il difetto nell'interfaccia. Senza quella prova la diagnosi sarebbe partita dal posto sbagliato.
 
+✅ **Giro sull'iPhone del 2026-08-29**: la tendina si apre e i consigli arrivano.
+
 ### B-17 — La testata del calendario legge un `ref` dentro un worklet (2026-08-28, CHIUSO)
 
 **Sintomo**: nei log di Metro, a ogni apertura dell'app sull'iPhone, `WARN [Worklets] Tried to modify key `current` of an object which has been already passed to a worklet`.
@@ -1125,11 +1151,13 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 🔑 **Ed è stato cercato altrove**, perché un difetto di questa forma non ha ragione di essere unico: uno scorrimento di tutto `app/`, `components/` e `lib/` per ogni `.current` letto dentro un worklet (`useAnimatedStyle`, `useAnimatedProps`, `useAnimatedReaction`, `useDerivedValue`, `useAnimatedScrollHandler`) non ha trovato **nessun altro punto**. *Trovato un difetto per forma, si cerca la forma, non il difetto.*
 
-**Verificato**: `tsc` e `eslint` puliti, e nel bundle iOS `direzione.value` compare tre volte mentre `direzione.current` zero. ⚠️ Non verificato sul telefono: che il titolo entri dal lato giusto si vede solo scorrendo i mesi, e l'avviso di Reanimated sparirà dai log di Metro alla prima apertura vera.
+**Verificato**: `tsc` e `eslint` puliti, e nel bundle iOS `direzione.value` compare tre volte mentre `direzione.current` zero.
+
+✅ **Giro sull'iPhone del 2026-08-29**: il calendario è fra le cose che l'utente ha usato senza trovare niente di rotto. ⚠️ Ma non è confermato che i mesi siano stati scorsi avanti e indietro, che è l'unico gesto in cui il verso del titolo si vede — la parte **osservabile** di questa correzione resta quindi non esercitata. Il difetto tecnico è chiuso (il `ref` non c'è più); la funzione che proteggeva, no.
 
 **Perché è stato trovato**: leggendo il log di Metro mentre si verificava altro. ⚠️ E la prima occorrenza è **precedente** alle modifiche di oggi, il che è l'unica ragione per cui non è stato scambiato per una regressione: quando si trova un avviso, la prima domanda è *da quando c'è*, non *cosa ho appena toccato*.
 
-### B-16 — Il «+» della mappa senza il suo tondo, ma solo appena avviata l'app (2026-08-28, CORRETTO — causa isolata)
+### B-16 — Il «+» della mappa senza il suo tondo, ma solo appena avviata l'app (2026-08-28, CHIUSO — verificato su iPhone il 2026-08-29)
 
 **Sintomo, riferito dall'utente**: *«appena avvio l'applicazione non c'è il riquadro del pulsante "+" per l'aggiunta di luoghi sull'interfaccia mappa»*. Restava l'icona, spariva la superficie.
 
@@ -1140,6 +1168,8 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 **Correzione**: **D-61** — il vetro non nasce più dentro un livello a opacità zero (in due punti), e `TondoVetro` prende comunque `fondo="sicuro"`, così **il modo in cui fallisce resta deciso** anche se la diagnosi fosse incompleta.
 
 ⚠️ **Verificato solo per costruzione e per stringa** (`tsc`, `eslint`, i simboli nuovi presenti nel bundle iOS). Sul telefono **non ancora**: è la prima cosa del prossimo giro, e il caso di prova è preciso — *chiudere del tutto l'app e riaprirla*, non ricaricare.
+
+✅ **CHIUSO il 2026-08-29**: sull'iPhone il tondo del «+» c'è. ⚠️ Con un limite dichiarato — non è confermato che il giro abbia esercitato il caso di prova stretto, *chiudere del tutto l'app e riaprirla*, che era l'unica finestra in cui il difetto si manifestava. 🔑 Quindi: se il tondo dovesse tornare a mancare **al solo avvio a freddo**, non va letto come una regressione ma come questa finestra, mai attraversata.
 
 ### B-01 — `assegna_punti` chiamabile via RPC da chiunque, anon compreso (2026-08-12)
 **Trovato**: con una chiamata di prova dall'esterno (`POST /rest/v1/rpc/assegna_punti` con la sola anon key), subito dopo l'applicazione di 0001. La chiamata è **entrata nella funzione** ed è stata fermata solo dal vincolo di chiave esterna, perché il `coppia_id` era inventato. Con un id reale, un utente poteva **auto-assegnarsi punti** saltando i trigger — violazione diretta di D-15.
@@ -1548,23 +1578,28 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-28 (primo giro sull'iPhone, D-60→D-66, B-16→B-20).**
+**Aggiornato al 2026-08-29** — giro di verifica sull'iPhone. Copre D-60→D-67 e B-16→B-23.
 
-🔴 **Da applicare: la migrazione `0021_partita_abbandonabile.sql`** — senza, nessuna partita si può abbandonare (B-23) e `npm run test:partita` si ferma al blocco della telepatia, perché la partita di prova precedente resta viva e l'indice unico non ne ammette una seconda.
+**Dove siamo, in una riga**: l'app è stata usata sull'iPhone e funziona tutta **tranne i giochi**, che restano l'unico fronte mai visto girare su un dispositivo. Migrazioni **0020** e **0021** applicate; suite tutta verde.
 
-✅ **Migrazione 0020 applicata dall'utente** dopo due fallimenti (**B-21**), e **verificata contro il database vero**: le quattro tabelle nuove rispondono, le quattro colonne nuove di `partita` esistono, e le tre funzioni girano — interrogate via `/rest/v1/rpc` hanno risposto con le **nostre** eccezioni, che è la prova che esistono e che le firme sono giuste.
+---
 
-✅ **I due giochi sono scritti** (**D-67**): «indovina il disegno» (5 round) e «telepatia» (10 round), versione ufficiale. Con loro: i due punteggi **Intesa** e **Sintonia** al posto della Classifica, l'anello del punteggio finale, e i banchi da 500 voci verificati con `npm run test:parole`.
+### 🔴 L'unica cosa aperta: una partita vera, fra due persone
 
-✅ **Le due partite sono state giocate davvero** — non su due telefoni, ma da due giocatori simulati con due sessioni vere contro il database reale: `npm run test:partita`, **41 asserzioni su 41**. Sono provati: la partita che non parte con un solo pronto e parte col secondo, i cinque round coi ruoli che si invertono, il punteggio (3/5, scelto perché né tutto né niente), la conclusione all'ultimo round, e il round telepatia intero.
+⚠️ **Nessuna partita è mai stata giocata da due persone su due telefoni**, e nemmeno l'**hub** dei giochi è mai stato aperto sul dispositivo. È l'unica zona dell'app in questo stato — tutto il resto è stato usato.
+
+✅ **I due giochi sono scritti** (**D-67**): «indovina il disegno» (5 round) e «telepatia» (10 round), versione ufficiale. Con loro: i due punteggi **Intesa** e **Sintonia** al posto della Classifica, l'anello del punteggio finale, e i due banchi da 500 voci in `lib/parole.ts` verificati con `npm run test:parole` (15 controlli verdi: nessuna chiave doppia, nessuna voce vuota, 25 temi da 20, e il normalizzatore dei tentativi provato su casi veri).
+
+✅ **La meccanica è provata**, da `tests/partita.mjs` — non dai test avversariali, che restano quelli di RLS e non sanno niente di partite. `npm run test:partita`: **42 asserzioni su 42**, con due giocatori simulati da due sessioni vere contro il database reale. Sono provati: la partita che non parte con un solo pronto e parte col secondo, i cinque round coi ruoli che si invertono, il punteggio (3/5, scelto perché né tutto né niente), la conclusione all'ultimo round, il round telepatia intero, e la pulizia — **asserita**, che è la parte che mancava prima di B-23.
 
 🔴 **E sono provate le due cose che a mano non si possono provare**:
 - **chi indovina non legge la parola** — zero righe da `round_segreto` interrogando l'API col proprio token, verificato su tutti e cinque i round. Sul telefono si vedrebbe solo che *l'interfaccia non la mostra*, che è un'affermazione molto più debole;
 - **la rivelazione della telepatia tace** con una sola scelta, né a chi ha scelto né a chi non ha scelto — e il partner non legge il sigillo dell'altro.
 
-⚠️ **Resta non provato ciò che è esperienza, non meccanica**: nessuna partita è mai stata giocata **da due persone su due telefoni**. Che i tratti arrivino fluidi, che il tempo scorra uguale sui due schermi, che il round passi quando deve — quello lo dice solo una partita vera. Il modo praticabile senza una seconda persona è **telefono + preview web** con i due account, che sono entrambi dell'utente.
+⚠️ **Resta non provato ciò che è esperienza, non meccanica**: che i tratti arrivino fluidi, che il tempo scorra uguale sui due schermi, che il round passi quando deve. Quello lo dice solo una partita vera. Il modo praticabile senza una seconda persona è **telefono + preview web** coi due account, che sono entrambi dell'utente. *(L'agente non può essere il secondo giocatore: servirebbe una sessione di uno dei due account, cioè un codice via email.)*
 
 **Cosa guardare alla prima partita vera, in ordine di quanto è probabile che sia rotto**:
+0. **L'hub si apre e si scorre?** Quattro carte (**D-62**, **D-65**), i puntini che si allungano, i due fogli, e il cartellino «serve il partner» al posto dei comandi se si è soli. ⚠️ E lo **zoom** premendo «Gioca» non deve essere tagliato sopra e sotto: è il motivo dei 48 punti di pista in più. È l'unico punto di questa lista che si prova **da soli**, quindi va per primo.
 1. **La partita parte?** Entrambi premono «avvia» e la schermata deve cambiare **da sola** su tutti e due. Se resta ferma su uno, il sospetto è il realtime su `partita_pronto`.
 2. **I tratti arrivano?** Chi indovina deve vedere il disegno **mentre** viene fatto, non alla fine. Se arriva a scatti o non arriva, è il canale broadcast.
 3. ⚠️ **Il tentativo giusto viene riconosciuto?** Lo giudica il telefono di **chi disegna**. Se un tentativo palesemente giusto non passa, guardare `normalizza` in `lib/parole.ts` prima di sospettare la rete.
@@ -1572,37 +1607,42 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 5. **La telepatia rivela solo quando hanno scelto in due**, e chi sceglie per primo **non deve vedere niente** finché l'altro non ha scelto. È il sigillo D-12: se trapelasse, è il difetto più grave dei due giochi.
 6. **A fine partita** l'anello si riempie e il numero sale.
 
-✅ **Il confine nuovo è coperto**, da `tests/partita.mjs` e non dai test avversariali — che restano quelli di RLS e non sanno niente di partite.
+⚠️ **Correzione del 2026-08-28, lasciata qui apposta**: in questo punto era stato scritto che il test di partita «ripulisce ciò che crea». **Era falso** — vedi **B-23**: mancava la policy di update su `partita`, quindi la pulizia non faceva niente e non lo diceva. Ora la policy c'è (migrazione **0021**, applicata) e la pulizia è asserita. 🔑 *Aver capito un difetto non è averlo evitato*: quella frase fu scritta con la sicurezza di chi aveva appena imparato la lezione.
 
-⚠️ **Correzione del 2026-08-28**: avevo scritto qui che il nuovo test «ripulisce ciò che crea». **Era falso** — vedi **B-23**: mancava la policy di update su `partita`, quindi la pulizia non faceva niente e non lo diceva. Ora la policy c'è (migrazione **0021**, da applicare) e la pulizia è **asserita**, che è la parte che mancava davvero.
+---
 
-**Fatto e verificato oggi sui giochi**: i due banchi da 500 voci in `lib/parole.ts`, con `npm run test:parole` (15 controlli verdi: nessuna chiave doppia, nessuna voce vuota, 25 temi da 20, e il normalizzatore dei tentativi provato su casi veri). **Non fatto**: le due schermate di gioco, il canale realtime, il timer, l'animazione del punteggio finale e i due punteggi al posto della Classifica.
+### ✅ Chiuso dal giro sull'iPhone del 2026-08-29
 
-✅ **L'app è stata aperta sull'iPhone**, finalmente, e il giro ha prodotto quattro risposte: commenti **funzionanti**, caricamento foto **migliorato**, B-15 **non riprodotto**, e due difetti confermati sul vetro — poi corretti con D-60 e D-61.
+Tutto ciò che era stato scritto il 2026-08-27 e il 2026-08-28 e mai visto girare è stato usato, e non si è trovato niente di rotto: **D-60** (il pannello «aggiungi un luogo» non è più in ombra), **B-16 / D-61** (il «+» della mappa ha il suo tondo), **D-64 / B-18 / B-19** (l'aggiunta di un posto è una sola, la tendina risponde, il posto nasce identico dalle due strade), **B-17** (il verso del titolo del calendario), **D-58**, **D-59**, e tutto il resto del 2026-08-27 — calendario, pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home.
 
-🔴 **Cosa guardare al prossimo giro, in ordine.** Sono tutte cose corrette o scritte **oggi e mai viste girare**:
-1. **Il pannello «aggiungi un luogo»** (D-60): la carta e **i due bottoni dentro** devono essere chiari. Erano i bottoni il colpevole più probabile — nidificati nel vetro della carta — ma la correzione copre anche il caso in cui fosse la carta, quindi *se è ancora in ombra la diagnosi è sbagliata in pieno*, non a metà.
-2. **Il «+» della mappa** (D-61 / B-16). ⚠️ Il caso di prova è preciso: **chiudere del tutto l'app e riaprirla**, non ricaricare — il difetto aveva quella finestra sola.
-3. **L'hub dei giochi**, ora a **quattro** carte (D-65: «indovina il disegno» in fondo, verde): la parte bassa **respira** ora (D-62, coda) — puntini, comandi, riga di stato e barra non devono più toccarsi — e ⚠️ lo **zoom** non deve essere tagliato sopra e sotto premendo «Gioca»: è il motivo dei 48 punti di pista in più. Poi il resto, mai visto: scorrimento fra le carte, puntini che si allungano, i due fogli, e il cartellino «serve il partner» al posto dei comandi se si è soli.
-4. **L'aggiunta di un posto, che ora è una sola** (D-64). Il «+» della mappa apre **lo stesso foglio** di Liste: non c'è più «Come lo chiamate?», non c'è più «segna dove sono». Da provare, in ordine: *(a)* il «+» **della mappa** e il «+» **di Liste** devono aprire la stessa identica cosa; *(b)* tre lettere → **la tendina**, e sotto le tre la riga che dice di scriverne ancora (B-18); *(c)* scelto un posto, deve comparire **subito il pin** sulla mappa (è la `ricarica` passata al foglio); *(d)* ⚠️ **e in Liste quello stesso posto deve avere la copertina** — è B-19, ed è l'unica metà che sulla mappa non si vede.
-5. **Tutto il resto del 2026-08-27**, che il primo giro non ha coperto: il calendario (pillola allineata, **titolo direzionale** — B-17 è stato corretto ma la prova è guardarlo: scorri due mesi avanti e due indietro, il titolo deve entrare dal lato da cui vieni —, scorrimento a giorni), la pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home, D-58/D-59.
+🔑 **Su D-60 vale la pena notare che la diagnosi era giusta *in pieno*, non a metà**: la correzione copriva sia il caso dei bottoni nidificati nel vetro della carta sia il caso della carta stessa, ed era scritto che se il pannello fosse rimasto in ombra la lettura di D-55 sarebbe stata sbagliata alla radice. Non è rimasto.
 
-⚠️ **I permessi non si provano in Expo Go** (B-20): il dialogo usa l'`Info.plist` di Expo Go, non il nostro. Tutto ciò che sta nei `plugins` di `app.json` — testi dei permessi, chiavi dichiarate — resta **non verificato** finché non si fa un build vero. È la prima cosa da ricontrollare il giorno in cui se ne farà uno.
+⚠️ **Con un limite dichiarato, che serve a leggere bene un'eventuale ricomparsa.** È stato un giro d'**uso**, non l'esecuzione dei quattro casi di prova stretti — che erano scritti apposta perché un giro normale **non li attraversa**: **B-16** voleva l'app *chiusa del tutto e riaperta*, non ricaricata; **B-19** voleva la scheda *in Liste*, che è la metà invisibile dalla mappa; **B-17** voleva *due mesi avanti e due indietro*; **D-59** voleva un rientro *senza che iOS avesse riavviato l'app*. Sono stati chiesti e non è arrivata risposta: restano non confermati singolarmente.
 
-✅ **B-17 chiuso**: `direzione` in `components/testata-calendario.tsx` è ora un `useSharedValue`. Cercata anche la **forma** del difetto in tutto il codice — nessun altro `.current` letto dentro un worklet. ⚠️ Non verificato sul telefono: si vede solo scorrendo i mesi, e l'avviso di Reanimated sparirà dai log di Metro alla prima apertura.
+🔑 **La conseguenza pratica, che è l'unica che conta**: se uno di questi quattro si ripresenta, **non è una regressione**. È la finestra stretta che il giro non ha attraversato, e la prima mossa è riprovarla col suo caso di prova — non cercare una causa nuova in codice che nel frattempo nessuno ha toccato.
 
-🔴 **Non deciso, e blocca il prossimo pezzo dei giochi**: **come si formula la Classifica** (D-62). *Chi ha vinto più volte* è una graduatoria persistente fra le due persone, e P-03 dice che il punteggio non deve diventare un verdetto sulla relazione. Va deciso prima di scriverne il conteggio.
+---
+
+### ⚠️ Cose vere che restano da sapere
+
+⚠️ **I permessi non si provano in Expo Go** (**B-20**): il dialogo usa l'`Info.plist` di Expo Go, non il nostro. Tutto ciò che sta nei `plugins` di `app.json` — testi dei permessi, chiavi dichiarate — resta **non verificato** finché non si fa un build vero, e nessun giro sull'iPhone per quanto accurato può intercettarlo. È la prima cosa da ricontrollare il giorno in cui se ne farà uno.
+
+⚠️ **Da fare al primo build vero**: `eas.json` col profilo APK, le variabili d'ambiente su EAS, il tetto di quota Google, e i dialoghi di sistema tradotti (backlog **11-quater**).
 
 ⚠️ **Il bundle web si compila solo da un Metro fresco.** Il 2026-08-28 il processo su :8081 è rimasto impiantato al 99,9% e non ha mai emesso una riga `Web Bundled`; un secondo Metro sulla porta 8082 ha prodotto lo stesso bundle in **7 secondi**. Non è un difetto del codice — ma se un giorno il bundle web «non finisce mai», la prima cosa da provare è **riavviare Metro**, non cercare il modulo colpevole.
 
-✅ **Chiave Google Places inserita nel `.env`** (terza sessione del 2026-08-27) e **verificata nel bundle iOS**, insieme a URL e anon key. Questo chiude il punto 1 della lista qui sotto e accende la ricerca luoghi/ristoranti di D-37.
+✅ **Chiave Google Places inserita nel `.env`** (terza sessione del 2026-08-27) e **verificata nel bundle iOS**, insieme a URL e anon key. Questo accende la ricerca luoghi/ristoranti di D-37.
 ⚠️ **E rende attuale un debito che era teorico**: la chiave ora vive nel bundle. Il **proxy dietro una Edge Function** e il **tetto di quota + avviso di budget** su Google Cloud vanno fatti **prima di utenti veri**, non prima della pubblicazione.
 
-✅ **D-58** — il calendario si apre sul **Diario**, non sul mese. ⚠️ Conseguenza non misurata: il Diario carica le anteprime delle foto, quindi ora quelle richieste partono a **ogni** apertura del calendario. Se l'apertura è lenta sul telefono, è il primo posto dove guardare.
-✅ **D-59** — la mappa **chiede** il permesso di posizione (dialogo iOS diretto, scelta dell'utente) e lo **rilegge a ogni focus**, così concederlo dalle Impostazioni dopo un rifiuto funziona senza riavviare. ⚠️ Il caso di prova vero è stretto: iOS di solito riavvia l'app quando si cambia un permesso dalle Impostazioni, e il riavvio maschererebbe il merito di `useFocusEffect` — per vederlo bisogna tornare **senza** che l'app si sia riavviata.
+✅ **D-58** — il calendario si apre sul **Diario**, non sul mese. ⚠️ Conseguenza mai **misurata**: il Diario carica le anteprime delle foto, quindi quelle richieste partono a *ogni* apertura del calendario. Il giro del 2026-08-29 non ha segnalato lentezza, ma non l'ha nemmeno cronometrata: se un giorno l'apertura risultasse lenta sul telefono, è il primo posto dove guardare.
+
+✅ **D-59** — la mappa **chiede** il permesso di posizione (dialogo iOS diretto, scelta dell'utente) e lo **rilegge a ogni focus**, così concederlo dalle Impostazioni dopo un rifiuto funziona senza riavviare.
 🔑 **Perché D-59 esisteva già e non funzionava per nessuno**: leggeva la posizione solo se il permesso era *già* concesso, e l'unico modo di concederlo era «segna dove sono adesso». Non un errore — **una funzione che tace**, sopravvissuta a due sessioni e a una rilettura del codice.
 
-**Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che parte. Zero risorse cloud, zero costi sostenuti.
+✅ **La Classifica è decisa** — era il blocco dichiarato il 2026-08-28. Il punteggio è **della coppia**, non fra i due: **Intesa** e **Sintonia**. 🔑 E scioglie P-03 da sé, invece di aggirarlo: una classifica *fra* le due persone sarebbe un verdetto sulla relazione; un totale condiviso no.
+
+**Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che gira sull'iPhone.
+⚠️ **Aggiornato il 2026-08-29** — la riga diceva ancora *«zero risorse cloud»*, scritta il 2026-08-12 e mai corretta: **non è più vera**. Esistono un progetto **Supabase** (piano gratuito, con 21 migrazioni applicate — va in pausa se resta fermo, vedi **R-02**) e una **chiave Google Places** attiva nel bundle. **Costi sostenuti finora: nessuno documentato**, entrambi i servizi essendo sul piano gratuito — ed è esattamente per questo che il tetto di quota su Google Cloud sta più in alto in questa pagina: 🔑 *un costo a zero perché nessuno lo usa non è un costo sotto controllo.*
 
 **Cosa è deciso**: le sei funzioni · i tre giochi da implementare per primi · lo stack completo (D-10) · l'ordine di implementazione (D-11) · la creatura geometrica ora e sostituibile poi (D-09) · il ciclo mestruale rimandato (D-07) e il divieto di reintrodurre art. 9 da altre porte (D-08) · le regole di scioglimento (D-04), posizione (D-05), invio sigillato (D-12) e pass (D-13).
 
