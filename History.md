@@ -28,7 +28,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
-### 2026-08-29 — Il giro di verifica: tutto ciò che era scritto e mai visto girare
+### 2026-08-28 (seconda sessione) — Il giro di verifica: tutto ciò che era scritto e mai visto girare
 
 **Chiesto dall'utente**: nessuno sviluppo. Un giro di verifica sull'iPhone di tutte le novità del 2026-08-27 e del 2026-08-28, e l'aggiornamento della documentazione con l'esito.
 
@@ -48,7 +48,7 @@ Cadono quindi i punti **1, 2, 4 e 5** della lista «cosa guardare al prossimo gi
 
 🔑 **La lezione è quella di ieri, applicata dal lato opposto.** Il 2026-08-28 il difetto era stato scrivere «verificato» dove era stato *scritto* e non provato (**B-23**). Oggi la tentazione rovesciata è scrivere «verificato» dove è stato *usato* e non *esercitato*. È la stessa scorciatoia con due facce: **la parola «verificato» vale quanto il caso di prova che ha dietro**, e quando il caso di prova non si conosce si dichiara, non si arrotonda.
 
-**Sessione**: [`workspace/sessione-2026-08-29.md`](../../workspace/sessione-2026-08-29.md).
+**Sessione**: [`workspace/sessione-2026-08-28-verifica-iphone.md`](../../workspace/sessione-2026-08-28-verifica-iphone.md).
 
 ### 2026-08-28 — Il primo giro sull'iPhone, e l'hub dei giochi
 
@@ -1114,7 +1114,7 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 🔑 **La lezione sta nel modo in cui è stato trovato**: la richiesta era *«lo stesso funzionamento di aggiungi luogo in elenco»*, e la lettura pigra è «la stessa tendina». Quella giusta è **lo stesso risultato**. Due strade che creano la stessa entità in due modi diversi sono un difetto, anche quando entrambe funzionano.
 
-✅ **Giro sull'iPhone del 2026-08-29**: l'aggiunta di un posto funziona da entrambe le strade. ⚠️ Non è confermato che sia stata aperta la scheda **in Liste**, che è la metà del difetto invisibile dalla mappa: il pin compare comunque, con o senza copertina.
+✅ **Giro di verifica del 2026-08-28**: l'aggiunta di un posto funziona da entrambe le strade. ⚠️ Non è confermato che sia stata aperta la scheda **in Liste**, che è la metà del difetto invisibile dalla mappa: il pin compare comunque, con o senza copertina.
 
 ### B-18 — Il campo di ricerca dei luoghi taceva, e il silenzio si legge come un guasto (2026-08-28, CHIUSO)
 
@@ -1133,7 +1133,7 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 **Verificato**: che l'API risponda è stato provato **davvero**, chiamando Places con la chiave del `.env` — HTTP 200 con risultati veri — prima di cercare il difetto nell'interfaccia. Senza quella prova la diagnosi sarebbe partita dal posto sbagliato.
 
-✅ **Giro sull'iPhone del 2026-08-29**: la tendina si apre e i consigli arrivano.
+✅ **Giro di verifica del 2026-08-28**: la tendina si apre e i consigli arrivano.
 
 ### B-17 — La testata del calendario legge un `ref` dentro un worklet (2026-08-28, CHIUSO)
 
@@ -1153,11 +1153,11 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 **Verificato**: `tsc` e `eslint` puliti, e nel bundle iOS `direzione.value` compare tre volte mentre `direzione.current` zero.
 
-✅ **Giro sull'iPhone del 2026-08-29**: il calendario è fra le cose che l'utente ha usato senza trovare niente di rotto. ⚠️ Ma non è confermato che i mesi siano stati scorsi avanti e indietro, che è l'unico gesto in cui il verso del titolo si vede — la parte **osservabile** di questa correzione resta quindi non esercitata. Il difetto tecnico è chiuso (il `ref` non c'è più); la funzione che proteggeva, no.
+✅ **Giro di verifica del 2026-08-28**: il calendario è fra le cose che l'utente ha usato senza trovare niente di rotto. ⚠️ Ma non è confermato che i mesi siano stati scorsi avanti e indietro, che è l'unico gesto in cui il verso del titolo si vede — la parte **osservabile** di questa correzione resta quindi non esercitata. Il difetto tecnico è chiuso (il `ref` non c'è più); la funzione che proteggeva, no.
 
 **Perché è stato trovato**: leggendo il log di Metro mentre si verificava altro. ⚠️ E la prima occorrenza è **precedente** alle modifiche di oggi, il che è l'unica ragione per cui non è stato scambiato per una regressione: quando si trova un avviso, la prima domanda è *da quando c'è*, non *cosa ho appena toccato*.
 
-### B-16 — Il «+» della mappa senza il suo tondo, ma solo appena avviata l'app (2026-08-28, CHIUSO — verificato su iPhone il 2026-08-29)
+### B-16 — Il «+» della mappa senza il suo tondo, ma solo appena avviata l'app (2026-08-28, CHIUSO — verificato su iPhone il 2026-08-28)
 
 **Sintomo, riferito dall'utente**: *«appena avvio l'applicazione non c'è il riquadro del pulsante "+" per l'aggiunta di luoghi sull'interfaccia mappa»*. Restava l'icona, spariva la superficie.
 
@@ -1169,7 +1169,7 @@ La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `e
 
 ⚠️ **Verificato solo per costruzione e per stringa** (`tsc`, `eslint`, i simboli nuovi presenti nel bundle iOS). Sul telefono **non ancora**: è la prima cosa del prossimo giro, e il caso di prova è preciso — *chiudere del tutto l'app e riaprirla*, non ricaricare.
 
-✅ **CHIUSO il 2026-08-29**: sull'iPhone il tondo del «+» c'è. ⚠️ Con un limite dichiarato — non è confermato che il giro abbia esercitato il caso di prova stretto, *chiudere del tutto l'app e riaprirla*, che era l'unica finestra in cui il difetto si manifestava. 🔑 Quindi: se il tondo dovesse tornare a mancare **al solo avvio a freddo**, non va letto come una regressione ma come questa finestra, mai attraversata.
+✅ **CHIUSO il 2026-08-28** (seconda sessione): sull'iPhone il tondo del «+» c'è. ⚠️ Con un limite dichiarato — non è confermato che il giro abbia esercitato il caso di prova stretto, *chiudere del tutto l'app e riaprirla*, che era l'unica finestra in cui il difetto si manifestava. 🔑 Quindi: se il tondo dovesse tornare a mancare **al solo avvio a freddo**, non va letto come una regressione ma come questa finestra, mai attraversata.
 
 ### B-01 — `assegna_punti` chiamabile via RPC da chiunque, anon compreso (2026-08-12)
 **Trovato**: con una chiamata di prova dall'esterno (`POST /rest/v1/rpc/assegna_punti` con la sola anon key), subito dopo l'applicazione di 0001. La chiamata è **entrata nella funzione** ed è stata fermata solo dal vincolo di chiave esterna, perché il `coppia_id` era inventato. Con un id reale, un utente poteva **auto-assegnarsi punti** saltando i trigger — violazione diretta di D-15.
@@ -1578,7 +1578,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-29** — giro di verifica sull'iPhone. Copre D-60→D-67 e B-16→B-23.
+**Aggiornato al 2026-08-28 (seconda sessione)** — giro di verifica sull'iPhone. Copre D-60→D-67 e B-16→B-23.
 
 **Dove siamo, in una riga**: l'app è stata usata sull'iPhone e funziona tutta **tranne i giochi**, che restano l'unico fronte mai visto girare su un dispositivo. Migrazioni **0020** e **0021** applicate; suite tutta verde.
 
@@ -1611,9 +1611,9 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ---
 
-### ✅ Chiuso dal giro sull'iPhone del 2026-08-29
+### ✅ Chiuso dal giro di verifica del 2026-08-28
 
-Tutto ciò che era stato scritto il 2026-08-27 e il 2026-08-28 e mai visto girare è stato usato, e non si è trovato niente di rotto: **D-60** (il pannello «aggiungi un luogo» non è più in ombra), **B-16 / D-61** (il «+» della mappa ha il suo tondo), **D-64 / B-18 / B-19** (l'aggiunta di un posto è una sola, la tendina risponde, il posto nasce identico dalle due strade), **B-17** (il verso del titolo del calendario), **D-58**, **D-59**, e tutto il resto del 2026-08-27 — calendario, pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home.
+Tutto ciò che era stato scritto il 2026-08-27 e nella prima sessione del 2026-08-28, e mai visto girare è stato usato, e non si è trovato niente di rotto: **D-60** (il pannello «aggiungi un luogo» non è più in ombra), **B-16 / D-61** (il «+» della mappa ha il suo tondo), **D-64 / B-18 / B-19** (l'aggiunta di un posto è una sola, la tendina risponde, il posto nasce identico dalle due strade), **B-17** (il verso del titolo del calendario), **D-58**, **D-59**, e tutto il resto del 2026-08-27 — calendario, pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home.
 
 🔑 **Su D-60 vale la pena notare che la diagnosi era giusta *in pieno*, non a metà**: la correzione copriva sia il caso dei bottoni nidificati nel vetro della carta sia il caso della carta stessa, ed era scritto che se il pannello fosse rimasto in ombra la lettura di D-55 sarebbe stata sbagliata alla radice. Non è rimasto.
 
@@ -1634,7 +1634,7 @@ Tutto ciò che era stato scritto il 2026-08-27 e il 2026-08-28 e mai visto girar
 ✅ **Chiave Google Places inserita nel `.env`** (terza sessione del 2026-08-27) e **verificata nel bundle iOS**, insieme a URL e anon key. Questo accende la ricerca luoghi/ristoranti di D-37.
 ⚠️ **E rende attuale un debito che era teorico**: la chiave ora vive nel bundle. Il **proxy dietro una Edge Function** e il **tetto di quota + avviso di budget** su Google Cloud vanno fatti **prima di utenti veri**, non prima della pubblicazione.
 
-✅ **D-58** — il calendario si apre sul **Diario**, non sul mese. ⚠️ Conseguenza mai **misurata**: il Diario carica le anteprime delle foto, quindi quelle richieste partono a *ogni* apertura del calendario. Il giro del 2026-08-29 non ha segnalato lentezza, ma non l'ha nemmeno cronometrata: se un giorno l'apertura risultasse lenta sul telefono, è il primo posto dove guardare.
+✅ **D-58** — il calendario si apre sul **Diario**, non sul mese. ⚠️ Conseguenza mai **misurata**: il Diario carica le anteprime delle foto, quindi quelle richieste partono a *ogni* apertura del calendario. Il giro di verifica non ha segnalato lentezza, ma non l'ha nemmeno cronometrata: se un giorno l'apertura risultasse lenta sul telefono, è il primo posto dove guardare.
 
 ✅ **D-59** — la mappa **chiede** il permesso di posizione (dialogo iOS diretto, scelta dell'utente) e lo **rilegge a ogni focus**, così concederlo dalle Impostazioni dopo un rifiuto funziona senza riavviare.
 🔑 **Perché D-59 esisteva già e non funzionava per nessuno**: leggeva la posizione solo se il permesso era *già* concesso, e l'unico modo di concederlo era «segna dove sono adesso». Non un errore — **una funzione che tace**, sopravvissuta a due sessioni e a una rilettura del codice.
@@ -1642,7 +1642,7 @@ Tutto ciò che era stato scritto il 2026-08-27 e il 2026-08-28 e mai visto girar
 ✅ **La Classifica è decisa** — era il blocco dichiarato il 2026-08-28. Il punteggio è **della coppia**, non fra i due: **Intesa** e **Sintonia**. 🔑 E scioglie P-03 da sé, invece di aggirarlo: una classifica *fra* le due persone sarebbe un verdetto sulla relazione; un totale condiviso no.
 
 **Stato**: progetto **inizializzato e funzionante**. Esistono i tre documenti, il repo su GitHub, il submodule nel brain e un'app Expo che gira sull'iPhone.
-⚠️ **Aggiornato il 2026-08-29** — la riga diceva ancora *«zero risorse cloud»*, scritta il 2026-08-12 e mai corretta: **non è più vera**. Esistono un progetto **Supabase** (piano gratuito, con 21 migrazioni applicate — va in pausa se resta fermo, vedi **R-02**) e una **chiave Google Places** attiva nel bundle. **Costi sostenuti finora: nessuno documentato**, entrambi i servizi essendo sul piano gratuito — ed è esattamente per questo che il tetto di quota su Google Cloud sta più in alto in questa pagina: 🔑 *un costo a zero perché nessuno lo usa non è un costo sotto controllo.*
+⚠️ **Aggiornato il 2026-08-28** — la riga diceva ancora *«zero risorse cloud»*, scritta il 2026-08-12 e mai corretta: **non è più vera**. Esistono un progetto **Supabase** (piano gratuito, con 21 migrazioni applicate — va in pausa se resta fermo, vedi **R-02**) e una **chiave Google Places** attiva nel bundle. **Costi sostenuti finora: nessuno documentato**, entrambi i servizi essendo sul piano gratuito — ed è esattamente per questo che il tetto di quota su Google Cloud sta più in alto in questa pagina: 🔑 *un costo a zero perché nessuno lo usa non è un costo sotto controllo.*
 
 **Cosa è deciso**: le sei funzioni · i tre giochi da implementare per primi · lo stack completo (D-10) · l'ordine di implementazione (D-11) · la creatura geometrica ora e sostituibile poi (D-09) · il ciclo mestruale rimandato (D-07) e il divieto di reintrodurre art. 9 da altre porte (D-08) · le regole di scioglimento (D-04), posizione (D-05), invio sigillato (D-12) e pass (D-13).
 
