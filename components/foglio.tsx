@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { Modal, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+} from 'react-native';
 import Riani, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,6 +42,27 @@ import { NienteSotto } from '@/components/ui/vetro';
  * `visibile` a `false` non smonta subito: prima si lascia finire l'uscita e
  * solo alla fine si toglie il `Modal`. Senza, il foglio sparirebbe di colpo e
  * l'animazione di chiusura non si vedrebbe mai.
+ *
+ * ## ⚠️ La tastiera la fa scansare il foglio, non chi lo riempie (2026-08-28)
+ *
+ * Un foglio sta **incollato in fondo allo schermo**: è esattamente il posto che
+ * la tastiera copre. Finora se ne occupava ogni schermata per conto suo — il
+ * calendario aveva il suo `KeyboardAvoidingView`, e chi scriveva il foglio
+ * successivo doveva ricordarsene.
+ *
+ * 🔑 **Non se l'è ricordato**: il foglio «crea una lista» (D-68) è nato senza,
+ * e la tastiera gli copriva i comandi. È la stessa forma del difetto che D-60
+ * aveva già diagnosticato per il vetro — *una regola che dipende dalla memoria
+ * di chi scrive la prossima schermata non è una regola, è una speranza* — e la
+ * stessa cura: il foglio sa di stare in fondo, quindi è il foglio a scansarsi.
+ *
+ * È anche la ragione per cui `NienteSotto` sta qui e non nelle schermate, due
+ * righe più sotto: stesso problema, stessa risposta, un posto solo.
+ *
+ * ⚠️ **Conseguenza per chi usa `Foglio`**: non serve — e non si deve — mettere
+ * un altro `KeyboardAvoidingView` dentro. Due contenitori che scansano la
+ * stessa tastiera sommano il loro spostamento, e il foglio schizza in alto del
+ * doppio.
  */
 export function Foglio({
   visibile,
@@ -86,15 +114,21 @@ export function Foglio({
           style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,8,14,0.4)' }]}
         />
       </Riani.View>
-      <Riani.View
-        pointerEvents="box-none"
-        style={[{ flex: 1, justifyContent: 'flex-end' }, stileFoglio]}
-      >
+      <Riani.View pointerEvents="box-none" style={[{ flex: 1 }, stileFoglio]}>
         {/* ⚠️ La velatura scura qui sopra e' proprio cio' che un vetro non deve
             sfocare: dichiararlo **una volta**, qui, evita che ogni schermata se
             lo ricordi — che e' come si e' perso il difetto del 2026-08-27.
             Vedi `ContestoNienteSotto` in `components/ui/vetro.tsx`. */}
-        <NienteSotto>{children}</NienteSotto>
+        {/* `box-none` anche qui: la parte vuota sopra il pannello deve
+            lasciar passare i tocchi alla velatura, che è ciò che chiude il
+            foglio toccando fuori. */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          pointerEvents="box-none"
+          style={{ flex: 1, justifyContent: 'flex-end' }}
+        >
+          <NienteSotto>{children}</NienteSotto>
+        </KeyboardAvoidingView>
       </Riani.View>
     </Modal>
   );

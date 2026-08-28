@@ -9,7 +9,6 @@ import {
   Platform,
   ActivityIndicator,
   Pressable,
-  KeyboardAvoidingView,
   Animated,
   Dimensions,
   PanResponder,
@@ -972,15 +971,14 @@ export default function Calendario() {
           pannello sale con una molla — le due cose separate, come su ogni foglio
           di sistema. Dettagli in `components/foglio.tsx`. */}
       <Foglio visibile={aperto} onChiudi={() => setAperto(false)}>
-        {/* La tastiera copriva il form: il foglio sale con lei, e il contenuto
-            scorre, cosi' la nota resta visibile mentre la si scrive. */}
-        {/* ⚠️ `flex-1` deve restare: il pannello sotto usa `max-h-[88%]`, e una
+        {/* ⚠️ Qui c'era un `KeyboardAvoidingView`, tolto il 2026-08-28: ora la
+            tastiera la scansa `Foglio` per tutti i fogli, e tenerne un secondo
+            avrebbe **sommato** i due spostamenti. La spiegazione sta in
+            `components/foglio.tsx`.
+            ⚠️ `flex-1` deve restare: il pannello sotto usa `max-h-[88%]`, e una
             percentuale ha bisogno di un genitore con un'altezza definita. Senza,
             il tetto dell'88% non si applica e un form lungo esce dallo schermo. */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 justify-end"
-        >
+        <View className="flex-1 justify-end">
           <View className="max-h-[88%] rounded-t-3xl bg-card">
             <ScrollView
               contentContainerClassName="gap-4 p-6"
@@ -1297,7 +1295,7 @@ export default function Calendario() {
               <View style={{ height: 8 }} />
             </ScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Foglio>
     </View>
   );
