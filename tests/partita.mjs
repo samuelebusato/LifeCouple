@@ -16,8 +16,11 @@
 // Prerequisiti: come `rls.avversariali.mjs` — `.env` compilato e "Confirm
 // email" spento nel dashboard. Crea utenti gioco-*@example.com.
 //
-// ⚠️ **Ripulisce ciò che crea** (a differenza di `rls.avversariali.mjs`, ed è
-// proprio quella mancanza che ha fatto fallire la migrazione 0020 — vedi B-21).
+// ⚠️ **Ripulisce ciò che crea**, e soprattutto **verifica di averlo fatto**.
+// La prima versione si limitava a lanciare l'UPDATE: non funzionava — mancava
+// la policy di update su `partita` (0021) — e non lo diceva, perché un UPDATE
+// negato dalla RLS torna «riuscito» con zero righe. Una pulizia non asserita è
+// una pulizia che non sta avvenendo, ed è la stessa forma di B-21.
 // =============================================================================
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
@@ -87,13 +90,25 @@ async function coppiaDiDue() {
   return { a, b, coppia };
 }
 
-/** Toglie di mezzo le partite vive: l'indice unico ne ammette una per gioco. */
+/**
+ * Toglie di mezzo le partite vive: l'indice unico ne ammette una per gioco.
+ *
+ * ⚠️ **Restituisce quante ne restano**, e chi la chiama alla fine lo asserisce.
+ * Senza, una pulizia che non funziona è indistinguibile da una che funziona:
+ * l'UPDATE negato dalla RLS non solleva niente.
+ */
 async function pulisci(a, coppia) {
   await a.c
     .from('partita')
     .update({ stato: 'abbandonata' })
     .eq('coppia_id', coppia)
     .in('stato', ['attesa', 'in_corso']);
+  const { data } = await a.c
+    .from('partita')
+    .select('id')
+    .eq('coppia_id', coppia)
+    .in('stato', ['attesa', 'in_corso']);
+  return (data ?? []).length;
 }
 
 // =============================================================================
@@ -271,7 +286,14 @@ console.log('\nTelepatia');
 }
 
 // =============================================================================
-await pulisci(a, coppia);
+console.log('\nPulizia');
+const restate = await pulisci(a, coppia);
+esito(
+  'la pulizia finale non lascia partite vive',
+  restate === 0,
+  `restano ${restate} — manca la policy di update su partita? (migrazione 0021)`
+);
+
 console.log(`\n${ok}/${ok + ko} asserzioni passate`);
 if (ko > 0) {
   console.error(`${ko} fallite.`);

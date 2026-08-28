@@ -233,10 +233,32 @@ export function usePartita(gioco: CodiceGioco) {
     []
   );
 
-  /** Abbandona: serve a non lasciare una partita viva che blocca la prossima. */
+  /**
+   * Abbandona: serve a non lasciare una partita viva che blocca la prossima.
+   *
+   * ⚠️ **Controlla di averlo fatto davvero.** Fino al 2026-08-28 questa funzione
+   * non funzionava e non lo diceva: mancava la policy di `update` su
+   * `partita` (migrazione 0021), e un UPDATE negato dalla RLS torna
+   * «riuscito» con zero righe toccate. Chiudere la schermata azzerando lo stato
+   * locale faceva sembrare tutto a posto mentre la partita restava viva nel
+   * database, a bloccare la successiva.
+   *
+   * 🔑 La regola che ne esce: **dopo una scrittura che dipende da un permesso,
+   * si rilegge.** Non perché la rete possa fallire — quello lo direbbe l'errore
+   * — ma perché il permesso che manca non fallisce: tace.
+   */
   const abbandona = React.useCallback(async () => {
     if (!partita) return;
-    await supabase.from('partita').update({ stato: 'abbandonata' }).eq('id', partita.id);
+    const { error } = await supabase
+      .from('partita')
+      .update({ stato: 'abbandonata' })
+      .eq('id', partita.id);
+    if (error) return setErrore(error.message);
+
+    const { data } = await supabase.from('partita').select('stato').eq('id', partita.id).maybeSingle();
+    if (data && data.stato !== 'abbandonata') {
+      return setErrore('la partita non si è chiusa: manca il permesso di aggiornarla');
+    }
     setPartita(null);
     setRound(null);
     setPronti([]);

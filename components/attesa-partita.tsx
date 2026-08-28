@@ -6,6 +6,7 @@ import { Fondo } from '@/components/schermata';
 import { BottoneVetro, BottonePieno } from '@/components/ui/vetro';
 import { Emblema } from '@/components/emblema';
 import { useTema } from '@/lib/tema';
+import { t } from '@/lib/i18n';
 
 /**
  * L'anticamera di una partita: si prepara, si preme «avvia», si aspetta l'altro.
@@ -21,6 +22,7 @@ export function Attesa({
   azione,
   onAzione,
   onEsci,
+  onAnnulla,
   attesa = false,
 }: {
   titolo: string;
@@ -29,6 +31,17 @@ export function Attesa({
   azione?: string;
   onAzione?: () => void;
   onEsci: () => void;
+  /**
+   * Annulla **la partita**, non solo la schermata.
+   *
+   * 🔑 Serve perché senza, una partita in attesa non si può togliere di mezzo
+   * da nessuna parte: il database ne ammette **una viva per gioco**, quindi
+   * quella rimasta appesa impedisce di cominciarne un'altra — per sempre, e
+   * senza dire perché. Uscire con «indietro» lascia la partita dov'è: è la cosa
+   * giusta se stai solo sbirciando, ed è una trappola se è l'unico modo di
+   * uscire che esiste.
+   */
+  onAnnulla?: () => void;
   /** Vero mentre si aspetta l'altra persona: mostra la rotella al posto sua. */
   attesa?: boolean;
 }) {
@@ -64,9 +77,18 @@ export function Attesa({
             <BottonePieno testo={azione} onPress={onAzione} style={{ minWidth: 240 }} />
           )}
         </View>
-        <View className="px-8 pb-8">
+        <View className="gap-2 px-8 pb-8">
+          {/* ⚠️ Annullare è **secondario e scritto per esteso**: «indietro» lo si
+              preme distrattamente, e se la stessa gesto buttasse via la partita
+              che l'altro sta aspettando di iniziare sarebbe una perdita causata
+              dall'interfaccia, non dall'utente. */}
+          {!!onAnnulla && (
+            <BottoneVetro altezza={46} variante="pericolo" onPress={onAnnulla}>
+              <Text>{t.gioco.annulla}</Text>
+            </BottoneVetro>
+          )}
           <BottoneVetro altezza={46} onPress={onEsci}>
-            <Text>{'←'}</Text>
+            <Text>{t.gioco.indietro}</Text>
           </BottoneVetro>
         </View>
       </SafeAreaView>

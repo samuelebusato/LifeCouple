@@ -999,6 +999,25 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-23 — Una partita non si poteva abbandonare, e il permesso mancante taceva (2026-08-28, CORRETTO con 0021 — da applicare)
+
+**Trovato** perché l'utente ha chiesto di fermare le partite attive. Ho lanciato la pulizia sugli account di prova, l'output diceva «abbandonata» quattro volte, e **ho ricontrollato**: quattro partite ancora vive.
+
+**La causa**: `partita` aveva, dal 2026-08-12, una policy di `select` e una di `insert`. **Nessuna di `update`.** Con la RLS attiva nessuno può modificare una partita passando dal client — quindi `abbandona()` nell'app e la pulizia in coda a `tests/partita.mjs` non facevano **niente**.
+
+🔑 **E non lo dicevano.** Un UPDATE negato dalla RLS **non è un errore**: la query torna con `error: null` e zero righe toccate. Chi la scrive vede che è andata bene e va avanti. È il modo peggiore in cui un permesso può mancare — non fallisce, tace. *La rete che cade te lo dice; il permesso che manca no.*
+
+**Perché i 41 test passavano lo stesso**: tutte le scritture che contano — `segna_pronto`, `chiudi_round`, `rivela_telepatia` — passano da funzioni `security definer`, che la RLS la scavalcano per costruzione. L'unica scrittura diretta era la pulizia, e **nessuna asserzione la verificava**.
+
+🔴 **E questa è la parte che pesa di più**: nella stessa giornata avevo scritto, in questo file e nel commit, che il nuovo test «ripulisce ciò che crea, a differenza di `rls.avversariali.mjs`» — indicando quella mancanza come la causa di B-21. **L'affermazione era falsa**, ed è stata scritta con la sicurezza di chi ha appena imparato la lezione. *Aver capito un difetto non è averlo evitato: la seconda cosa va verificata come la prima.*
+
+**Correzione, in tre pezzi**:
+1. migrazione **0021**: la policy di `update` su `partita` per i membri della coppia. ⚠️ **Nessuna di `delete`, ed è voluto**: una partita conclusa è il punteggio della coppia, cioè ciò che alimenta «Intesa» e «Sintonia» — poterla cancellare vorrebbe dire riscrivere il passato condiviso, e da un solo lato;
+2. `tests/partita.mjs`: la pulizia **restituisce quante ne restano** e chi la chiama lo **asserisce**. Ora il test fallisce forte al punto giusto invece di passare lasciando spazzatura;
+3. `abbandona()` **rilegge dopo aver scritto** e mostra un errore se la partita è ancora viva. La regola generale: *dopo una scrittura che dipende da un permesso, si rilegge.*
+
+**E un difetto d'interfaccia che ne discendeva**: una partita in attesa non si poteva togliere di mezzo da nessuna parte. Il database ne ammette **una viva per gioco**, quindi quella appesa avrebbe impedito di cominciarne un'altra — per sempre, e senza dire perché. Aggiunto «Annulla la partita» nell'anticamera, secondario e scritto per esteso: «indietro» lo si preme distrattamente, e la stessa gesto non deve buttare via la partita che l'altro sta aspettando.
+
 ### B-22 — «Avvia partita» e «Gioca» sembravano disattivati (2026-08-28, CORRETTO)
 
 **Sintomo, riferito dall'utente**: *«il pulsante avvia partita sembra "disattivato", così come il pulsante "gioca"»*. Non lo erano: lo **sembravano**.
@@ -1038,7 +1057,11 @@ La sequenza giusta è **togli, sistema, rimetti**. La regola generale, che è la
 
 ⚠️ **Nota di metodo su come è stata trovata la seconda volta**: il primo errore diceva *«violata da qualche riga»* (dati vecchi), il secondo *«nuova riga viola»* (una scrittura in corso). Sono due messaggi diversi per due guasti diversi, e leggerli come «di nuovo il solito problema» avrebbe portato a rimettere mano ai dati invece che all'ordine.
 
-**Aperto, e non corretto qui**: 🔴 **i test avversariali non ripuliscono ciò che creano.** Non è un difetto del prodotto ma della suite, e ha appena prodotto un guasto vero. Finché resta, ogni esecuzione lascia righe in `partita` e `invio_sigillato`, e la prossima migrazione che tocca quelle tabelle inciamperà allo stesso modo.
+✅ **CHIUSO il 2026-08-28**, dopo la migrazione 0021: `rls.avversariali.mjs` ora ripulisce, e verificato che il database resti a zero partite vive.
+
+🔑 **Non si sarebbe potuto chiudere prima**, e non per distrazione: mancava la policy di update su `partita` (**B-23**), quindi qualunque pulizia sarebbe tornata «riuscita» senza toccare niente. *Il difetto che impediva di ripulire era lo stesso che rendeva invisibile il non aver ripulito.*
+
+🔑 **E la pulizia sta in TESTA, non solo in coda.** La prima stesura la metteva alla fine del file e non serviva a niente: al primo tentativo il test è fallito prima di arrivarci, con l'indice unico che rifiutava la partita nuova per colpa di quella vecchia. **Pulire dopo funziona solo se il test riesce; pulire prima funziona sempre.** In coda c'è comunque, ma come igiene, non come garanzia.
 
 **Verificato**: solo staticamente — delimitatori di funzione pari, otto `create policy` e otto `drop policy if exists` appaiati. ⚠️ Su questa macchina non c'è un Postgres (niente Docker, niente `psql`): **la prova vera è l'esecuzione**, e la fa l'utente.
 
@@ -1521,6 +1544,8 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 **Aggiornato al 2026-08-28 (primo giro sull'iPhone, D-60→D-66, B-16→B-20).**
 
+🔴 **Da applicare: la migrazione `0021_partita_abbandonabile.sql`** — senza, nessuna partita si può abbandonare (B-23) e `npm run test:partita` si ferma al blocco della telepatia, perché la partita di prova precedente resta viva e l'indice unico non ne ammette una seconda.
+
 ✅ **Migrazione 0020 applicata dall'utente** dopo due fallimenti (**B-21**), e **verificata contro il database vero**: le quattro tabelle nuove rispondono, le quattro colonne nuove di `partita` esistono, e le tre funzioni girano — interrogate via `/rest/v1/rpc` hanno risposto con le **nostre** eccezioni, che è la prova che esistono e che le firme sono giuste.
 
 ✅ **I due giochi sono scritti** (**D-67**): «indovina il disegno» (5 round) e «telepatia» (10 round), versione ufficiale. Con loro: i due punteggi **Intesa** e **Sintonia** al posto della Classifica, l'anello del punteggio finale, e i banchi da 500 voci verificati con `npm run test:parole`.
@@ -1541,7 +1566,9 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 5. **La telepatia rivela solo quando hanno scelto in due**, e chi sceglie per primo **non deve vedere niente** finché l'altro non ha scelto. È il sigillo D-12: se trapelasse, è il difetto più grave dei due giochi.
 6. **A fine partita** l'anello si riempie e il numero sale.
 
-✅ **Il confine nuovo è coperto**, da `tests/partita.mjs` e non dai test avversariali — che restano quelli di RLS e non sanno niente di partite. ⚠️ Il nuovo test **ripulisce ciò che crea**, a differenza di `rls.avversariali.mjs`: quella mancanza è ciò che ha fatto fallire la migrazione 0020 (B-21), e non valeva la pena ripeterla.
+✅ **Il confine nuovo è coperto**, da `tests/partita.mjs` e non dai test avversariali — che restano quelli di RLS e non sanno niente di partite.
+
+⚠️ **Correzione del 2026-08-28**: avevo scritto qui che il nuovo test «ripulisce ciò che crea». **Era falso** — vedi **B-23**: mancava la policy di update su `partita`, quindi la pulizia non faceva niente e non lo diceva. Ora la policy c'è (migrazione **0021**, da applicare) e la pulizia è **asserita**, che è la parte che mancava davvero.
 
 **Fatto e verificato oggi sui giochi**: i due banchi da 500 voci in `lib/parole.ts`, con `npm run test:parole` (15 controlli verdi: nessuna chiave doppia, nessuna voce vuota, 25 temi da 20, e il normalizzatore dei tentativi provato su casi veri). **Non fatto**: le due schermate di gioco, il canale realtime, il timer, l'animazione del punteggio finale e i due punteggi al posto della Classifica.
 

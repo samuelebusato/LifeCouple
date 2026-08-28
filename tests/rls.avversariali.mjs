@@ -208,6 +208,33 @@ let luogoId;
 
 // --- giochi: il sigillo (D-12) --------------------------------------------------
 {
+  // 🔑 **Si pulisce PRIMA, non dopo** (B-21).
+  //
+  // Questi test creano una partita a ogni esecuzione, e per due settimane non
+  // ne hanno mai tolta una: il 2026-08-28 quelle righe hanno fatto fallire la
+  // migrazione 0020, che stringeva il vincolo sugli stati e trovava valori del
+  // ciclo di vita vecchio.
+  //
+  // La prima stesura di questa pulizia stava in coda al file — e non serviva a
+  // niente: se il test fallisce prima, la coda non viene mai raggiunta. E'
+  // successo al primo tentativo, con l'indice `partita_una_viva` che rifiutava
+  // la partita nuova per colpa di quella vecchia. **Pulire dopo funziona solo
+  // se il test riesce; pulire prima funziona sempre.**
+  //
+  // ⚠️ Prima del 2026-08-28 questa pulizia non si sarebbe potuta scrivere
+  // affatto: mancava la policy di update su `partita` (B-23), quindi l'UPDATE
+  // sarebbe tornato «riuscito» senza toccare niente. Il difetto che impediva di
+  // ripulire era lo stesso che rendeva invisibile il non aver ripulito.
+  await a1.from('partita').update({ stato: 'abbandonata' }).in('stato', ['attesa', 'in_corso']);
+  const { data: vive } = await a1.from('partita').select('id').in('stato', ['attesa', 'in_corso']);
+  esito(
+    'la pulizia iniziale non lascia partite vive (B-21)',
+    (vive ?? []).length === 0,
+    // Sul PASS questo dettaglio si stampa comunque: tenerlo neutro. Il
+    // perche' di un eventuale fallimento sta nel commento qui sopra.
+    `vive: ${(vive ?? []).length}`
+  );
+
   const { data: partita, error } = await a1
     .from('partita')
     .insert({ coppia_id: coppiaA, gioco: 'telepatia' })
@@ -322,6 +349,7 @@ let luogoId;
   esito('il partner appaiato legge i contenuti della coppia', Array.isArray(partnerVede));
 
   // --- sigillo (D-12) con DUE membri veri: prima era non coperto -----------------
+  await a2.from('partita').update({ stato: 'abbandonata' }).in('stato', ['attesa', 'in_corso']);
   const { data: part } = await a2.from('partita').insert({ coppia_id: coppiaFormata, gioco: 'telepatia' }).select().single();
   await a2.from('invio_sigillato').insert({ partita_id: part.id, natura: 'scelta', contenuto: { s: 'A' } });
   const { data: sbircia } = await partner.from('invio_sigillato').select('*').eq('partita_id', part.id);
@@ -462,6 +490,24 @@ let luogoId;
 }
 
 // =============================================================================
+// PULIZIA — la mancanza che ha fatto fallire una migrazione (B-21)
+//
+// Questi test creano partite per provare il sigillo di D-12, e per due settimane
+// non le hanno mai tolte di mezzo: una a ogni esecuzione. Il 2026-08-28 quelle
+// righe hanno fatto fallire la migrazione 0020, che stringeva il vincolo sugli
+// stati e trovava valori del ciclo di vita vecchio.
+//
+// 🔑 Prima del 2026-08-28 questa pulizia **non si sarebbe potuta scrivere**, e
+// non per distrazione: mancava la policy di update su `partita` (B-23), quindi
+// l'UPDATE sarebbe tornato «riuscito» senza toccare niente. Il difetto che
+// impediva di ripulire era lo stesso che rendeva invisibile il non aver
+// ripulito.
+//
+// ⚠️ Si **verifica** di aver pulito, invece di limitarsi a lanciare la query: un
+// permesso mancante non fallisce, tace — ed e' esattamente cosi' che la prima
+// versione di questa pulizia sarebbe passata inosservata una seconda volta.
+// =============================================================================
+// =============================================================================
 console.log('\n--- Dichiarati NON coperti (nessun gap silenzioso) ---');
 console.log('- file nello storage delle foto: la riga si cancella, il file no — non c e ancora storage');
 console.log('- tetto cumulativo 1 GB: richiederebbe ~100 insert; verificata la sola guardia per-file');
@@ -470,6 +516,17 @@ console.log(
     '  sia "non li vedo". Servirebbe la service_role, che non entra in questo repo.\n' +
     '  Coperte invece le conseguenze: l ex non legge, non scrive e non invita.'
 );
+
+// Pulizia in coda: **in piu**, non al posto di quella in testa.
+// Quella in testa garantisce che il giro funzioni anche partendo sporco;
+// questa lascia il campo pulito quando il giro arriva in fondo. Se il test
+// muore prima non gira — ed e proprio per questo che non puo essere la sola.
+// ⚠️ Client nuovi e non `a1`/`a2`: quelli vivono dentro i blocchi `{ }` piu
+// sopra e qui non esistono. Il primo tentativo e morto proprio cosi.
+for (const email of ['rls-a1@example.com', 'rls-a2@example.com']) {
+  const c = await utente(email);
+  await c.from('partita').update({ stato: 'abbandonata' }).in('stato', ['attesa', 'in_corso']);
+}
 
 console.log(`\n${falliti === 0 ? 'TUTTI I TEST PASSANO' : `${falliti} TEST FALLITI`}`);
 process.exit(falliti === 0 ? 0 : 1);

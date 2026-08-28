@@ -240,6 +240,10 @@ export default function GiocoDisegno() {
         titolo={t.giochi.indovina_disegno}
         testo={p.ioSonoPronto ? t.gioco.attendoAltro : t.gioco.pronti}
         onEsci={() => router.back()}
+        onAnnulla={async () => {
+          await p.abbandona();
+          router.back();
+        }}
         azione={p.ioSonoPronto ? undefined : t.gioco.avvia}
         onAzione={p.premiAvvia}
         attesa={p.ioSonoPronto}
