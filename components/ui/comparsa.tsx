@@ -50,6 +50,7 @@ export function Comparsa({
   ritardo = 0,
   /** Quanto e' piccola all'inizio. 1 = non rimpicciolisce. */
   scala = 0.96,
+  entraAlMontaggio = true,
 }: {
   visibile: boolean;
   children?: React.ReactNode;
@@ -58,10 +59,32 @@ export function Comparsa({
   scarto?: number;
   ritardo?: number;
   scala?: number;
+  /**
+   * Anima l'entrata anche quando l'elemento e' **gia' visibile al montaggio**?
+   *
+   * ## Perche' esiste (2026-08-28)
+   *
+   * Due ragioni, e la seconda e' un difetto vero riferito dall'utente.
+   *
+   * 1. Un elemento che c'e' gia' quando la schermata compare **non ha nulla da
+   *    cui entrare**: sta entrando la schermata. L'entrata dentro l'entrata si
+   *    legge come uno scatto, non come un movimento in piu'.
+   * 2. ⚠️ **Il vetro di sistema non sopravvive al montaggio a opacita' zero.**
+   *    Su iOS il Liquid Glass e' una vista nativa che campiona cio' che ha
+   *    dietro; creata dentro un livello a opacita' 0 non cattura niente, e
+   *    quando l'opacita' torna a 1 l'effetto **non si ripresenta da solo**:
+   *    restano i figli — l'icona — e la superficie no. E' esattamente il «+»
+   *    della mappa senza il suo tondo *appena avviata l'app*, e solo allora:
+   *    dopo, il componente si rimonta a schermo gia' acceso e il vetro c'e'.
+   *
+   * Con `false` l'elemento parte gia' presente e si anima solo dai cambi
+   * successivi — che sono quelli che l'occhio segue davvero.
+   */
+  entraAlMontaggio?: boolean;
 }) {
   const [montato, setMontato] = React.useState(visibile);
   /** 0 = assente, 1 = del tutto presente. */
-  const p = useSharedValue(0);
+  const p = useSharedValue(visibile && !entraAlMontaggio ? 1 : 0);
 
   /**
    * ⚠️ Il verso **precedente**, in un ref.
@@ -75,6 +98,12 @@ export function Comparsa({
 
   React.useEffect(() => {
     if (verso.current === visibile) return;
+    // Gia' presente al primo giro: nessuna entrata da fare. Si prende nota del
+    // verso e basta, cosi' l'**uscita** continua a funzionare come sempre.
+    if (verso.current === null && visibile && !entraAlMontaggio) {
+      verso.current = visibile;
+      return;
+    }
     verso.current = visibile;
 
     if (visibile) {
@@ -85,7 +114,7 @@ export function Comparsa({
         if (finita) runOnJS(setMontato)(false);
       });
     }
-  }, [visibile, montato, p, ritardo]);
+  }, [visibile, montato, p, ritardo, entraAlMontaggio]);
 
   /**
    * ⚠️ **Un'animazione non puo' nascondere il contenuto.** Rete di sicurezza.

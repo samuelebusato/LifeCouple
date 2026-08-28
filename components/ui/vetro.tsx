@@ -59,6 +59,47 @@ import { durata } from '@/lib/movimento';
 // del Liquid Glass sul web non esiste (avrebbe rotto — ha rotto — il bundle).
 import { GlassView, VETRO_NATIVO as vetroNativo } from '@/components/ui/vetro-nativo';
 
+/**
+ * **Sotto, da qui in giu', non c'e' niente da guardare.**
+ *
+ * ## Perche' esiste (2026-08-28)
+ *
+ * Il 2026-08-27 la regola era «vetro dentro un foglio ⇒ `fondo="pieno"`», e
+ * doveva ricordarsela chi scriveva la schermata. Nel commento di
+ * `cerca-luogo.tsx` c'era scritto anche il perche' non poteva essere
+ * altrimenti: *«un componente non sa in che albero e' stato montato»*.
+ *
+ * **Era falso**, ed e' costato il difetto: il contesto di React e' esattamente
+ * il modo in cui un componente sa in che albero e' stato montato. Con cento
+ * punti che usano il vetro, la disciplina al punto di chiamata non regge — e
+ * infatti non ha retto: il pannello del posto nuovo aveva la sua base, ma i
+ * **bottoni dentro** no, ed erano loro a leggersi in ombra.
+ *
+ * Chi mette una velatura scura lo dichiara **una volta**, e ogni vetro sotto di
+ * lui si adegua da solo. Un `Vetro` lo dichiara ai propri figli senza che
+ * nessuno debba dirglielo: sotto un vetro c'e' il vetro, non il contenuto.
+ *
+ * ## E fa la seconda meta' del lavoro: **niente vetro dentro il vetro**
+ *
+ * Su iOS 26 il Liquid Glass e' una vista **nativa** che campiona cio' che ha
+ * dietro *nella finestra*. Annidarne uno dentro un altro non lo fa campionare
+ * il vetro che lo contiene: gli fa campionare lo sfondo di tutti e due — cioe'
+ * la velatura scura del modale. Il bottone dentro il foglio diventa **scuro**,
+ * ed e' il difetto riferito. Quando siamo dentro, quindi, si usano i tre
+ * strati: sopra una base chiara opaca danno la stessa superficie chiara, senza
+ * chiedere al sistema una composizione che non supporta.
+ */
+const ContestoNienteSotto = React.createContext(false);
+
+/**
+ * Dichiara che da qui in giu' sotto il vetro c'e' una velatura di modale e non
+ * del contenuto. Da mettere in cima a ogni foglio (`components/foglio.tsx` lo
+ * fa da se'); i `Modal` costruiti a mano lo ereditano dalla loro carta.
+ */
+export function NienteSotto({ children }: { children?: React.ReactNode }) {
+  return <ContestoNienteSotto.Provider value={true}>{children}</ContestoNienteSotto.Provider>;
+}
+
 type VetroProps = {
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -95,10 +136,16 @@ export function Vetro({
   intensita,
   ombra = true,
   tinto = false,
-  fondo = 'niente',
+  fondo,
   interattivo = false,
 }: VetroProps) {
   const { vetro } = useTema();
+  /**
+   * Il valore passato **vince sempre**: il contesto e' il default giusto, non
+   * un'imposizione. Chi ha un caso che il contesto non prevede lo dichiara.
+   */
+  const nienteSotto = React.useContext(ContestoNienteSotto);
+  const fondoVero = fondo ?? (nienteSotto ? 'pieno' : 'niente');
 
   /**
    * ⚠️ **Bianco, non il colore della carta.** Sotto una velatura gia' chiara
@@ -106,9 +153,9 @@ export function Vetro({
    * non e' dare un colore, e' impedire che passi il buio.
    */
   const colorePiano =
-    fondo === 'pieno'
+    fondoVero === 'pieno'
       ? 'rgba(255,255,255,0.94)'
-      : fondo === 'sicuro'
+      : fondoVero === 'sicuro'
         ? 'rgba(255,255,255,0.22)'
         : null;
   const piano = colorePiano ? (
@@ -130,7 +177,26 @@ export function Vetro({
       }
     : null;
 
-  if (vetroNativo && GlassView) {
+  /**
+   * Il materiale di sistema si usa **solo dove ha davvero qualcosa da mostrare**.
+   * Due esclusioni, e sono le due facce dello stesso difetto:
+   *
+   * - `nienteSotto`: vetro di sistema **dentro** vetro di sistema non campiona
+   *   il vetro che lo contiene, campiona lo sfondo di entrambi — cioe' la
+   *   velatura scura del modale. E' cosi' che il bottone dentro il foglio
+   *   diventava scuro.
+   * - `fondoVero === 'pieno'`: sotto c'e' una base **opaca**. Non c'e' niente da
+   *   attraversare, quindi non c'e' niente da guadagnare — e resta solo il
+   *   rischio che il materiale campioni il buio invece della base. Un vetro a
+   *   cui si e' tolto il "attraverso" non e' piu' vetro: e' una superficie
+   *   chiara, ed e' meglio disegnarla noi che chiederla al sistema.
+   *
+   * ⚠️ La seconda copre il caso che il 2026-08-27 si era dato per risolto: il
+   * pannello del posto nuovo *aveva* `fondo="pieno"`, e all'utente si leggeva
+   * ancora in ombra. Cosi' l'esito non dipende piu' da quale dei due strati
+   * fosse il colpevole.
+   */
+  if (vetroNativo && GlassView && !nienteSotto && fondoVero !== 'pieno') {
     return (
       <View style={[stileOmbra, { borderRadius: raggio }, style]}>
         {/* ⚠️ Il piano sta **fuori** dal `GlassView` e dietro di lui, non
@@ -159,7 +225,7 @@ export function Vetro({
           isInteractive={interattivo}
           tintColor={tinto ? 'rgba(228,37,158,0.28)' : undefined}
         >
-          {children}
+          <NienteSotto>{children}</NienteSotto>
         </GlassView>
       </View>
     );
@@ -171,7 +237,7 @@ export function Vetro({
         {piano}
         {/* ⚠️ Con la base **opaca** la sfocatura non ha piu' niente da sfocare:
             si salta, ed e' una vista nativa in meno per ogni foglio aperto. */}
-        {fondo !== 'pieno' && (
+        {fondoVero !== 'pieno' && (
           <BlurView
             intensity={intensita ?? vetro.intensita}
             tint={vetro.tinta}
@@ -192,7 +258,7 @@ export function Vetro({
           colors={vetro.riflesso as unknown as [string, string]}
           style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '55%' }}
         />
-        {children}
+        <NienteSotto>{children}</NienteSotto>
         {/* Bordo per ultimo, sopra tutto, e non cliccabile. */}
         <View
           pointerEvents="none"
@@ -234,9 +300,21 @@ export function BottoneVetro({
   style?: StyleProp<ViewStyle>;
   altezza?: number;
 }) {
+  /**
+   * ⚠️ **Non `vetroNativo` da solo** (2026-08-28). Quel flag dice se il sistema
+   * ha il Liquid Glass, non se **questo** bottone lo sta usando: dentro un
+   * foglio non lo usa (vedi `ContestoNienteSotto`), e il bianco pensato per il
+   * vetro tinto di sistema finirebbe su una velatura rosa chiara — bianco su
+   * rosa chiaro, cioe' un'etichetta illeggibile. La domanda giusta non e'
+   * «il sistema ha il vetro?» ma «che superficie ho sotto i piedi io?».
+   */
+  // L'hook si chiama sempre e per primo: dietro un `&&` che cortocircuita
+  // sarebbe una chiamata condizionale, cioe' un ordine degli hook variabile.
+  const nienteSotto = React.useContext(ContestoNienteSotto);
+  const nativoQui = !!(vetroNativo && GlassView) && !nienteSotto;
   const testo =
     variante === 'accento'
-      ? vetroNativo
+      ? nativoQui
         ? 'text-base font-semibold text-white'
         : 'text-base font-semibold text-primary'
       : variante === 'pericolo'
@@ -380,6 +458,7 @@ export function TondoVetro({
   lato = 56,
   style,
   tinto = true,
+  fondo,
 }: {
   children?: React.ReactNode;
   onPress?: () => void;
@@ -387,7 +466,21 @@ export function TondoVetro({
   lato?: number;
   style?: StyleProp<ViewStyle>;
   tinto?: boolean;
+  fondo?: 'niente' | 'sicuro' | 'pieno';
 }) {
+  /**
+   * ⚠️ **`'sicuro'` di default** (2026-08-28), ed e' il difetto riferito
+   * dall'utente: all'avvio dell'app il «+» della mappa mostrava **l'icona senza
+   * il tondo**. Questo bottone galleggia sopra il contenuto e non ha niente
+   * sotto di se': quando il materiale nativo non viene disegnato, non resta
+   * nulla — e' il modo di rompersi n. 2 descritto in testa al file.
+   *
+   * `'sicuro'` era stato scritto ieri **proprio per questo caso** e non era mai
+   * stato messo su nessun componente: una rete di sicurezza progettata e non
+   * collegata e' esattamente come non averla. Ora la si paga qui, una volta, per
+   * tutti i tondi dell'app — che sono il «+» di ogni schermata.
+   */
+  const nienteSotto = React.useContext(ContestoNienteSotto);
   return (
     <Premibile
       onPress={onPress}
@@ -398,7 +491,7 @@ export function TondoVetro({
       scala={0.9}
       style={[{ opacity: disabled ? 0.45 : 1 }, style]}
     >
-      <Vetro raggio={lato / 2} tinto={tinto}>
+      <Vetro raggio={lato / 2} tinto={tinto} fondo={fondo ?? (nienteSotto ? 'pieno' : 'sicuro')}>
         <View style={{ width: lato, height: lato, alignItems: 'center', justifyContent: 'center' }}>
           {children}
         </View>
@@ -413,18 +506,18 @@ export function TondoVetro({
  * Sfoca meno di un bottone: una superficie grande con la stessa sfocatura di
  * un bottone diventa una parete opaca e il fondo sparisce.
  *
- * ⚠️ **Dentro un foglio va sempre `fondo="pieno"`.** Una carta di vetro sopra
- * la velatura scura di un modale sfoca il buio, e si legge «in ombra» — che e'
- * esattamente il difetto riferito dall'utente il 2026-08-27 sul pannello dei
- * posti nuovi. La regola sta qui e non nella testa di chi scrive la prossima
- * schermata: **vetro dentro un foglio ⇒ `fondo="pieno"`**.
+ * ⚠️ **Dentro un foglio serve una base chiara**, o la carta sfoca il buio della
+ * velatura e si legge «in ombra». Dal 2026-08-28 **non c'e' piu' niente da
+ * ricordare**: `ContestoNienteSotto` lo deduce dall'albero, e `fondo="pieno"`
+ * esplicito resta solo dove si vuole dirlo a voce alta. La versione a carico di
+ * chi chiamava e' durata un giorno e ha lasciato scoperti i bottoni interni.
  */
 export function CartaVetro({
   children,
   style,
   raggio = 30,
   ombra = true,
-  fondo = 'niente',
+  fondo,
 }: {
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;

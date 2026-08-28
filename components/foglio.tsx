@@ -7,6 +7,7 @@ import Riani, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
+import { NienteSotto } from '@/components/ui/vetro';
 
 /**
  * Il **foglio che sale dal basso**, con la salita animata da noi.
@@ -89,7 +90,11 @@ export function Foglio({
         pointerEvents="box-none"
         style={[{ flex: 1, justifyContent: 'flex-end' }, stileFoglio]}
       >
-        {children}
+        {/* ⚠️ La velatura scura qui sopra e' proprio cio' che un vetro non deve
+            sfocare: dichiararlo **una volta**, qui, evita che ogni schermata se
+            lo ricordi — che e' come si e' perso il difetto del 2026-08-27.
+            Vedi `ContestoNienteSotto` in `components/ui/vetro.tsx`. */}
+        <NienteSotto>{children}</NienteSotto>
       </Riani.View>
     </Modal>
   );
