@@ -135,6 +135,34 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-73 — Un evento senza foto prende in prestito l'immagine del suo posto
+
+**Chiesto dall'utente** il 2026-08-28: se un evento non ha immagini ma ha un luogo, la pagina dell'evento usa come copertina **l'immagine di default del luogo**; la vista **Diario** del calendario resta com'è.
+
+**Prima**: un evento senza scatti mostrava una sfumatura rosa. Se però ha un posto, quel posto **una sua immagine ce l'ha** — quella di Google — e usarla dice *dove eravate* anche prima che esista una foto vostra.
+
+## ⚠️ La scelta vera: **quale** immagine del luogo
+
+La scheda di un luogo, in lista, usa questa scala: foto scelta a mano → **foto delle vostre serate lì** → Google. Verrebbe naturale riusarla identica.
+
+🔑 **Sarebbe sbagliata proprio qui**, e per una ragione che non è tecnica: quelle sono foto di **altre** serate. Messe in testa a *questa* pagina si leggerebbero come scatti di *questo* evento — un ricordo attribuito alla data sbagliata, e per giunta senza che niente lo segnali. La foto di Google non ha il problema: non è di nessuno e non è di nessuna sera, è **l'immagine del posto**.
+
+*Una copertina che mente sul giorno è peggio di nessuna copertina.*
+
+## Perché il Diario resta com'era, e non è pigrizia
+
+Là le anteprime dicono **quali serate avete fotografato**. Riempirle con l'immagine del posto renderebbe tutte le righe uguali — cioè toglierebbe esattamente l'informazione che quella vista dà. Due schermate che mostrano lo stesso dato per scopi diversi possono, e a volte devono, mostrarlo in modo diverso.
+
+## Due strade verso lo stesso posto, di nuovo
+
+⚠️ `foto_google` sta su **`elemento_lista`**, non su `luogo` (è lì da 0013), quindi non basta la query del luogo. E si cerca per **entrambe** le strade — `elemento_id` e `luogo_id` — perché **B-12** aveva già trovato che un evento punta al posto in due modi: guardarne una sola avrebbe fatto comparire la copertina **su metà degli eventi**, cioè il difetto che sembra casuale e che nessuno riesce a riprodurre.
+
+## 🔴 E un difetto trovato prima di spedirlo, in una funzione vecchia
+
+Scrivendo il ripiego è emerso che **`urlFotoGoogle('')` non restituiva `undefined`**: costruiva un URL valido verso una risorsa inesistente. Chi la chiamava con un nome vuoto non otteneva «nessuna foto» — otteneva **un'immagine rotta**, e il ripiego previsto (la sfumatura) non scattava mai.
+
+⚠️ I due chiamanti esistenti si guardavano da soli con un `? :`, quindi il difetto non si era mai visto. 🔑 **Ed è proprio per questo che valeva chiuderlo nella funzione**: una funzione che si comporta bene *solo se chi la chiama se ne ricorda* è la forma di D-60, e il prossimo chiamante non ha modo di saperlo. Ora accetta `null | undefined` e restituisce `undefined` per qualunque nome vuoto.
+
 ### D-72 — Sulla mappa tornano tutti i posti, e a distinguerli è l'icona
 
 **Chiesto dall'utente** il 2026-08-28: sulla mappa devono comparire **tutti** i luoghi — quelli in programma con il calendario **bianco**, quelli dove si è stati con il calendario **rosa**, e i desiderati con un'icona a scelta.
@@ -1744,6 +1772,7 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
    - [x] **I luoghi arrivano dalle wishlist, non dalla mappa** — 2026-08-28, **D-70** / migrazione **0024**: «Viaggi» e «Ristoranti» di default, mappa come registro dei visitati, colori non adiacenti.
    - [x] **La mappa è di sola lettura e le liste di partenza sono protette** — 2026-08-28, **D-71** / migrazione **0025**, più i difetti **B-26** e **B-27**.
    - [x] **Tre pin sulla mappa, e l'hub che rilegge** — 2026-08-28, **D-72**, più i difetti **B-28** e **B-29**. Nessuna migrazione: è tutto lato app.
+   - [x] **La copertina di un evento senza foto viene dal suo luogo** — 2026-08-28, **D-73**. Nessuna migrazione.
    - [ ] **Scegliere il tipo creando una lista** (voci o film): la colonna `lista.tipo` esiste già, manca solo la scelta nel foglio di creazione — oggi si può avere una sola lista di film, quella automatica.
 7. [ ] **Cancellazione account in-app** (richiesta obbligatoria da Apple) con catena di cancellazione verificata
 7-bis. [x] **Hub dei giochi** — fatto il 2026-08-28 (**D-62**): carosello delle tre carte, «Classifica» e «Gioca», e dietro «Gioca» le due sorgenti di domande di 11-bis. È **solo l'ingresso**: nessuna partita, per esplicita richiesta dell'utente («partiamo implementando solo l'hub game»).
@@ -1920,6 +1949,12 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 27. **L'elenco però resta filtrato** (solo visitati o con eventi): mappa e elenco ora divergono **di proposito**, e non è un difetto.
 28. **Il numero sulla carta si aggiorna** tornando indietro dopo aver aggiunto una voce (B-28).
 29. 🔴 **Scorrere piano e lasciare senza slancio, poi premere «Apri»**: deve aprirsi la lista che si vede, non la precedente (B-29). ⚠️ È il caso che con uno scorrimento normale **non si riproduce** — va fatto apposta.
+
+🔴 **E la copertina prestata dal luogo (D-73)**:
+30. **Un evento con un posto e senza foto** deve mostrare in testa **l'immagine del posto**, non la sfumatura rosa.
+31. **Un evento con almeno una foto vostra** deve continuare a mostrare **quella**: il posto è il ripiego, non il vincitore.
+32. ⚠️ **Un evento con un posto ma senza identità Google** (quelli nati da un tocco lungo, prima di D-64) deve tornare alla **sfumatura**. È il caso che il difetto di `urlFotoGoogle` avrebbe rotto — se qui compare un riquadro vuoto invece della sfumatura, quella correzione non ha preso.
+33. **Nel Diario del calendario non cambia niente**: le anteprime restano solo quelle degli eventi fotografati.
 
 24. 🔴 **La prova vera del divieto non è l'interfaccia**: è che una cancellazione forzata venga **rifiutata dal database** con un errore leggibile, non con un silenzioso «fatto». Il bottone tolto è cortesia; il trigger è la regola.
 

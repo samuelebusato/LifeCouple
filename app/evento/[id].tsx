@@ -46,6 +46,7 @@ import { useTema } from '@/lib/tema';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { usePreferiti } from '@/lib/preferiti';
+import { urlFotoGoogle } from '@/lib/ricerca-luoghi';
 import { useEventoDettaglio } from '@/lib/evento-dettaglio';
 import { caricaFoto, cancellaFoto, indirizziFirmati, scegliFoto, staccaDaEvento } from '@/lib/foto';
 import { TIPI, type TipoEvento } from '@/lib/eventi';
@@ -90,6 +91,7 @@ export default function PaginaEvento() {
   const {
     evento,
     luogo,
+    fotoLuogo,
     foto,
     commenti,
     loading,
@@ -265,7 +267,25 @@ export default function PaginaEvento() {
       ? t.calendario.tuttoIlGiorno
       : da.toLocaleTimeString(lingua, { hour: '2-digit', minute: '2-digit' });
 
-  const copertina = foto[0] ? url[foto[0].chiave_storage] : undefined;
+  /**
+   * La copertina della pagina evento (D-73).
+   *
+   * 1. **una vostra foto** di questa serata, se c'e';
+   * 2. altrimenti **l'immagine del posto** presa da Google;
+   * 3. altrimenti la sfumatura rosa, come prima.
+   *
+   * ⚠️ Il secondo gradino **non** e' «l'ultima foto scattata in quel posto»,
+   * che pure sarebbe disponibile: quelle sono foto di *altre* serate, e in
+   * testa a questa pagina si leggerebbero come scatti di **questa**. Una
+   * copertina che mente sul giorno e' peggio di nessuna copertina. La
+   * spiegazione per esteso sta in `CopertinaLuogo`, in `lib/evento-dettaglio.ts`.
+   *
+   * ⚠️ La **vista Diario del calendario resta com'era**, per scelta: li' le
+   * anteprime dicono *quali serate avete fotografato*, e riempirle con
+   * l'immagine di un posto renderebbe tutte le righe uguali, cioe' toglierebbe
+   * proprio l'informazione che quella vista da'.
+   */
+  const copertina = foto[0] ? url[foto[0].chiave_storage] : urlFotoGoogle(fotoLuogo);
 
   /**
    * Manda il commento.

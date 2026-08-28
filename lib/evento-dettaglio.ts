@@ -31,6 +31,32 @@ export type RistoranteEvento = {
 };
 
 /**
+ * ## La copertina che il **luogo** presta a un evento senza foto (D-73)
+ *
+ * Un evento a cui non avete ancora attaccato scatti mostrava una sfumatura
+ * rosa. Se però quell'evento ha un posto, il posto **una sua immagine ce
+ * l'ha** — quella di Google — e usarla è meglio di una sfumatura: dice *dove*
+ * eravate anche prima che ci sia una foto vostra.
+ *
+ * ## ⚠️ Perché la foto di Google e non «l'ultima foto scattata lì»
+ *
+ * La scheda di un luogo, in lista, usa questa scala: foto scelta a mano →
+ * **foto delle vostre serate lì** → Google. Verrebbe da riusarla tale e quale.
+ *
+ * 🔑 **Sarebbe sbagliato proprio qui**, e per una ragione che non è tecnica:
+ * quelle sono foto di *altre* serate. Metterle in testa a **questa** pagina le
+ * presenterebbe come scatti di questo evento — un ricordo attribuito alla
+ * data sbagliata. La foto di Google non ha questo problema: non è di nessuno e
+ * non è di nessuna sera, è **l'immagine del posto**.
+ *
+ * *Una copertina che mente sul giorno è peggio di nessuna copertina.*
+ *
+ * ⚠️ Resta `null` per i posti senza identità Google (quelli nati da un tocco
+ * lungo sulla mappa, prima di D-64): lì la sfumatura resta, ed è corretto.
+ */
+export type CopertinaLuogo = string | null;
+
+/**
  * Tutto quello che appartiene a un evento: il momento, il posto, gli scatti e
  * le parole.
  *
@@ -41,6 +67,8 @@ export type RistoranteEvento = {
 export function useEventoDettaglio(id: string | undefined) {
   const [evento, setEvento] = React.useState<Evento | null>(null);
   const [luogo, setLuogo] = React.useState<Luogo | null>(null);
+  /** Il `foto_google` del posto della serata (D-73). Vedi `CopertinaLuogo`. */
+  const [fotoLuogo, setFotoLuogo] = React.useState<CopertinaLuogo>(null);
   const [ristorante, setRistorante] = React.useState<RistoranteEvento | null>(null);
   const [commenti, setCommenti] = React.useState<Commento[]>([]);
   const [foto, setFoto] = React.useState<Foto[]>([]);
@@ -75,6 +103,29 @@ export function useEventoDettaglio(id: string | undefined) {
       setLuogo((data as Luogo | null) ?? null);
     } else {
       setLuogo(null);
+    }
+
+    /**
+     * La copertina del posto (D-73).
+     *
+     * ⚠️ **`foto_google` sta su `elemento_lista`, non su `luogo`** — è lì da
+     * 0013 — quindi non basta la query qui sopra: serve la riga di lista di
+     * quel posto, che da 0017 è una sola.
+     *
+     * 🔑 E si prova per **entrambe le strade**, perché un evento punta al posto
+     * in due modi (`elemento_id` e `luogo_id`): è **B-12**, e guardarne una
+     * sola avrebbe fatto comparire la copertina solo per metà degli eventi —
+     * cioè il tipo di difetto che sembra casuale.
+     */
+    if (ev?.elemento_id || ev?.luogo_id) {
+      const q = supabase.from('elemento_lista').select('foto_google').limit(1);
+      const { data } = await (ev.elemento_id
+        ? q.eq('id', ev.elemento_id)
+        : q.eq('luogo_id', ev.luogo_id!)
+      ).maybeSingle();
+      setFotoLuogo(((data as { foto_google: string | null } | null)?.foto_google) ?? null);
+    } else {
+      setFotoLuogo(null);
     }
 
     // Il ristorante della serata (0012): stessa forma del luogo.
@@ -168,6 +219,7 @@ export function useEventoDettaglio(id: string | undefined) {
   return {
     evento,
     luogo,
+    fotoLuogo,
     ristorante,
     commenti,
     foto,

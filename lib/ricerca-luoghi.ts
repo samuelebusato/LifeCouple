@@ -151,8 +151,19 @@ export async function cercaLuoghi(query: string, segnale?: AbortSignal): Promise
  * Si chiede a Google al momento di mostrarla (niente copia nostra): e' la
  * strada che le condizioni d'uso di Places prevedono per le foto.
  */
-export function urlFotoGoogle(nome: string, larghezza = 900) {
+export function urlFotoGoogle(nome: string | null | undefined, larghezza = 900) {
   if (!CHIAVE) return undefined;
+  // ⚠️ **Un nome vuoto non e' una foto**, ed e' il caso che questa funzione
+  // sbagliava (2026-08-28). Senza questa riga, `urlFotoGoogle('')` costruiva
+  // un URL valido verso una risorsa inesistente: chi lo usava non otteneva
+  // `undefined` — otteneva **un'immagine rotta**, che e' peggio, perche' il
+  // ripiego previsto (una sfumatura, un segnaposto) non scattava mai.
+  //
+  // 🔑 I chiamanti si guardavano gia' da soli con un `? :`. Proprio per questo
+  // valeva la pena chiudere il buco **qui**: una funzione che si comporta bene
+  // solo se chi la chiama se ne ricorda e' la forma di D-60, e il prossimo
+  // chiamante non ha modo di saperlo.
+  if (!nome) return undefined;
   return `https://places.googleapis.com/v1/${nome}/media?maxWidthPx=${larghezza}&key=${CHIAVE}`;
 }
 
