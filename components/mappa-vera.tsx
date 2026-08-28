@@ -33,6 +33,15 @@ export function MappaVera(_: {
   ristoranti?: RistoranteSuMappa[];
   eventiPerLuogo?: Record<string, number>;
   eventiPerRistorante?: Record<string, number>;
+  /**
+   * ⚠️ Dichiarate anche qui, dove non servono: questa è la variante **senza
+   * mappa** e non disegna pin. Ma è **questo** file che TypeScript usa per
+   * controllare le chiamate — il `.native.tsx` lo vede solo il bundler — quindi
+   * una prop che manca qui è un errore di compilazione anche se il codice che
+   * la usa è corretto. Le due firme vanno tenute allineate (D-72).
+   */
+  programmatiLuogo?: Record<string, boolean>;
+  programmatiRistorante?: Record<string, boolean>;
   spazioSotto?: number;
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;

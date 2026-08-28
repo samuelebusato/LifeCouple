@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { StatoCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
 import { cercaIdentita, fotoDiUnPosto } from '@/lib/ricerca-luoghi';
+import { identitaFilm } from '@/lib/ricerca-film';
 
 /**
  * I due tipi della lista dei desideri.
@@ -13,7 +14,14 @@ import { cercaIdentita, fotoDiUnPosto } from '@/lib/ricerca-luoghi';
  * che cambiava era l'etichetta. Che genere di posto sia lo dice `genere`, che
  * e' il tipo primario di Google: un dato piu' ricco di quello che si e' perso.
  */
-export type TipoElemento = 'film' | 'luogo';
+export type TipoElemento = 'film' | 'luogo' | 'voce';
+
+/**
+ * ⚠️ `voce` è arrivato con 0022, ed è il tipo delle righe di una **wishlist**:
+ * ciò che una coppia scrive da sé — «prendere il passaporto», «regalo per mia
+ * sorella» — e che non è né un film né un posto. Non ha copertina, non ha
+ * identità Google, non ha un pin sulla mappa: ha un titolo e una spunta.
+ */
 
 export type Recensione = {
   id: string;
@@ -32,6 +40,15 @@ export type Elemento = {
   stato: string;
   fatto_il: string | null;
   creato_il: string;
+  /**
+   * La wishlist a cui appartiene (0022).
+   *
+   * ⚠️ `null` **non è un dato mancante**: significa che questa riga è un luogo
+   * della mappa (D-46), che vive in questa tabella senza stare in nessuna
+   * lista. Filtrare per `lista_id` non è quindi mai «prendi tutti tranne
+   * qualche caso da sistemare»: è prendere l'altra metà della tabella.
+   */
+  lista_id: string | null;
   /** Il posto del ristorante (0012): e' cio' che lo porta sulla mappa. */
   luogo_id: string | null;
   luogo: { id: string; nome: string; lat: number; lng: number } | null;
@@ -41,6 +58,10 @@ export type Elemento = {
   foto_google: string | null;
   /** Il tipo primario secondo Google (`restaurant`, `city_park`, `museum`…). */
   genere: string | null;
+  /** L'identità TMDB di un film (0023): scelto dalla tendina, non inventato. */
+  tmdb_id: number | null;
+  /** Il `poster_path` TMDB — la locandina. L'URL si ricompone al momento. */
+  locandina: string | null;
   recensioni: Recensione[];
 };
 
@@ -91,13 +112,15 @@ export function usePreferiti(coppiaId: string | null) {
     async (
       tipo: TipoElemento,
       titolo: string,
-      ricaricaCoppia: () => Promise<StatoCoppia>
+      ricaricaCoppia: () => Promise<StatoCoppia>,
+      /** La wishlist in cui finisce (0022). `null` solo per i luoghi. */
+      listaId: string | null = null
     ): Promise<string | null> => {
       const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
       if (!esito.coppiaId) return esito.errore;
       const { error } = await supabase
         .from('elemento_lista')
-        .insert({ coppia_id: esito.coppiaId, tipo, titolo: titolo.trim() });
+        .insert({ coppia_id: esito.coppiaId, tipo, titolo: titolo.trim(), lista_id: listaId });
       if (error) return error.message;
       await ricarica();
       return null;
@@ -237,9 +260,10 @@ export function usePreferiti(coppiaId: string | null) {
   const aggiungiLuogoPreferito = React.useCallback(
     async (
       trovato: LuogoTrovato,
-      ricaricaCoppia: () => Promise<StatoCoppia>
+      ricaricaCoppia: () => Promise<StatoCoppia>,
+      listaId: string | null = null
     ): Promise<{ errore: string | null; elementoId?: string; luogoId?: string }> => {
-      const esito = await creaLuogo(coppiaId, trovato, ricaricaCoppia);
+      const esito = await creaLuogo(coppiaId, trovato, ricaricaCoppia, listaId);
       if (!esito.errore) await ricarica();
       return esito;
     },
@@ -311,6 +335,72 @@ export function usePreferiti(coppiaId: string | null) {
     if (riparati > 0) await ricarica();
   }, [elementi, ricarica]);
 
+  /**
+   * Aggiunge un film **scelto dalla tendina** (0023): titolo, identità TMDB e
+   * locandina in una scrittura sola.
+   *
+   * 🔑 È il gemello di `creaLuogo`, e per la stessa ragione di B-19: se il film
+   * si potesse aggiungere da due punti con due scritture diverse, una delle due
+   * dimenticherebbe la locandina — e la differenza si scoprirebbe fra settimane
+   * guardando una lista in cui alcune schede hanno la copertina e altre no.
+   */
+  const aggiungiFilm = React.useCallback(
+    async (
+      trovato: { tmdbId: number; titolo: string; locandina: string | null },
+      listaId: string | null,
+      ricaricaCoppia: () => Promise<StatoCoppia>
+    ): Promise<string | null> => {
+      const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
+      if (!esito.coppiaId) return esito.errore;
+      const { error } = await supabase.from('elemento_lista').insert({
+        coppia_id: esito.coppiaId,
+        tipo: 'film',
+        titolo: trovato.titolo.trim(),
+        lista_id: listaId,
+        tmdb_id: trovato.tmdbId,
+        locandina: trovato.locandina,
+      });
+      if (error) return error.message;
+      await ricarica();
+      return null;
+    },
+    [coppiaId, ricarica]
+  );
+
+  /**
+   * Ripara le locandine dei film scritti a mano, senza passare dalla tendina.
+   *
+   * ⚠️ **Stessa rete di `riparaCopertine`, e stessa trappola evitata**: chi è
+   * già stato tentato non si ritenta. Senza il registro, un film che TMDB non
+   * conosce resterebbe per sempre nell'insieme dei "senza locandina", e la
+   * ricerca ripartirebbe a ogni modifica dell'elenco — una richiesta in un ciclo
+   * che non converge.
+   *
+   * ⚠️ E prende **il primo risultato**, che è una scommessa: «Dune» sono due
+   * film. La tendina resta la strada buona; questa è la rete per chi ha scritto
+   * e basta.
+   */
+  const tentatiFilm = React.useRef(new Set<string>());
+
+  const riparaLocandine = React.useCallback(async () => {
+    const rotti = elementi.filter(
+      (e) => e.tipo === 'film' && !e.locandina && !tentatiFilm.current.has(e.id)
+    );
+    if (rotti.length === 0) return;
+    let riparati = 0;
+    for (const e of rotti) {
+      tentatiFilm.current.add(e.id);
+      const trovato = await identitaFilm(e.titolo);
+      if (!trovato?.locandina) continue;
+      const { error } = await supabase
+        .from('elemento_lista')
+        .update({ tmdb_id: trovato.tmdbId, locandina: trovato.locandina })
+        .eq('id', e.id);
+      if (!error) riparati++;
+    }
+    if (riparati > 0) await ricarica();
+  }, [elementi, ricarica]);
+
   const sincronizzaVisitati = React.useCallback(async () => {
     if (!coppiaId) return;
     const { data, error } = await supabase.rpc('aggiorna_ristoranti_visitati');
@@ -331,6 +421,8 @@ export function usePreferiti(coppiaId: string | null) {
     elimina,
     collegaPosto,
     aggiungiLuogoPreferito,
+    aggiungiFilm,
+    riparaLocandine,
     sincronizzaVisitati,
     riparaCopertine,
   };
@@ -372,7 +464,25 @@ export type LuogoTrovato = {
 export async function creaLuogo(
   coppiaId: string | null,
   trovato: LuogoTrovato,
-  ricaricaCoppia: () => Promise<StatoCoppia>
+  ricaricaCoppia: () => Promise<StatoCoppia>,
+  /**
+   * La wishlist in cui finisce (0024).
+   *
+   * 🔴 **Mancava, ed è il difetto riferito dall'utente** — *«quando aggiungo
+   * degli elementi alla wishlist viaggi e ristoranti questi non vengono
+   * caricati»*. La riga nasceva con `lista_id` a `null`, cioè fuori da ogni
+   * lista, mentre la wishlist filtra **per** `lista_id`: il posto veniva creato
+   * davvero, la mappa se ne accorgeva, e la lista da cui lo avevi aggiunto no.
+   *
+   * 🔑 È **la forma esatta di B-19**: una via di creazione che non scrive un
+   * campo che chi legge usa per filtrare. Allora mancavano copertina e genere,
+   * oggi manca l'appartenenza — e allora come oggi il sintomo non è un errore,
+   * è una cosa che *non compare*.
+   *
+   * ⚠️ `null` resta legittimo: un posto può nascere **da un evento** (D-44)
+   * senza passare da nessuna lista.
+   */
+  listaId: string | null = null
 ): Promise<{ errore: string | null; elementoId?: string; luogoId?: string }> {
   const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
   if (!esito.coppiaId) return { errore: esito.errore };
@@ -397,6 +507,7 @@ export async function creaLuogo(
       tipo: 'luogo',
       titolo: trovato.nome.trim(),
       luogo_id: data.id,
+      lista_id: listaId,
       google_place_id: trovato.placeId ?? null,
       foto_google: trovato.fotoNome ?? null,
       genere: trovato.primaryType ?? null,

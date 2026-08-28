@@ -11,12 +11,11 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import Riani, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
-import { MapPin, Plus, Trash2, UtensilsCrossed } from 'lucide-react-native';
+import { MapPin, Trash2, UtensilsCrossed } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
-import { BottoneVetro, CartaVetro, TondoVetro, Vetro } from '@/components/ui/vetro';
+import { BottoneVetro, CartaVetro, Vetro } from '@/components/ui/vetro';
 import { Premibile } from '@/components/ui/premibile';
 import { Comparsa } from '@/components/ui/comparsa';
-import { FoglioAggiungiLuogo } from '@/components/foglio-aggiungi-luogo';
 import { Fondo } from '@/components/schermata';
 import { SPAZIO_BARRA, SOPRA_BARRA } from '@/components/barra-volante';
 import { AnteprimaEvento } from '@/components/anteprima-evento';
@@ -131,7 +130,7 @@ type Toccato =
 
 export default function Mappa() {
   const router = useRouter();
-  const { coppiaId, ricarica: ricaricaCoppia } = useCoppia();
+  const { coppiaId } = useCoppia();
   const {
     luoghi,
     loading,
@@ -181,7 +180,6 @@ export default function Mappa() {
    * nasce. Il perche' per esteso sta in
    * `components/foglio-aggiungi-luogo.tsx`.
    */
-  const [aggiungiAperto, setAggiungiAperto] = React.useState(false);
   /** Dove guarda la mappa: cambia quando si sceglie un risultato di ricerca. */
   const [centro, setCentro] = React.useState<{ latitude: number; longitude: number } | null>(null);
 
@@ -286,6 +284,34 @@ export default function Mappa() {
   const contiRistorante = React.useMemo(
     () => Object.fromEntries(Object.entries(perRistorante).map(([k, v]) => [k, v.length])),
     [perRistorante]
+  );
+
+  /**
+   * Chi ha **almeno una serata futura** (D-72), per luogo e per ristorante.
+   *
+   * ⚠️ Non si ricava dal conteggio degli eventi: quel numero comprende anche le
+   * serate passate, e un posto dove siete già stati tre volte avrebbe lo stesso
+   * conto di uno dove andrete domani. È la differenza fra *ci è successo
+   * qualcosa* e *ci succederà qualcosa*, e sulla mappa sono due icone diverse.
+   *
+   * ⚠️ Il confronto è con l'istante del render, non con la mezzanotte: un
+   * evento di stasera alle 20 è «in programma» fino alle 20, e diventa passato
+   * dopo. Arrotondare al giorno avrebbe fatto sparire l'icona bianca la mattina
+   * stessa della serata, cioè proprio quando serve.
+   */
+  const futuri = React.useCallback((evs: Evento[] | undefined) => {
+    if (!evs?.length) return false;
+    const ora = Date.now();
+    return evs.some((e) => new Date(e.inizio).getTime() > ora);
+  }, []);
+
+  const programmatiLuogo = React.useMemo(
+    () => Object.fromEntries(Object.entries(perLuogo).map(([k, v]) => [k, futuri(v)])),
+    [perLuogo, futuri]
+  );
+  const programmatiRistorante = React.useMemo(
+    () => Object.fromEntries(Object.entries(perRistorante).map(([k, v]) => [k, futuri(v)])),
+    [perRistorante, futuri]
   );
 
   /**
@@ -550,12 +576,14 @@ export default function Mappa() {
               {Platform.OS === 'web' ? t.mappa.soloTelefono : t.mappa.senzaComponente}
             </Text>
 
-            {/* Anche senza il componente mappa si aggiunge un posto, e si
-                aggiunge **nello stesso modo**: lo stesso foglio, la stessa
-                funzione. Prima qui c'era una terza variante della ricerca. */}
-            <BottoneVetro onPress={() => setAggiungiAperto(true)} variante="accento">
-              <Text>{t.mappa.aggiungiPosto}</Text>
-            </BottoneVetro>
+            {/* ⚠️ **Qui c'era il secondo «aggiungi un posto»**, per quando il
+                componente mappa non c'è (web). Tolto con D-70 insieme al «+»:
+                era la stessa porta, su un'altra parete.
+
+                🔑 È anche il motivo per cui vale la pena cercare la **forma** e
+                non il difetto: togliere solo il «+» avrebbe lasciato aperta
+                esattamente la strada che si voleva chiudere, e per giunta sul
+                web — dove nessuno prova, quindi dove sarebbe sopravvissuta. */}
 
             <ScrollView
               contentContainerClassName="gap-2"
@@ -604,6 +632,8 @@ export default function Mappa() {
             luoghi={luoghiSoli}
             ristoranti={ristoranti}
             eventiPerLuogo={contiLuogo}
+            programmatiLuogo={programmatiLuogo}
+            programmatiRistorante={programmatiRistorante}
             eventiPerRistorante={contiRistorante}
             // Quando l'anteprima e' aperta la mappa "utile" e' piu' corta: senza,
             // il pin scelto puo' finire proprio sotto la carta appena comparsa.
@@ -645,17 +675,22 @@ export default function Mappa() {
               avviata l'app. Il perche' per esteso sta in `components/ui/comparsa.tsx`.
               L'entrata che si vede davvero resta: e' il rientro dopo che
               l'anteprima del pin si chiude. */}
-          <Comparsa
-            visibile={!tastieraAperta && !toccato}
-            entraAlMontaggio={false}
-            scarto={18}
-            scala={0.8}
-            style={{ position: 'absolute', right: 20, bottom: SOPRA_BARRA }}
-          >
-            <TondoVetro lato={58} onPress={() => setAggiungiAperto(true)}>
-              <Plus color={c.accento} size={26} />
-            </TondoVetro>
-          </Comparsa>
+          {/*
+            ⚠️ **Qui c'era il «+» per aggiungere un posto, tolto il 2026-08-28
+            con D-70.** Non è stato nascosto: è stato **rimosso**, insieme al
+            foglio che apriva.
+
+            🔑 La mappa non è più un posto dove si *dichiara* di voler andare
+            da qualche parte — è il registro di dove siete stati. Un desiderio
+            si scrive nelle wishlist «Viaggi» e «Ristoranti»; un posto arriva
+            qui **essendoci andati**, cioè spuntandolo o legandolo a una serata.
+
+            E lasciare il bottone «tanto poi filtriamo» avrebbe ricreato
+            esattamente le due strade che D-64 aveva appena finito di
+            cancellare: una porta che nessuno usa non viene aggiornata quando
+            cambia lo schema, e chi la trova fra sei mesi la ricollega
+            credendola equivalente.
+          */}
         </Riani.View>
       )}
 
@@ -753,13 +788,6 @@ export default function Mappa() {
           pannello con «Come lo chiamate?», l'interruttore «ci siamo gia' stati»
           e un salvataggio tutto suo — cioe' una seconda strada che creava la
           stessa cosa in modo diverso. */}
-      <FoglioAggiungiLuogo
-        visibile={aggiungiAperto}
-        onChiudi={() => setAggiungiAperto(false)}
-        coppiaId={coppiaId}
-        ricaricaCoppia={ricaricaCoppia}
-        onAggiunto={ricaricaLuoghi}
-      />
 
     </View>
   );

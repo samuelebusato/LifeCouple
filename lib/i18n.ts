@@ -306,11 +306,79 @@ const it = {
     placeholder: {
       film: 'Un film da vedere…',
       luogo: 'Un posto dove andare…',
+      voce: 'Una cosa da fare…',
     },
     vuoto: {
       film: 'Nessun film in lista, per ora.',
       luogo: 'Nessun posto in lista, per ora.',
+      voce: 'Lista vuota. Scrivi qui sotto la prima cosa.',
     },
+  },
+  /**
+   * L'hub delle **liste dei desideri** (0022).
+   *
+   * ⚠️ Le chiavi di `preferiti` restano dove sono: quel blocco descrive le
+   * **voci** di una lista, questo descrive le **liste**. Sono due livelli
+   * diversi dello stesso schermo, e fonderli avrebbe prodotto un blocco in cui
+   * metà delle chiavi non c'entra con l'altra metà.
+   */
+  /**
+   * La ricerca dei film (0023).
+   *
+   * ⚠️ Le frasi degli stati «vuoti» esistono per la stessa ragione di quelle
+   * della ricerca luoghi: un campo che non risponde si legge come rotto, non
+   * come «non ho ancora niente da dirti» (B-18).
+   */
+  film: {
+    cerca: 'Cerca un film…',
+    scriviAncora: 'Scrivi ancora un paio di lettere.',
+    cercando: 'Sto cercando…',
+    nessunRisultato: 'Nessun film con questo titolo.',
+    senzaChiave: 'La ricerca dei film non è configurata.',
+    senzaChiaveNota:
+      'Manca EXPO_PUBLIC_TMDB_KEY nel .env. Puoi comunque scrivere il titolo a mano dalle altre liste.',
+  },
+  liste: {
+    titolo: 'Liste',
+    sottotitolo: 'Le cose che volete fare, in un posto solo.',
+    voce: 'voce',
+    vociPlurale: 'voci',
+    vuota: 'Ancora vuota. Apri e aggiungi la prima cosa.',
+    avanzamento: (fatte: number, totali: number): string =>
+      fatte === 0
+        ? `${totali} da fare`
+        : fatte === totali
+          ? 'Fatto tutto — bravi'
+          : `${fatte} su ${totali} — ci siete quasi`,
+    nuovaCarta: 'Una lista nuova',
+    nuovaCartaNota: 'Un viaggio, dei regali, i film di questo inverno.',
+    crea: 'Crea una lista',
+    creaTitolo: 'Come la chiamate?',
+    creaNota: 'Il nome lo vedete in due. Si può cambiare quando volete.',
+    creaPlaceholder: 'Viaggi 2027',
+    creaConferma: 'Crea',
+    apri: 'Apri',
+    elimina: 'Elimina',
+    /** La conferma: dice **cosa** si porta via, non solo che è definitiva. */
+    eliminaTitolo: (nome: string) => `Eliminare «${nome}»?`,
+    eliminaNota: (voci: number): string =>
+      voci === 0
+        ? 'La lista è vuota: non si perde niente.'
+        : voci === 1
+          ? 'Dentro c\u2019è una voce, e sparisce con la lista. Anche se l\u2019ha messa il tuo partner.'
+          : `Dentro ci sono ${voci} voci, e spariscono con la lista. Anche quelle messe dal tuo partner.`,
+    eliminaConferma: 'Elimina',
+    annulla: 'Annulla',
+    /**
+     * L'errore che nasce da un **permesso**, non da un guasto. La policy di
+     * `delete` è solo-autore: senza questa frase l'app direbbe «fatto» e la
+     * lista resterebbe lì, che è esattamente B-23.
+     */
+    soloAutore: 'Questa lista l\u2019ha creata il tuo partner: solo chi la crea può eliminarla.',
+    nessuna: 'Nessuna lista, per ora.',
+    nessunaNota: 'Scorri fino alla carta col «+» per crearne una.',
+    nomeVuoto: 'Serve un nome.',
+    predefinitaNota: 'Le liste di partenza non si eliminano.',
   },
   importa: {
     titolo: 'Importa',
@@ -668,11 +736,58 @@ const en: Dizionario = {
     placeholder: {
       film: 'A film to watch…',
       luogo: 'A place to try…',
+      voce: 'Something to do…',
     },
     vuoto: {
       film: 'No films on the list yet.',
       luogo: 'No places on the list yet.',
+      voce: 'Empty list. Write the first thing below.',
     },
+  },
+  film: {
+    cerca: 'Search for a film…',
+    scriviAncora: 'Type a couple more letters.',
+    cercando: 'Searching…',
+    nessunRisultato: 'No film with that title.',
+    senzaChiave: 'Film search is not configured.',
+    senzaChiaveNota:
+      'EXPO_PUBLIC_TMDB_KEY is missing from .env. You can still type titles by hand in other lists.',
+  },
+  liste: {
+    titolo: 'Lists',
+    sottotitolo: 'The things you want to do, in one place.',
+    voce: 'item',
+    vociPlurale: 'items',
+    vuota: 'Still empty. Open it and add the first thing.',
+    avanzamento: (fatte: number, totali: number): string =>
+      fatte === 0
+        ? `${totali} to do`
+        : fatte === totali
+          ? 'All done — nice'
+          : `${fatte} of ${totali} — almost there`,
+    nuovaCarta: 'A new list',
+    nuovaCartaNota: 'A trip, some gifts, this winter\u2019s films.',
+    crea: 'Create a list',
+    creaTitolo: 'What do you call it?',
+    creaNota: 'You both see the name. You can change it whenever you like.',
+    creaPlaceholder: 'Trips 2027',
+    creaConferma: 'Create',
+    apri: 'Open',
+    elimina: 'Delete',
+    eliminaTitolo: (nome: string) => `Delete \u201c${nome}\u201d?`,
+    eliminaNota: (voci: number): string =>
+      voci === 0
+        ? 'The list is empty: nothing is lost.'
+        : voci === 1
+          ? 'There is one item in it, and it goes with the list. Even if your partner added it.'
+          : `There are ${voci} items in it, and they go with the list. Including the ones your partner added.`,
+    eliminaConferma: 'Delete',
+    annulla: 'Cancel',
+    soloAutore: 'Your partner created this list: only whoever creates it can delete it.',
+    nessuna: 'No lists yet.',
+    nessunaNota: 'Swipe to the \u201c+\u201d card to create one.',
+    nomeVuoto: 'It needs a name.',
+    predefinitaNota: 'The starting lists cannot be deleted.',
   },
   importa: {
     titolo: 'Import',

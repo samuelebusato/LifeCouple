@@ -50,11 +50,18 @@ export function FoglioAggiungiLuogo({
   coppiaId,
   ricaricaCoppia,
   onAggiunto,
+  listaId = null,
 }: {
   visibile: boolean;
   onChiudi: () => void;
   coppiaId: string | null;
   ricaricaCoppia: () => Promise<StatoCoppia>;
+  /**
+   * La wishlist in cui mettere il posto (0024). Senza, la riga nasce fuori da
+   * ogni lista e **non compare dove l'hai aggiunta** - vedi la nota in
+   * `creaLuogo`.
+   */
+  listaId?: string | null;
   /** Chi ha una lista da rinfrescare la rinfresca qui (la mappa, i suoi pin). */
   onAggiunto?: (luogoId?: string) => void | Promise<void>;
 }) {
@@ -101,7 +108,7 @@ export function FoglioAggiungiLuogo({
                 onScegli={async (trovato) => {
                   setErrore(null);
                   setAttesa(true);
-                  const esito = await creaLuogo(coppiaId, trovato, ricaricaCoppia);
+                  const esito = await creaLuogo(coppiaId, trovato, ricaricaCoppia, listaId);
                   setAttesa(false);
                   if (esito.errore) return setErrore(esito.errore);
                   await onAggiunto?.(esito.luogoId);

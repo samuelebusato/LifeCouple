@@ -186,10 +186,13 @@ export type Database = {
           genere: string | null
           google_place_id: string | null
           id: string
+          lista_id: string | null
+          locandina: string | null
           luogo_id: string | null
           stato: string
           tipo: string
           titolo: string
+          tmdb_id: number | null
         }
         Insert: {
           autore_id?: string
@@ -200,10 +203,13 @@ export type Database = {
           genere?: string | null
           google_place_id?: string | null
           id?: string
+          lista_id?: string | null
+          locandina?: string | null
           luogo_id?: string | null
           stato?: string
           tipo: string
           titolo: string
+          tmdb_id?: number | null
         }
         Update: {
           autore_id?: string
@@ -214,10 +220,13 @@ export type Database = {
           genere?: string | null
           google_place_id?: string | null
           id?: string
+          lista_id?: string | null
+          locandina?: string | null
           luogo_id?: string | null
           stato?: string
           tipo?: string
           titolo?: string
+          tmdb_id?: number | null
         }
         Relationships: [
           {
@@ -232,6 +241,59 @@ export type Database = {
             columns: ["luogo_id"]
             isOneToOne: false
             referencedRelation: "luogo"
+            referencedColumns: ["id"]
+          },
+          // ⚠️ SCRITTO A MANO (0022) — da sostituire rigenerando i tipi.
+          {
+            foreignKeyName: "elemento_lista_lista_id_fkey"
+            columns: ["lista_id"]
+            isOneToOne: false
+            referencedRelation: "lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      // ⚠️ TABELLA SCRITTA A MANO (0022) — da sostituire rigenerando i tipi.
+      // Verificata contro la migrazione, non generata dallo schema vero: e' il
+      // debito gia' dichiarato nel PUNTO DI RIPRESA, e questa e' l'ennesima
+      // tabella che lo rende un po' piu' caro.
+      lista: {
+        Row: {
+          autore_id: string
+          coppia_id: string
+          creata_il: string
+          id: string
+          nome: string
+          pastello: string
+          predefinita: boolean
+          tipo: string
+        }
+        Insert: {
+          autore_id?: string
+          coppia_id: string
+          creata_il?: string
+          id?: string
+          nome: string
+          pastello?: string
+          predefinita?: boolean
+          tipo?: string
+        }
+        Update: {
+          autore_id?: string
+          coppia_id?: string
+          creata_il?: string
+          id?: string
+          nome?: string
+          pastello?: string
+          predefinita?: boolean
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lista_coppia_id_fkey"
+            columns: ["coppia_id"]
+            isOneToOne: false
+            referencedRelation: "coppia"
             referencedColumns: ["id"]
           },
         ]
@@ -302,6 +364,17 @@ export type Database = {
             columns: ["elemento_id"]
             isOneToOne: false
             referencedRelation: "elemento_lista"
+            referencedColumns: ["id"]
+          },
+          // ⚠️ SCRITTA A MANO (0024) — mancava, ed è il motivo per cui
+          // `luogo.select('*, evento(id)')` non compilava: senza la relazione
+          // dichiarata, PostgREST-types non sa che i due sono collegati. La
+          // colonna `luogo_id` c'era da 0008; la **relazione** no.
+          {
+            foreignKeyName: "evento_luogo_id_fkey"
+            columns: ["luogo_id"]
+            isOneToOne: false
+            referencedRelation: "luogo"
             referencedColumns: ["id"]
           },
         ]

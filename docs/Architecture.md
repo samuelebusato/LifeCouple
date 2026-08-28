@@ -119,15 +119,27 @@ erDiagram
     coppia ||--o{ punti_evento : accumula
     coppia ||--o{ evento : ""
     coppia ||--o{ luogo : ""
+    coppia ||--o{ lista : ""
     coppia ||--o{ elemento_lista : ""
     coppia ||--o{ foto : ""
     coppia ||--o{ partita : ""
     luogo  ||--o{ foto : "ha foto"
+    lista ||--o{ elemento_lista : "le voci di una wishlist"
     elemento_lista ||--o{ recensione : "una per membro"
     partita ||--o{ invio_sigillato : raccoglie
     partita ||--|| partita_risultato : produce
     domanda ||--o{ invio_sigillato : ""
 ```
+
+> **Perché la locandina è un percorso TMDB e non un file nello storage** (0023): salvarla consumerebbe il tetto di 1 GB (D-22) per un'immagine che TMDB serve già da CDN in cinque formati. *Alternativa scartata*: scaricare e archiviare; costo: quota della coppia bruciata da copertine che non sono ricordi suoi. *Rischio accettato*: se TMDB cambia i percorsi le locandine si rompono insieme — tollerabile perché ripescabili.
+>
+> ⚠️ **E la fonte è TMDB, non Google**, che per i film non ha un'API: la richiesta originale diceva «da Google» ed è stata soddisfatta nella sostanza, non alla lettera.
+
+> **Perché un posto desiderato e un posto visitato non stanno più nello stesso elenco** (D-70, 0024): hanno **cicli di vita diversi** — il primo si aggiunge, si rimanda e a volte si cancella; il secondo non cambia più. Tenerli insieme obbligava ogni schermata a filtrare, e ogni filtro dimenticato mostrava desideri fra i ricordi. *Alternativa scartata*: tenerli insieme e filtrare meglio; costo: la correttezza dipende dal fatto che chi scrive la prossima schermata si ricordi del filtro — cioè la stessa speranza che D-60 ha già smontato una volta.
+>
+> ⚠️ **Corretto il 2026-08-28 (D-72)**: la nota qui sopra descriveva anche il nascondere i desideri dalla mappa. Quella metà è stata **ritirata** — nascondere un posto desiderato lo rendeva invisibile proprio sulla superficie che serve a decidere dove andare. Resta vero il resto: i due cicli di vita sono diversi, e l'**elenco** continua a mostrare solo ciò su cui si può agire.
+>
+> ⚠️ **La promozione non è codice nuovo**: spuntare la riga di lista scrive già `luogo.stato` (dal 2026-08-13) e `aggiorna_ristoranti_visitati` spunta da sé le serate passate. Il confine è nel punto giusto proprio perché il passaggio esisteva già.
 
 **Identità e legame**
 
@@ -142,10 +154,15 @@ erDiagram
 | Tabella | Colonne che contano |
 |---|---|
 | `evento` | `titolo`, `inizio`, `fine`, `tutto_il_giorno`, `nota` |
-| `luogo` | `nome`, `lat`, `lng`, **`stato`** (desiderato/visitato), **`visitato_il`**, `nota` |
-| `elemento_lista` | **`tipo`** (film/ristorante), `titolo`, **`stato`** (desiderato/fatto), **`fatto_il`** |
+| `luogo` | `nome`, `lat`, `lng`, **`stato`** (desiderato/visitato), **`visitato_il`**, `nota` — la mappa li mostra **tutti** e li distingue con **tre icone** (**D-72**); il filtro «solo visitati o con evento» di D-70 è rimasto **solo nell'elenco** |
+| `lista` | `nome`, `pastello`, **`tipo`** (voce/film/luogo), **`predefinita`** (le tre di partenza: un trigger ne vieta la cancellazione, 0025), `creata_il` — le **wishlist create dalla coppia** (0022/0023). Nasce con la coppia via trigger, come la creatura. `update`/`delete` **solo-autore** |
+| `elemento_lista` | **`tipo`** (film/luogo/voce), `titolo`, **`stato`** (desiderato/fatto), **`fatto_il`**, **`lista_id`**, **`tmdb_id`** + **`locandina`** (0023) |
 | `recensione` | `elemento_id`, `autore_id`, `voto`, `testo` — **una per membro**, vincolo unico su (elemento, autore) |
 | `foto` | `chiave_storage`, **`luogo_id`** (facoltativo), `scattata_il`, `byte` |
+
+> **Perché le voci di una wishlist stanno in `elemento_lista` e non in una tabella loro** (0022): perché `elemento_lista` ha già la transizione `desiderato → fatto`, ed è quella transizione che alimenta la creatura (D-15) tramite un trigger. Una tabella separata avrebbe richiesto un **secondo trigger dei punti**, cioè due strade per guadagnarli — e due strade che fanno la stessa cosa divergono al primo ritocco (è la lezione di B-19, qui applicata allo schema invece che al codice). *Alternativa scartata*: `voce_wishlist` autonoma; costo: trigger duplicato, recensioni irraggiungibili, e la creatura che si nutre solo di metà delle cose fatte.
+>
+> ⚠️ **Conseguenza da conoscere**: `elemento_lista.lista_id` è **nullable**, e il null significa *«questa riga è un luogo della mappa»* (D-46), non *«dato mancante»*. È il prezzo del riuso: una colonna che è obbligatoria per metà tabella e vietata per l'altra metà. Il vincolo che la renderebbe `not null` **non si può mettere**, ed è scritto nella migrazione perché nessuno ci provi credendo di sistemare una svista.
 
 > **Perché `recensione` è una tabella separata e non due colonne su `elemento_lista`**: sono **due persone** e possono avere due opinioni sullo stesso film. Metterle nell'elemento costringerebbe a un'unica recensione di coppia — che è la cosa meno interessante che si possa fare in un'app per due. Alternativa scartata: campo unico condiviso; costo: si perde il confronto, che è metà del divertimento.
 

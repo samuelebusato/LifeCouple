@@ -28,7 +28,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
-### 2026-08-28 (seconda sessione) — Il giro di verifica: tutto ciò che era scritto e mai visto girare
+### 2026-08-28 (seconda sessione) — Il giro di verifica, e le liste che si creano
 
 **Chiesto dall'utente**: nessuno sviluppo. Un giro di verifica sull'iPhone di tutte le novità del 2026-08-27 e del 2026-08-28, e l'aggiornamento della documentazione con l'esito.
 
@@ -47,6 +47,15 @@ Cadono quindi i punti **1, 2, 4 e 5** della lista «cosa guardare al prossimo gi
 *La conseguenza pratica, che è l'unica che conta*: se uno di questi quattro si ripresenta, **non va letto come una regressione**. È la finestra stretta che il giro non ha attraversato, e la prima mossa è riprovarla col suo caso di prova — non cercare una causa nuova in codice che nel frattempo nessuno ha toccato.
 
 🔑 **La lezione è quella di ieri, applicata dal lato opposto.** Il 2026-08-28 il difetto era stato scrivere «verificato» dove era stato *scritto* e non provato (**B-23**). Oggi la tentazione rovesciata è scrivere «verificato» dove è stato *usato* e non *esercitato*. È la stessa scorciatoia con due facce: **la parola «verificato» vale quanto il caso di prova che ha dietro**, e quando il caso di prova non si conosce si dichiara, non si arrotonda.
+
+**Poi, nella stessa sessione: le wishlist** (**D-68**, migrazione **0022**). «Liste» era rimasta una categoria decisa da noi — un elenco solo, i film, dopo che D-51 aveva portato i luoghi nella mappa. Ora le liste le crea la coppia, col carosello dell'hub dei giochi e una carta «+» in fondo.
+
+Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
+- **dove mettere le voci** — dentro `elemento_lista` e non in una tabella nuova, per non duplicare il trigger dei punti;
+- **cosa fanno i comandi sulla carta «+»** — restano nella stessa posizione e diventano uno solo, perché la regola di D-62 parla di *dove si preme*, non di come si chiama;
+- **cosa dice la conferma di cancellazione** — quante voci porta via e di chi, invece di «sei sicuro?».
+
+⚠️ **Verificato solo a compilazione**: `tsc` e `eslint` puliti, bundle web 12,5 MB con i simboli nuovi presenti. La migrazione **non è applicata** e la schermata **non è stata vista girare** — la preview web si ferma al cancello di sessione.
 
 **Sessione**: [`workspace/sessione-2026-08-28-verifica-iphone.md`](../../workspace/sessione-2026-08-28-verifica-iphone.md).
 
@@ -125,6 +134,201 @@ Cadono quindi i punti **1, 2, 4 e 5** della lista «cosa guardare al prossimo gi
 ---
 
 ## 3. Decisioni
+
+### D-72 — Sulla mappa tornano tutti i posti, e a distinguerli è l'icona
+
+**Chiesto dall'utente** il 2026-08-28: sulla mappa devono comparire **tutti** i luoghi — quelli in programma con il calendario **bianco**, quelli dove si è stati con il calendario **rosa**, e i desiderati con un'icona a scelta.
+
+## È un cambio di idea rispetto a D-70, e va detto così
+
+D-70 aveva tolto dalla mappa i posti desiderati, perché *«la mappa è il registro di dove siete stati»*. Il ragionamento reggeva, ma aveva un effetto che si vede solo usandola: **nascondeva i desideri proprio sulla superficie che serve a decidere dove andare**.
+
+🔑 L'icona risolve lo stesso problema — *non confondere un ricordo con un desiderio* — **senza togliere informazione**. Fra due soluzioni a un problema di confusione, quella che distingue batte quella che nasconde, quasi sempre. D-70 aveva scelto l'altra.
+
+⚠️ **Ma il filtro non sparisce: si sposta.** Resta nell'**elenco** (B-27), e ora le due viste divergono **di proposito**: nella mappa si guarda, nell'elenco si agisce, e un elenco di cose su cui agire non deve contenere ciò che non si può ancora toccare. È anche la ragione per cui il filtro non poteva più stare in `useLuoghi`: da lì valeva per entrambe.
+
+## I tre stati, e l'ordine fra loro è una decisione
+
+1. **visitato** → calendario **bianco** su pin **pieno** — è un fatto compiuto;
+2. **in programma** (almeno una serata **futura**) → calendario **rosa** su pin **chiaro** — c'è, ma non è ancora successo;
+3. **desiderato** → **segnalibro** grigio — messo da parte, senza una data.
+
+⚠️ **La corrispondenza è stata invertita su richiesta dell'utente**, poche ore dopo la prima stesura: all'inizio il bianco stava sul programmato e il rosa sul visitato. La riga qui sopra con la richiesta originale è lasciata com'era — è ciò che era stato chiesto allora, e riscriverla farebbe sparire il ripensamento.
+
+🔑 **E l'inversione non è di un attributo solo: colore dell'icona e riempimento del pin sono una scelta sola.** Un'icona bianca ha bisogno di un fondo pieno e una rosa di un fondo chiaro; invertirne una senza l'altra produce bianco-su-bianco o rosa-su-rosa, cioè **un pin vuoto**. Chi tocca quei rami li tocca a coppie.
+
+🔑 La scala che ne esce si legge da sé: **pieno = è successo**, **contornato = non ancora**, **grigio = nemmeno in programma**. Il peso visivo segue la **certezza del fatto**, non la sua urgenza — che è la lettura giusta per una mappa che è prima di tutto un registro.
+
+🔑 **`visitato` vince quando un posto è entrambi** (ci tornate): la mappa è prima di tutto il registro di dov'è stata la coppia, e *«ci siamo stati»* è un fatto mentre *«ci andremo»* è un'intenzione. Se servisse il contrario, è l'ordine dei tre rami a cambiare — nient'altro.
+
+⚠️ **Il segnalibro non è un `MapPin`**: dentro un pin, un'icona a forma di pin è una ripetizione che non dice niente. «Messo da parte» è invece esattamente lo stato.
+
+⚠️ **«In programma» non si deduce dal conteggio degli eventi**, ed è la trappola di questa modifica: quel numero comprende anche le serate passate, quindi un posto dove siete stati tre volte avrebbe lo stesso conto di uno dove andrete domani. Serve guardare le **date**, e il confronto è con l'istante del render e non con la mezzanotte — arrotondare al giorno avrebbe fatto sparire l'icona bianca la mattina stessa della serata, cioè proprio quando serve.
+
+⚠️ **Nota di manutenzione**: le prop nuove sono state dichiarate **anche in `mappa-vera.tsx`**, la variante web che non disegna pin e non le usa. È quel file che TypeScript legge per controllare le chiamate — il `.native.tsx` lo vede solo il bundler — quindi le due firme vanno tenute allineate o il codice giusto non compila.
+
+### D-71 — I due elenchi si separano davvero: la wishlist si modifica, la mappa si guarda e basta
+
+**Chiesto dall'utente** il 2026-08-28, subito dopo aver provato D-70: nell'elenco dei luoghi non si devono poter **cancellare** posti, perché contiene quelli legati agli eventi; sulla wishlist si aggiunge e si toglie liberamente; e le tre liste di partenza non si devono poter eliminare.
+
+## Il confine di D-70 era giusto e applicato a metà
+
+D-70 aveva detto *«la mappa è un registro»* e aveva filtrato **i pin**. Ma la stessa sezione ha anche un **elenco**, che legge da un'altra parte (`elemento_lista`, non `luogo`) — e quello mostrava ancora tutto, cancellazione compresa.
+
+🔑 *Quando una regola riguarda un dato, va messa dove il dato si legge; se le letture sono due, i posti sono due.* Filtrare una vista sola non è una regola applicata a metà: è **una regola che non c'è**, perché la vista sbagliata basta a smentirla.
+
+**Ora sono due modalità dichiarate**, non due comportamenti impliciti:
+- **dentro una wishlist** — si aggiunge, si spunta, si cancella;
+- **dentro la mappa** — solo i posti visitati o con una serata, e **niente spunta, niente cestino, niente copertina**.
+
+⚠️ **E la ragione per cui il cestino sparisce è più forte dell'estetica**: quei posti sono citati da eventi. Cancellarne uno da lì non toglie una riga da un elenco — toglie **il posto a una serata che lo nomina**. La wishlist può permetterselo perché lì un posto non è ancora legato a niente.
+
+🔑 **La spunta sparisce invece di restare inerte.** Un tondo che non risponde al dito si legge come un'app rotta, non come «qui non si tocca» — è la lezione di `premibile.tsx`, e B-22 ha già mostrato quanto costa ignorarla.
+
+## Le tre liste di partenza non si cancellano (0025)
+
+«Film», «Viaggi» e «Ristoranti» non sono liste come le altre: sono **la struttura** su cui poggiano due schermate. Cancellarne una non toglie una lista, toglie **il posto dove finiscono le cose**.
+
+🔴 **E questo contraddice una nota che avevo scritto in 0023**, dove sostenevo il contrario — *«una lista che non si può togliere è un pezzo di arredamento»*. Il ragionamento era coerente ma **partiva da un prodotto diverso**: allora «Film» era l'unico default e i luoghi vivevano ancora sulla mappa. Con D-70 le liste di partenza sono diventate l'unico ingresso per i desideri.
+
+🔑 La lezione non è «avevo torto»: è che **una decisione giusta smette di esserlo quando cambia ciò su cui poggiava**, e il modo di accorgersene è rileggere le note vecchie invece di fidarsene. La nota in 0023 resta, col rimando a 0025: cancellarla nasconderebbe il cambio di idea, che è l'informazione più utile delle due.
+
+**Il divieto vive nel database**, come trigger. ⚠️ Nascondere il bottone non è una protezione, è un suggerimento: chiunque parli all'API con un token valido cancella la riga lo stesso, ed è il modello di attaccante che il threat model descrive (TB-1).
+
+⚠️ **Un trigger e non una policy più stretta**, ed è la scelta che conta: una policy filtrerebbe la riga **in silenzio** — zero righe, `error: null` — cioè B-23 di nuovo. Un'eccezione arriva al client **come errore**, e si può tradurre in una frase. *Quando il rifiuto va spiegato, non va nascosto in un filtro.*
+
+⚠️ E `predefinita` è **una colonna**, non il nome: riconoscerle da `nome in ('Film','Viaggi','Ristoranti')` avrebbe perso la protezione alla prima rinomina e l'avrebbe regalata a una lista creata a mano con lo stesso nome.
+
+**Nell'interfaccia** il comando «Elimina» non compare, e resta un solo «Apri» a tutta larghezza — **la stessa forma già usata per la carta «+»**: la riga non si sposta, cambia cosa si può fare. Sotto, una frase dice *perché* manca, invece di lasciare che si scambi per un guasto.
+
+### D-70 — La mappa diventa il registro di dove siete stati, e i desideri passano alle wishlist
+
+**Chiesto dall'utente** il 2026-08-28: togliere la possibilità di aggiungere luoghi dalla mappa e dall'elenco; nella sezione Luoghi mostrare **solo i posti visitati o collegati a eventi**; mettere i posti desiderati in due wishlist di default, «Viaggi» e «Ristoranti»; e far comparire un posto nei Luoghi **automaticamente** quando viene spuntato o quando la sua serata è passata.
+
+## Perché è un cambio di modello e non di schermata
+
+Prima la mappa era **due cose insieme**: i posti dove siete stati e quelli dove vorreste andare, distinti da un campo `stato` e da un pin di colore diverso.
+
+🔑 **Ma i due hanno cicli di vita diversi.** Un posto *desiderato* si aggiunge, si rimanda, a volte si cancella. Un posto *visitato* non cambia più: ci siete stati, e resta. Tenerli nello stesso elenco obbligava **ogni schermata a filtrare**, e ogni filtro dimenticato mostrava desideri in mezzo ai ricordi. Ora il confine lo dice **il posto in cui la riga vive**, non un campo che qualcuno deve ricordarsi di controllare — che è ancora D-60: *se il dato è deducibile dalla posizione, si deduce.*
+
+✅ **E il passaggio fra i due mondi esisteva già**, che è il segno migliore che il confine è nel punto giusto: spuntare «fatto» su una riga di lista **scrive già `luogo.stato`** (`segnaFatto`, dal 2026-08-13), e `aggiorna_ristoranti_visitati` (0015/0016) spunta da sé i posti la cui serata è passata. Non è stata inventata nessuna promozione automatica: c'era, e adesso ha un significato visibile.
+
+## Le porte chiuse sono due, non una
+
+Il «+» della mappa è stato **rimosso**, non nascosto — e con lui il foglio che apriva.
+
+🔴 **E ce n'era un secondo**, che il primo giro di modifica non aveva visto: nella variante **senza componente mappa** (il web) c'era un bottone «aggiungi un posto» che apriva lo stesso foglio. Togliere solo il «+» avrebbe lasciato aperta esattamente la strada che si voleva chiudere, **e per giunta sul web** — cioè dove nessuno prova, quindi dove sarebbe sopravvissuta.
+
+🔑 *Trovato un difetto per forma, si cerca la forma.* È la stessa regola di B-17, applicata a una rimozione invece che a una correzione: quando si toglie una strada, si cercano **tutte** le sue imboccature.
+
+⚠️ E lasciare il bottone «tanto poi filtriamo» avrebbe ricreato le due strade che **D-64 aveva appena finito di cancellare**, con la stessa conseguenza già scritta lì: *una strada che nessuno percorre non viene aggiornata quando cambia lo schema, e chi la trova fra sei mesi la ricollega credendola equivalente.*
+
+## Cosa mostra la mappa, esattamente
+
+`stato = 'visitato'` **oppure** almeno un evento — anche **futuro**, perché una serata già in calendario è un posto che vi riguarda già, e vederlo sulla mappa è metà del motivo per cui la mappa esiste.
+
+⚠️ **Il secondo legame evento→posto non viene controllato, ed è voluto.** B-12 aveva trovato che un evento punta al luogo in due modi (`luogo_id` e `elemento_id`), e verrebbe da filtrare su entrambi. Non serve: la strada per `elemento_id` passa da `elemento_lista`, e spuntare quella riga scrive già `luogo.stato`. Quel caso è **già coperto dalla prima condizione** — e aggiungere un secondo controllo darebbe l'impressione di due regole dove ce n'è una.
+
+## I posti che c'erano non si perdono
+
+La migrazione **0024** assegna a una wishlist **tutti** i luoghi esistenti, visitati compresi — non solo i desiderati. ⚠️ Un posto visitato che non stesse in nessuna lista sarebbe visibile **solo** sulla mappa, e la sua scheda con le recensioni diventerebbe irraggiungibile. *Cambia dove si guarda, non cosa esiste.*
+
+I ristoranti vanno in «Ristoranti» (la condizione ricalca `eRistorante()`, che accetta l'intera famiglia — sono `bar` e `cafe` i casi più comuni di una serata), tutto il resto in «Viaggi».
+
+🔑 ⚠️ **E le due `update` non si possono invertire**: la seconda prende «tutto il resto», e il resto è definito da *ciò che la prima ha già sistemato*. Invertirle avrebbe messo i ristoranti in «Viaggi» e poi non li avrebbe più trovati. **L'ordine è il significato**, non lo stile.
+
+## I colori: la prima regola non reggeva
+
+**Chiesto**: ogni lista di colore diverso, ripetizioni ammesse ma non fra vicine.
+
+🔴 La prima stesura (D-68) prendeva `pastelli[liste.length % 4]`. Sembra un giro regolare e non lo è: **basta cancellare una lista** perché il conteggio torni indietro e la successiva nasca dello stesso colore di quella che ora le sta accanto.
+
+🔑 **Il ciclo garantisce di non ripetersi *contando*, non di non ripetersi *in fila*** — e in fila è l'unica cosa che conta, perché il colore serve a distinguere due carte vicine senza leggerne il nome. La regola ora si scrive per ciò che deve ottenere: **diverso dagli ultimi due**. Due e non uno: con quattro tinte, evitare solo la precedente lascia passare A-B-A, che nel carosello si legge come un motivo invece che come tre cose diverse.
+
+⚠️ E le tre liste di default nascono con **tre colori assegnati a mano** nella migrazione, non col default della colonna: nascono insieme, quindi finirebbero adiacenti e identiche — esattamente il difetto che il colore doveva evitare.
+
+### D-69 — La lista «Film» c'è sempre, le locandine arrivano da sole, e le recensioni c'erano già
+
+**Chiesto dall'utente** il 2026-08-28: una lista di default «Film» in cui scrivere i titoli da vedere, con la **copertina presa in automatico «da Google»**, e la possibilità per entrambi di lasciare **recensione e voto in stelle** una volta spuntato il film.
+
+## Un terzo della richiesta era già fatto, e dirlo vale più che rifarlo
+
+✅ **Le recensioni esistono dal 2026-08-12 e fanno già esattamente questo**: `recensione` ha il vincolo `unique(elemento_id, autore_id)` — *due persone, due opinioni, nessuna sovrascrive l'altra* — e `components/scheda-elemento.tsx` mostra cinque stelle **toccabili solo se sono le proprie**, ferme se sono del partner, con il testo accanto. E compaiono **alla spunta di «fatto»**, che è la condizione chiesta, con questo commento già in codice: *«prima non c'è niente da recensire, e chiederlo sarebbe rumore»*.
+
+🔑 **Non è stato riscritto niente.** La cosa utile qui non è il codice risparmiato: è che una funzione già costruita e mai vista può essere richiesta come se non esistesse — e se si costruisce di nuovo, si costruisce **una seconda strada** verso lo stesso dato. È B-19 evitato leggendo prima di scrivere.
+
+## Google non ha un'API per le locandine: si usa TMDB
+
+🔴 **La richiesta non era soddisfacibile alla lettera.** Google Places serve i *luoghi*; per il cinema non esiste un equivalente, e la Knowledge Graph Search API è deprecata e non restituisce poster utilizzabili. La fonte di fatto è **TMDB** — la stessa indicata poche ore prima nella risposta sulle liste Netflix, e quella che sta dietro a JustWatch e Letterboxd.
+
+Quindi: **soddisfatta la sostanza** (*«scrivo il titolo e la copertina arriva»*), **non la lettera** (*«da Google»*). Va scritto qui perché fra sei mesi «la copertina viene da Google» sembrerà vero leggendo la richiesta e falso leggendo il codice.
+
+⚠️ **E porta un debito identico a quello della chiave Google**, dichiarato subito invece di essere scoperto dopo: la chiave `EXPO_PUBLIC_TMDB_KEY` **vive nel bundle**, quindi va dietro una Edge Function prima di utenti veri. E 🔴 **TMDB è gratuito per uso NON commerciale**: se si attivasse il listino di `Marketing/LifeCouple/monetizzazione.md`, la licenza va verificata **prima**.
+
+## La lista «Film» nasce con la coppia, come la creatura
+
+0022 creava «Film» **solo per le coppie che avevano già dei film**: era una lista di *migrazione*, non di *default*. Una coppia nuova apriva Liste e trovava il vuoto.
+
+🔑 **La forma giusta era già nello schema dal 2026-08-12**, scritta per un'altra cosa: *«La creatura nasce con la coppia: mai una coppia senza creatura»* — un trigger su `coppia`. Qui vale identico, e per la stessa ragione: **ciò che deve esistere sempre non si crea dal client**, perché il client può dimenticarsene, fallire a metà, o non essere ancora stato scritto.
+
+⚠️ **Il trigger da solo non basta**: copre le coppie future, non quelle già nate. Serve anche il riempimento all'indietro — *la regola nuova vale da adesso, i dati vengono dal passato*, che è B-21 letto in positivo per la seconda volta in due migrazioni.
+
+## Una lista dichiara cosa contiene, invece di farlo indovinare
+
+La schermata di una lista aperta deve sapere **come si aggiunge una voce**: scrivendo, o scegliendo da una tendina con le locandine. L'alternativa era dedurlo dal **nome** — *«se si chiama Film allora è di film»* — che si rompe con «Filmoni», in inglese, e alla prima rinomina.
+
+🔑 Da qui `lista.tipo`. È **D-60 riportato allo schema**: *se il dato serve, si dichiara; non si deduce da un indizio che può cambiare.*
+
+⚠️ **Limitazione dichiarata**: oggi **non si può creare una seconda lista di film**, perché il foglio di creazione non chiede il tipo. La colonna però esiste, quindi aggiungere quella scelta è una riga di interfaccia e non una migrazione. Sta nel backlog.
+
+⚠️ **E le liste «Film» nate da 0022 vanno promosse a `tipo = 'film'`**, altrimenti succede la cosa più beffarda: la ricerca funziona per chi *non* aveva film e non per chi ne aveva.
+
+## Le due colonne, e perché non se ne riusano due che c'erano
+
+`tmdb_id` e `locandina` sono nuove. Mettere l'identità TMDB in `google_place_id` e il poster in `foto_google` sarebbe stata **la stessa bugia nello schema** che 0022 aveva rifiutato di scrivere per `tipo`: chi legge `foto_google` fra sei mesi si aspetta un nome-risorsa di Google Places.
+
+⚠️ **La locandina è un percorso, non un file.** Salvare l'immagine consumerebbe il tetto di 1 GB (D-22) per una figura che TMDB serve già da CDN. Costo dichiarato: se TMDB cambia i percorsi le locandine si rompono tutte insieme — accettabile perché **non è un ricordo della coppia**, è la copertina di un film e si ripesca.
+
+## Due strade per aggiungere un film, e una è una scommessa
+
+- **La tendina** è la strada buona: si sceglie fra film veri, con la locandina già visibile nella riga — che è ciò che distingue due film omonimi, cioè il caso in cui la tendina serve davvero. È D-37 applicato al cinema.
+- **La riparazione automatica** cerca la locandina per i titoli scritti a mano e prende il **primo risultato**. ⚠️ È una scommessa: «Dune» sono due film, e TMDB ordina per popolarità, non per *quello che intendevate voi*. Chi vuole essere sicuro sceglie.
+
+⚠️ **E chi è già stato tentato non si ritenta**, come per le copertine dei luoghi: senza quel registro, un film che TMDB non conosce resterebbe per sempre fra i «senza locandina» e la ricerca ripartirebbe a ogni modifica dell'elenco — una richiesta in un ciclo che non converge.
+
+### D-68 — «Liste» smette di essere una categoria decisa da noi e diventa una cosa che si crea
+
+**Chiesto dall'utente** il 2026-08-28: *«vorrei che la parte "preferiti" diventasse wishlist. L'interfaccia deve essere simile a quella dei giochi con le card che scorrono e per ultima ci deve essere una card "+" che permette di creare una nuova lista. Sotto ci devono essere 2 pulsanti: "elimina" e "apri". Aprendo una wishlist è possibile aggiungere delle voci.»*
+
+**Cosa c'era prima, e perché non reggeva più.** La sezione si era già chiamata «Preferiti» (nome sbagliato, corretto da **D-47**) e poi «Liste», ma dopo che **D-51** aveva portato i luoghi dentro la mappa era rimasto **un elenco solo**: i film. Una sezione al plurale con dentro una cosa sola non è una sezione — è un residuo di due riorganizzazioni che nessuno ha ridiscusso fino in fondo. Ora l'elenco lo decide la coppia.
+
+**Lo schema: `lista` nuova, e `lista_id` su `elemento_lista`** (migrazione **0022**).
+
+🔑 **La tentazione era una tabella `voce_wishlist` pulita, e sarebbe stata l'errore di B-19 fatto in schema.** `elemento_lista` ha già la transizione `desiderato → fatto`, ed è *quella* transizione che alimenta la creatura (D-15) tramite un trigger. Una tabella separata avrebbe richiesto un **secondo trigger dei punti** — cioè due strade per guadagnarli, che non restano uguali: divergono al primo ritocco, e la differenza si scopre mesi dopo notando che la creatura cresce solo per metà delle cose fatte. Stessa ragione per le recensioni, che pendono già da `elemento_lista` col vincolo «una per persona».
+
+⚠️ **Il prezzo del riuso, dichiarato**: `lista_id` è **nullable**, e il null vuol dire *«è un luogo della mappa»* (D-46), non *«dato mancante»*. È una colonna obbligatoria per metà tabella e vietata per l'altra metà. Il `not null` che sembrerebbe la stretta ovvia **non si può mettere**, ed è scritto nella migrazione perché nessuno ci provi credendo di correggere una svista.
+
+**Un tipo nuovo, `voce`**, accanto a `film` e `luogo`. Una wishlist contiene quello che vuole la coppia — «prendere il passaporto», «regalo per mia sorella» — e riusare `film` per non aggiungere un valore sarebbe stata **una bugia scritta nello schema**, di quelle che fanno filtrare male qualcun altro fra sei mesi. ⚠️ È un **allargamento** del `check`, non una stretta: non ha il problema di B-21, perché nessuna riga esistente lo viola.
+
+**I film che c'erano prima non restano orfani.** La migrazione crea una lista «Film» per ogni coppia che ne ha e ce li attacca. 🔑 Senza quel passo i film sarebbero rimasti nel database ma **in nessuna lista**, cioè spariti dall'app pur esistendo — la forma peggiore di perdita di dati, perché non la segnala nessuno: chi non sapeva che c'erano non li cerca, e chi lo sapeva pensa di ricordare male. È B-21 letto in positivo: *sistema i dati nella stessa migrazione che cambia le regole.*
+
+## Il nodo di interfaccia: cosa fanno i due comandi sulla carta «+»
+
+L'hub dei giochi (**D-62**) poggia su una regola esplicita — *i comandi restano due, sempre gli stessi, fermi in fondo* — e qui l'ultima carta del mazzo **non è una lista**: è il gesto per crearne una. «Elimina» su quella carta non significa niente.
+
+🔑 **La regola parla di posizione, non di etichetta.** Ciò che non deve accadere è che scorrendo i comandi si spostino e li si debba ritrovare. Quindi sulla carta «+» la riga resta **nello stesso posto e della stessa altezza**, e contiene un comando solo a tutta larghezza. *Cambia cosa si può fare, non dove si preme.*
+
+⚠️ **E la carta «+» non è toccabile**, come nessuna carta di nessuno dei due caroselli. Renderla premibile era la cosa naturale da fare ed è precisamente **l'errore di D-64**: due strade per lo stesso gesto. Una strada, quella in fondo.
+
+**«Apri» è pieno, «Elimina» è di vetro** — dopo **B-22** il pieno va all'azione primaria, e l'azione primaria di questa schermata è aprire. ⚠️ Nel foglio di conferma il rapporto **si inverte**: lì il bottone pieno è «Annulla», perché il pieno è quello che il pollice trova per primo e su una cancellazione deve trovare la via d'uscita.
+
+**La conferma dice quante voci si porta via**, e che possono essere del partner. *«Sei sicuro?»* non è una domanda: non aggiunge niente a quello che chi preme già sa. Il numero sì — è l'unica cosa che può fargli cambiare idea.
+
+⚠️ **Cancellare è solo-autore, ed è una scelta.** La policy segue quella già in vigore sui singoli elementi. Il costo è lo stesso già accettato (se uno sbaglia, l'altro non corregge); il beneficio qui è più grande, perché una lista è **un contenitore che riempiono in due**. Fra «chiunque può cancellare il lavoro di entrambi» e «solo chi l'ha creata può», la seconda sbaglia dalla parte giusta.
+
+🔑 **E la cancellazione rilegge quante righe ha toccato**, perché un `delete` negato dalla RLS torna con `error: null` e zero righe — **B-23 nella sua forma esatta**. Senza quel controllo l'app direbbe «fatto» e la lista resterebbe lì, e chi ha premuto leggerebbe un guasto casuale invece di un permesso.
+
+**La schermata aperta riusa `ElencoElementi`** invece di avere un elenco suo, più semplice. Sarebbe bastato per le voci scritte a mano — ma i film migrati hanno copertina, recensioni e punti, e un elenco nuovo li avrebbe mostrati come righe nude: **funzioni che spariscono dall'interfaccia restando nel database**, senza un errore e senza un test che fallisca.
 
 ### D-67 — I due giochi costruiti: chi decide cosa, e cosa non tocca mai il database
 **Fatto il 2026-08-28**, dopo che l'utente ha applicato la migrazione 0020. Versione **ufficiale** di «indovina il disegno» (5 round) e «telepatia» (10 round).
@@ -1021,6 +1225,94 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-28 — Il numero sulla carta non si aggiornava tornando dalla lista (2026-08-28, CORRETTO)
+
+**Sintomo, riferito dall'utente**: *«quando apro una lista e inserisco una voce poi chiudo la card il numero sulla card non si aggiorna»*.
+
+**La causa**: le carte mostrano quante voci ha ogni lista, e quel numero si carica **al montaggio**. Tornando indietro, la schermata a tab **non si rimonta** — quindi il conto resta quello di prima mentre il database ne ha uno nuovo.
+
+🔴 **È la forma di B-09/B-13 per la terza volta**: *due copie dello stesso stato, di cui una non viene aggiornata*. E la regola era già scritta il 2026-08-27 — *se una schermata legge dati che un'altra può scrivere, deve rileggere al focus* — poi riapplicata da **D-59** ai permessi di posizione.
+
+🔑 **Questa schermata è nata ieri e non ce l'aveva.** È la stessa lezione di B-24 in un altro punto: *sapere una regola e applicarla sono due cose diverse, e la seconda non segue dalla prima.* Tre occorrenze della stessa forma in due giorni dicono che il problema non è la memoria di chi scrive — è che non c'è niente che lo ricordi al posto suo. ⚠️ **Va considerato un candidato per un controllo automatico**: una schermata sotto `app/(tabs)/` che usa un hook di lettura senza `useFocusEffect` è un difetto probabile, e si può cercare con un grep.
+
+**Correzione**: `useFocusEffect` che richiama `ricarica`, come in `galleria.tsx` e `home.tsx`.
+
+### B-29 — «Apri» apriva a volte la lista sbagliata (2026-08-28, CORRETTO)
+
+**Sintomo, riferito dall'utente**: *«a volte apro una card ma mi apre un'altra lista»*.
+
+**La causa**: `scelto` — l'indice della carta al centro — si aggiornava **solo** in `onMomentumScrollEnd`, che scatta quando il carosello si ferma **per inerzia**. Se si trascina piano e si lascia, o si accompagna la carta fino in fondo col dito, quell'evento **non arriva mai**: la carta al centro è cambiata, lo stato no, e «Apri» apre la precedente.
+
+⚠️ **Il «a volte» della segnalazione è la diagnosi**, e vale la pena notarlo: un difetto che dipende da *come* si scorre non si riproduce a comando, e la tentazione è archiviarlo come impressione. Qui invece descriveva esattamente la condizione — capita quando il gesto finisce senza inerzia.
+
+🔑 **La correzione non è aggiungere il secondo evento sperando di averli presi tutti.** È smettere di **dedurre una posizione da una sequenza di eventi**: lo scorrimento vero sta in `x`, aggiornato a ogni fotogramma, e al momento del tocco si legge quello. *Il pezzo che sa il dato lo usa, invece di ricostruirlo* — la stessa cura di B-25, dove il dato era l'altezza della tastiera.
+
+⚠️ `onScrollEndDrag` è stato aggiunto lo stesso, ma **per un'altra ragione**: serve a far cambiare **i bottoni** mentre si scorre (una lista di partenza non mostra «Elimina»). Quello è aspetto e può permettersi uno stato in ritardo di un istante; **l'azione no**.
+
+🔴 **E la stessa rilettura è stata messa sulla cancellazione**, dove non era stata segnalata: cancellare la lista sbagliata è molto peggio che aprirla. *Trovato un difetto per forma, si cerca la forma* — anche quando la seconda occorrenza non ha ancora fatto danni.
+
+### B-27 — L'elenco della mappa mostrava ancora i posti non visitati (2026-08-28, CORRETTO)
+
+**Sintomo, riferito dall'utente**: *«l'elenco dei luoghi contiene anche luoghi non ancora visitati»*.
+
+**La causa**: D-70 aveva filtrato `useLuoghi`, che alimenta **i pin**. L'elenco della stessa sezione però non legge da lì: legge `elemento_lista` tramite `ElencoElementi`, e quel filtro non c'era.
+
+🔑 **Due viste della stessa cosa, una sola corretta** — ed è la peggiore delle due situazioni, perché la vista giusta fa credere che la regola sia applicata. *Quando una regola riguarda un dato, va messa dove il dato si legge; se le letture sono due, i posti sono due.*
+
+⚠️ **Il criterio è ora scritto identico nei due punti** (`visitato` **oppure** almeno un evento) e questo è un debito, non una soluzione: due copie della stessa condizione divergeranno. Non è stato unificato oggi perché le due leggono tabelle diverse con strumenti diversi, e l'astrazione che le unisce andrebbe progettata, non improvvisata a fine giornata. **Sta qui perché la prossima volta che una delle due cambia, si cambino entrambe.**
+
+### B-26 — I posti aggiunti a «Viaggi» e «Ristoranti» non comparivano (2026-08-28, CORRETTO)
+
+**Sintomo, riferito dall'utente**: *«quando aggiungo degli elementi alla wishlist viaggi e ristoranti questi non vengono caricati»*.
+
+**La causa, e viene da me.** `creaLuogo` scrive due righe — una in `luogo` e una in `elemento_lista` — e nella seconda **non metteva `lista_id`**. Ma la wishlist filtra **per** `lista_id`: il posto veniva creato davvero, il database lo aveva, la mappa se ne sarebbe accorta — e la lista da cui lo avevi aggiunto no.
+
+🔴 **È la forma esatta di B-19**, introdotta lo stesso giorno in cui B-19 veniva citato tre volte come lezione appresa. Allora `aggiungi` non scriveva copertina e genere; oggi non scrive l'appartenenza. La forma è: *una via di creazione che non scrive un campo che chi legge usa per filtrare* — e il sintomo, allora come oggi, **non è un errore: è una cosa che non compare**.
+
+⚠️ **Perché non l'hanno preso i controlli**: `tsc` non poteva dire niente, perché `lista_id` è **nullable per progetto** — un posto può nascere da un evento senza stare in nessuna lista (D-44). Il tipo che permette il caso legittimo permette anche il difetto. *Una colonna nullable è una colonna su cui il compilatore ha smesso di aiutarti.*
+
+**Correzione**: `creaLuogo` accetta `listaId` e lo scrive; `FoglioAggiungiLuogo` lo inoltra; `ElencoElementi` gli passa il proprio. Il valore predefinito resta `null`, perché il caso «nato da un evento» è ancora vero.
+
+**Verificato**: `tsc`, `eslint`, bundle. ⚠️ **Non sul telefono** — e questo è uno dei pochi difetti di oggi che si vedrebbe anche in preview, se non ci fosse il cancello di sessione.
+
+### B-25 — La tastiera copriva la riga di aggiunta di una lista (2026-08-28, CORRETTO)
+
+**Sintomo, riferito dall'utente**: *«anche quando inserisco una voce il tastierino sovrascrive elementi della UI»*. È la **seconda** segnalazione di tastiera della giornata, arrivata dopo la correzione di **B-24** — che quindi non l'aveva coperta.
+
+**Perché B-24 non bastava**: quella correzione ha messo la gestione della tastiera dentro `Foglio`, e riguarda i **fogli**. Qui la riga di aggiunta non sta in un foglio: sta in fondo a `components/elenco-elementi.tsx`, che aveva un `KeyboardAvoidingView` **suo** — e funzionante, fino a ieri.
+
+🔑 **La causa, e perché si è manifestata solo adesso.** `behavior="padding"` calcola quanto padding serve **dalla posizione del contenitore sullo schermo**. Nella sezione Liste quel contenitore partiva subito sotto un titolo di una riga, e il conto tornava. Dentro una **lista aperta** (D-68, di oggi) ha sopra un'intestazione più alta — il tondo «indietro» più due righe di testo — e sottostima **esattamente di quell'altezza**.
+
+⚠️ **Non era quindi un difetto del componente: era un difetto della schermata nuova, che ha reso visibile un'assunzione che il componente aveva sempre fatto.** Un `KeyboardAvoidingView` che funziona è un `KeyboardAvoidingView` che nessuno ha ancora messo sotto un'intestazione alta.
+
+**Correzione**: la frame-math viene tolta di mezzo. L'altezza della tastiera si **misura** con `useTastiera` — che il progetto ha già, perché la barra volante deve sparire — e si applica come `paddingBottom`. Nessun conto sulle posizioni, quindi nessuna intestazione che possa falsarlo.
+
+🔑 È la stessa cura di B-24 in un contesto diverso: **il pezzo che sa il dato lo usa direttamente, invece di farlo dedurre a qualcun altro da un indizio geometrico.**
+
+**Verificato**: `tsc` e `eslint` puliti, bundle ricompilato. ⚠️ **Non verificato sul telefono**, e non è verificabile altrove: sul web non esiste una tastiera di sistema. La prova è aprire una lista e scrivere una voce.
+
+### B-24 — La tastiera copriva i comandi di un foglio (2026-08-28, CORRETTO nella forma)
+
+**Sintomo, riferito dall'utente**: *«quando si apre il tastierino nasconde alcuni elementi della UI»*.
+
+⚠️ **La segnalazione non diceva quale schermata**, e la diagnosi qui sotto è stata fatta cercando *dove il difetto poteva esistere*, non partendo da dove è stato visto. Va quindi riletta come «trovato un difetto di questa forma, e corretto», non come «trovato quel difetto». Se dopo la correzione qualcosa resta coperto, è un secondo caso e non una correzione fallita.
+
+**La causa**: `components/foglio.tsx` **non sapeva niente della tastiera**. Un foglio sta incollato in fondo allo schermo — cioè esattamente nel posto che la tastiera copre — e finora se ne occupava ogni schermata per conto proprio: il calendario aveva il suo `KeyboardAvoidingView` dentro il foglio, e chi scriveva il foglio successivo doveva ricordarsene.
+
+🔴 **Chi lo ha scritto dopo non se n'è ricordato**: il foglio «crea una lista» di **D-68**, di oggi, è nato senza. Con `autoFocus` sul campo, la tastiera sale subito e copre «Crea» e «Annulla».
+
+🔑 **Ed è la stessa forma già diagnosticata da D-60 per il vetro**, alla lettera: *una regola che dipende dalla memoria di chi scrive la prossima schermata non è una regola, è una speranza*. Lì la prova era che il vetro si rompeva su cento punti di chiamata; qui è bastato **un** foglio nuovo, scritto lo stesso giorno in cui quella lezione era in cima al PUNTO DI RIPRESA, per ripetere l'errore. *Sapere una regola e applicarla sono due cose diverse, e la seconda non segue dalla prima.*
+
+**Correzione, nella forma e non nell'istanza**: la tastiera la scansa **`Foglio`**, una volta, per tutti i fogli — presenti e futuri. Il `KeyboardAvoidingView` è dentro la vista animata, così non litiga con la salita del pannello, e `pointerEvents="box-none"` lascia passare i tocchi alla velatura, che è ciò che chiude il foglio toccando fuori.
+
+⚠️ **E il `KeyboardAvoidingView` del calendario è stato tolto**, non lasciato lì: due contenitori che scansano la stessa tastiera **sommano** lo spostamento, e il foglio sarebbe schizzato in alto del doppio. È la parte della correzione che si dimentica più facilmente, perché il difetto che introduce assomiglia a una svista di stile invece che a una regressione.
+
+🔑 **Il posto era già indicato dal file stesso.** In `foglio.tsx` c'era scritto, a proposito di un'altra cosa: *«dichiararlo una volta, qui, evita che ogni schermata se lo ricordi — che è come si è perso il difetto del 2026-08-27»*. Lo stesso ragionamento, nello stesso file, per lo stesso tipo di problema — e la tastiera era rimasta fuori. Una regola scritta accanto al posto giusto non si applica da sola.
+
+**I due `KeyboardAvoidingView` rimasti sono corretti e non vanno toccati**: quello di `elenco-elementi.tsx` (riga di aggiunta) avvolge la **schermata**, non un foglio; quello di `foglio-aggiungi-luogo.tsx` sta dentro un `Modal` di sistema, non dentro `Foglio`.
+
+**Verificato**: `tsc` e `eslint` puliti, bundle web ricompilato (12,5 MB, HTTP 200). ⚠️ **Non verificato sul telefono**, che è l'unico posto dove una tastiera vera esiste: sul web non c'è tastiera di sistema, quindi `KeyboardAvoidingView` non ha niente da cui scansarsi e la preview **non può dire nulla** su questa correzione. La prova è aprire «crea una lista» sull'iPhone e vedere i due comandi sopra la tastiera.
+
 ### B-23 — Una partita non si poteva abbandonare, e il permesso mancante taceva (2026-08-28, CHIUSO — 0021 applicata il 2026-08-28)
 
 **Trovato** perché l'utente ha chiesto di fermare le partite attive. Ho lanciato la pulizia sugli account di prova, l'output diceva «abbandonata» quattro volte, e **ho ricontrollato**: quattro partite ancora vive.
@@ -1447,6 +1739,12 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
 4. [x] **Mappa dei luoghi visitati** — fatta il 2026-08-13 (D-34): mappa nativa, posti segnati a mano (tocco lungo o «segna dove sono»), eventi del luogo
 5. [x] **Cartella foto condivisa** — fatta il 2026-08-13 (D-34/`0009`/`0010`): bucket privato, indirizzi firmati, compressione, tetto 1 GB dal database
 6. [x] **Liste film e ristoranti** — fatte il 2026-08-13 (D-32): da fare / già fatti, una recensione per persona con voto e testo
+   - [x] **Le liste le crea la coppia** — 2026-08-28, **D-68** / migrazione **0022**: carosello di carte come l'hub dei giochi, carta «+» in fondo, «Elimina» e «Apri» sotto, e le voci dentro. ⚠️ Migrazione **da applicare**, e **mai visto girare**.
+   - [x] **Lista «Film» di default, locandine automatiche e recensioni** — 2026-08-28, **D-69** / migrazione **0023**. ⚠️ Serve `EXPO_PUBLIC_TMDB_KEY` nel `.env`.
+   - [x] **I luoghi arrivano dalle wishlist, non dalla mappa** — 2026-08-28, **D-70** / migrazione **0024**: «Viaggi» e «Ristoranti» di default, mappa come registro dei visitati, colori non adiacenti.
+   - [x] **La mappa è di sola lettura e le liste di partenza sono protette** — 2026-08-28, **D-71** / migrazione **0025**, più i difetti **B-26** e **B-27**.
+   - [x] **Tre pin sulla mappa, e l'hub che rilegge** — 2026-08-28, **D-72**, più i difetti **B-28** e **B-29**. Nessuna migrazione: è tutto lato app.
+   - [ ] **Scegliere il tipo creando una lista** (voci o film): la colonna `lista.tipo` esiste già, manca solo la scelta nel foglio di creazione — oggi si può avere una sola lista di film, quella automatica.
 7. [ ] **Cancellazione account in-app** (richiesta obbligatoria da Apple) con catena di cancellazione verificata
 7-bis. [x] **Hub dei giochi** — fatto il 2026-08-28 (**D-62**): carosello delle tre carte, «Classifica» e «Gioca», e dietro «Gioca» le due sorgenti di domande di 11-bis. È **solo l'ingresso**: nessuna partita, per esplicita richiesta dell'utente («partiamo implementando solo l'hub game»).
     - 🔴 **Aperta la formulazione della classifica** — vedi D-62: *chi ha vinto più volte* è una graduatoria persistente fra le due persone, e P-03 dice che il punteggio non deve diventare un verdetto sulla relazione. Da decidere **prima** di scriverne il conteggio, non dopo.
@@ -1578,7 +1876,52 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-28 (seconda sessione)** — giro di verifica sull'iPhone. Copre D-60→D-67 e B-16→B-23.
+**Aggiornato al 2026-08-28 (seconda sessione)** — giro di verifica, poi le wishlist. Copre D-60→D-68 e B-16→B-23.
+
+🔴 **Da applicare: le migrazioni `0022`, `0023`, `0024` e `0025`, in quest'ordine.** Ognuna dipende dalla precedente: la 0023 dalla tabella della 0022, la 0024 dalla colonna `tipo` della 0023, la 0025 dalle liste create dalla 0024.
+
+🔴 **E serve una chiave TMDB**: `EXPO_PUBLIC_TMDB_KEY` nel `.env` (gratuita su themoviedb.org → Impostazioni → API → chiave v3), poi **Metro va riavviato** perché le `EXPO_PUBLIC_` entrano nel bundle a compilazione. Senza, la ricerca film **lo dice** invece di tacere — ma non funziona.
+
+🔴 **Da applicare: la migrazione `0022_wishlist.sql`.** Senza, la sezione Liste non carica niente: la tabella `lista` non esiste e la query fallisce a ogni apertura. È la prima cosa da fare, prima di qualunque prova.
+
+🔴 **E poi c'è un fronte in più mai visto girare**: le **wishlist** (**D-68**). Cosa guardare, in ordine:
+1. **La sezione Liste si apre** e mostra il carosello. Se la coppia aveva dei film, deve esserci una carta **«Film»** con dentro i film di prima — se quella carta non c'è, o è vuota, la migrazione dei dati non ha funzionato ed è la cosa più grave delle due.
+2. **La carta «+»** è l'ultima del mazzo, e il comando sotto diventa **uno solo** a tutta larghezza. Scorrendo avanti e indietro fra una lista e il «+», i comandi non devono **spostarsi**: cambia cosa dicono, non dove stanno.
+3. **Creare una lista**: il nome, e la carta nuova compare col colore successivo del ciclo. 🔴 **Ed è anche la prova di B-24**: col campo a fuoco e la tastiera aperta, «Crea» e «Annulla» devono restare **sopra** la tastiera. ⚠️ Da guardare nello stesso giro anche il foglio «nuovo evento» del calendario, che è l'altro toccato dalla correzione e prima funzionava: se ora salta troppo in alto, è il doppio spostamento.
+4. **Aprire**: le voci si aggiungono scrivendo, come i film. Le voci vecchie (i film migrati) devono avere ancora **copertina e recensioni**.
+5. ⚠️ **Eliminare una lista creata dal partner** deve mostrare la frase sul permesso, non un «fatto» silenzioso. È il caso che B-23 ha insegnato a non dare per riuscito — e serve il secondo account per provarlo.
+6. **Il conteggio sulla carta** (voci, e «n su m») si aggiorna tornando indietro dalla lista.
+
+🔴 **E per i film (D-69), nello stesso giro**:
+7. **La lista «Film» c'è** anche se la coppia non aveva film. Se manca, è il trigger o il riempimento all'indietro di 0023.
+8. **Aprendola compare la tendina**, non il campo di scrittura. Se compare il campo, `lista.tipo` non è `film` — e il sospetto è la promozione delle liste nate da 0022.
+9. **Scrivendo tre lettere arrivano i risultati con la locandina piccola.** Se resta vuoto: chiave assente (ma allora lo dice), oppure Metro non riavviato dopo aver messo la chiave.
+10. **Scelto un film**, la scheda deve avere **la locandina grande**.
+11. ⚠️ **Spuntato «fatto», compaiono le stelle** — ed è la parte che **non è stata scritta oggi**: esiste dal 2026-08-12 e non è mai stata vista girare. Se è rotta, è rotta da allora.
+12. **La recensione del partner** si vede in sola lettura e non si può toccare: serve il secondo account.
+
+🔴 **E per i luoghi (D-70), che è il cambio più grosso**:
+13. **Esistono tre liste di default**: Film, Viaggi, Ristoranti — e i **tre colori sono diversi**. Se due sono uguali e adiacenti, è la parte del colore ad aver fallito, non la migrazione.
+14. **I posti che c'erano sono finiti nella lista giusta**: i ristoranti in «Ristoranti», il resto in «Viaggi». ⚠️ Questo è il punto in cui si perde più facilmente qualcosa — se un posto non compare in **nessuna** delle due liste **e** non è sulla mappa, le due `update` di 0024 non hanno funzionato, e va guardato prima di aggiungere altro.
+15. **Sulla mappa non c'è più il «+»**, né nella mappa vera né nella variante senza componente mappa (il web).
+16. ⚠️ **Superato da D-72**: qui c'era scritto *«la mappa mostra solo i posti visitati o con un evento; un desiderio senza data non deve avere un pin»*. **Non è più vero** — la mappa li mostra tutti, e a distinguerli è l'icona (punto 25). Il filtro è rimasto **solo nell'elenco**, ed è il punto 27.
+17. **Aprendo «Viaggi» compare la ricerca luoghi** (il «+» che galleggia), e lì un posto si aggiunge ancora.
+18. 🔴 **Il passaggio automatico**: spuntare un posto in «Viaggi» deve farlo comparire sulla mappa. È il cuore della modifica, e usa codice che **esisteva già** (`segnaFatto` scrive `luogo.stato` dal 2026-08-13) — quindi se non funziona, non è codice nuovo ad essersi rotto.
+19. **La riga di aggiunta non finisce più sotto la tastiera** (B-25), in una lista aperta di qualunque tipo.
+
+🔴 **E il secondo giro su luoghi e liste (D-71), che corregge tre difetti riferiti**:
+20. **Aggiungere un posto a «Viaggi»**: deve comparire **subito nella lista** (B-26). Era il difetto che si vedeva di più — il posto veniva creato e non si vedeva da nessuna parte se non sulla mappa.
+21. **L'elenco dentro la mappa non mostra i posti non visitati** (B-27). ⚠️ Da guardare **insieme ai pin**: se i pin sono giusti e l'elenco no, o viceversa, sono le due copie della stessa condizione ad essere divergenti — è il debito dichiarato in B-27.
+22. **Nell'elenco della mappa non c'è il cestino, non c'è la spunta, non c'è «cambia copertina»**. Solo lettura.
+23. **Sulle tre liste di partenza non compare «Elimina»**, e sotto c'è la frase che dice perché. Resta il solo «Apri», nella stessa posizione.
+🔴 **E l'ultimo giro (D-72), che è il più visivo di tutti**:
+25. **Sulla mappa ci sono di nuovo tutti i posti**, con **tre** pin diversi: calendario **bianco** su pin **pieno** = ci siete stati; calendario **rosa** su pin **chiaro** = ci andrete; **segnalibro** grigio = desiderato, senza data.
+26. ⚠️ **Il caso che distingue una correzione giusta da una che sembra giusta**: un posto con una serata **passata** deve avere il pin **pieno col calendario bianco**, non quello chiaro col rosa. Se è chiaro, «in programma» sta guardando il conteggio degli eventi invece delle loro date.
+27. **L'elenco però resta filtrato** (solo visitati o con eventi): mappa e elenco ora divergono **di proposito**, e non è un difetto.
+28. **Il numero sulla carta si aggiorna** tornando indietro dopo aver aggiunto una voce (B-28).
+29. 🔴 **Scorrere piano e lasciare senza slancio, poi premere «Apri»**: deve aprirsi la lista che si vede, non la precedente (B-29). ⚠️ È il caso che con uno scorrimento normale **non si riproduce** — va fatto apposta.
+
+24. 🔴 **La prova vera del divieto non è l'interfaccia**: è che una cancellazione forzata venga **rifiutata dal database** con un errore leggibile, non con un silenzioso «fatto». Il bottone tolto è cortesia; il trigger è la regola.
 
 **Dove siamo, in una riga**: l'app è stata usata sull'iPhone e funziona tutta **tranne i giochi**, che restano l'unico fronte mai visto girare su un dispositivo. Migrazioni **0020** e **0021** applicate; suite tutta verde.
 

@@ -69,6 +69,7 @@ export function Scheda({
   onElimina,
   onCopertina,
   onPosto,
+  soloLettura = false,
   onEvento,
   onApri,
   foto,
@@ -84,6 +85,16 @@ export function Scheda({
   onElimina: () => void;
   onCopertina: () => void;
   onPosto?: () => void;
+  /**
+   * **Sola visualizzazione** (D-71): niente spunta, niente cestino, niente
+   * copertina da cambiare.
+   *
+   * Serve all'elenco dei luoghi dentro la mappa, che dal 2026-08-28 è un
+   * **registro** e non un elenco su cui si agisce: quei posti sono legati a
+   * serate, e cancellarne uno da lì toglierebbe il posto **anche all'evento**
+   * che lo cita. Si modificano dalla wishlist, dove sono nati.
+   */
+  soloLettura?: boolean;
   onEvento?: (id: string) => void;
   /** Toccando la testa: apre l'elenco completo delle serate di questo posto. */
   onApri?: () => void;
@@ -153,22 +164,29 @@ export function Scheda({
 
             {/* Spuntare "fatto" e' il gesto piu' frequente: sta sull'immagine,
                 grande, invece che in un angolo della scheda. */}
-            <Pressable onPress={() => onFatto(!fatto)} hitSlop={8}>
-              <View
-                className="h-9 w-9 items-center justify-center rounded-full border"
-                style={{
-                  backgroundColor: fatto ? c.accento : 'rgba(255,255,255,0.22)',
-                  borderColor: fatto ? c.accento : 'rgba(255,255,255,0.55)',
-                }}
-              >
-                {fatto && <Check color={c.suAccento} size={18} />}
-              </View>
-            </Pressable>
+            {/* ⚠️ In sola lettura la spunta **sparisce** invece di restare
+                inerte: un tondo che non risponde al dito si legge come
+                un'app rotta, non come «qui non si tocca» — è la lezione di
+                `premibile.tsx`, e B-22 ha mostrato quanto costa ignorarla. */}
+            {!soloLettura && (
+              <Pressable onPress={() => onFatto(!fatto)} hitSlop={8}>
+                <View
+                  className="h-9 w-9 items-center justify-center rounded-full border"
+                  style={{
+                    backgroundColor: fatto ? c.accento : 'rgba(255,255,255,0.22)',
+                    borderColor: fatto ? c.accento : 'rgba(255,255,255,0.55)',
+                  }}
+                >
+                  {fatto && <Check color={c.suAccento} size={18} />}
+                </View>
+              </Pressable>
+            )}
           </View>
         </Pressable>
 
         {/* --- il corpo ----------------------------------------------------- */}
         <View className="gap-3 p-4">
+          {!soloLettura && (
           <View className="flex-row items-center justify-between">
             {Platform.OS !== 'web' ? (
               <Pressable onPress={onCopertina} hitSlop={6} className="flex-row items-center gap-1.5">
@@ -186,6 +204,7 @@ export function Scheda({
               </Pressable>
             )}
           </View>
+          )}
 
           {/* Il posto del ristorante (0012): e' cio' che lo porta sulla mappa.
               Lo aggancia solo chi l'ha aggiunto (policy solo-autore). */}

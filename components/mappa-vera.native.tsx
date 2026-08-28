@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { CalendarHeart, MapPin } from 'lucide-react-native';
+import { Bookmark, CalendarHeart } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { C } from '@/lib/tema';
 import type { Luogo } from '@/lib/luoghi';
@@ -136,6 +136,8 @@ export function MappaVera({
   luoghi,
   ristoranti = [],
   eventiPerLuogo = {},
+  programmatiLuogo = {},
+  programmatiRistorante = {},
   eventiPerRistorante = {},
   spazioSotto = 0,
   onLuogo,
@@ -146,6 +148,13 @@ export function MappaVera({
   ristoranti?: RistoranteSuMappa[];
   /** Quanti eventi ha ogni posto: decide pin pieno/vuoto e il numerino. */
   eventiPerLuogo?: Record<string, number>;
+  /**
+   * Chi ha **almeno una serata futura** (D-72). Non si deduce dal conteggio:
+   * quel numero comprende anche le serate passate, e un posto dove siete già
+   * stati tre volte avrebbe lo stesso conto di uno dove andrete domani.
+   */
+  programmatiLuogo?: Record<string, boolean>;
+  programmatiRistorante?: Record<string, boolean>;
   eventiPerRistorante?: Record<string, number>;
   /** Quanto della mappa e' coperto in basso (barra volante e anteprima): logo
    *  Apple, callout e bussola si spostano sopra, invece di finire sotto. */
@@ -170,6 +179,7 @@ export function MappaVera({
     >
       {luoghi.map((l) => {
         const n = eventiPerLuogo[l.id] ?? 0;
+        const programmato = programmatiLuogo[l.id] === true;
         return (
           <Marker
             key={l.id}
@@ -180,15 +190,48 @@ export function MappaVera({
             // dicono la stessa cosa in due modi diversi.
             onPress={() => onLuogo(l)}
           >
+            {/*
+              ## ⚠️ Tre stati, e l'ordine fra loro è una decisione (D-72)
+              1. **visitato** → calendario **bianco** su pin **pieno**: ci siete
+                 stati, ed è un fatto compiuto;
+              2. **in programma** (una serata **futura**) → calendario **rosa**
+                 su pin **chiaro**: c'è, ma non è ancora successo;
+              3. **desiderato** → **segnalibro** grigio: messo da parte, senza
+                 una data.
+
+              ⚠️ **Colore dell'icona e riempimento del pin non sono due scelte,
+              sono una sola.** Un'icona bianca ha bisogno di un fondo pieno e una
+              rosa di un fondo chiaro: invertirne una senza l'altra produce
+              bianco-su-bianco o rosa-su-rosa, cioè un pin vuoto. Chi cambia
+              questi rami deve cambiarli a coppie.
+
+              🔑 E la scala che ne esce si legge da sé: **pieno = è successo**,
+              **contornato = non ancora**, **grigio = nemmeno in programma**. Il
+              peso visivo segue la certezza del fatto, non la sua urgenza — che
+              è la lettura giusta per una mappa che è prima di tutto un
+              registro.
+
+              🔑 **`visitato` vince su «in programma»**, quando un posto è
+              entrambi (ci tornate). Perché la mappa è prima di tutto il
+              registro di dov'è stata la coppia, e «ci siamo stati» è un fatto
+              mentre «ci andremo» è un'intenzione. Se un giorno servisse il
+              contrario, è l'ordine di questi tre rami a cambiare — non altro.
+
+              ⚠️ E il **segnalibro** non è un `MapPin`: dentro un pin, un'icona
+              a forma di pin è una ripetizione che non dice niente. Dice invece
+              *messo da parte*, che è esattamente lo stato.
+            */}
             <Pin
-              colore={l.stato === 'visitato' ? C.accento : '#8b7480'}
-              pieno={n > 0}
+              colore={l.stato === 'visitato' || programmato ? C.accento : '#8b7480'}
+              pieno={l.stato === 'visitato'}
               conto={n}
             >
-              {n > 0 ? (
+              {l.stato === 'visitato' ? (
                 <CalendarHeart color="#ffffff" size={17} />
+              ) : programmato ? (
+                <CalendarHeart color={C.accento} size={17} />
               ) : (
-                <MapPin color={l.stato === 'visitato' ? C.accento : '#8b7480'} size={17} />
+                <Bookmark color="#8b7480" size={17} />
               )}
             </Pin>
           </Marker>
@@ -208,6 +251,10 @@ export function MappaVera({
           serate, vuoto se ancora no. */}
       {ristoranti.map((r) => {
         const n = eventiPerRistorante[r.id] ?? 0;
+        const programmato = programmatiRistorante[r.id] === true;
+        // ⚠️ Un ristorante «visitato» si riconosce dall'avere serate **passate**
+        // e nessuna futura: la riga `RistoranteSuMappa` non porta lo `stato`.
+        const visitato = n > 0 && !programmato;
         return (
           <Marker
             key={`rist-${r.id}`}
@@ -215,11 +262,20 @@ export function MappaVera({
             tracksViewChanges={traccia}
             onPress={() => onRistorante?.(r)}
           >
-            <Pin colore={C.accento} pieno={n > 0} conto={n}>
-              {n > 0 ? (
+            {/* Stessa regola dei luoghi: un ristorante è un luogo, e due
+                vocabolari visivi per la stessa cosa sono due cose da imparare
+                invece di una. */}
+            <Pin
+              colore={visitato || programmato ? C.accento : '#8b7480'}
+              pieno={visitato}
+              conto={n}
+            >
+              {visitato ? (
                 <CalendarHeart color="#ffffff" size={17} />
+              ) : programmato ? (
+                <CalendarHeart color={C.accento} size={17} />
               ) : (
-                <MapPin color={C.accento} size={17} />
+                <Bookmark color="#8b7480" size={17} />
               )}
             </Pin>
           </Marker>

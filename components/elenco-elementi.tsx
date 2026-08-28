@@ -29,6 +29,8 @@ import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
 import { caricaFoto, copertinePerElemento, fotoDegliEventiPerElemento, scegliFoto } from '@/lib/foto';
+import { CercaFilm } from '@/components/cerca-film';
+import { urlLocandina } from '@/lib/ricerca-film';
 import { supabase } from '@/lib/supabase';
 import type { Evento } from '@/lib/eventi';
 import { usePreferiti, type Elemento, type TipoElemento } from '@/lib/preferiti';
@@ -69,7 +71,22 @@ import { lingua, t } from '@/lib/i18n';
  * perche' li' non c'e' nessun cambio di vista da accompagnare.
  */
 
-export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
+export function ElencoElementi({
+  tipo,
+  listaId = null,
+}: {
+  tipo: TipoElemento;
+  /**
+   * La wishlist di cui mostrare le voci (0022).
+   *
+   * ⚠️ Quando c'è, **il filtro è questo e non `tipo`**: una lista creata dalla
+   * coppia può contenere insieme voci scritte a mano e film, e filtrare per
+   * tipo ne mostrerebbe metà. Il `tipo` resta comunque, perché serve a decidere
+   * *come si aggiunge* — un film e una voce si scrivono, un luogo si sceglie —
+   * e perché ogni riga continua a disegnarsi in base al **proprio** tipo.
+   */
+  listaId?: string | null;
+}) {
   const router = useRouter();
   const { session } = useAuth();
   const { coppiaId, ricarica: ricaricaCoppia } = useCoppia();
@@ -84,10 +101,12 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
     collegaPosto,
     sincronizzaVisitati,
     riparaCopertine,
+    aggiungiFilm,
+    riparaLocandine,
     ricarica,
   } = usePreferiti(coppiaId);
   const { c } = useTema();
-  const { aperta: tastieraAperta } = useTastiera();
+  const { aperta: tastieraAperta, altezza: altezzaTastiera } = useTastiera();
 
   const [nuovo, setNuovo] = React.useState('');
   const [attesa, setAttesa] = React.useState(false);
@@ -130,7 +149,36 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
     })();
   }, [coppiaId, elementi]);
 
-  const suoi = elementi.filter((e) => e.tipo === tipo);
+  /**
+   * ## ⚠️ Due elenchi di luoghi, e mostrano cose diverse (D-71)
+   *
+   * - **Dentro una wishlist** (`listaId` valorizzato): tutto ciò che sta in
+   *   quella lista, visitato o no. È il posto dove si aggiunge e si toglie.
+   * - **Dentro la mappa** (`listaId` nullo, `tipo` luogo): **solo i posti dove
+   *   siete stati o che hanno una serata**. È un registro.
+   *
+   * 🔴 Il secondo filtro **mancava**, ed è il difetto riferito: *«l'elenco dei
+   * luoghi contiene anche luoghi non ancora visitati»*. Il 2026-08-28 avevo
+   * filtrato i **pin** della mappa (`useLuoghi`) e non il suo **elenco**, che
+   * legge da un'altra parte — due viste della stessa cosa, una sola corretta.
+   * *Quando una regola riguarda un dato, va messa dove il dato si legge; se le
+   * letture sono due, i posti sono due.*
+   *
+   * ⚠️ Il criterio è lo stesso di `useLuoghi` e va tenuto tale: `visitato`
+   * **oppure** almeno un evento, anche futuro.
+   */
+  const registroLuoghi = tipo === 'luogo' && listaId === null;
+
+  const suoi = listaId
+    ? elementi.filter((e) => e.lista_id === listaId)
+    : elementi
+        .filter((e) => e.tipo === tipo)
+        .filter(
+          (e) =>
+            !registroLuoghi ||
+            e.stato === 'fatto' ||
+            (eventiPer[e.id]?.length ?? 0) > 0
+        );
   const daFare = suoi.filter((e) => e.stato !== 'fatto');
   const fatti = suoi.filter((e) => e.stato === 'fatto');
 
@@ -205,7 +253,8 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
     // quindi al giro successivo non parte nessuna richiesta. Se non c'e' niente
     // da riparare non ne parte nemmeno una.
     riparaCopertine();
-  }, [caricaCopertine, riparaCopertine]);
+    riparaLocandine();
+  }, [caricaCopertine, riparaCopertine, riparaLocandine]);
 
   /** Il luogo di cui si sta guardando l'elenco completo delle serate. */
   const [serateDi, setSerateDi] = React.useState<Elemento | null>(null);
@@ -214,7 +263,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
     if (nuovo.trim().length === 0) return;
     setErroreForm(null);
     setAttesa(true);
-    const err = await aggiungi(tipo, nuovo, ricaricaCoppia);
+    const err = await aggiungi(tipo, nuovo, ricaricaCoppia, listaId);
     setAttesa(false);
     if (err) return setErroreForm(err);
     setNuovo('');
@@ -250,10 +299,25 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
          * alla cieca. Ora e' l'ultima riga di una colonna: quando la tastiera
          * sale, sale con lei.
          */}
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+        {/*
+          ⚠️ **Qui c'era un `KeyboardAvoidingView`, tolto il 2026-08-28** perché
+          copriva la riga di aggiunta — la seconda segnalazione di tastiera
+          della giornata, dopo B-24.
+
+          🔑 La causa: `behavior="padding"` calcola quanto padding serve **dalla
+          posizione del contenitore sullo schermo**. Nella sezione Liste il
+          contenitore partiva subito sotto un titolo di una riga e il conto
+          tornava; dentro una lista aperta ha sopra un'intestazione più alta —
+          tondo «indietro» e due righe di testo — e sottostima esattamente di
+          quell'altezza. Il difetto non era nel componente: era nel fatto che il
+          componente **indovina** invece di sapere.
+
+          Ora l'altezza della tastiera si **misura** (`useTastiera`, che il
+          progetto ha già perché la barra volante deve sparire) e si applica.
+          Nessun conto sulle posizioni, quindi nessuna intestazione che possa
+          falsarlo — stessa cura di B-24, applicata dove un foglio non c'è.
+        */}
+        <View className="flex-1" style={{ paddingBottom: altezzaTastiera }}>
           {loading ? (
             <View className="flex-1 items-center justify-center">
               <ActivityIndicator color={c.accento} />
@@ -300,7 +364,10 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                     copertina={
                       copertine[e.id] ??
                       fotoLuoghi[e.id]?.[0] ??
-                      (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
+                      (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined) ??
+                      // 4. la **locandina TMDB** (0023), per i film. Ultima
+                      //    perché una foto vostra vale sempre più di un poster.
+                      (urlLocandina(e.locandina, 500) ?? undefined)
                     }
                     foto={fotoLuoghi[e.id]}
                     onFoto={(i) => setFotoAperte({ id: e.id, da: i })}
@@ -310,6 +377,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                         : undefined
                     }
                     eventi={eventiPer[e.id]}
+                    soloLettura={registroLuoghi}
                     onFatto={(f) => segnaFatto(e.id, f)}
                     onRecensisci={(v, txt) => recensisci(e, v, txt)}
                     onElimina={() => elimina(e.id)}
@@ -350,7 +418,10 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                     copertina={
                       copertine[e.id] ??
                       fotoLuoghi[e.id]?.[0] ??
-                      (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined)
+                      (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined) ??
+                      // 4. la **locandina TMDB** (0023), per i film. Ultima
+                      //    perché una foto vostra vale sempre più di un poster.
+                      (urlLocandina(e.locandina, 500) ?? undefined)
                     }
                     foto={fotoLuoghi[e.id]}
                     onFoto={(i) => setFotoAperte({ id: e.id, da: i })}
@@ -360,6 +431,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
                         : undefined
                     }
                     eventi={eventiPer[e.id]}
+                    soloLettura={registroLuoghi}
                     onFatto={(f) => segnaFatto(e.id, f)}
                     onRecensisci={(v, txt) => recensisci(e, v, txt)}
                     onElimina={() => elimina(e.id)}
@@ -384,13 +456,31 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
             style={{ paddingBottom: tastieraAperta ? 10 : SPAZIO_BARRA }}
           >
             {erroreForm && <Text className="text-sm text-destructive">{erroreForm}</Text>}
+            {/*
+              ⚠️ **Un film si sceglie, una voce si scrive**, ed è la stessa
+              distinzione già fatta per i luoghi (D-37): un film ha
+              un'identità là fuori — con una locandina, un anno, e spesso un
+              omonimo — mentre «prendere il passaporto» è solo ciò che ci
+              scrivi. La tendina serve dove esiste qualcosa da riconoscere.
+            */}
             {tipo === 'film' ? (
+              <CercaFilm
+                placeholder={t.film.cerca}
+                onScegli={async (f) => {
+                  setErroreForm(null);
+                  setAttesa(true);
+                  const err = await aggiungiFilm(f, listaId, ricaricaCoppia);
+                  setAttesa(false);
+                  if (err) setErroreForm(err);
+                }}
+              />
+            ) : tipo !== 'luogo' ? (
               <View className="flex-row items-center gap-2">
                 <Input
                   className="flex-1"
                   value={nuovo}
                   onChangeText={setNuovo}
-                  placeholder={t.preferiti.placeholder.film}
+                  placeholder={t.preferiti.placeholder.voce}
                   onSubmitEditing={salva}
                   returnKeyType="done"
                 />
@@ -408,7 +498,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
               </View>
             ) : null}
           </View>
-        </KeyboardAvoidingView>
+        </View>
 
       {/* --- aggiungere un luogo: un "+" che galleggia -----------------------
           Al posto del bottone «Cerca un posto» a tutta larghezza in fondo alla
@@ -423,7 +513,14 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
 
           Sta sopra la barra volante come tutti gli altri tondi dell'app
           (`SOPRA_BARRA`), cosi' non ci finisce sotto. */}
-      {tipo === 'luogo' && !tastieraAperta && (
+      {/*
+        ⚠️ **Solo dentro una wishlist** (0024): nella mappa questo elenco mostra
+        ormai *dove siete stati*, e in un registro non si aggiunge a mano — ci si
+        finisce essendoci andati. Il «+» lì sarebbe l'ultima porta rimasta aperta
+        verso il vecchio modello, e quelle porte, come ha mostrato D-64, non
+        restano chiuse da sole: qualcuno le ricollega credendole equivalenti.
+      */}
+      {tipo === 'luogo' && listaId !== null && !tastieraAperta && (
         <View style={{ position: 'absolute', right: 20, bottom: SOPRA_BARRA }}>
           <TondoVetro lato={58} onPress={() => setCercaRist(true)}>
             <Plus color={c.accento} size={26} />
@@ -440,6 +537,7 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
         onChiudi={() => setCercaRist(false)}
         coppiaId={coppiaId}
         ricaricaCoppia={ricaricaCoppia}
+        listaId={listaId}
         onAggiunto={ricarica}
       />
 

@@ -44,7 +44,30 @@ export function useLuoghi(coppiaId: string | null) {
       .eq('coppia_id', coppiaId)
       .order('creato_il', { ascending: false });
     setErrore(error?.message ?? null);
-    if (!error) setLuoghi((data ?? []) as Luogo[]);
+    if (!error) {
+      /**
+       * ## ⚠️ Qui **non si filtra più** (2026-08-28, terza revisione)
+       *
+       * Per qualche ora questa funzione ha filtrato a `visitato` o «ha un
+       * evento», perché D-70 aveva stabilito che la mappa fosse il registro di
+       * dove siete stati. **D-72 ha cambiato quella decisione**: sulla mappa
+       * compaiono di nuovo *tutti* i posti, e a distinguerli è **l'icona del
+       * pin** invece della loro presenza.
+       *
+       * 🔑 È un cambio di idea sano, e vale la pena dire perché: nascondere un
+       * posto desiderato lo rendeva invisibile *proprio sulla superficie che
+       * serve a decidere dove andare*. L'icona risolve lo stesso problema —
+       * non confondere un ricordo con un desiderio — **senza togliere
+       * informazione**, che è quasi sempre la soluzione migliore fra le due.
+       *
+       * ⚠️ **Il filtro resta però nell'elenco** (`ElencoElementi`, B-27): là
+       * dentro le righe si toccano, e un elenco di cose su cui agire non è la
+       * stessa cosa di una mappa che si guarda. Le due viste ora divergono **di
+       * proposito**, ed è la ragione per cui il filtro non è più qui: viveva
+       * nel posto sbagliato per essere una regola di una sola delle due.
+       */
+      setLuoghi((data ?? []) as Luogo[]);
+    }
     setLoading(false);
   }, [coppiaId]);
 
