@@ -1805,6 +1805,23 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
 - [ ] **Tetto di quota giornaliero + avviso di budget** su Google Cloud. Da fare **subito**, non prima di pubblicare: finché la chiave sta nel bundle è l'unica cosa che impedisce davvero un conto a sorpresa.
 - [ ] 🔴 **Spostare la chiave dietro una Edge Function di Supabase**, prima di utenti veri. Oggi vive in `EXPO_PUBLIC_GOOGLE_PLACES_KEY`, cioè **dentro il bundle**: chiunque scarichi l'app può estrarla, e `urlFotoGoogle` la mette anche nella *query string* delle immagini, dove finisce in cache e log. Le "application restrictions" di Google non chiudono il buco per una `fetch` scritta a mano — valgono per gli SDK nativi, che mandano da soli gli header d'identità, e chi ha copiato la chiave può fabbricarli. Con la funzione la chiave sta in un secret, si può limitare per utente autenticato, e si spegne senza ripubblicare l'app.
 
+### Cambiare partner senza distruggere la coppia — aggiunto il 2026-08-28 (terza sessione)
+
+🔴 **Manca la terza via fra l'invito e lo scioglimento, e il buco si è visto usandolo.** Il 2026-08-28 è stato necessario sostituire il secondo membro di una coppia esistente. Non c'è **nessun** modo di farlo dall'app, e non è una svista: `coppia` e `membro_coppia` non hanno policy di INSERT/UPDATE dal client (**D-14**/**D-25**), quindi dal telefono è impossibile per costruzione. L'unica strada è stata **SQL a mano con la chiave `service_role`** dal dashboard — cioè scavalcare a mano l'unico strato di autorizzazione che questo progetto ha.
+
+**Perché le due vie esistenti non bastano, entrambe per una ragione diversa**:
+- **L'invito** (0003) richiede un posto libero: `conferma_invito` rifiuta se `n_membri_attivi >= 2`. Presuppone una coppia che si **forma**, non una che **cambia**.
+- **`sciogli_coppia()`** (0004) libera il posto, ma è progettata per la fine di una storia: duplica i contenuti condivisi uno a testa, recide il legame, e **cancella creatura, punti, partite e domande**. Usarla per un cambio di partner distruggerebbe proprio ciò che si vuole conservare.
+
+⚠️ **E c'è una conseguenza che nessuna delle due gestisce, e che va decisa prima di scrivere la funzione.** La sostituzione secca lascia dentro la coppia tutto ciò che ha scritto il membro uscente, e le policy di lettura sono `e_membro_attivo(coppia_id) or autore_id = auth.uid()` — quindi **il membro nuovo eredita la lettura di foto e recensioni del precedente** (0001:410-424 per `recensione` e `foto`). L'unica tabella che resta chiusa è `invio_sigillato`, author-only in ogni fase (**D-12**). Stessa cosa per **creatura e punti**, che sono per `coppia_id` e quindi si ereditano: è così che `sciogli_coppia()` li cancella, per coppia e non per membro.
+
+🔑 **La lezione, che vale oltre questo caso**: `sciogli_coppia()` fa **due** cose insieme — *libera il posto* e *chiude la storia* — e finché sono un blocco unico non si può fare la prima senza la seconda. Il difetto non è una funzione mancante: è una funzione che fa due lavori.
+
+- [ ] **Decidere la sorte dei contenuti del membro uscente** — la scelta vera, e va fatta prima del codice. Tre letture possibili, con costi diversi: (a) restano e il nuovo membro li vede (è ciò che è stato fatto a mano, ed è il più permissivo); (b) restano ma solo al loro autore, riusando la duplicazione di D-21; (c) la coppia riparte vuota. ⚠️ Nessuna è ovvia, ed è il punto in cui si decide se l'app tratta la coppia come **contenitore** o come **relazione**.
+- [ ] **Scrivere `sostituisci_membro()`** come funzione `security definer`, con le guardie già scritte altrove e non reinventate: chiamante membro attivo della coppia, il subentrante non già in un'altra coppia (la guardia di `conferma_invito`), `uscito_il` chiuso invece che riga cancellata (l'appartenenza è un **intervallo**, 0001).
+- [ ] ⚠️ **E il consenso: chi può farlo?** Lo scioglimento è **unilaterale di proposito** (TB-2: intrappolare chi ha bisogno di uscire sarebbe il danno peggiore). Ma una *sostituzione* unilaterale è un'altra cosa — significa che uno dei due può **rimpiazzare l'altro** in una coppia che continua a esistere, tenendosi i contenuti condivisi. Va deciso, non ereditato dallo scioglimento per analogia.
+- [ ] **Traccia in `registro_azioni`**, come fa `sciogli_coppia()` e per lo stesso motivo: un cambio di membro è un atto, non un aggiornamento.
+
 ### Dopo l'MVP, non prima
 - [ ] Rimettere le etichette nella barra in basso, **se** all'uso reale le sei icone risultano illeggibili (D-40)
 - [ ] Notifiche push
@@ -1905,13 +1922,11 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-28 (seconda sessione)** — giro di verifica, poi le wishlist. Copre D-60→D-68 e B-16→B-23.
+**Aggiornato al 2026-08-28 (terza sessione)** — giro di verifica, wishlist, e la sostituzione del membro. Copre D-60→D-68 e B-16→B-23.
 
-🔴 **Da applicare: le migrazioni `0022`, `0023`, `0024` e `0025`, in quest'ordine.** Ognuna dipende dalla precedente: la 0023 dalla tabella della 0022, la 0024 dalla colonna `tipo` della 0023, la 0025 dalle liste create dalla 0024.
+✅ **Migrazioni `0022`→`0025` applicate** dall'utente il 2026-08-28 (seconda sessione), in quest'ordine — ognuna dipende dalla precedente. ⚠️ Restava scritto qui «da applicare» anche dopo, in due punti: la riga è stata corretta il 2026-08-28 (terza sessione). *Un PUNTO DI RIPRESA che dice il falso è peggio di uno vuoto: il primo lo si crede.*
 
-🔴 **E serve una chiave TMDB**: `EXPO_PUBLIC_TMDB_KEY` nel `.env` (gratuita su themoviedb.org → Impostazioni → API → chiave v3), poi **Metro va riavviato** perché le `EXPO_PUBLIC_` entrano nel bundle a compilazione. Senza, la ricerca film **lo dice** invece di tacere — ma non funziona.
-
-🔴 **Da applicare: la migrazione `0022_wishlist.sql`.** Senza, la sezione Liste non carica niente: la tabella `lista` non esiste e la query fallisce a ogni apertura. È la prima cosa da fare, prima di qualunque prova.
+⚠️ **La chiave TMDB è per dispositivo, non per progetto.** `EXPO_PUBLIC_TMDB_KEY` è stata inserita nel `.env` del dispositivo usato nella seconda sessione, ma **il `.env` è nel `.gitignore`**: su ogni altro dispositivo va rimessa a mano (gratuita su themoviedb.org → Impostazioni → API → chiave v3), e **Metro va riavviato** perché le `EXPO_PUBLIC_` entrano nel bundle a compilazione. Verificato il 2026-08-28 (terza sessione): sul secondo dispositivo Metro caricava solo `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `GOOGLE_PLACES_KEY` — la ricerca film **lo dice** invece di tacere, ma non funziona. Vale identico per `EXPO_PUBLIC_GOOGLE_PLACES_KEY`.
 
 🔴 **E poi c'è un fronte in più mai visto girare**: le **wishlist** (**D-68**). Cosa guardare, in ordine:
 1. **La sezione Liste si apre** e mostra il carosello. Se la coppia aveva dei film, deve esserci una carta **«Film»** con dentro i film di prima — se quella carta non c'è, o è vuota, la migrazione dei dati non ha funzionato ed è la cosa più grave delle due.
@@ -2002,6 +2017,9 @@ Tutto ciò che era stato scritto il 2026-08-27 e nella prima sessione del 2026-0
 ---
 
 ### ⚠️ Cose vere che restano da sapere
+
+⚠️ **Il secondo membro della coppia di prova è cambiato il 2026-08-28** (terza sessione): sostituito con un altro utente, e `insieme_dal` portata al **2026-04-12**. Fatto in **SQL a mano con la chiave `service_role`**, perché l'app non ha nessuna via per farlo — vedi il backlog *«Cambiare partner senza distruggere la coppia»*. **Verificato rileggendo** dopo la scrittura, non fidandosi dell'assenza di errore (è la lezione di **B-23**).
+🔑 **Conseguenza da ricordare prima di leggere qualunque cosa come un difetto**: i contenuti del membro uscente sono **rimasti** nella coppia, quindi il membro nuovo **vede foto e recensioni** che non ha scritto, e **creatura e punti sono stati ereditati** — sono per `coppia_id`, non per membro. Non è un difetto: è la conseguenza accettata di una sostituzione secca. *Chi troverà questi dati fra un mese, senza questa riga, li leggerebbe come una falla nella RLS.*
 
 ⚠️ **I permessi non si provano in Expo Go** (**B-20**): il dialogo usa l'`Info.plist` di Expo Go, non il nostro. Tutto ciò che sta nei `plugins` di `app.json` — testi dei permessi, chiavi dichiarate — resta **non verificato** finché non si fa un build vero, e nessun giro sull'iPhone per quanto accurato può intercettarlo. È la prima cosa da ricontrollare il giorno in cui se ne farà uno.
 
