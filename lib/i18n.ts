@@ -118,13 +118,84 @@ const it = {
     quiz_preferenze: 'Quiz sulle preferenze',
     obbligo_verita: 'Obbligo o verità',
     telepatia: 'Telepatia',
+    indovina_disegno: 'Indovina il disegno',
   } as Record<string, string>,
+  gioco: {
+    preparo: 'Preparo la partita…',
+    pronti: 'Quando siete pronti tutti e due, la partita comincia da sola.',
+    avvia: 'Avvia partita',
+    attendoAltro: 'Sei pronto. Aspettiamo che prema anche il tuo partner.',
+    round: (n: number, tot: number): string => `Round ${n} di ${tot}`,
+    disegnaTu: 'Disegna tu',
+    indovinaTu: 'Indovina tu',
+    tuaParola: 'La tua parola',
+    cosaE: 'Cosa sarà?',
+    pulisci: 'Ricomincia il disegno',
+    nessunTentativo: 'Nessun tentativo, per ora.',
+    scriviQualcosa: 'Scrivi cosa vedi: puoi provare quante volte vuoi.',
+    indovinato: 'Indovinato!',
+    tempoScaduto: 'Tempo scaduto',
+    eraParola: (p: string): string => `Era: ${p}`,
+    // --- telepatia ---
+    sceglieteInsieme: 'Scegliete, senza dirvelo.',
+    haiScelto: 'Hai scelto. Aspettiamo il tuo partner.',
+    coincidete: 'La stessa!',
+    diverso: 'Stavolta no',
+    haSceltoLui: (p: string): string => `Lui ha scelto: ${p}`,
+    // --- fine partita ---
+    suTotale: (tot: number): string => `su ${tot}`,
+    finito: 'Va bene così',
+    /** I due punteggi. Nomi scelti il 2026-08-28: descrivono voi due insieme. */
+    intesa: 'Intesa',
+    sintonia: 'Sintonia',
+    /**
+     * ⚠️ Nessuna di queste frasi dice «hai perso», e non è delicatezza: il
+     * punteggio è **della coppia** (P-03), quindi non c'è nessuno che ha perso
+     * contro nessuno. Una frase che suonasse come una pagella sarebbe l'app che
+     * emette un verdetto sulla relazione — esattamente ciò che P-03 vieta.
+     */
+    commento: (p: number, tot: number): string => {
+      if (tot === 0) return '';
+      const q = p / tot;
+      if (q >= 0.8) return 'Vi capite al volo.';
+      if (q >= 0.5) return 'Ci siete quasi sempre.';
+      if (q > 0) return 'Qualcosa è passato. Il resto si allena.';
+      return 'Stavolta niente. È un gioco: si rigioca.';
+    },
+  },
+  hubGiochi: {
+    titolo: 'I vostri giochi',
+    sottotitolo: 'Scorri per sceglierne uno.',
+    classifica: 'Classifica',
+    gioca: 'Gioca',
+    descrizioni: {
+      quiz_preferenze:
+        'Quanto vi conoscete davvero. Ognuno deposita le proprie risposte, poi si prova a indovinare quelle dell’altro.',
+      obbligo_verita:
+        'A turno si sceglie, e si può passare. Il banco resta leggero: niente prove fisiche, niente domande sugli ex.',
+      telepatia:
+        'Le stesse opzioni a tutti e due, nello stesso momento. Si vince quando pensate la stessa cosa.',
+      indovina_disegno:
+        'Uno disegna, l’altro prova a capire cosa sia. Non serve saper disegnare: di solito è meglio se non sapete.',
+    } as Record<string, string>,
+    modoTitolo: 'Come volete giocare?',
+    ufficiale: 'Versione ufficiale',
+    ufficialeNota: 'Le nostre domande, uguali per tutte le coppie.',
+    personalizzata: 'Personalizzata',
+    personalizzataNota:
+      'Le domande le scrivete voi due. Restano vostre: non finiscono nel banco comune e non le vede nessun altro.',
+    classificaTitolo: 'Chi ha vinto di più',
+    notaSintonia: 'Volte in cui avete scelto la stessa cosa.',
+    notaIntesa: 'Disegni che l’altro ha indovinato.',
+    classificaVuota:
+      'Non avete ancora giocato. Qui comparirà chi ha vinto più partite, gioco per gioco.',
+    /** Onesta' verso chi tocca: la stessa regola della sezione in arrivo. */
+    inArrivo: 'Le partite arrivano: manca il meccanismo di invio sigillato.',
+    chiudi: 'Chiudi',
+  },
   mappa: {
     /** L'interruttore fra la mappa e l'elenco dei luoghi. */
     viste: { mappa: 'Mappa', elenco: 'Elenco' },
-    nuovoTitolo: 'Un posto nuovo',
-    placeholderNome: 'Come lo chiamate?',
-    ciSiamoStati: 'Ci siamo già stati',
     visitato: 'ci siete stati',
     daVisitare: 'da visitare',
     segnaVisitato: 'Ci siamo stati',
@@ -132,15 +203,17 @@ const it = {
     nessunEvento: 'Nessun evento legato a questo posto, per ora.',
     /** Il “…” dell'anteprima: apre le azioni sul posto. */
     azioniPosto: 'Azioni sul posto',
-    permessoNegato: 'Senza il permesso di posizione non possiamo segnare dove sei.',
+    aggiungiPosto: 'Aggiungi un posto',
     cerca: 'Cerca un posto…',
     cercaNota: 'La ricerca manda solo quello che scrivi, mai dove sei.',
     mancaChiave: 'Manca la chiave Google: EXPO_PUBLIC_GOOGLE_PLACES_KEY nel .env.',
+    scriviAncora: 'Scrivi almeno tre lettere.',
+    cercando: 'Cerco…',
+    nessunRisultato: 'Nessun posto trovato con questo nome.',
     nessunEventoRistorante: 'Nessuna serata legata a questo ristorante, per ora.',
     soloTelefono: 'La mappa vera si vede sul telefono. Qui resta l’elenco.',
     senzaComponente:
       'Su questa versione dell’app la mappa non si disegna: restano l’elenco dei posti e i loro eventi.',
-    segnaDoveSono: 'Segna dove sono adesso',
   },
   galleria: {
     tetto: '1 GB per voi due',
@@ -425,27 +498,90 @@ const en: Dizionario = {
     quiz_preferenze: 'Preferences quiz',
     obbligo_verita: 'Truth or dare',
     telepatia: 'Telepathy',
+    indovina_disegno: 'Guess the drawing',
   } as Record<string, string>,
+  gioco: {
+    preparo: 'Setting up the game…',
+    pronti: 'Once you have both tapped, the game starts on its own.',
+    avvia: 'Start game',
+    attendoAltro: 'You are ready. Waiting for your partner to tap too.',
+    round: (n: number, tot: number): string => `Round ${n} of ${tot}`,
+    disegnaTu: 'You draw',
+    indovinaTu: 'You guess',
+    tuaParola: 'Your word',
+    cosaE: 'What could it be?',
+    pulisci: 'Start the drawing over',
+    nessunTentativo: 'No guesses yet.',
+    scriviQualcosa: 'Type what you see: guess as many times as you like.',
+    indovinato: 'Got it!',
+    tempoScaduto: 'Time is up',
+    eraParola: (p: string): string => `It was: ${p}`,
+    sceglieteInsieme: 'Pick one, without telling each other.',
+    haiScelto: 'You picked. Waiting for your partner.',
+    coincidete: 'Same one!',
+    diverso: 'Not this time',
+    haSceltoLui: (p: string): string => `They picked: ${p}`,
+    suTotale: (tot: number): string => `out of ${tot}`,
+    finito: 'That will do',
+    intesa: 'Rapport',
+    sintonia: 'In sync',
+    commento: (p: number, tot: number): string => {
+      if (tot === 0) return '';
+      const q = p / tot;
+      if (q >= 0.8) return 'You read each other instantly.';
+      if (q >= 0.5) return 'You get there most of the time.';
+      if (q > 0) return 'Something got through. The rest is practice.';
+      return 'Nothing this time. It is a game: play again.';
+    },
+  },
+  hubGiochi: {
+    titolo: 'Your games',
+    sottotitolo: 'Swipe to pick one.',
+    classifica: 'Standings',
+    gioca: 'Play',
+    descrizioni: {
+      quiz_preferenze:
+        'How well you actually know each other. You each store your own answers, then try to guess the other’s.',
+      obbligo_verita:
+        'You take turns choosing, and you can pass. The deck stays light: no physical dares, nothing about exes.',
+      telepatia:
+        'The same options for both of you, at the same time. You win when you think alike.',
+      indovina_disegno:
+        'One of you draws, the other tries to work out what it is. No drawing skills needed — it is usually better without.',
+    } as Record<string, string>,
+    modoTitolo: 'How do you want to play?',
+    ufficiale: 'Official version',
+    ufficialeNota: 'Our questions, the same for every couple.',
+    personalizzata: 'Your own',
+    personalizzataNota:
+      'You two write the questions. They stay yours: they never join the shared deck and nobody else sees them.',
+    classificaTitolo: 'Who has won the most',
+    notaSintonia: 'Times you picked the same thing.',
+    notaIntesa: 'Drawings your partner guessed.',
+    classificaVuota:
+      'You haven’t played yet. This is where the win count will show up, game by game.',
+    inArrivo: 'Matches are coming: the sealed-submission mechanism is missing.',
+    chiudi: 'Close',
+  },
   mappa: {
     viste: { mappa: 'Map', elenco: 'List' },
-    nuovoTitolo: 'A new place',
-    placeholderNome: 'What do you call it?',
-    ciSiamoStati: 'We’ve already been',
     visitato: 'you’ve been here',
     daVisitare: 'still to visit',
     segnaVisitato: 'We’ve been here',
     segnaDaVisitare: 'Back to the wish list',
     nessunEvento: 'Nothing tied to this place yet.',
     azioniPosto: 'Place actions',
-    permessoNegato: 'Without location permission we can’t pin where you are.',
+    aggiungiPosto: 'Add a place',
     cerca: 'Search for a place…',
     cercaNota: 'The search only sends what you type, never where you are.',
     mancaChiave: 'Google key missing: EXPO_PUBLIC_GOOGLE_PLACES_KEY in .env.',
+    scriviAncora: 'Type at least three letters.',
+    cercando: 'Searching…',
+    nessunRisultato: 'No place found with that name.',
     nessunEventoRistorante: 'No evening tied to this restaurant yet.',
     soloTelefono: 'The real map shows on the phone. Here you get the list.',
     senzaComponente:
       'This build can’t draw the map: you still get the list of places and their events.',
-    segnaDoveSono: 'Pin where I am now',
   },
   galleria: {
     tetto: '1 GB for the two of you',

@@ -535,31 +535,128 @@ export type Database = {
           },
         ]
       }
+      // ⚠️ SCRITTO A MANO — migrazione 0020 (le partite dei giochi). Come il
+      // blocco `cartella` più sopra, questo va **sostituito rigenerando i tipi**
+      // (`supabase gen types`) appena si ha in mano una chiave segreta: finché
+      // resta scritto a mano dice ciò che crediamo, non ciò che è.
+      //
+      // Le colonne aggiunte sono però state **verificate contro il database
+      // vero** il 2026-08-28, una per una, con una `select` mirata attraverso
+      // l'API REST — non copiate dalla migrazione e sperate.
+      // ⚠️ SCRITTE A MANO — migrazione 0020. Vale la stessa avvertenza del
+      // blocco `partita` qui sotto: da rigenerare.
+      partita_pronto: {
+        Row: {
+          partita_id: string
+          pronto_il: string
+          utente_id: string
+        }
+        Insert: {
+          partita_id: string
+          pronto_il?: string
+          utente_id?: string
+        }
+        Update: {
+          partita_id?: string
+          pronto_il?: string
+          utente_id?: string
+        }
+        Relationships: []
+      }
+      partita_round: {
+        Row: {
+          chiave_rivelata: string | null
+          disegnatore_id: string | null
+          esito: string
+          finito_il: string | null
+          id: string
+          iniziato_il: string
+          numero: number
+          opzioni: Json | null
+          partita_id: string
+          punti: number
+        }
+        Insert: {
+          chiave_rivelata?: string | null
+          disegnatore_id?: string | null
+          esito?: string
+          finito_il?: string | null
+          id?: string
+          iniziato_il?: string
+          numero: number
+          opzioni?: Json | null
+          partita_id: string
+          punti?: number
+        }
+        Update: {
+          chiave_rivelata?: string | null
+          disegnatore_id?: string | null
+          esito?: string
+          finito_il?: string | null
+          id?: string
+          iniziato_il?: string
+          numero?: number
+          opzioni?: Json | null
+          partita_id?: string
+          punti?: number
+        }
+        Relationships: []
+      }
+      round_segreto: {
+        Row: {
+          chiave: string
+          creato_il: string
+          round_id: string
+        }
+        Insert: {
+          chiave: string
+          creato_il?: string
+          round_id: string
+        }
+        Update: {
+          chiave?: string
+          creato_il?: string
+          round_id?: string
+        }
+        Relationships: []
+      }
       partita: {
         Row: {
+          conclusa_il: string | null
           coppia_id: string
           creata_da: string
           creata_il: string
           gioco: string
           id: string
+          punti: number
+          round_corrente: number
+          round_totali: number
           stato: string
           turno_di: string | null
         }
         Insert: {
+          conclusa_il?: string | null
           coppia_id: string
           creata_da?: string
           creata_il?: string
           gioco: string
           id?: string
+          punti?: number
+          round_corrente?: number
+          round_totali?: number
           stato?: string
           turno_di?: string | null
         }
         Update: {
+          conclusa_il?: string | null
           coppia_id?: string
           creata_da?: string
           creata_il?: string
           gioco?: string
           id?: string
+          punti?: number
+          round_corrente?: number
+          round_totali?: number
           stato?: string
           turno_di?: string | null
         }
@@ -737,6 +834,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      // ⚠️ SCRITTE A MANO — migrazione 0020. Le tre firme sono state provate
+      // contro il database vero il 2026-08-28: chiamandole via `/rest/v1/rpc`
+      // hanno risposto con le **nostre** eccezioni («partita inesistente»,
+      // «round inesistente», «partita non tua»), che è la prova che esistono e
+      // che i parametri sono quelli giusti — una firma sbagliata avrebbe dato
+      // 404 sulla funzione, non un errore del suo corpo.
+      segna_pronto: {
+        Args: { p_partita: string }
+        Returns: Database['public']['Tables']['partita']['Row']
+      }
+      chiudi_round: {
+        Args: { p_round: string; p_esito: string; p_punti: number; p_chiave?: string | null }
+        Returns: Database['public']['Tables']['partita']['Row']
+      }
+      rivela_telepatia: {
+        Args: { p_partita: string; p_round: number }
+        Returns: { utente_id: string; scelta: string }[]
+      }
       apri_invito: { Args: { p_token: string }; Returns: string }
       assegna_punti: {
         Args: { cid: string; n: number; rif: string; tipo_evento: string }

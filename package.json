@@ -8,7 +8,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test:rls": "node tests/rls.avversariali.mjs"
+    "test:rls": "node tests/rls.avversariali.mjs",
+    "test:parole": "node tests/parole.mjs",
+    "test:partita": "node tests/partita.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
