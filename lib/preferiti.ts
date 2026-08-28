@@ -230,58 +230,18 @@ export function usePreferiti(coppiaId: string | null) {
   );
 
   /**
-   * Aggiunge un **luogo vero** (D-37, allargato da 0016): dal risultato Google
-   * nascono insieme il posto sulla mappa e l'elemento della lista, con
-   * identita', copertina e genere. Un solo ingresso per tre fatti, cosi' non
-   * esistono luoghi a meta'.
+   * Aggiunge un luogo e **ricarica l'elenco**. Il lavoro vero lo fa
+   * `creaLuogo` qui sotto: questa e' solo la versione per chi ha una lista da
+   * aggiornare subito dopo.
    */
   const aggiungiLuogoPreferito = React.useCallback(
     async (
-      trovato: {
-        nome: string;
-        lat: number;
-        lng: number;
-        placeId?: string;
-        fotoNome?: string;
-        primaryType?: string;
-      },
+      trovato: LuogoTrovato,
       ricaricaCoppia: () => Promise<StatoCoppia>
     ): Promise<{ errore: string | null; elementoId?: string; luogoId?: string }> => {
-      const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
-      if (!esito.coppiaId) return { errore: esito.errore };
-      const { data, error } = await supabase
-        .from('luogo')
-        .insert({
-          coppia_id: esito.coppiaId,
-          nome: trovato.nome.trim(),
-          lat: trovato.lat,
-          lng: trovato.lng,
-          stato: 'desiderato',
-        })
-        .select('id')
-        .single();
-      if (error) return { errore: error.message };
-      // ⚠️ Restituisce gli **id**, non solo l'esito.
-      // Serve a chi lo chiama dal form dell'evento: appena il ristorante nasce
-      // va anche *selezionato* in quel form, e senza il suo id l'utente
-      // dovrebbe sceglierlo a mano da un elenco in cui e' appena comparso —
-      // cioe' rifare un gesto che ha appena fatto.
-      const ins = await supabase
-        .from('elemento_lista')
-        .insert({
-          coppia_id: esito.coppiaId,
-          tipo: 'luogo',
-          titolo: trovato.nome.trim(),
-          luogo_id: data.id,
-          google_place_id: trovato.placeId ?? null,
-          foto_google: trovato.fotoNome ?? null,
-          genere: trovato.primaryType ?? null,
-        })
-        .select('id')
-        .single();
-      if (ins.error) return { errore: ins.error.message };
-      await ricarica();
-      return { errore: null, elementoId: ins.data.id, luogoId: data.id };
+      const esito = await creaLuogo(coppiaId, trovato, ricaricaCoppia);
+      if (!esito.errore) await ricarica();
+      return esito;
     },
     [coppiaId, ricarica]
   );
@@ -374,6 +334,78 @@ export function usePreferiti(coppiaId: string | null) {
     sincronizzaVisitati,
     riparaCopertine,
   };
+}
+
+/** Ciò che serve per creare un luogo: e' quanto restituisce una ricerca Google. */
+export type LuogoTrovato = {
+  nome: string;
+  lat: number;
+  lng: number;
+  placeId?: string;
+  fotoNome?: string;
+  primaryType?: string;
+};
+
+/**
+ * Crea un **luogo vero** (D-37, allargato da 0016): dal risultato Google
+ * nascono insieme il posto sulla mappa e l'elemento della lista, con identita',
+ * copertina e genere. Un solo ingresso per tre fatti, cosi' non esistono luoghi
+ * a meta'.
+ *
+ * ## Perche' e' una funzione autonoma e non un metodo dell'hook (2026-08-28)
+ *
+ * Perche' i luoghi si aggiungono da **due schermate** — l'elenco e la mappa — e
+ * finche' questa logica e' vissuta dentro `usePreferiti`, la mappa non poteva
+ * chiamarla: aveva il suo `useLuoghi`, con la sua funzione di inserimento, che
+ * scriveva **una riga diversa** per lo stesso posto (B-19).
+ *
+ * 🔑 Due funzioni che creano la stessa entita' non restano uguali: divergono al
+ * primo ritocco, e la differenza si scopre guardando una lista in cui alcune
+ * schede hanno la copertina e altre no. Da oggi la funzione e' **una**, e chi
+ * ha una lista da rinfrescare ci mette sopra la sua `ricarica`.
+ *
+ * ⚠️ Restituisce gli **id**, non solo l'esito: serve a chi la chiama dal form
+ * dell'evento, dove il ristorante appena nato va anche *selezionato* — senza il
+ * suo id l'utente dovrebbe sceglierlo a mano da un elenco in cui e' appena
+ * comparso, cioe' rifare il gesto che ha appena fatto.
+ */
+export async function creaLuogo(
+  coppiaId: string | null,
+  trovato: LuogoTrovato,
+  ricaricaCoppia: () => Promise<StatoCoppia>
+): Promise<{ errore: string | null; elementoId?: string; luogoId?: string }> {
+  const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
+  if (!esito.coppiaId) return { errore: esito.errore };
+
+  const { data, error } = await supabase
+    .from('luogo')
+    .insert({
+      coppia_id: esito.coppiaId,
+      nome: trovato.nome.trim(),
+      lat: trovato.lat,
+      lng: trovato.lng,
+      stato: 'desiderato',
+    })
+    .select('id')
+    .single();
+  if (error) return { errore: error.message };
+
+  const ins = await supabase
+    .from('elemento_lista')
+    .insert({
+      coppia_id: esito.coppiaId,
+      tipo: 'luogo',
+      titolo: trovato.nome.trim(),
+      luogo_id: data.id,
+      google_place_id: trovato.placeId ?? null,
+      foto_google: trovato.fotoNome ?? null,
+      genere: trovato.primaryType ?? null,
+    })
+    .select('id')
+    .single();
+  if (ins.error) return { errore: ins.error.message };
+
+  return { errore: null, elementoId: ins.data.id, luogoId: data.id };
 }
 
 /** L'ultimo film visto: serve al riquadro della home. */

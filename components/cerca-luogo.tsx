@@ -18,7 +18,7 @@ import { t } from '@/lib/i18n';
  * licenza ODbL con cui quei dati si possono usare. Sta sotto i risultati,
  * dove i risultati si vedono.
  *
- * ## `dentroUnFoglio` (2026-08-27)
+ * ## `dentroUnFoglio` (2026-08-27, corretta il 2026-08-28)
  *
  * I due punti in cui vive **non sono lo stesso posto**, e per il vetro la
  * differenza e' tutto:
@@ -30,26 +30,64 @@ import { t } from '@/lib/i18n';
  *   quel buio e la tendina dei risultati si legge sporca — «sembra in ombra»,
  *   parole dell'utente.
  *
- * Chi lo usa dichiara dove lo mette, e la superficie si adegua. Non lo si puo'
- * dedurre da qui: un componente non sa in che albero e' stato montato.
+ * ⚠️ Qui c'era scritto: *«Non lo si puo' dedurre da qui: un componente non sa in
+ * che albero e' stato montato»*. **Era falso**, e quella frase e' il motivo per
+ * cui il difetto e' sopravvissuto un giorno intero: il contesto di React serve
+ * esattamente a saperlo. Ora lo deduce `ContestoNienteSotto`
+ * (`components/ui/vetro.tsx`) e la prop resta solo come **scavalco** per chi ha
+ * un caso che il contesto non prevede.
  */
 export function CercaLuogo({
   onScegli,
   placeholder,
   autoFocus,
-  dentroUnFoglio = false,
+  dentroUnFoglio,
 }: {
   onScegli: (l: Trovato) => void;
   placeholder?: string;
   autoFocus?: boolean;
-  /** Sta dentro un foglio o un modale? Allora il vetro prende una base chiara. */
+  /**
+   * Scavalco: normalmente non serve passarla — il vetro se ne accorge da solo.
+   * Serve solo dove il contesto non arriva o va contraddetto.
+   */
   dentroUnFoglio?: boolean;
   /** Solo ristoranti veri: e' il vincolo dei preferiti (D-37). */
 }) {
   const { c } = useTema();
-  const fondo = dentroUnFoglio ? 'pieno' : 'niente';
-  const { query, setQuery, risultati, cercando, errore, pulisci } =
-    useRicercaLuoghi();
+  // `undefined` e non `'niente'`: un valore esplicito **vincerebbe** sul
+  // contesto, e un campo dentro un foglio che nessuno ha etichettato tornerebbe
+  // a sfocare il buio.
+  const fondo = dentroUnFoglio ? 'pieno' : undefined;
+  const { query, setQuery, risultati, cercando, errore, pulisci } = useRicercaLuoghi();
+
+  /**
+   * ## Il campo non tace mai (2026-08-28)
+   *
+   * Prima la tendina compariva **solo** con dei risultati o con un errore. In
+   * tutti gli altri casi non compariva niente — e "niente" e' lo stesso
+   * fotogramma che si vede quando un'app e' rotta. Difetto riferito
+   * dall'utente: *«scrivo ma non mi si apre la tendina con i consigli»*.
+   *
+   * I casi che producevano il nulla erano **tre**, e nessuno dei tre e' un
+   * guasto:
+   *
+   * 1. **Meno di tre lettere.** La soglia sta in `useRicercaLuoghi` e serve a
+   *    non pagare una chiamata a Google per ogni tasto — ma era **invisibile**:
+   *    chi scrive "Bar" non ha modo di sapere che a due lettere non succede
+   *    niente per scelta.
+   * 2. **Sto ancora cercando.** C'era la rotella nel campo, che e' piccola e sta
+   *    dove il dito la copre mentre scrive.
+   * 3. **Google non ha trovato niente.** Indistinguibile da un guasto.
+   *
+   * 🔑 E' la lezione di `components/ui/premibile.tsx` applicata a un campo di
+   * testo: **un comando che non risponde non si legge come "non c'e' ancora
+   * nulla da dire", si legge come "non ha funzionato"** — e la reazione e'
+   * riprovare, poi smettere. Uno stato costa una riga di testo; il dubbio costa
+   * la funzione.
+   */
+  const q = query.trim();
+  const corta = q.length > 0 && q.length < 3;
+  const mostraPannello = risultati.length > 0 || !!errore || corta || q.length >= 3;
 
   return (
     <View className="gap-2">
@@ -75,11 +113,25 @@ export function CercaLuogo({
         </View>
       </Vetro>
 
-      {(risultati.length > 0 || !!errore) && (
+      {mostraPannello && (
         <Vetro raggio={22} fondo={fondo}>
           <View className="p-1">
             {!!errore && (
               <Text className="px-3 py-3 text-sm text-destructive">{errore}</Text>
+            )}
+            {/* Gli stati che prima erano il **nulla**: vedi il commento in testa. */}
+            {!errore && corta && (
+              <Text className="px-3 py-3 text-sm text-muted-foreground">
+                {t.mappa.scriviAncora}
+              </Text>
+            )}
+            {!errore && !corta && cercando && (
+              <Text className="px-3 py-3 text-sm text-muted-foreground">{t.mappa.cercando}</Text>
+            )}
+            {!errore && !corta && !cercando && risultati.length === 0 && (
+              <Text className="px-3 py-3 text-sm text-muted-foreground">
+                {t.mappa.nessunRisultato}
+              </Text>
             )}
             <ScrollView style={{ maxHeight: 260 }} keyboardShouldPersistTaps="handled">
               {risultati.map((r) => (

@@ -6,8 +6,6 @@ import {
   Platform,
   ActivityIndicator,
   Pressable,
-  Switch,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Riani, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
@@ -15,11 +13,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { MapPin, Plus, Trash2, UtensilsCrossed } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
-import { Input } from '@/components/ui/input';
 import { BottoneVetro, CartaVetro, TondoVetro, Vetro } from '@/components/ui/vetro';
 import { Premibile } from '@/components/ui/premibile';
 import { Comparsa } from '@/components/ui/comparsa';
-import { CercaLuogo } from '@/components/cerca-luogo';
+import { FoglioAggiungiLuogo } from '@/components/foglio-aggiungi-luogo';
 import { Fondo } from '@/components/schermata';
 import { SPAZIO_BARRA, SOPRA_BARRA } from '@/components/barra-volante';
 import { AnteprimaEvento } from '@/components/anteprima-evento';
@@ -138,7 +135,6 @@ export default function Mappa() {
   const {
     luoghi,
     loading,
-    aggiungi,
     segnaVisitato,
     elimina,
     ricarica: ricaricaLuoghi,
@@ -175,11 +171,17 @@ export default function Mappa() {
   /** Il foglio delle azioni sul posto, dietro il "…" dell'anteprima. */
   const [dettagli, setDettagli] = React.useState<Luogo | null>(null);
 
-  const [nuovo, setNuovo] = React.useState<{ lat: number; lng: number } | null>(null);
-  const [nome, setNome] = React.useState('');
-  const [visitato, setVisitato] = React.useState(true);
-  const [attesa, setAttesa] = React.useState(false);
-  const [errore, setErrore] = React.useState<string | null>(null);
+  /**
+   * Il foglio «aggiungi un posto» — **lo stesso di Liste** (2026-08-28).
+   *
+   * ⚠️ Qui prima c'erano tre stati (`nuovo`, `nome`, `visitato`), un pannello
+   * scritto a mano e una funzione di salvataggio tutta sua. Un posto nasceva in
+   * due modi diversi a seconda della porta da cui entravi, e i due risultati
+   * non erano la stessa riga (B-19). Ora la porta e' una: si cerca, si sceglie,
+   * nasce. Il perche' per esteso sta in
+   * `components/foglio-aggiungi-luogo.tsx`.
+   */
+  const [aggiungiAperto, setAggiungiAperto] = React.useState(false);
   /** Dove guarda la mappa: cambia quando si sceglie un risultato di ricerca. */
   const [centro, setCentro] = React.useState<{ latitude: number; longitude: number } | null>(null);
 
@@ -370,27 +372,10 @@ export default function Mappa() {
   );
 
   /** Un gesto esplicito, una lettura sola: nessuna posizione in background. */
-  async function segnaDoveSono() {
-    setErrore(null);
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return setErrore(t.mappa.permessoNegato);
-    const p = await Location.getCurrentPositionAsync({});
-    setNuovo({ lat: p.coords.latitude, lng: p.coords.longitude });
-    setNome('');
-    setVisitato(true);
-  }
-
-  async function salvaLuogo() {
-    if (!nuovo || nome.trim().length === 0) return;
-    setErrore(null);
-    setAttesa(true);
-    const err = await aggiungi({ ...nuovo, nome, visitato }, ricaricaCoppia);
-    setAttesa(false);
-    if (err) return setErrore(err);
-    setNuovo(null);
-    setNome('');
-  }
-
+  /**
+   * Il centro della mappa, col suo ripiego: la posizione se c'e', altrimenti il
+   * primo posto salvato, altrimenti Milano.
+   */
   const centroMappa =
     centro ??
     (luoghi[0]
@@ -451,7 +436,25 @@ export default function Mappa() {
    * schede che salgono. La dissolvenza e' solo il cambio di scena fra i due.
    */
   const entrata = useSharedValue(1);
+  /**
+   * ⚠️ **Solo sui cambi, non al montaggio** (2026-08-28). Prima l'effetto girava
+   * anche al primo giro: la schermata partiva sbattendo a opacita' 0 per poi
+   * risalire. Due danni, uno visibile e uno no.
+   *
+   * - Visibile: all'avvio non c'e' nessuna scena *precedente* da cui
+   *   dissolvere. Una dissolvenza in entrata senza un "da dove" e' solo un
+   *   lampo di vuoto.
+   * - Invisibile, ed e' meta' del difetto riferito: il vetro di sistema creato
+   *   dentro un livello a opacita' 0 non cattura il suo sfondo e **non si
+   *   ripresenta** quando l'opacita' torna. E' il «+» senza il suo tondo appena
+   *   avviata l'app; l'altra meta' sta in `components/ui/comparsa.tsx`.
+   */
+  const primoGiro = React.useRef(true);
   React.useEffect(() => {
+    if (primoGiro.current) {
+      primoGiro.current = false;
+      return;
+    }
     entrata.value = 0;
     entrata.value = withTiming(1, { duration: durata.media });
   }, [vista, entrata]);
@@ -547,21 +550,12 @@ export default function Mappa() {
               {Platform.OS === 'web' ? t.mappa.soloTelefono : t.mappa.senzaComponente}
             </Text>
 
-            {/* La ricerca funziona anche senza componente mappa: senza mappa si
-                puo' comunque cercare un posto e aggiungerlo all'elenco. */}
-            <CercaLuogo
-              onScegli={(l) => {
-                setNuovo({ lat: l.lat, lng: l.lng });
-                setNome(l.nome);
-                setVisitato(false);
-              }}
-            />
-
-            {Platform.OS !== 'web' && (
-              <BottoneVetro onPress={segnaDoveSono} variante="accento">
-                <Text>{t.mappa.segnaDoveSono}</Text>
-              </BottoneVetro>
-            )}
+            {/* Anche senza il componente mappa si aggiunge un posto, e si
+                aggiunge **nello stesso modo**: lo stesso foglio, la stessa
+                funzione. Prima qui c'era una terza variante della ricerca. */}
+            <BottoneVetro onPress={() => setAggiungiAperto(true)} variante="accento">
+              <Text>{t.mappa.aggiungiPosto}</Text>
+            </BottoneVetro>
 
             <ScrollView
               contentContainerClassName="gap-2"
@@ -618,39 +612,47 @@ export default function Mappa() {
             onRistorante={(r) => setToccato({ tipo: 'ristorante', ristorante: r })}
           />
 
-          {/* ⚠️ **Niente barra di ricerca e niente cartellino qui**
-              (2026-08-27). Cercare un posto per nome e' un'azione da *lista*, e
-              in Liste c'e' ora il suo "+": tenerne una copia anche qui
-              significava due ingressi per la stessa cosa, e un campo di testo
-              permanente addosso alla mappa — che di spazio ne ha bisogno tutto.
-              Col tocco lungo e' sparito anche il cartellino che lo spiegava, e
-              con lui l'ultima scritta fissa sopra la mappa. Quel che resta e' il
-              gesto che solo qui ha senso, perche' parla di *questo punto*:
-              «segna dove sono», dietro il «+». */}
+          {/* ⚠️ **Niente barra di ricerca fissa sopra la mappa** (2026-08-27,
+              e resta vero). Un campo di testo permanente addosso a una
+              schermata che di spazio ne ha bisogno tutto e' un costo che si
+              paga a ogni sguardo, per un gesto che si fa una volta ogni tanto.
+              La ricerca c'e', ma sta **dentro il foglio** che si apre col «+». */}
 
           {/* ⚠️ Un **«+»**, non un mirino (2026-08-27).
               Il tondo in basso a destra fa la stessa cosa in tutte le schermate
               — calendario, galleria, Liste — e in tutte e' un «+». Qui era un
-              mirino perche' faceva una cosa sola: «segna dove sono». Ma il
-              gesto che l'utente cerca in quell'angolo e' *aggiungere*, non
-              *localizzare*, e un'icona diversa per lo stesso posto e lo stesso
-              scopo costringe a ricordare che qui e' un'eccezione.
-              Cosa aggiunge resta la stessa cosa di prima: il posto in cui sei
-              adesso — e' l'unico modo di aggiungere che abbia senso *sulla
-              mappa*, perche' parla di questo punto. Per nome si aggiunge
-              dall'elenco, che e' a un tocco da qui. */}
+              mirino perche' faceva una cosa sola: «segna dove sono».
+
+              ⚠️ **E dal 2026-08-28 non fa piu' nemmeno quella**: apre lo stesso
+              foglio di Liste, si cerca un posto e si sceglie. Il «segna dove
+              sono» e' sparito insieme al pannello che chiedeva «come lo
+              chiamate?», per richiesta esplicita dell'utente di **normalizzare**
+              l'aggiunta di un luogo su quella dell'elenco.
+              Cio' che si perde e' scritto senza sconti in
+              `components/foglio-aggiungi-luogo.tsx`: non si puo' piu' segnare un
+              punto che su Google non esiste. Cio' che si guadagna e' che un
+              posto nasce **uguale** da qualunque porta entri — che era il
+              difetto B-19, non un capriccio. */}
           {/* ⚠️ Il «+» **esce invece di sparire**: se ne va verso il basso
               proprio mentre l'anteprima arriva da li'. Prima era un
               `{condizione && …}` secco, cioe' un fotogramma tagliato nel punto
               esatto in cui l'occhio si trova — perche' e' li' che il dito ha
               appena toccato il pin. */}
+          {/* ⚠️ `entraAlMontaggio={false}` (2026-08-28): il «+» c'e' gia' quando
+              la mappa compare, quindi non ha nulla da cui entrare — e
+              soprattutto il suo vetro non deve nascere dentro un livello a
+              opacita' zero, che e' cio' che lo lasciava **senza tondo** appena
+              avviata l'app. Il perche' per esteso sta in `components/ui/comparsa.tsx`.
+              L'entrata che si vede davvero resta: e' il rientro dopo che
+              l'anteprima del pin si chiude. */}
           <Comparsa
             visibile={!tastieraAperta && !toccato}
+            entraAlMontaggio={false}
             scarto={18}
             scala={0.8}
             style={{ position: 'absolute', right: 20, bottom: SOPRA_BARRA }}
           >
-            <TondoVetro lato={58} onPress={segnaDoveSono}>
+            <TondoVetro lato={58} onPress={() => setAggiungiAperto(true)}>
               <Plus color={c.accento} size={26} />
             </TondoVetro>
           </Comparsa>
@@ -746,65 +748,19 @@ export default function Mappa() {
         </View>
       </Modal>
 
-      {/* Il posto nuovo: nome e se ci siete gia' stati */}
-      <Modal
-        visible={nuovo !== null}
-        animationType={Platform.OS === 'web' ? 'none' : 'slide'}
-        transparent
-        onRequestClose={() => setNuovo(null)}
-      >
-        {/* ⚠️ `KeyboardAvoidingView`, che qui mancava: il campo del nome apre
-            la tastiera da solo (`autoFocus`), e senza questo i tasti coprivano
-            l'interruttore «ci siamo stati» e i due bottoni — cioe' tutto quello
-            che serve per finire. Il foglio sale con la tastiera invece di
-            restare fermo sotto. */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 justify-end"
-          style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
-        >
-          <CartaVetro raggio={30} fondo="pieno" style={{ margin: 8 }}>
-            <SafeAreaView edges={['bottom']}>
-              <View className="gap-4 p-6">
-                <Text className="font-serif-bold text-2xl text-foreground">
-                  {t.mappa.nuovoTitolo}
-                </Text>
-                <Input
-                  value={nome}
-                  onChangeText={setNome}
-                  placeholder={t.mappa.placeholderNome}
-                  autoFocus
-                />
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-base text-foreground">{t.mappa.ciSiamoStati}</Text>
-                  <Switch
-                    value={visitato}
-                    onValueChange={setVisitato}
-                    trackColor={{ true: c.accento, false: undefined }}
-                  />
-                </View>
-                {errore && <Text className="text-sm text-destructive">{errore}</Text>}
-                <BottoneVetro
-                  variante="accento"
-                  disabled={attesa || nome.trim().length === 0}
-                  onPress={salvaLuogo}
-                >
-                  <Text>{attesa ? t.onboarding.attesa : t.calendario.salva}</Text>
-                </BottoneVetro>
-                <BottoneVetro altezza={46} onPress={() => setNuovo(null)}>
-                  <Text>{t.calendario.annulla}</Text>
-                </BottoneVetro>
-              </View>
-            </SafeAreaView>
-          </CartaVetro>
-        </KeyboardAvoidingView>
-      </Modal>
+      {/* ⚠️ **Un solo modo di aggiungere un posto** (2026-08-28): lo stesso
+          componente che usa Liste, con la stessa funzione dietro. Qui c'era un
+          pannello con «Come lo chiamate?», l'interruttore «ci siamo gia' stati»
+          e un salvataggio tutto suo — cioe' una seconda strada che creava la
+          stessa cosa in modo diverso. */}
+      <FoglioAggiungiLuogo
+        visibile={aggiungiAperto}
+        onChiudi={() => setAggiungiAperto(false)}
+        coppiaId={coppiaId}
+        ricaricaCoppia={ricaricaCoppia}
+        onAggiunto={ricaricaLuoghi}
+      />
 
-      {errore && !nuovo && (
-        <Text className="absolute bottom-40 left-6 right-6 text-center text-sm text-destructive">
-          {errore}
-        </Text>
-      )}
     </View>
   );
 }

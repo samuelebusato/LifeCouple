@@ -22,6 +22,7 @@ import { CartaVetro, BottoneVetro, TondoVetro } from '@/components/ui/vetro';
 import { Comparsa } from '@/components/ui/comparsa';
 import { SPAZIO_BARRA, SOPRA_BARRA } from '@/components/barra-volante';
 import { CercaLuogo } from '@/components/cerca-luogo';
+import { FoglioAggiungiLuogo } from '@/components/foglio-aggiungi-luogo';
 import { VisoreFoto } from '@/components/visore-foto';
 import { Scheda } from '@/components/scheda-elemento';
 import { useAuth } from '@/lib/auth';
@@ -81,7 +82,6 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
     recensisci,
     elimina,
     collegaPosto,
-    aggiungiLuogoPreferito,
     sincronizzaVisitati,
     riparaCopertine,
     ricarica,
@@ -431,44 +431,17 @@ export function ElencoElementi({ tipo }: { tipo: TipoElemento }) {
         </View>
       )}
 
-      {/* Il foglio "cerca un ristorante vero": selezione, non invenzione. */}
-      <Modal
-        visible={cercaRist}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setCercaRist(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 justify-end"
-          style={{ backgroundColor: 'rgba(20,8,14,0.4)' }}
-        >
-          <CartaVetro raggio={32} fondo="pieno" style={{ margin: 8 }}>
-            <SafeAreaView edges={['bottom']}>
-              <View className="gap-4 p-6">
-                <View className="flex-row items-center justify-between">
-                  <Text className="font-serif-bold text-2xl text-foreground">
-                    {t.preferiti.cercaRistorante}
-                  </Text>
-                  <Pressable onPress={() => setCercaRist(false)} hitSlop={8}>
-                    <X color={c.tenue} size={20} />
-                  </Pressable>
-                </View>
-                <CercaLuogo
-                  dentroUnFoglio
-                  autoFocus
-                  placeholder={t.preferiti.placeholder.luogo}
-                  onScegli={async (trovato) => {
-                    setCercaRist(false);
-                    const { errore } = await aggiungiLuogoPreferito(trovato, ricaricaCoppia);
-                    if (errore) setErroreForm(errore);
-                  }}
-                />
-              </View>
-            </SafeAreaView>
-          </CartaVetro>
-        </KeyboardAvoidingView>
-      </Modal>
+      {/* ⚠️ Il foglio non e' piu' scritto qui: e' lo **stesso componente** che
+          usa la mappa (2026-08-28). Prima erano due copie che facevano la stessa
+          cosa in due modi diversi — vedi il commento in testa a
+          `components/foglio-aggiungi-luogo.tsx`. */}
+      <FoglioAggiungiLuogo
+        visibile={cercaRist}
+        onChiudi={() => setCercaRist(false)}
+        coppiaId={coppiaId}
+        ricaricaCoppia={ricaricaCoppia}
+        onAggiunto={ricarica}
+      />
 
       {/* Il foglio "aggiungi il posto": la stessa ricerca della mappa. */}
       <Modal

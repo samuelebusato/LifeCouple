@@ -52,56 +52,22 @@ export function useLuoghi(coppiaId: string | null) {
     ricarica();
   }, [ricarica]);
 
-  const aggiungi = React.useCallback(
-    async (
-      dati: { nome: string; lat: number; lng: number; visitato: boolean; nota?: string },
-      ricaricaCoppia: () => Promise<StatoCoppia>
-    ): Promise<string | null> => {
-      const esito = await assicuraCoppia(coppiaId, ricaricaCoppia);
-      if (!esito.coppiaId) return esito.errore;
-      const { data, error } = await supabase
-        .from('luogo')
-        .insert({
-          coppia_id: esito.coppiaId,
-          nome: dati.nome.trim(),
-          lat: dati.lat,
-          lng: dati.lng,
-          stato: dati.visitato ? 'visitato' : 'desiderato',
-          // La data della visita la mette il trigger dei punti alla transizione
-          // (D-15); qui si valorizza solo se nasce gia' visitato.
-          visitato_il: dati.visitato ? new Date().toISOString() : null,
-          nota: dati.nota?.trim() || null,
-        })
-        .select('id')
-        .single();
-      if (error) return error.message;
-
-      // ⚠️ **E anche la riga in lista** (0017).
-      //
-      // Un posto poteva nascere in due modi che non producevano la stessa cosa:
-      // dal campo "dove" di un evento nascevano entrambe le righe, dalla mappa
-      // solo `luogo`. Finche' la lista si chiamava "ristoranti" la differenza
-      // aveva senso; da 0016 la lista e' dei **luoghi**, e un posto che sta
-      // sulla mappa ma non in lista e' semplicemente un posto che manca —
-      // senza copertina, senza recensioni, senza "da fare / fatto".
-      //
-      // Se fallisce non si annulla il luogo: un posto sulla mappa senza riga in
-      // lista e' un difetto lieve e recuperabile (0017 sa ripararlo), mentre
-      // cancellare un posto che l'utente ha appena segnato e' una perdita.
-      await supabase.from('elemento_lista').insert({
-        coppia_id: esito.coppiaId,
-        tipo: 'luogo',
-        titolo: dati.nome.trim(),
-        luogo_id: data.id,
-        stato: dati.visitato ? 'fatto' : 'desiderato',
-        fatto_il: dati.visitato ? new Date().toISOString() : null,
-      });
-
-      await ricarica();
-      return null;
-    },
-    [coppiaId, ricarica]
-  );
+  /*
+   * ⚠️ **Qui c'era `aggiungi`, ed e' stata tolta il 2026-08-28.**
+   *
+   * Creava un luogo dalla mappa: posizione attuale piu' un nome scritto a mano.
+   * Era la **seconda** funzione capace di far nascere un posto — l'altra e'
+   * `creaLuogo` in `lib/preferiti.ts` — e le due non scrivevano la stessa riga:
+   * questa non aveva identita' Google, copertina, genere (B-19).
+   *
+   * Toglierla e' la meta' invisibile della normalizzazione chiesta dall'utente.
+   * Lasciarla inutilizzata sarebbe stato peggio che lasciarla in uso: una
+   * seconda strada che nessuno percorre non viene corretta quando cambia lo
+   * schema, e chi la trova fra sei mesi la ricollega credendola equivalente.
+   *
+   * Chi deve creare un luogo usa `creaLuogo`; chi ha una lista da rinfrescare
+   * usa `aggiungiLuogoPreferito`, che e' la stessa piu' una `ricarica`.
+   */
 
   /**
    * Da desiderato a visitato: e' **la transizione** che alimenta la creatura
@@ -158,5 +124,5 @@ export function useLuoghi(coppiaId: string | null) {
     [ricarica]
   );
 
-  return { luoghi, loading, errore, ricarica, aggiungi, segnaVisitato, elimina };
+  return { luoghi, loading, errore, ricarica, segnaVisitato, elimina };
 }
