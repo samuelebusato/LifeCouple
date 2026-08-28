@@ -79,6 +79,20 @@ La **sostanza** di D-05 resta intatta, ed è quella che il threat model deve pro
 
 ---
 
+### 3-ter. I due giochi, dal 2026-08-28 — righe nuove su TB-2
+
+I giochi introducono una cosa che il resto dell'app non aveva: **un'informazione che un membro della coppia deve poter tenere all'altro**. Fin qui TB-2 riguardava ciò che l'ex non deve vedere dopo la rottura; qui è ciò che il partner non deve vedere **durante**, ed è una categoria diversa.
+
+| Componente | STRIDE | Minaccia concreta | Conseguenza | Mitigazione, e come è verificata |
+|---|---|---|---|---|
+| `round_segreto` | **I** (Information disclosure) | Chi indovina legge la parola del round interrogando l'API col proprio token, invece che dall'interfaccia | Il gioco non esiste più: si «indovina» sempre | Tabella separata con policy `select` vincolata a `disegnatore_id = auth.uid()`. ✅ **Verificato**: `npm run test:partita`, un'asserzione per ognuno dei 5 round — chi indovina ottiene **zero righe** |
+| `invio_sigillato` (telepatia) | **I** | Chi sceglie per secondo legge la scelta del primo prima di scegliere | Stesso danno: la telepatia diventa copiare | Policy `autore_id = auth.uid()` (già in 0001) + `rivela_telepatia` che tace finché mancano scelte. ✅ **Verificato**: il partner ottiene zero righe, e la rivelazione non dice niente né a chi ha scelto né a chi non ha scelto |
+| `chiudi_round` | **T** (Tampering) | Un client chiama la funzione due volte e raddoppia i punti | Punteggio falso — lieve, ma è un difetto che capita **da solo** quando i due telefoni chiudono insieme | La funzione ignora un round non più `in_corso`. ✅ **Verificato** con un'asserzione dedicata |
+| Canale broadcast dei tratti | **I** | I tratti del disegno passano per l'infrastruttura Realtime | Un disegno è un contenuto, e passa dai nostri fornitori | 🔑 **Non si salvano da nessuna parte**: esistono per i secondi del round e poi non sono mai esistiti. Il rischio residuo è il transito, non la conservazione — ed è lo stesso di ogni altro dato dell'app (TB-1) |
+| Parola pescata dal client | **T** | Chi disegna sceglie una parola facile per far vincere la coppia | Nessuna: **il punteggio è condiviso**, quindi barerebbe a proprio danno | ⚠️ **Rischio accettato per costruzione.** È il caso in cui l'assenza di un avversario cambia il modello: dove non c'è nessuno da battere, non c'è nessuno da difendere |
+
+⚠️ **Cosa NON è verificato**: nessuna delle due partite è mai stata giocata da due persone vere su due telefoni. Ciò che è provato è il **confine** (le righe qui sopra) e la macchina a stati; ciò che non lo è è l'esperienza — che i tratti arrivino fluidi, che il tempo scorra uguale sui due telefoni, che il round passi quando deve.
+
 ## 4. TB-3 — Coppia ↔ coppia
 
 | Componente | STRIDE | Minaccia concreta | Conseguenza | Mitigazione |

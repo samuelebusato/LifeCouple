@@ -28,6 +28,34 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-08-28 — Il primo giro sull'iPhone, e l'hub dei giochi
+
+**Chiesto dall'utente**: aprire l'app sull'iPhone e chiudere i difetti rimasti; poi implementare **solo l'hub dei giochi**, ispirato a due riferimenti (lo stile «toon» del primo, l'organizzazione a carte scorrevoli del secondo), con «Classifica» e «Gioca» sotto, e animazioni di scorrimento e di zoom.
+
+**Il giro sull'iPhone — il primo davvero fatto.** Esito riferito dall'utente, punto per punto:
+- ✅ **i commenti funzionano** (D-57) e ✅ **il caricamento delle foto è migliorato**;
+- ✅ **B-15 non si ripresenta**: la scomparsa del riquadro della barra «ora si è risolta»;
+- ❌ **il vetro del pannello «aggiungi un luogo» è ancora in ombra**, malgrado D-55;
+- ❌ **all'avvio manca il riquadro del «+»** della mappa: resta l'icona, il tondo no.
+
+🔑 **I due difetti rimasti erano la conferma di D-55, non la sua smentita**: quella decisione aveva descritto *esattamente* questi due modi di rompersi del vetro, e aveva sbagliato solo il modo di applicarli — a carico di chi chiama invece che dedotto dall'albero. Da lì **D-60** e **D-61**, e le due voci **B-16** e **B-17**.
+
+**Fatto**: **D-60** (il contesto del vetro: la base non si dichiara più a mano, e niente vetro dentro il vetro), **D-61** (niente materiale nativo creato a opacità zero), **D-62** (l'hub dei giochi). Trovato e **non** corretto **B-17**, che è di ieri e sta nella testata del calendario.
+
+**Secondo giro, dopo che l'utente ha guardato l'hub sull'iPhone**: *«nell'interfaccia mappa dei luoghi non riesco ad aggiungere luoghi: scrivo ma non mi si apre la tendina con i consigli»*, e *«la parte bassa dell'hub giochi mi sembra un po' schiacciata»*.
+
+🔑 **La prima non era un guasto, ed è stato utile chiederlo invece di indovinarlo.** L'API Google risponde 200 e la chiave è nei bundle: l'utente stava scrivendo nel pannello **«Un posto nuovo»** della mappa, dove una tendina non c'è mai stata — la ricerca per nome era stata spostata in Elenco il 2026-08-27. Alla domanda diretta ha risposto *«vorrei che avesse lo stesso funzionamento di aggiungi luogo in elenco»*: da lì **D-63**. Se avessi tirato a indovinare avrei corretto la schermata sbagliata.
+
+**Fatto nel secondo giro**: **D-63** (la ricerca dentro il pannello del «+», e la parità di risultato con l'elenco), **B-18** (il campo di ricerca che taceva), **B-19** (la mappa scriveva una riga di lista più povera dell'elenco), più la spaziatura dell'hub — registrata in coda a **D-62**.
+
+**Quarto giro**: *«come gioco aggiungi anche "indovina il disegno"»* → **D-65**, che promuove la proposta 1 di P-04 da idea a gioco previsto, e la mette nel backlog come **voce 11-ter**.
+
+**Terzo giro, e la richiesta che chiude il tema**: *«rimuovi la parte "come lo chiamate". Voglio che il funzionamento di aggiungere un luogo sia normalizzato come quello dell'aggiunta dall'elenco»*. Da lì **D-64**: una schermata sola, una funzione sola, e la rimozione del «segna dove sono». 🔑 D-63, scritta poche ore prima, si è rivelata **una tappa e non un approdo**: aveva messo la ricerca *accanto* al vecchio pannello invece che *al posto suo*, e quindi aveva lasciato in piedi le due strade che B-19 aveva appena mostrato essere il problema.
+
+⚠️ **Non verificato**: l'hub non è stato visto girare. La preview web non ci arriva — il cancello di sessione porta alla schermata d'ingresso e l'accesso è via codice email — quindi restano `tsc`, `eslint`, e i due bundle (iOS 15,2 MB e web 12,3 MB, entrambi 200) coi nuovi simboli verificati per stringa.
+
+**Sessione**: —.
+
 ### 2026-08-27 (seconda sessione) — Via il tocco lungo, e l'app impara a muoversi
 
 **Sessione**: [`workspace/sessione-2026-08-27-movimento.md`](../../workspace/sessione-2026-08-27-movimento.md).
@@ -75,6 +103,147 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 ---
 
 ## 3. Decisioni
+
+### D-67 — I due giochi costruiti: chi decide cosa, e cosa non tocca mai il database
+**Fatto il 2026-08-28**, dopo che l'utente ha applicato la migrazione 0020. Versione **ufficiale** di «indovina il disegno» (5 round) e «telepatia» (10 round).
+
+🔑 **La regola che tiene in piedi una partita a due: ogni cosa la decide UNO SOLO.** In un gioco a due telefoni, ogni decisione presa da entrambi può essere presa **in due modi diversi**, e ciò che ne esce non è un errore ma un *disaccordo* — molto più difficile da leggere. Le responsabilità sono divise senza sovrapposizioni:
+- **disegno**: chi disegna crea il round, pesca la parola, tiene il tempo e chiude; chi indovina manda tentativi e basta;
+- **telepatia**: chi ha creato la partita apre e chiude tutti i round; l'altro sceglie e basta;
+- **il turno non si negozia**: chi ha creato la partita disegna nei round dispari, l'altro nei pari. È una funzione del numero di round, quindi i due telefoni ci arrivano alla stessa risposta **senza scambiarsi un messaggio**.
+
+🔑 **Il tentativo si giudica sul telefono di chi disegna**, ed è il punto in cui la regola del gioco e il confine di sicurezza **coincidono**: il telefono di chi indovina *non ha la parola* — la policy di `round_segreto` glielo impedisce — quindi non potrebbe giudicare nemmeno volendo. Quando il confine tecnico cade dove cade quello del gioco, è il segno che è nel posto giusto.
+
+**I tratti viaggiano normalizzati fra 0 e 1**, non in punti-schermo. Un iPhone SE e un Pro Max differiscono di un terzo in larghezza: con coordinate assolute il disegno arriverebbe **tagliato o rimpicciolito in un angolo**. In frazioni di tela la stessa casa è la stessa casa su qualunque schermo. E vanno nel canale **broadcast**: non si salvano, non si rileggono, non pesano su D-22.
+
+⚠️ **La telepatia interroga a intervalli invece di ascoltare**, ed è voluto: `invio_sigillato` non sta nella pubblicazione realtime e non ci starebbe bene, perché la sua RLS nasconde la riga dell'altro — l'evento non arriverebbe comunque a chi aspetta. La domanda ripetuta a `rivela_telepatia` è la strada onesta, e dura solo i secondi fra la prima scelta e la seconda.
+
+⚠️ **Tre secondi di pausa fra un round e il successivo** (`PAUSA_FRA_ROUND`), correzione fatta prima che il difetto si vedesse: chiuso un round, chi apre il successivo lo avrebbe creato nel fotogramma dopo, e la riga «era: cane» sarebbe comparsa e sparita prima che l'occhio ci arrivasse. **Il round finito è il momento per cui si sta giocando**, e mangiarselo per fretta toglie al gioco la sua unica soddisfazione.
+
+**Sessanta secondi per disegnare**, non novanta: chi disegna smette di aggiungere dettagli utili molto prima, e chi indovina ha già detto tutto. Un timer lungo non allunga il gioco, allunga *l'attesa dentro il gioco*.
+
+**I due punteggi si chiamano «Intesa» (disegni) e «Sintonia» (telepatia)** e sostituiscono la Classifica, chiudendo il problema aperto in D-62. Nessuna frase di fine partita dice «hai perso»: il punteggio è **della coppia**, quindi non c'è nessuno che ha perso contro nessuno — e una frase da pagella sarebbe l'app che emette un verdetto sulla relazione, cioè ciò che P-03 vieta.
+
+### D-66 — L'impianto dei due giochi: banco nell'app, chiavi nel database, disegni effimeri
+**Chiesto dall'utente il 2026-08-28**: sviluppare **telepatia** e **indovina il disegno** (versione ufficiale). Entrambi partono quando **tutti e due premono «avvia partita»**; 5 round per i disegni, 10 per la telepatia; banchi da **500 parole** ciascuno; punteggio finale con una piccola animazione.
+
+**Tre decisioni reggono tutto il resto.**
+
+🔑 **1. Il banco delle parole sta nell'app, non nel database.** Ogni voce è `[chiave inglese, testo italiano]`; nel database viaggia **solo la chiave**, che è neutra rispetto alla lingua. Conseguenza che è anche la ragione della scelta: **due partner con il telefono in lingue diverse giocano la stessa identica partita** — stesso round, stessa parola, stessi punti — vedendo ognuno la propria lingua. Per un'app di coppia la coppia mista non è un caso di scuola.
+   *Alternativa scartata*: le mille voci nella tabella `domanda`, che ha già una colonna `lingua`. Costava un viaggio di rete per ogni parola mostrata, un passo di semina in ogni ambiente, e soprattutto rendeva **possibile che le due liste divergessero** — 500 righe italiane e 499 inglesi è un difetto che si scopre al round 500.
+
+🔑 **2. È il client di turno a pescare la parola.** Chi disegna pesca la propria; chi avvia un round di telepatia pesca il tema e le quattro opzioni. ⚠️ **Non è un rilassamento di «l'autorizzazione sta nel database»** (D-12): quella regola esiste dove c'è **un avversario**. Qui non c'è — il punteggio è *della coppia*, non di uno contro l'altro — e barare significherebbe rubare punti a sé stessi. L'unica cosa che va davvero protetta è che **chi indovina non legga la parola**, e quella sta nel database, con la sua policy.
+   ⚠️ E sta in una **tabella a parte** (`round_segreto`), non in una colonna: la RLS di Postgres decide quali *righe* si leggono, non quali *colonne*. Chi indovina la riga del round deve leggerla — contiene il numero e chi disegna — quindi la parola non poteva starci dentro.
+
+🔑 **3. I disegni non si salvano.** I tratti viaggiano nel canale broadcast e muoiono con la partita. P-04 aveva lasciato aperte tre domande — se un disegno sia contenuto personale o condiviso (D-04/D-21), se si conservi, se pesi sul tetto di 1 GB (D-22): **non salvandolo, le tre domande non esistono più**. È la scelta che toglie problemi invece di risolverli, ed è anche la ragione per cui questo gioco costa molto meno di quanto P-04 temesse.
+
+**Il ciclo di vita** sostituisce quello di D-12 (`invito → deposito → tentativi`), che descriveva una partita a domande: ora è `attesa → in_corso → conclusa`, e l'attesa finisce **da sola** quando la seconda persona è pronta. La prontezza è una riga per persona in `partita_pronto` e non due colonne booleane, perché «puoi scrivere solo la tua colonna» in RLS si esprime male, mentre `utente_id = auth.uid()` si legge da solo.
+
+**Cosa di D-12 resta e serve ancora**: `invio_sigillato` e la sua policy «l'altro non legge mai» sono **esattamente** ciò che vuole la telepatia, dove scegliere sapendo la scelta dell'altro non è barare, è non giocare. La funzione `rivela_telepatia` è quella che il commento del 2026-08-12 prometteva (*«arriverà coi giochi»*). ⚠️ Finché manca una delle due scelte **non restituisce niente** — non «la tua sì e la sua no»: rispondere a metà direbbe *quando* l'altro ha scelto, che è già un'informazione di troppo.
+
+**I punteggi al posto della Classifica.** L'utente ha chiesto due punteggi invece di una graduatoria, *«essendo giochi di coppia»*. 🔑 **Quell'intuizione chiude da sola il problema aperto in D-62**: P-03 vieta che il punteggio diventi un verdetto sulla relazione, e una classifica *fra i due* lo sarebbe. Un punteggio **della coppia** non lo è — non c'è nessuno che vince contro nessuno. Nomi proposti: **Sintonia** (telepatia: avete scelto la stessa cosa) e **Intesa** (disegni: ti bastano quattro linee per farti capire). Descrivono i due insieme, che è precisamente ciò che li rende ammissibili.
+
+### D-65 — «Indovina il disegno» entra fra i giochi, e porta con sé un secondo meccanismo
+**Chiesto dall'utente il 2026-08-28**: *«come gioco aggiungi anche "indovina il disegno"»*.
+
+**Non è un'idea nuova**: è la **proposta 1 di P-04**, registrata il 2026-08-12 e analizzata lì. Questa decisione la **promuove** da *possibile gioco futuro* a *gioco previsto*, e nell'hub è già una carta come le altre. Ciò che P-04 aveva scritto resta vero e va tenuto in vista, perché è il costo:
+
+🔑 **Non è un quarto gioco: è un secondo meccanismo.** Gli altri tre — quiz, obbligo o verità, telepatia — sono **lo stesso** congegno, il sigillo D-12: *ognuno manda in segreto, si rivela quando hanno mandato entrambi*. Questo è *uno produce, l'altro indovina*, che il progetto **non ha**. È il singolo motivo per cui non costa un quarto di quanto sono costati gli altri tre insieme, ma parecchio di più.
+
+🔴 **P-04 aveva già scritto la strada più economica per arrivarci, e vale la pena ripeterla qui**: la proposta 2, *«indovina la parola dell'altro»*, è **lo stesso meccanismo senza il disegno** — nessuna superficie da disegno, nessun file, nessuno spazio consumato. Farla prima verifica se il formato piace **al costo di una schermata**. Non è una decisione presa oggi: è l'avvertenza da avere sul tavolo quando si aprirà il cantiere.
+
+⚠️ **Tre vincoli già esistenti che questo gioco tocca**, e nessuno dei tre è una rifinitura:
+- **D-04 / D-21**: un disegno è **un contenuto con un autore**, come una foto. Va deciso se allo scioglimento resta a chi l'ha fatto o è condiviso — la decisione non c'è ancora.
+- **D-22**: se i disegni si conservano, occupano spazio, e il tetto di 1 GB imposto dal database li riguarda.
+- **D-08** non c'entra: un disegno non è un banco di domande. *È l'unico dei quattro di P-04 che non ha un problema di categorie particolari.*
+
+**Nell'hub oggi non costa nulla** — è una carta, un emblema e due stringhe per lingua — e sta **in fondo** al carosello di proposito: è il meno pronto dei quattro, e l'ordine del carosello dice anche questo. Il colore è il **verde** dei pastelli (`vacanza`), l'ultimo libero della famiglia già in uso: nessuna tinta nuova da tarare.
+
+⚠️ **L'emblema mostra UNA cosa sola** — un foglio e una matita — mentre gli altri tre ne mostrano **due** simmetriche (due fumetti, due teste, la bottiglia che gira in mezzo). Non è un vezzo: è la differenza fra i due meccanismi resa visibile prima di leggere il titolo. Negli altri tre agite insieme; qui uno fa e l'altro aspetta.
+
+### D-64 — Un posto si aggiunge in **un modo solo**, e il «segna dove sono» sparisce
+**Chiesto dall'utente il 2026-08-28**: *«rimuovi la parte "come lo chiamate". Voglio che il funzionamento di aggiungere un luogo sia normalizzato come quello dell'aggiunta dall'elenco»*.
+
+**Cosa c'era**: due porte che creavano la stessa entità in due modi diversi. Da **Liste** si cercava un posto vero e nasceva completo — identità Google, copertina, genere. Dalla **mappa** si prendeva la posizione attuale, si scriveva un nome a mano e nasceva più povero. **B-19** aveva già mostrato che le due righe non erano uguali; D-63 aveva corretto il *risultato* ma lasciato le *due strade*.
+
+🔑 **Normalizzare non è stato togliere un campo, è stato togliere una delle due strade** — e a tre livelli, perché a fermarsi al primo si sarebbe ricostruita la divergenza al primo ritocco:
+1. **Una schermata sola**: [`components/foglio-aggiungi-luogo.tsx`](components/foglio-aggiungi-luogo.tsx), usata da Liste **e** dalla mappa. Prima erano due blocchi di JSX quasi identici in due file.
+2. **Una funzione sola**: `creaLuogo` in [`lib/preferiti.ts`](lib/preferiti.ts), estratta da dentro l'hook proprio perché la mappa non poteva chiamarla — aveva il suo `useLuoghi` con la sua `aggiungi`. Chi ha una lista da rinfrescare ci mette sopra la sua `ricarica`; il resto è identico per costruzione.
+3. **La seconda funzione è stata cancellata**, non lasciata inutilizzata. ⚠️ Una strada che nessuno percorre è **peggio** di una in uso: non viene aggiornata quando cambia lo schema, e chi la trova fra sei mesi la ricollega credendola equivalente. Al suo posto, in `lib/luoghi.ts`, resta un commento che dice cosa c'era e perché non c'è più.
+
+🔴 **Cosa si perde, e va detto senza sconti**: **non si può più segnare un punto che su Google non esiste** — la panchina, il belvedere senza nome, «casa della nonna». È il prezzo della normalizzazione, non un effetto collaterale trascurabile. È però coerente con **D-37**, che aveva già deciso che *un luogo si sceglie fra quelli veri*: la mappa era rimasta l'ultima porta da cui lo si poteva inventare. Se un giorno servisse di nuovo, la strada giusta non è rimettere il pannello: è aggiungere «segna questo punto» **dentro l'unico foglio**, sotto la ricerca — così la porta resta una.
+
+**Con «segna dove sono» spariscono anche** il permesso di posizione chiesto in fase di aggiunta (resta quello di D-59, che serve a centrare la mappa), l'interruttore «ci siamo già stati» — un posto cercato nasce «da visitare», come in Liste — e cinque stringhe per lingua.
+
+⚠️ **Conseguenza che vale la pena notare**: D-63 era stata scritta **quattro ore prima** ed è già in parte superata. Non è lavoro sprecato — è stata la mossa che ha reso visibile il problema vero: mettere la ricerca accanto al pannello vecchio ha mostrato, guardandoli affiancati, che il pannello vecchio non serviva più. *Alcune decisioni si prendono bene solo dopo aver visto la versione intermedia.*
+
+### D-63 — La ricerca torna sulla mappa, ma dentro il pannello e non sopra la mappa
+**Chiesto dall'utente il 2026-08-28**: *«ero in mappa dopo il "+", allora in questo caso vorrei che avesse lo stesso funzionamento di aggiungi luogo in elenco»*.
+
+**Il conflitto apparente con il 2026-08-27**, e perché non è un dietrofront: quel giorno era stata tolta **la barra di ricerca fissa sopra la mappa**, per due ragioni che restano valide — era un campo di testo permanente addosso a una schermata che di spazio ha bisogno tutto, ed era un **secondo ingresso** per una cosa che ne aveva già uno in Liste. Qui la ricerca sta **dentro il pannello che si apre dopo il «+»**: non toglie un pixel alla mappa, e non è un secondo ingresso — è la seconda metà dell'unico ingresso, quello che finora sapeva dire soltanto «dove sono adesso». *Una decisione si rovescia quando cade la ragione che l'aveva motivata; qui la ragione regge, ed è il caso d'uso a essere diverso.*
+
+**Scegliere un suggerimento sostituisce anche le coordinate**: non stai più segnando dove sei, stai segnando quel posto. E il posto nasce **«da visitare»** invece che «ci siamo stati», come in Elenco — chi cerca un posto per nome di norma non ci è ancora stato, e chi sì ha l'interruttore lì sotto.
+
+⚠️ **Il campo del nome resta, e perde `autoFocus`.** Resta perché il nome è l'etichetta che date **voi** al posto — «da noi», non «Via Roma 14». Perde il fuoco automatico perché con due campi nello stesso foglio, aprire la tastiera su quello sbagliato manda a scrivere un nome a chi voleva cercare.
+
+🔑 **E il pannello ora si apre PRIMA di chiedere il permesso di posizione, non dopo.** Prima un permesso negato faceva `return` e il pannello non compariva affatto: il «+» della mappa era un bottone che non fa niente. Da oggi quel pannello contiene anche una strada che la posizione non la usa, quindi legarlo al permesso avrebbe chiuso l'unica porta d'ingresso della mappa a chi il permesso lo ha negato una volta. Si apre al **centro della mappa** — ciò che l'utente sta guardando, quindi il default meno sbagliato — e la posizione vera, se arriva, corregge; se non arriva **il pannello lo dice**, invece di lasciar credere che il punto sia giusto.
+
+**Alternativa scartata**: rimettere la barra di ricerca sopra la mappa, cioè annullare la decisione di ieri. Costava lo spazio che ieri si era deciso di non spendere e riportava i due ingressi. Il pannello li tiene tutti e due nello stesso posto senza costare niente alla mappa.
+
+### D-62 — L'hub dei giochi: un carosello, e due comandi che non si spostano
+**Chiesto dall'utente il 2026-08-28**, con due riferimenti visivi: da uno lo stile **«toon»**, dall'altro **l'organizzazione a carte** che si scorrono. Più: sotto, «Classifica» e «Gioca» (che fa scegliere fra versione ufficiale e personalizzata), e le animazioni di scorrimento e di **zoom della carta alla pressione di un comando**.
+
+**Cosa si è preso dei riferimenti, e cosa no.** Dal primo la **grammatica** del toon — forme piene e grasse, nessuno spigolo, un riflesso bianco per volume, una sfumatura per volume — e **non la tavolozza**: quei viola accanto a "Quarzo rosa" avrebbero fatto sembrare l'app due app. I colori dei tre giochi sono i **pastelli dei tipi di evento** già in `lib/tema.ts`. *Non è riuso per pigrizia: è lo stesso problema — distinguere a colpo d'occhio pochi elementi di pari rango — e con due famiglie di colori vicine si vede subito quale è arrivata dopo.*
+
+**Carosello e non griglia.** La griglia di tre icone era più corta da scrivere. Il carosello vince perché i giochi sono **tre e resteranno pochi** (P-04 ne propone altri quattro, non altri quaranta): con pochi elementi la griglia spreca lo schermo e li mostra tutti alla stessa distanza dall'occhio, mentre il carosello ne sceglie **uno alla volta** e può quindi permettersi, di ognuno, un disegno grande e una frase intera invece di due parole sotto un'icona.
+
+⚠️ **La carta è larga il 74% dello schermo, non il 100%**: le vicine devono sporgere. Un carosello a pagina piena non si legge come un mazzo, si legge come una schermata che ogni tanto cambia contenuto — e nessuno prova a scorrerla, perché niente dice che ci sia dell'altro.
+
+🔑 **I due comandi restano due, sempre gli stessi, fermi in fondo.** È la parte del riferimento che valeva la pena prendere. Se ogni carta avesse i suoi bottoni, cambiare gioco sposterebbe anche i comandi, e ogni scorrimento costringerebbe a ritrovarli.
+
+**Le carte non sono di vetro**, ed è una scelta contro l'abitudine dell'app: qui il contenuto *è* la carta, e tre vetri affiancati su fondo chiaro diventano tre rettangoli lattiginosi distinguibili solo dal titolo — l'opposto di ciò che serve a un carosello, dove **si deve capire dove si è senza leggere**. Il vetro resta ai due comandi, che sopra una carta colorata hanno finalmente qualcosa da lasciar trasparire. Di passaggio si evita il vetro-dentro-il-vetro di D-60.
+
+**Il movimento**: ogni carta legge la stessa `x` dello scorrimento e ne ricava la propria distanza dal centro; da quella discendono scala, opacità, quota e una **piccola rotazione** (5 gradi — a 10 sembrava un mazzo buttato sul tavolo: su un'app di coppia il registro è *giocoso*, non *sciatto*, e la differenza sta in quanti gradi si concede). Lo **zoom** resta su finché il foglio è aperto invece di essere un lampo: così non è un effetto sul bottone, è la carta che **viene avanti** perché il foglio parla di lei.
+
+**Le due sorgenti di domande** dietro «Gioca» sono D-19 / backlog 11-bis, non due giochi: in schema è la colonna `domanda.coppia_id` (NULL = banco comune).
+
+⚠️ **L'hub non finge.** Le partite non esistono ancora — manca la voce 8, il sigillo D-12 — quindi i comandi si aprono davvero e mostrano ciò che mostreranno, **e dicono cosa manca**. È la regola di `SezioneInArrivo` applicata a una schermata ormai troppo piena per essere un cartellino.
+
+⚠️ **Il cartellino «serve il partner» sostituisce i comandi, non la schermata.** Chi è ancora solo vede lo stesso i tre giochi e capisce cosa lo aspetta; quello che non può fare è avviarli. Coerente con la scelta del 2026-08-13: *si blocca ciò che senza due persone non esiste, non ciò che senza due persone è solo meno bello.*
+
+**Aggiornamento del 2026-08-28, dopo il primo sguardo sull'iPhone** — riferito: *«la parte bassa (pulsanti, barra di scorrimento e toolbar) mi sembra un po' schiacciata e troppo vicina tra loro»*. Esatto, e la causa era una sola: **l'altezza del carosello non era decisa da me**. La `ScrollView` non aveva altezza e se la prendeva dal contenuto, allungandosi dentro la colonna `flex-1`; il risultato è che lo spazio finiva tutto in un vuoto sopra i puntini, e ciò che veniva dopo si stringeva in fondo. *In una colonna elastica lo spazio non sparisce: si accumula dove nessuno lo ha assegnato.*
+
+Correzione: altezza esplicita della pista (`ALTEZZA + 48`) e `flexGrow: 0`. I 48 punti non sono aria — sono il posto in cui la carta si **ingrandisce con lo zoom** (1,07 su 390 fanno 27 punti) e in cui cade la sua ombra: una `ScrollView` ritaglia ai propri bordi, e senza quel margine premere «Gioca» avrebbe tagliato la carta proprio mentre la si guarda venire avanti. Poi: i puntini più vicini a ciò che indicano (`mt-2`) e più lontani da ciò che li segue, e in fondo `SPAZIO_BARRA + 26` invece di `SPAZIO_BARRA` — ⚠️ quella costante misura il **minimo per non finire sotto la barra**, non la distanza a cui una riga di testo smette di sembrarle addosso.
+
+🔴 **Una cosa NON è decisa, e va decisa prima di riempire la Classifica di numeri.** L'utente ha chiesto che mostri «chi ha vinto più volte». P-03 e l'avvertenza su P-04 dicono che il punteggio non deve diventare *un verdetto che resta sulla relazione*, e una graduatoria di partite vinte fra le due persone **è** una classifica persistente fra loro. Il conteggio si fa; **come** si formula — vittorie dell'ultima partita o totale di sempre, per gioco o complessivo — è ciò che separa un gioco da una pagella. Rimandata a quando le partite esisteranno: oggi la schermata dice solo che non avete ancora giocato, quindi la decisione non è stata presa di nascosto scrivendo codice.
+
+### D-61 — Niente vetro di sistema creato dentro un livello a opacità zero
+**Contesto**: il «+» della mappa senza il suo tondo **appena avviata l'app**, e solo allora (B-16).
+
+**La causa**: su iOS il Liquid Glass è una vista **nativa** che campiona ciò che ha dietro. Creata dentro un livello a opacità 0 non cattura niente, e quando l'opacità torna a 1 **l'effetto non si ripresenta da solo**: restano i figli — l'icona — e la superficie no. Il «+» stava dentro due livelli che al montaggio partivano da zero: la `Comparsa` che lo avvolge, e la dissolvenza di scena della mappa.
+
+**Scelta, in due punti**:
+1. `Comparsa` guadagna `entraAlMontaggio`. Con `false` l'elemento parte già presente. Vale anche senza il vetro: **un elemento che c'è già quando la schermata compare non ha nulla da cui entrare** — sta entrando la schermata, e l'entrata dentro l'entrata si legge come uno scatto.
+2. La dissolvenza fra le due viste della mappa gira **solo sui cambi**, non al montaggio. All'avvio non c'è nessuna scena precedente da cui dissolvere: era un lampo di vuoto.
+
+**E resta la rete**: `TondoVetro` prende `fondo="sicuro"` di default. ⚠️ Quel valore era stato scritto il 2026-08-27 **proprio per questo caso** e non era mai stato messo su nessun componente. *Una rete di sicurezza progettata e non collegata è esattamente come non averla* — ed è la seconda volta in due giorni che D-55 fallisce non per l'idea ma per l'applicazione (vedi D-60).
+
+**Alternativa scartata**: far ricreare il vetro dopo l'entrata (un `key` che cambia a fine animazione). Scartata perché scommette sulla diagnosi: se la causa fosse un'altra non resterebbe niente, mentre non-nascere-a-zero e la base chiara reggono comunque.
+
+### D-60 — La base sotto il vetro si deduce dall'albero, non si dichiara a mano
+**Contesto**: il 2026-08-27 D-55 aveva introdotto la prop `fondo` e la regola *«vetro dentro un foglio ⇒ `fondo="pieno"`»*, a carico di chi scrive la schermata. Il 2026-08-28 l'utente ha riferito che il pannello «aggiungi un luogo» **è ancora in ombra**.
+
+🔑 **La regola era giusta e il modo di applicarla no.** Con **cento** punti di chiamata del vetro, la disciplina al punto di chiamata non regge — e non ha retto: la carta del pannello *aveva* la sua base, ma i **bottoni dentro** no. In `cerca-luogo.tsx` c'era anche scritto il perché non poteva essere altrimenti: *«un componente non sa in che albero è stato montato»*. **Era falso**: il contesto di React serve esattamente a saperlo, ed è quella frase ad aver fatto sopravvivere il difetto un giorno intero.
+
+**Scelta**: un contesto `ContestoNienteSotto`. Chi mette una velatura scura lo dichiara **una volta** (`Foglio` lo fa da sé); un `Vetro` lo dichiara ai propri figli senza che nessuno glielo dica — *sotto un vetro c'è il vetro, non il contenuto*. Il valore passato a mano vince sempre: il contesto è il default giusto, non un'imposizione.
+
+**E fa la seconda metà del lavoro: niente vetro dentro il vetro.** Su iOS 26 annidare un Liquid Glass dentro un altro non gli fa campionare il vetro che lo contiene, gli fa campionare lo sfondo di entrambi — cioè la velatura scura del modale. **È così che il bottone dentro il foglio diventava scuro.** Quando siamo dentro si usano i tre strati, che sopra una base chiara opaca danno la stessa superficie senza chiedere al sistema una composizione che non supporta.
+
+⚠️ **Terza esclusione, e chiude il caso senza indovinarlo**: niente materiale di sistema neanche quando `fondo === 'pieno'`. Sotto c'è una base **opaca**: non c'è niente da attraversare, quindi niente da guadagnare, e resta solo il rischio che il materiale campioni il buio invece della base. *Un vetro a cui si è tolto l'«attraverso» non è più vetro: è una superficie chiara, ed è meglio disegnarla noi che chiederla al sistema.* Serve perché non era accertato **quale** dei due strati fosse il colpevole — la carta o i bottoni: così l'esito non dipende dalla diagnosi.
+
+⚠️ **Conseguenza da non perdere**: `BottoneVetro` decideva il colore del testo da `VETRO_NATIVO`, che dice se **il sistema** ha il Liquid Glass, non se **quel** bottone lo sta usando. Dentro un foglio ora non lo usa, e il bianco pensato per il vetro tinto sarebbe finito su una velatura rosa chiara — un'etichetta illeggibile. La domanda giusta non è «il sistema ha il vetro?» ma «che superficie ho sotto i piedi io?».
+
+**Lezione**, che vale oltre il vetro: **una regola che dipende dalla memoria di chi scrive la prossima schermata non è una regola, è una speranza.** Se il dato che serve è deducibile dalla posizione nell'albero, si deduce.
 
 ### D-01 — Il progetto parte nonostante il verdetto negativo del 2026-08-06
 **Contesto**: l'idea era registrata in `elenco-progetti.md` §Futuri come *sconsigliata come business*.
@@ -830,6 +999,119 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-22 — «Avvia partita» e «Gioca» sembravano disattivati (2026-08-28, CORRETTO)
+
+**Sintomo, riferito dall'utente**: *«il pulsante avvia partita sembra "disattivato", così come il pulsante "gioca"»*. Non lo erano: lo **sembravano**.
+
+**La causa**: `BottoneVetro variante="accento"` sul vetro **nativo** di iOS 26 è vetro tinto di rosa al **28%** con il testo **bianco**. Sopra lo sfondo chiaro dell'app quel 28% non basta a fare da fondo, e resta bianco su quasi bianco.
+
+🔑 **E l'app aveva insegnato a leggerlo come "spento"**: in tutta la libreria l'unica variazione di opacità significa *disabilitato* (`opacity: 0.45` quando `disabled`). Chi la usa impara quel codice, e poi lo applica a **qualunque** cosa sbiadita — anche a ciò che sbiadito lo è per un altro motivo. *Un vocabolario visivo, una volta insegnato, viene letto anche dove non lo si è scritto.*
+
+**Correzione**: le due azioni primarie passano a `BottonePieno`, che il colore se lo porta. La lezione è più larga del bottone: **un'azione primaria non può dipendere da un materiale che decide il sistema.** Il vetro tinto rende benissimo sopra una foto o una mappa e sparisce sopra il bianco — e quale delle due situazioni capiti non lo decide chi scrive il bottone.
+
+⚠️ Si perde l'icona nel «Gioca» (`BottonePieno` prende solo testo): fra un'azione leggibile e un'icona, in fondo a una schermata con due soli comandi, l'icona è quella che si può perdere.
+
+### B-21 — La migrazione 0020 è fallita due volte: dati vecchi, poi l'ordine delle mosse (2026-08-28, CORRETTO — riscontrato dall'utente)
+
+**Sintomo**, riferito dall'utente mentre applicava la migrazione:
+```
+ERROR: 23514: check constraint "partita_stato_check" of relation "partita" is violated by some row
+```
+
+**La causa immediata**: avevo scritto la migrazione dando per scontato che `partita` fosse vuota — «nessuna partita è mai stata giocata». Vero per il *prodotto*, falso per il *database*: [`tests/rls.avversariali.mjs`](tests/rls.avversariali.mjs) crea una partita per provare il sigillo di D-12 (righe 211 e 325) e **non la cancella mai**. Ogni esecuzione della suite ne lascia indietro una, con lo stato predefinito `invito` — che il vincolo nuovo non ammette.
+
+🔑 **La lezione, che vale oltre questo file**: *una migrazione che stringe un vincolo deve prima sistemare i dati che il vincolo nuovo non accetta.* Il vincolo descrive il futuro; le righe vengono dal passato, e non si aggiornano da sole. «La tabella è vuota» non è una cosa che si sa: è una cosa che si verifica, o di cui si fa a meno scrivendo la migrazione perché regga comunque.
+
+**Correzione, in tre parti** — la seconda non era stata riferita e sarebbe morsa subito dopo:
+1. Un `update` che porta a `abbandonata` ogni riga con uno stato del vecchio ciclo. **Non si cancella niente**: sono dati di prova e verrebbe la tentazione di buttarli, ma una migrazione che cancella righe è una migrazione che un giorno cancella le righe sbagliate. `abbandonata` e non `attesa` perché quelle partite non hanno round né righe di prontezza: **non sono riprendibili**, e dire che aspettano sarebbe falso. Di passaggio risolve anche l'indice unico `partita_una_viva`, che con più residui sulla stessa coppia sarebbe fallito subito dopo.
+2. ⚠️ **La migrazione è stata resa ripetibile.** Una migrazione che fallisce a metà va rieseguita su un database che ne ha già digerito un pezzo — e `create policy` in Postgres **non ha** `if not exists`: le otto policy sarebbero morte alla seconda esecuzione. Ora ognuna si butta prima di essere ricreata. *Il primo fallimento non è quello che costa: è quello che rende impossibile riprovare.*
+
+**E poi è fallita una seconda volta**, con l'errore rovesciato:
+```
+ERROR: 23514: new row for relation "partita" violates check constraint "partita_stato_check"
+DETAIL:  Failing row contains (…, telepatia, abbandonata, …, 2026-08-12 13:52:07+00)
+```
+
+🔑 **La riga rifiutata conteneva il valore nuovo**, ed è tutta la diagnosi: a rifiutarlo era **il vincolo vecchio**, ancora in vigore. Avevo messo l'`update` in testa al file, prima del `drop constraint` — cioè stavo chiedendo al database di scrivere `abbandonata` mentre il vincolo che vieta `abbandonata` era ancora attaccato alla tabella.
+
+La sequenza giusta è **togli, sistema, rimetti**. La regola generale, che è la parte che vale: *un vincolo protegge lo stato finale, non le mosse che servono per arrivarci* — e una migrazione è fatta di mosse intermedie che, prese da sole, sono tutte illegali secondo lo schema di partenza o quello di arrivo. La data della riga (2026-08-12) conferma da dove veniva: la sessione in cui furono scritti i test.
+
+⚠️ **Nota di metodo su come è stata trovata la seconda volta**: il primo errore diceva *«violata da qualche riga»* (dati vecchi), il secondo *«nuova riga viola»* (una scrittura in corso). Sono due messaggi diversi per due guasti diversi, e leggerli come «di nuovo il solito problema» avrebbe portato a rimettere mano ai dati invece che all'ordine.
+
+**Aperto, e non corretto qui**: 🔴 **i test avversariali non ripuliscono ciò che creano.** Non è un difetto del prodotto ma della suite, e ha appena prodotto un guasto vero. Finché resta, ogni esecuzione lascia righe in `partita` e `invio_sigillato`, e la prossima migrazione che tocca quelle tabelle inciamperà allo stesso modo.
+
+**Verificato**: solo staticamente — delimitatori di funzione pari, otto `create policy` e otto `drop policy if exists` appaiati. ⚠️ Su questa macchina non c'è un Postgres (niente Docker, niente `psql`): **la prova vera è l'esecuzione**, e la fa l'utente.
+
+### B-20 — Il testo del permesso di posizione stava sulla chiave sbagliata, e si vedrà solo in un build vero (2026-08-28, CORRETTO)
+
+**Trovato** rispondendo a una domanda dell'utente — *«è possibile scaricare in locale una versione dell'app su iPhone/Android?»* — mentre si guardava cosa serve per un build. Non è stato riferito da nessuno e **non era osservabile in Expo Go**.
+
+**Il difetto, in due strati.**
+
+1. `app.json` valorizzava **solo** `locationAlwaysAndWhenInUsePermission`. Ma l'app chiama `requestForegroundPermissionsAsync`, cioè chiede **When In Use** — e quella chiave è un'altra. Letto nel plugin (`node_modules/expo-location/plugin/build/withLocation.js`): tutte e tre le chiavi hanno un **default**, `'Allow $(PRODUCT_NAME) to access your location'`. Quindi in un build vero il dialogo che l'app apre davvero avrebbe mostrato **la frase generica in inglese**, mentre la frase italiana scritta con cura era attaccata a un permesso che l'app non chiede mai.
+2. E quella frase **descriveva «segna dove sono»**, funzione rimossa poche ore prima con D-64. Un testo di permesso che parla di un gesto inesistente non è un refuso: è ciò che Apple legge in revisione, ed è ciò che legge l'utente nel momento in cui decide se fidarsi.
+
+🔑 **Perché Expo Go non poteva mostrarlo**: in Expo Go il dialogo usa l'`Info.plist` **di Expo Go**, non il nostro. Tutta la configurazione dei permessi è quindi **invisibile finché non si fa un build** — ed è una categoria di difetti che il giro sull'iPhone, per quanto accurato, non può intercettare. *Un banco di prova che non esercita un pezzo non dice niente su quel pezzo: dice solo che non lo ha guardato.*
+
+**Correzione**: si valorizza `locationWhenInUsePermission` — la chiave che l'app usa davvero — con un testo che dice ciò che l'app fa oggi (centrare la mappa), e si mettono a `false` le due chiavi *Always*, che il plugin allora **cancella** dal plist. È **least privilege applicato al plist**: l'app non chiede mai la posizione in background, quindi non deve nemmeno dichiararla — e finora la dichiarava, con una descrizione generica in inglese.
+
+**Verificato**: leggendo l'implementazione del plugin (la mappatura chiave→plist e il fatto che `false` faccia `delete infoPlist[permission]`), e ricaricando la configurazione con `npx expo config`, che la legge senza errori. ⚠️ **Non** verificato su un `Info.plist` prodotto: servirebbe un prebuild, che creerebbe le cartelle native e cambierebbe la natura del progetto. È il livello di prova disponibile senza fare quel passo, e va detto invece di lasciar credere altro.
+
+### B-19 — Lo stesso posto nasceva diverso a seconda di dove lo aggiungevi (2026-08-28, CHIUSO)
+
+**Trovato** mentre si implementava D-63, non riferito da nessuno.
+
+La mappa e l'elenco creano entrambi un posto, ma la mappa scriveva la riga di `elemento_lista` **senza** `google_place_id`, `foto_google` e `genere` — perché un posto segnato col «dove sono adesso» un'identità Google non ce l'ha. Corretto per il caso suo; sbagliato appena il posto arriva da una ricerca, cioè da D-63 in poi.
+
+**Conseguenza**: lo stesso identico locale, aggiunto dalla mappa invece che dall'elenco, finiva in lista **senza copertina e senza genere**. È il tipo di difetto che non si nota il giorno in cui nasce: si scopre settimane dopo, guardando una lista in cui alcune schede hanno la foto e altre no, e a quel punto le righe scritte nel frattempo restano rotte (⚠️ è **esattamente** la lezione già scritta in `fotoDiUnPosto`: *il codice torna com'era, le righe scritte nel frattempo no*).
+
+**Correzione**: `aggiungi` in [`lib/luoghi.ts`](lib/luoghi.ts) accetta i tre campi e li scrive, `?? null` quando mancano — la colonna deve **dire** che non c'è identità, non restare assente.
+
+🔑 **La lezione sta nel modo in cui è stato trovato**: la richiesta era *«lo stesso funzionamento di aggiungi luogo in elenco»*, e la lettura pigra è «la stessa tendina». Quella giusta è **lo stesso risultato**. Due strade che creano la stessa entità in due modi diversi sono un difetto, anche quando entrambe funzionano.
+
+### B-18 — Il campo di ricerca dei luoghi taceva, e il silenzio si legge come un guasto (2026-08-28, CHIUSO)
+
+**Sintomo, riferito dall'utente**: *«scrivo ma non mi si apre la tendina con i consigli»*.
+
+⚠️ **La segnalazione riguardava un'altra schermata** (vedi D-63: l'utente era nel pannello della mappa, dove una tendina non c'era mai stata) — **ma il difetto esisteva davvero**, nel campo di Liste, e sarebbe rimasto lì a fare danni. *Una segnalazione che punta al posto sbagliato può comunque essere vera.*
+
+**Il difetto**: la tendina compariva **solo** con dei risultati o con un errore. In tutti gli altri casi non compariva niente — e "niente" è lo stesso fotogramma che si vede quando un'app è rotta. I casi che producevano il nulla erano **tre**, e nessuno dei tre è un guasto:
+1. **meno di tre lettere** — la soglia serve a non pagare una chiamata a Google per ogni tasto, ma era **invisibile**: chi scrive «Bar» non ha modo di sapere che a due lettere non succede niente *per scelta*;
+2. **sto ancora cercando** — c'era la rotella dentro il campo, che è piccola e sta dove il dito la copre mentre scrive;
+3. **Google non ha trovato niente** — indistinguibile da un guasto.
+
+**Correzione**: il pannello si apre sempre che ci sia qualcosa da dire, e ognuno dei tre stati ha la sua riga.
+
+🔑 **È la lezione di [`components/ui/premibile.tsx`](components/ui/premibile.tsx) applicata a un campo di testo**: un comando che non risponde non si legge come *«non c'è ancora nulla da dire»*, si legge come *«non ha funzionato»* — e la reazione è riprovare, poi smettere di usarlo. Uno stato costa una riga di testo; il dubbio costa la funzione.
+
+**Verificato**: che l'API risponda è stato provato **davvero**, chiamando Places con la chiave del `.env` — HTTP 200 con risultati veri — prima di cercare il difetto nell'interfaccia. Senza quella prova la diagnosi sarebbe partita dal posto sbagliato.
+
+### B-17 — La testata del calendario legge un `ref` dentro un worklet (2026-08-28, APERTO — trovato, non corretto)
+
+**Sintomo**: nei log di Metro, a ogni apertura dell'app sull'iPhone, `WARN [Worklets] Tried to modify key `current` of an object which has been already passed to a worklet`.
+
+**Dove**: [`components/testata-calendario.tsx`](components/testata-calendario.tsx) — `direzione` è un `React.useRef`, viene **letto dentro `useAnimatedStyle`** (`translateX: (1 - cambio.value) * 22 * direzione.current`) e **mutato** sul thread JS poche righe sopra.
+
+🔑 **Il commento accanto alla dichiarazione dice già la cosa giusta** — *«il verso al momento del cambio: letto qui, non nello stile animato»* — ed è il codice a contraddirlo. È il tipo di difetto che una rilettura non trova, perché il commento rassicura.
+
+**Conseguenza**: il worklet tiene una **copia serializzata** del ref, quindi il verso che usa può essere **vecchio** — cioè il titolo del calendario può entrare **dal lato sbagliato**. È esattamente la funzione introdotta ieri con D-54 («titolo che entra dal lato giusto»), e resta fra le cose *non verificate sul telefono*.
+
+**Non corretto oggi**: è di ieri, non è fra i due difetti riferiti, e la sessione era già su altro. **La correzione è piccola**: `direzione` deve essere un `useSharedValue`, non un `ref` — è l'unico modo perché il worklet ne veda il valore corrente.
+
+**Perché è stato trovato**: leggendo il log di Metro mentre si verificava altro. ⚠️ E la prima occorrenza è **precedente** alle modifiche di oggi, il che è l'unica ragione per cui non è stato scambiato per una regressione: quando si trova un avviso, la prima domanda è *da quando c'è*, non *cosa ho appena toccato*.
+
+### B-16 — Il «+» della mappa senza il suo tondo, ma solo appena avviata l'app (2026-08-28, CORRETTO — causa isolata)
+
+**Sintomo, riferito dall'utente**: *«appena avvio l'applicazione non c'è il riquadro del pulsante "+" per l'aggiunta di luoghi sull'interfaccia mappa»*. Restava l'icona, spariva la superficie.
+
+**È il modo di rompersi n. 2 di D-55**, quello che quella decisione aveva descritto e per cui aveva scritto `fondo="sicuro"` — un valore **mai messo su nessun componente**. La rete c'era, sulla carta.
+
+🔑 **Ma stavolta la causa è stata isolata, non aggirata**, e la chiave è il *«solo appena avvio l'app»*. Il «+» sta dentro una `Comparsa`, che al montaggio parte da **opacità 0**, dentro la dissolvenza di scena della mappa, che al montaggio **partiva anch'essa da 0**. Su iOS una vista di vetro creata a opacità zero non cattura il suo sfondo, e quando l'opacità torna **non si ridisegna da sola**. Dopo l'avvio il componente si rimonta a schermo già acceso, e il tondo c'è: ecco perché il difetto aveva quella finestra così stretta.
+
+**Correzione**: **D-61** — il vetro non nasce più dentro un livello a opacità zero (in due punti), e `TondoVetro` prende comunque `fondo="sicuro"`, così **il modo in cui fallisce resta deciso** anche se la diagnosi fosse incompleta.
+
+⚠️ **Verificato solo per costruzione e per stringa** (`tsc`, `eslint`, i simboli nuovi presenti nel bundle iOS). Sul telefono **non ancora**: è la prima cosa del prossimo giro, e il caso di prova è preciso — *chiudere del tutto l'app e riaprirla*, non ricaricare.
+
 ### B-01 — `assegna_punti` chiamabile via RPC da chiunque, anon compreso (2026-08-12)
 **Trovato**: con una chiamata di prova dall'esterno (`POST /rest/v1/rpc/assegna_punti` con la sola anon key), subito dopo l'applicazione di 0001. La chiamata è **entrata nella funzione** ed è stata fermata solo dal vincolo di chiave esterna, perché il `coppia_id` era inventato. Con un id reale, un utente poteva **auto-assegnarsi punti** saltando i trigger — violazione diretta di D-15.
 **Causa**: Postgres concede `EXECUTE` a **PUBLIC** su ogni funzione nuova; il `revoke ... from anon` di 0001 non rimuove il grant a PUBLIC, e anon lo eredita da lì.
@@ -870,6 +1152,8 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 2. 🔑 **Un piano di riserva sotto il vetro**, che vale **anche se il sospetto è sbagliato**: una velatura chiarissima e un anello di luce, sempre presenti, sotto il materiale di sistema. Quando il vetro viene disegnato non si distinguono — 0,16 di bianco sotto un vetro è invisibile. Quando **non** viene disegnato sono tutto quello che resta, e la barra passa da «sparita» a «un po' meno bella».
 
 ⚠️ **Perché è segnato MITIGATO e non CHIUSO**: la causa non è stata isolata su un dispositivo, e non lo sarà finché il difetto non si ripresenta — o resta assente abbastanza a lungo da poterlo dire. Segnarlo chiuso sarebbe dichiarare una cosa che non è stata verificata.
+
+**Aggiornamento 2026-08-28** — primo giro vero sull'iPhone: l'utente riferisce che *«la "scomparsa del riquadro" ora si è risolta»*. ⚠️ **Resta MITIGATO**, e non è pedanteria: una prova su una sessione dice che il difetto non si è presentato, non che la causa fosse quella. Il valore di questa riga sta nel fatto che il sospetto — le viste native distrutte e ricreate a tastiera aperta — è **compatibile** con quanto scoperto in B-16 sullo stesso materiale, e le due cose insieme cominciano a somigliare a una spiegazione sola: *il vetro di sistema non sopravvive ai cambi di stato del livello che lo contiene*. Si chiude quando lo si è visto reggere per più sessioni.
 
 **Lezione**, ed è la stessa di B-14 applicata **prima** invece che dopo: due correzioni ragionevoli che non si possono verificare valgono meno di una che rende il fallimento innocuo. Più in generale: una superficie **nativa** non risponde a noi. Ovunque una vista di sistema sia l'unico strato fra il contenuto e il nulla, quel nulla è un esito possibile, e va deciso in anticipo.
 
@@ -1105,16 +1389,27 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
 5. [x] **Cartella foto condivisa** — fatta il 2026-08-13 (D-34/`0009`/`0010`): bucket privato, indirizzi firmati, compressione, tetto 1 GB dal database
 6. [x] **Liste film e ristoranti** — fatte il 2026-08-13 (D-32): da fare / già fatti, una recensione per persona con voto e testo
 7. [ ] **Cancellazione account in-app** (richiesta obbligatoria da Apple) con catena di cancellazione verificata
+7-bis. [x] **Hub dei giochi** — fatto il 2026-08-28 (**D-62**): carosello delle tre carte, «Classifica» e «Gioca», e dietro «Gioca» le due sorgenti di domande di 11-bis. È **solo l'ingresso**: nessuna partita, per esplicita richiesta dell'utente («partiamo implementando solo l'hub game»).
+    - 🔴 **Aperta la formulazione della classifica** — vedi D-62: *chi ha vinto più volte* è una graduatoria persistente fra le due persone, e P-03 dice che il punteggio non deve diventare un verdetto sulla relazione. Da decidere **prima** di scriverne il conteggio, non dopo.
 8. [ ] **Meccanismo di invio sigillato** (D-12) — la macchina a stati condivisa dai tre giochi: invito → accettazione → invio segreto di entrambi → rivelazione
 9. [ ] **Gioco 1 — quiz sulle preferenze del partner**: (a) uno invita, l'altro accetta; (b) fase di deposito, entrambi inseriscono le **proprie** risposte corrette su una lista di domande; (c) a turno ciascuno risponde cercando di indovinare quelle dell'altro; vince chi indovina di più
 10. [ ] **Gioco 2 — obbligo o verità**, con la regola del pass secondo **D-13** e il banco filtrato (D-08 + le due esclusioni specifiche)
-11. [ ] **Gioco 3 — telepatia**: stesse opzioni mostrate a entrambi, selezione contemporanea, si vince se coincidono. È il caso che richiede il **tempo reale** (presenza dell'altro, e rivelazione simultanea) — Supabase Realtime
+11. [x] **Gioco 3 — telepatia** — fatta il 2026-08-28 (**D-67**), versione ufficiale, 10 round. ⚠️ Mai giocata da due persone vere. Descrizione originale: stesse opzioni mostrate a entrambi, selezione contemporanea, si vince se coincidono. È il caso che richiede il **tempo reale** (presenza dell'altro, e rivelazione simultanea) — Supabase Realtime
 11-bis. [ ] **Modalità «personalizza i giochi»** — la coppia scrive il **proprio** set di domande (**D-19**). *Aggiunta al backlog il 2026-08-27: la decisione esisteva dal 2026-08-12 ma non compariva come voce di lavoro, quindi rischiava di restare una decisione senza esecutore.*
     - **Non è un gioco nuovo**: è una sorgente di domande alternativa per i giochi 9-11. Lo schema c'è già dal primo giorno — `domanda.coppia_id` *nullable* (`NULL` = banco comune, valorizzato = della coppia) e le tre policy RLS che ne discendono: si **legge** il comune più il proprio, si **scrive** e si **cancella** solo il proprio. Nessuno può inserire nel banco comune.
     - **Va costruito insieme al meccanismo dell'item 8, non dopo.** Se le partite nascono sapendo leggere solo il banco comune, aggiungere la seconda sorgente dopo significa rimettere le mani sulla selezione delle domande di tre giochi già scritti.
     - **Quattro cose che la funzione deve avere**, e sono mitigazioni di D-19, non rifiniture: (a) le domande restano **private della coppia** — mai riusate nel banco comune, mai suggerite ad altri, mai aggregate; (b) **nessuna analisi del contenuto**; (c) **avviso al primo uso** — «è un campo per giocare, non per informazioni delicate»; (d) dentro la catena di cancellazione e dentro D-04 per lo scioglimento.
     - ⚠️ **È il punto in cui D-08 cambia natura**, ed è la ragione per cui questa voce non può essere trattata come una schermata qualsiasi: finché il banco lo scriviamo noi, «nessun dato di categoria particolare» è garantito **per costruzione**; con le domande scritte dagli utenti diventa **mitigato**, perché le persone scriveranno di sesso, salute e religione. La distinzione che regge è che *quei dati non li chiediamo noi* — ma i dati arrivano sui nostri server lo stesso.
     - **Non ancora deciso** (`—`): l'avviso al primo uso è una schermata o una riga sopra il campo; se una domanda personalizzata sia modificabile o solo cancellabile e riscritta; se le domande della coppia si mescolino al banco comune o siano una modalità separata scelta a inizio partita.
+11-ter. [x] **Gioco 4 — «indovina il disegno»** — fatto il 2026-08-28 (**D-67**), 5 round, tela coi tratti in tempo reale. ⚠️ Mai giocato da due persone vere. Note originali (**D-65**, promosso da P-04 proposta 1).
+    - 🔴 **Richiede un secondo meccanismo**, *uno produce e l'altro indovina*, che il sigillo D-12 non fornisce. È la ragione per cui questa voce non sta accanto alle 9-11: quelle tre condividono la voce 8, questa no.
+    - ⚠️ **Prima di aprirlo, rileggere P-04 proposta 2** («indovina la parola»): è lo stesso meccanismo **senza** superficie di disegno, file e spazio — il modo più economico per scoprire se il formato piace.
+    - **Da decidere, e non c'è ancora niente di deciso** (`—`): se il disegno sia contenuto personale o condiviso (D-04/D-21), se si conservi o si butti a fine partita, e in quale caso pesi sul tetto di D-22.
+11-quater. [ ] **Tradurre i dialoghi di sistema** — *aperto il 2026-08-28, rispondendo alla domanda «se domani viene scaricata in America c'è la versione inglese?»*.
+    - **L'interfaccia sì**, ed è stato verificato: cercando stringhe italiane fuori da `lib/i18n.ts` in tutto `app/`, `components/` e `lib/` non ne resta nessuna su un percorso visibile all'utente (le uniche quattro sono due `select` Supabase, una riga di diagnostica in console e un errore da `.env` mancante, che vede solo chi sviluppa).
+    - 🔴 **I dialoghi di sistema no.** Le tre descrizioni dei permessi in `app.json` — calendario, posizione, foto — sono **solo in italiano**. Un utente americano riceverebbe la richiesta di accesso alle foto **in italiano**, ed è anche ciò che legge un revisore Apple.
+    - **Come si risolve**: il campo `expo.locales` di `app.json` (funzione documentata di Expo, verificata nello schema `@expo/config-types`) mappa una lingua a un file JSON che sovrascrive le chiavi dell'`Info.plist`. Costa tre stringhe per lingua e un file.
+    - ⚠️ **Non è verificabile prima di un build** (vedi **B-20**): in Expo Go i dialoghi usano l'`Info.plist` di Expo Go. Va fatto insieme al primo build, non prima e non dopo.
 12. [ ] **Creatura** (P-01): stato, stadi, disegno in `react-native-svg` (D-09)
 
 > **Le partite completate alimentano la creatura** (P-03): la ricompensa è la crescita condivisa, **non** un punteggio di compatibilità che resta.
@@ -1178,6 +1473,7 @@ I tre giochi già previsti (quiz, telepatia, obbligo o verità) sono **un solo m
 - **una non è un gioco**: è un tema di contenuto, ed è quella che tocca una decisione già presa.
 
 **1. Indovina cosa ha disegnato l'altro** — meccanismo *produci → indovina*, a turni.
+> ✅ **Promossa a gioco previsto il 2026-08-28** (**D-65**, backlog **11-ter**). L'analisi qui sotto resta valida ed è il suo preventivo.
 È la più cara delle quattro: serve una superficie di disegno sul telefono, e il disegno va salvato e trasmesso. ⚠️ Un disegno è **un contenuto con un autore**, quindi ricade su D-04 e D-21 come le foto: va deciso se conta come contenuto personale (resta a chi l'ha fatto) o condiviso. E se i disegni si conservano, consumano spazio — il tetto di D-22 li riguarda.
 
 **2. Indovina la parola dell'altro** — stesso meccanismo del punto 1, ma **solo testo**.
@@ -1223,9 +1519,48 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-27 (terza sessione: chiave Google nel `.env`, D-58, D-59, backlog 11-bis).**
+**Aggiornato al 2026-08-28 (primo giro sull'iPhone, D-60→D-66, B-16→B-20).**
 
-🔴 **Prima di tutto il resto: l'app non è ancora stata aperta sull'iPhone.** Il QR è stato prodotto nella terza sessione ma non usato, quindi **niente** di quanto scritto il 2026-08-27 — animazioni D-52→D-57, i due difetti riferiti, B-15, più D-58 e D-59 di oggi — è mai stato visto girare. La lista ordinata di cosa guardare è più in basso; **D-59 in particolare non è verificabile in nessun altro modo**, perché il dialogo di posizione e la mappa nativa non esistono nella preview web.
+✅ **Migrazione 0020 applicata dall'utente** dopo due fallimenti (**B-21**), e **verificata contro il database vero**: le quattro tabelle nuove rispondono, le quattro colonne nuove di `partita` esistono, e le tre funzioni girano — interrogate via `/rest/v1/rpc` hanno risposto con le **nostre** eccezioni, che è la prova che esistono e che le firme sono giuste.
+
+✅ **I due giochi sono scritti** (**D-67**): «indovina il disegno» (5 round) e «telepatia» (10 round), versione ufficiale. Con loro: i due punteggi **Intesa** e **Sintonia** al posto della Classifica, l'anello del punteggio finale, e i banchi da 500 voci verificati con `npm run test:parole`.
+
+✅ **Le due partite sono state giocate davvero** — non su due telefoni, ma da due giocatori simulati con due sessioni vere contro il database reale: `npm run test:partita`, **41 asserzioni su 41**. Sono provati: la partita che non parte con un solo pronto e parte col secondo, i cinque round coi ruoli che si invertono, il punteggio (3/5, scelto perché né tutto né niente), la conclusione all'ultimo round, e il round telepatia intero.
+
+🔴 **E sono provate le due cose che a mano non si possono provare**:
+- **chi indovina non legge la parola** — zero righe da `round_segreto` interrogando l'API col proprio token, verificato su tutti e cinque i round. Sul telefono si vedrebbe solo che *l'interfaccia non la mostra*, che è un'affermazione molto più debole;
+- **la rivelazione della telepatia tace** con una sola scelta, né a chi ha scelto né a chi non ha scelto — e il partner non legge il sigillo dell'altro.
+
+⚠️ **Resta non provato ciò che è esperienza, non meccanica**: nessuna partita è mai stata giocata **da due persone su due telefoni**. Che i tratti arrivino fluidi, che il tempo scorra uguale sui due schermi, che il round passi quando deve — quello lo dice solo una partita vera. Il modo praticabile senza una seconda persona è **telefono + preview web** con i due account, che sono entrambi dell'utente.
+
+**Cosa guardare alla prima partita vera, in ordine di quanto è probabile che sia rotto**:
+1. **La partita parte?** Entrambi premono «avvia» e la schermata deve cambiare **da sola** su tutti e due. Se resta ferma su uno, il sospetto è il realtime su `partita_pronto`.
+2. **I tratti arrivano?** Chi indovina deve vedere il disegno **mentre** viene fatto, non alla fine. Se arriva a scatti o non arriva, è il canale broadcast.
+3. ⚠️ **Il tentativo giusto viene riconosciuto?** Lo giudica il telefono di **chi disegna**. Se un tentativo palesemente giusto non passa, guardare `normalizza` in `lib/parole.ts` prima di sospettare la rete.
+4. **Il round passa dopo tre secondi**: non subito, e non mai.
+5. **La telepatia rivela solo quando hanno scelto in due**, e chi sceglie per primo **non deve vedere niente** finché l'altro non ha scelto. È il sigillo D-12: se trapelasse, è il difetto più grave dei due giochi.
+6. **A fine partita** l'anello si riempie e il numero sale.
+
+✅ **Il confine nuovo è coperto**, da `tests/partita.mjs` e non dai test avversariali — che restano quelli di RLS e non sanno niente di partite. ⚠️ Il nuovo test **ripulisce ciò che crea**, a differenza di `rls.avversariali.mjs`: quella mancanza è ciò che ha fatto fallire la migrazione 0020 (B-21), e non valeva la pena ripeterla.
+
+**Fatto e verificato oggi sui giochi**: i due banchi da 500 voci in `lib/parole.ts`, con `npm run test:parole` (15 controlli verdi: nessuna chiave doppia, nessuna voce vuota, 25 temi da 20, e il normalizzatore dei tentativi provato su casi veri). **Non fatto**: le due schermate di gioco, il canale realtime, il timer, l'animazione del punteggio finale e i due punteggi al posto della Classifica.
+
+✅ **L'app è stata aperta sull'iPhone**, finalmente, e il giro ha prodotto quattro risposte: commenti **funzionanti**, caricamento foto **migliorato**, B-15 **non riprodotto**, e due difetti confermati sul vetro — poi corretti con D-60 e D-61.
+
+🔴 **Cosa guardare al prossimo giro, in ordine.** Sono tutte cose corrette o scritte **oggi e mai viste girare**:
+1. **Il pannello «aggiungi un luogo»** (D-60): la carta e **i due bottoni dentro** devono essere chiari. Erano i bottoni il colpevole più probabile — nidificati nel vetro della carta — ma la correzione copre anche il caso in cui fosse la carta, quindi *se è ancora in ombra la diagnosi è sbagliata in pieno*, non a metà.
+2. **Il «+» della mappa** (D-61 / B-16). ⚠️ Il caso di prova è preciso: **chiudere del tutto l'app e riaprirla**, non ricaricare — il difetto aveva quella finestra sola.
+3. **L'hub dei giochi**, ora a **quattro** carte (D-65: «indovina il disegno» in fondo, verde): la parte bassa **respira** ora (D-62, coda) — puntini, comandi, riga di stato e barra non devono più toccarsi — e ⚠️ lo **zoom** non deve essere tagliato sopra e sotto premendo «Gioca»: è il motivo dei 48 punti di pista in più. Poi il resto, mai visto: scorrimento fra le carte, puntini che si allungano, i due fogli, e il cartellino «serve il partner» al posto dei comandi se si è soli.
+4. **L'aggiunta di un posto, che ora è una sola** (D-64). Il «+» della mappa apre **lo stesso foglio** di Liste: non c'è più «Come lo chiamate?», non c'è più «segna dove sono». Da provare, in ordine: *(a)* il «+» **della mappa** e il «+» **di Liste** devono aprire la stessa identica cosa; *(b)* tre lettere → **la tendina**, e sotto le tre la riga che dice di scriverne ancora (B-18); *(c)* scelto un posto, deve comparire **subito il pin** sulla mappa (è la `ricarica` passata al foglio); *(d)* ⚠️ **e in Liste quello stesso posto deve avere la copertina** — è B-19, ed è l'unica metà che sulla mappa non si vede.
+5. **Tutto il resto del 2026-08-27**, che il primo giro non ha coperto: il calendario (pillola allineata, titolo direzionale — ⚠️ vedi **B-17**, potrebbe entrare dal lato sbagliato, ed è un difetto vero non ancora corretto —, scorrimento a giorni), la pagina evento, «Cambia tag», il cedimento dei bottoni, la cascata della home, D-58/D-59.
+
+⚠️ **I permessi non si provano in Expo Go** (B-20): il dialogo usa l'`Info.plist` di Expo Go, non il nostro. Tutto ciò che sta nei `plugins` di `app.json` — testi dei permessi, chiavi dichiarate — resta **non verificato** finché non si fa un build vero. È la prima cosa da ricontrollare il giorno in cui se ne farà uno.
+
+⚠️ **B-17 è aperto e la correzione è nota**: `direzione` in `components/testata-calendario.tsx` dev'essere un `useSharedValue` e non un `React.useRef`, perché oggi un worklet ne legge una copia serializzata.
+
+🔴 **Non deciso, e blocca il prossimo pezzo dei giochi**: **come si formula la Classifica** (D-62). *Chi ha vinto più volte* è una graduatoria persistente fra le due persone, e P-03 dice che il punteggio non deve diventare un verdetto sulla relazione. Va deciso prima di scriverne il conteggio.
+
+⚠️ **Il bundle web si compila solo da un Metro fresco.** Il 2026-08-28 il processo su :8081 è rimasto impiantato al 99,9% e non ha mai emesso una riga `Web Bundled`; un secondo Metro sulla porta 8082 ha prodotto lo stesso bundle in **7 secondi**. Non è un difetto del codice — ma se un giorno il bundle web «non finisce mai», la prima cosa da provare è **riavviare Metro**, non cercare il modulo colpevole.
 
 ✅ **Chiave Google Places inserita nel `.env`** (terza sessione del 2026-08-27) e **verificata nel bundle iOS**, insieme a URL e anon key. Questo chiude il punto 1 della lista qui sotto e accende la ricerca luoghi/ristoranti di D-37.
 ⚠️ **E rende attuale un debito che era teorico**: la chiave ora vive nel bundle. Il **proxy dietro una Edge Function** e il **tetto di quota + avviso di budget** su Google Cloud vanno fatti **prima di utenti veri**, non prima della pubblicazione.

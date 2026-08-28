@@ -162,10 +162,23 @@ erDiagram
 | Tabella | Colonne | Nota |
 |---|---|---|
 | `domanda` | **`coppia_id` che può essere NULL**, `gioco`, `lingua`, `testo` | 🔑 `NULL` = banco comune scritto da noi (D-08 garantito); valorizzato = **domanda personalizzata di quella coppia** (D-19, contenuto non controllabile). Una sola tabella, il NULL fa la distinzione |
-| `partita` | `coppia_id`, `gioco`, `stato`, `fase`, `turno_di`, `creata_il` | Stati: `invito` → `deposito` → `tentativi` → `conclusa` |
+| `partita` | `coppia_id`, `gioco`, `stato`, `round_totali`, `round_corrente`, `punti` | Stati **dal 2026-08-28** (migrazione 0020): `attesa` → `in_corso` → `conclusa`, più `abbandonata`. I vecchi (`invito` → `deposito` → `tentativi`) descrivevano una partita a domande e non reggevano né «entrambi premono avvia» né i round |
+| `partita_pronto` | `partita_id`, `utente_id` | Una riga per persona. **Non due colonne booleane**: «puoi scrivere solo la TUA colonna» in RLS si esprime male, `utente_id = auth.uid()` si legge da solo |
+| `partita_round` | `partita_id`, `numero`, `disegnatore_id`, `opzioni`, `chiave_rivelata`, `esito`, `punti` | `opzioni`: le quattro della telepatia, **uguali per entrambi**. `chiave_rivelata`: la parola del disegno, scritta solo **a round finito** |
+| `round_segreto` | `round_id`, `chiave` | 🔴 **La parola che chi indovina non legge.** Sta in una tabella a parte e non in una colonna di `partita_round` per una ragione tecnica precisa: **la RLS decide quali righe si leggono, non quali colonne** — e la riga del round a chi indovina serve, perché contiene numero e ruoli |
 | `invio_sigillato` | `partita_id`, `round`, `autore_id`, `natura` (verità/tentativo/scelta), `domanda_id`, `contenuto` | 🔴 **La tabella che l'altro non legge mai** |
 | `partita_risultato` | `partita_id`, `esito`, `punti_assegnati`, `rivelato_il` | Ciò che diventa visibile a entrambi **dopo** la rivelazione |
 | `registro_azioni` | `coppia_id`, `autore_id`, `azione`, `oggetto`, `creato_il` | Solo-append: risponde al *"non sono stato io a cancellarle"* (TB-2, categoria R) |
+
+### 4.1-bis Le partite dei giochi, come sono costruite davvero (2026-08-28)
+
+**Il banco delle 1000 parole non è nel database**: sta in `lib/parole.ts`, e nel database viaggiano **solo le chiavi** (`dog`, `red`…), neutre rispetto alla lingua. È ciò che permette a due partner con il telefono in lingue diverse di giocare la **stessa** partita vedendo ognuno la propria. *Alternativa scartata*: le voci nella tabella `domanda` — costava un viaggio di rete per ogni parola mostrata, una semina per ambiente, e rendeva possibile che le due liste divergessero.
+
+🔑 **Conseguenza: è il client di turno a pescare la parola**, non una funzione Postgres. Non è un rilassamento di «l'autorizzazione sta nel database»: quella regola esiste dove c'è **un avversario**, e in un gioco di coppia il punteggio è condiviso — barare significa rubare punti a sé stessi. L'unica cosa da proteggere è che chi indovina non legga la parola, e **quella** sta nel database con la sua policy.
+
+**I tratti del disegno non toccano il database.** Viaggiano nel canale **broadcast** di Supabase Realtime, normalizzati fra 0 e 1 (non in punti-schermo: due telefoni di larghezza diversa riceverebbero il disegno tagliato), e non si salvano da nessuna parte. Conseguenza voluta: **le tre domande aperte da P-04 — contenuto personale o condiviso (D-04/D-21), conservazione, tetto di 1 GB (D-22) — non esistono più**, invece di essere risolte.
+
+**In publication realtime** stanno `partita`, `partita_pronto` e `partita_round`: i cambi di stato, la prontezza e i round. ⚠️ **Non** `invio_sigillato`, e non è una dimenticanza: la sua RLS nasconde la riga dell'altro, quindi l'evento non arriverebbe comunque a chi aspetta. Per questo la telepatia **interroga `rivela_telepatia` a intervalli** invece di ascoltare.
 
 ### 4.2 Le regole di accesso (policy RLS)
 
@@ -210,6 +223,10 @@ La cancellazione ha una regola sola (§4.2). Lo scioglimento no: **due classi**,
 ### 4.3 Le due funzioni che il client non può sostituire
 
 Sono l'unica logica che **non** può stare nell'app, perché il client è ostile per definizione:
+
+0. **`segna_pronto(partita_id)`** e **`chiudi_round(...)`** (0020) — la prima fa partire la partita quando la **seconda** persona è pronta; la seconda chiude un round e, all'ultimo, la partita. ⚠️ `chiudi_round` è **idempotente**: un round già chiuso torna senza fare nulla, perché i due telefoni possono chiuderlo insieme e i punti raddoppierebbero. Verificato con un'asserzione dedicata in `tests/partita.mjs`.
+
+0-bis. **`rivela_telepatia(partita_id, round)`** (0020) — è la funzione che questo elenco prometteva. Restituisce **niente** finché manca una delle due scelte: non «la tua sì e la sua no», niente — rispondere a metà direbbe *quando* l'altro ha scelto, e in un gioco in cui si sceglie al buio anche quello è un'informazione di troppo.
 
 1. **`rivela_partita(partita_id)`** — verifica che **entrambi** abbiano inviato, poi confronta e scrive `partita_risultato`. Finché uno solo ha inviato, non restituisce nulla. È ciò che rende il sigillo reale invece che grafico (D-12).
 2. **`assegna_punti(coppia_id, tipo, riferimento_id)`** — inserisce in `punti_evento` rispettando il vincolo unico e incrementa `creatura.punti`. Chiamata da trigger sulla **transizione** `desiderato → visitato/fatto`, mai sull'inserimento (D-15).
