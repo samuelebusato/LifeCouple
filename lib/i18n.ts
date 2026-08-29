@@ -14,21 +14,53 @@ const it = {
   benvenuto: {
     sottotitolo:
       'Il vostro diario condiviso. Un posto solo per voi due, dove tenere quello che vivete insieme.',
-    inizia: 'Iniziamo',
+    inizia: 'Crea il tuo account',
+    haiGiaAccount: 'Ho già un account',
     nota: 'Bastano la tua email e il tuo partner.',
   },
   accedi: {
-    titolo: 'Entra',
-    sottotitolo: 'Ti mandiamo un codice via email. Niente password da ricordare.',
+    titolo: 'Bentornato',
+    sottotitolo: 'Entra con la tua email e la tua password.',
     placeholderEmail: 'la-tua@email.it',
-    invio: 'Invio…',
+    placeholderPassword: 'La tua password',
+    entra: 'Entra',
+    verifico: 'Entro…',
+    passwordDimenticata: 'Ho dimenticato la password',
+    nonHaiAccount: 'Non hai un account? Creane uno',
+  },
+  registrati: {
+    titolo: 'Crea il tuo account',
+    sottotitolo: 'Serve solo un indirizzo email e una password.',
+    placeholderPassword: 'Scegli una password',
+    placeholderConferma: 'Ripeti la password',
+    crea: 'Crea account',
+    creo: 'Creo…',
+    haiGiaAccount: 'Hai già un account? Entra',
+    // ⚠️ Il requisito si dice PRIMA, non dopo il rifiuto: una password
+    // respinta dopo averla scritta due volte è la forma più fastidiosa di
+    // errore evitabile.
+    requisito: 'Almeno 8 caratteri.',
+    nonCoincidono: 'Le due password non coincidono.',
+    troppoCorta: 'La password deve avere almeno 8 caratteri.',
+    // Quando Supabase ha la conferma email attiva, signUp non apre nessuna
+    // sessione: l'utente resta fermo su una schermata che sembra riuscita.
+    confermaEmail: (email: string) =>
+      `Ti abbiamo mandato un'email a ${email}: aprila per confermare l'indirizzo, poi torna qui ed entra.`,
+  },
+  recupera: {
+    titolo: 'Password dimenticata',
+    sottotitolo:
+      'Ti mandiamo un codice via email. Con quello imposti una password nuova — la vecchia non serve.',
     mandaCodice: 'Mandami il codice',
+    invio: 'Invio…',
     titoloCodice: 'Il codice',
     sottotitoloCodice: (email: string) => `L'abbiamo mandato a ${email}. Controlla la posta.`,
     placeholderCodice: 'Inserisci il codice',
+    placeholderNuova: 'La nuova password',
     verifico: 'Verifico…',
-    entra: 'Entra',
-    cambiaEmail: 'Cambia email',
+    imposta: 'Imposta la password',
+    fatto: 'Password aggiornata. Sei dentro.',
+    tornaIndietro: 'Torna indietro',
   },
   onboarding: {
     titolo: 'Siete in due',
@@ -76,6 +108,71 @@ const it = {
     riprova: 'Riprova',
     invitaPartner: 'Invita il tuo partner',
     esci: 'Esci',
+    impostazioni: 'Impostazioni',
+  },
+  impostazioni: {
+    titolo: 'Impostazioni',
+    chiudi: 'Chiudi',
+    sezioneAccount: 'Account',
+    sezioneCoppia: 'La vostra coppia',
+    sezionePericolo: 'Cose senza ritorno',
+    esci: 'Esci da questo dispositivo',
+    esciNota: 'Il tuo account e i vostri ricordi restano dove sono.',
+
+    esportaTitolo: 'Scarica i tuoi dati',
+    // ⚠️ Si dice cosa NON c'è dentro, prima di premere: un file che arriva
+    // senza le foto, quando ci si aspettavano le foto, si legge come un'app
+    // che ha perso qualcosa.
+    esportaNota:
+      'Un file con tutto quello che hai caricato tu. Le foto ci sono come informazioni (quando, dove), non come immagini: quelle si salvano dalla galleria.',
+    esporta: 'Prepara il file',
+    esportaInCorso: 'Preparo il file…',
+    esportaFatto: (righe: number) => `Pronto: ${righe} elementi.`,
+    esportaNonRiuscita: 'Non siamo riusciti a preparare il file. Riprova fra poco.',
+
+    invitaTitolo: 'Invita il tuo partner',
+    invitaNota: 'Il link vale 72 ore e si usa una volta sola.',
+    invitaCrea: 'Crea il link',
+    invitaCondividi: 'Condividi il link',
+    invitaCreo: 'Preparo il link…',
+    invitaCoppiaPiena: 'Siete già in due: non serve nessun invito.',
+    invitaApertoTitolo: 'Qualcuno ha aperto il tuo invito',
+    // ⚠️ La conferma è il passo di D-14 che interrompe davvero l'ingresso di un
+    // estraneo. Il testo deve dire di guardare CHI, non solo premere.
+    invitaApertoNota:
+      'Prima di confermare, assicurati che sia davvero il tuo partner: dopo la conferma vedrà tutto ciò che è vostro.',
+    invitaConferma: 'Sì, è il mio partner',
+
+    sciogliTitolo: 'Sciogli la coppia',
+    sciogliNota:
+      'Smettete di condividere. Ciascuno conserva ciò che ha caricato lui; ciò che ha caricato l’altro non lo vedrai più.',
+    sciogliChiedi: 'Sciogliere la coppia?',
+    // 🔑 Si dice cosa succede DAVVERO, voce per voce: "sei sicuro?" non aggiunge
+    // niente a quello che chi preme già sa.
+    sciogliSpiega:
+      'Le foto e le recensioni tue restano tue. Eventi, luoghi e liste diventano una copia per ciascuno. La creatura e i punti spariscono per entrambi. Non si torna indietro, e non serve il consenso del partner.',
+    sciogliConferma: 'Sciogli',
+    sciogliAnnulla: 'Lascia stare',
+    sciogliInCorso: 'Sciolgo…',
+    sciogliFatto: 'La coppia è sciolta.',
+
+    cancellaTitolo: 'Elimina il tuo account',
+    cancellaNota:
+      'Sparisce tutto ciò che hai caricato tu, e l’account con esso. Il tuo partner conserva le sue copie.',
+    cancellaChiedi: 'Eliminare il tuo account?',
+    cancellaSpiega:
+      'Se siete ancora una coppia, prima viene sciolta. Poi vengono cancellati i tuoi contenuti e il tuo account. È definitivo: non esiste un ripristino, e non possiamo rimetterli indietro nemmeno noi.',
+    // ⚠️ Su Apple è obbligatorio dirlo: cancellare l'account NON disdice
+    // l'abbonamento, che vive nello store e non qui.
+    cancellaAbbonamento:
+      'Se hai un abbonamento attivo, questa operazione non lo disdice: va annullato dalle impostazioni del telefono, altrimenti continuerai a pagare.',
+    cancellaScrivi: 'Per confermare, scrivi ELIMINA qui sotto.',
+    cancellaParola: 'ELIMINA',
+    cancellaConferma: 'Elimina definitivamente',
+    cancellaAnnulla: 'No, torna indietro',
+    cancellaInCorso: 'Elimino…',
+    cancellaNonRiuscita:
+      'Non siamo riusciti a eliminare l’account, e non abbiamo cancellato niente a metà. Riprova fra poco.',
   },
   coppia: {
     servePartner: 'Invita il tuo partner per continuare',
@@ -476,21 +573,48 @@ const en: Dizionario = {
   benvenuto: {
     sottotitolo:
       'Your shared diary. A place just for the two of you, to keep what you live together.',
-    inizia: 'Get started',
+    inizia: 'Create your account',
+    haiGiaAccount: 'I already have an account',
     nota: 'All you need is your email and your partner.',
   },
   accedi: {
-    titolo: 'Sign in',
-    sottotitolo: 'We’ll email you a code. No password to remember.',
+    titolo: 'Welcome back',
+    sottotitolo: 'Sign in with your email and password.',
     placeholderEmail: 'your@email.com',
-    invio: 'Sending…',
+    placeholderPassword: 'Your password',
+    entra: 'Sign in',
+    verifico: 'Signing in…',
+    passwordDimenticata: 'I forgot my password',
+    nonHaiAccount: 'No account yet? Create one',
+  },
+  registrati: {
+    titolo: 'Create your account',
+    sottotitolo: 'All it takes is an email address and a password.',
+    placeholderPassword: 'Choose a password',
+    placeholderConferma: 'Repeat the password',
+    crea: 'Create account',
+    creo: 'Creating…',
+    haiGiaAccount: 'Already have an account? Sign in',
+    requisito: 'At least 8 characters.',
+    nonCoincidono: 'The two passwords do not match.',
+    troppoCorta: 'The password must be at least 8 characters.',
+    confermaEmail: (email: string) =>
+      `We sent an email to ${email}: open it to confirm your address, then come back and sign in.`,
+  },
+  recupera: {
+    titolo: 'Forgot your password',
+    sottotitolo:
+      'We’ll email you a code. Use it to set a new password — you won’t need the old one.',
     mandaCodice: 'Send me the code',
+    invio: 'Sending…',
     titoloCodice: 'The code',
     sottotitoloCodice: (email: string) => `We sent it to ${email}. Check your inbox.`,
     placeholderCodice: 'Enter the code',
+    placeholderNuova: 'The new password',
     verifico: 'Checking…',
-    entra: 'Sign in',
-    cambiaEmail: 'Change email',
+    imposta: 'Set the password',
+    fatto: 'Password updated. You’re in.',
+    tornaIndietro: 'Go back',
   },
   onboarding: {
     titolo: 'You’re two',
@@ -537,6 +661,62 @@ const en: Dizionario = {
     riprova: 'Try again',
     invitaPartner: 'Invite your partner',
     esci: 'Sign out',
+    impostazioni: 'Settings',
+  },
+  impostazioni: {
+    titolo: 'Settings',
+    chiudi: 'Close',
+    sezioneAccount: 'Account',
+    sezioneCoppia: 'Your couple',
+    sezionePericolo: 'Things with no way back',
+    esci: 'Sign out of this device',
+    esciNota: 'Your account and your memories stay where they are.',
+
+    esportaTitolo: 'Download your data',
+    esportaNota:
+      'A file with everything you uploaded. Photos are included as information (when, where), not as images: save those from the gallery.',
+    esporta: 'Prepare the file',
+    esportaInCorso: 'Preparing the file…',
+    esportaFatto: (righe: number) => `Ready: ${righe} items.`,
+    esportaNonRiuscita: 'We could not prepare the file. Please try again shortly.',
+
+    invitaTitolo: 'Invite your partner',
+    invitaNota: 'The link lasts 72 hours and works only once.',
+    invitaCrea: 'Create the link',
+    invitaCondividi: 'Share the link',
+    invitaCreo: 'Preparing the link…',
+    invitaCoppiaPiena: 'You are already two: no invite needed.',
+    invitaApertoTitolo: 'Someone opened your invite',
+    invitaApertoNota:
+      'Before confirming, make sure it really is your partner: after this they will see everything that is yours.',
+    invitaConferma: 'Yes, that’s my partner',
+
+    sciogliTitolo: 'Break up the couple',
+    sciogliNota:
+      'You stop sharing. Each of you keeps what they uploaded; what the other uploaded you will no longer see.',
+    sciogliChiedi: 'Break up the couple?',
+    sciogliSpiega:
+      'Your photos and reviews stay yours. Events, places and lists become one copy each. The creature and the points disappear for both. There is no way back, and your partner’s consent is not required.',
+    sciogliConferma: 'Break up',
+    sciogliAnnulla: 'Never mind',
+    sciogliInCorso: 'Breaking up…',
+    sciogliFatto: 'The couple has been broken up.',
+
+    cancellaTitolo: 'Delete your account',
+    cancellaNota:
+      'Everything you uploaded disappears, and the account with it. Your partner keeps their copies.',
+    cancellaChiedi: 'Delete your account?',
+    cancellaSpiega:
+      'If you are still a couple, it gets broken up first. Then your content and your account are deleted. This is final: there is no restore, and not even we can bring them back.',
+    cancellaAbbonamento:
+      'If you have an active subscription, this does not cancel it: you must cancel it from your phone settings, or you will keep being charged.',
+    cancellaScrivi: 'To confirm, type DELETE below.',
+    cancellaParola: 'DELETE',
+    cancellaConferma: 'Delete permanently',
+    cancellaAnnulla: 'No, go back',
+    cancellaInCorso: 'Deleting…',
+    cancellaNonRiuscita:
+      'We could not delete the account, and we did not delete anything halfway. Please try again shortly.',
   },
   coppia: {
     servePartner: 'Invite your partner to continue',

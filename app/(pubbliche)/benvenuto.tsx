@@ -21,11 +21,20 @@ export default function Benvenuto() {
         </Text>
       </View>
 
-      <View className="gap-4 px-8 pb-4">
-        <BottoneVetro variante="accento" altezza={58} onPress={() => router.push('/accedi')}>
+      {/* ⚠️ **Due strade dichiarate, non una che indovina** (2026-08-29). Prima
+          c'era un solo bottone «Iniziamo» e il database decideva da sé se
+          stavi nascendo o rientrando. Su un'app che custodisce ricordi la
+          differenza fra *«sto creando il mio spazio»* e *«sto tornando nel
+          mio»* è la prima cosa che l'utente vuole sapere — e la seconda è la
+          sola che può andare storta in modo spaventoso. */}
+      <View className="gap-3 px-8 pb-4">
+        <BottoneVetro variante="accento" altezza={58} onPress={() => router.push('/registrati')}>
           <Text>{t.benvenuto.inizia}</Text>
         </BottoneVetro>
-        <Text className="text-center text-sm text-muted-foreground">{t.benvenuto.nota}</Text>
+        <BottoneVetro altezza={52} onPress={() => router.push('/accedi')}>
+          <Text>{t.benvenuto.haiGiaAccount}</Text>
+        </BottoneVetro>
+        <Text className="mt-1 text-center text-sm text-muted-foreground">{t.benvenuto.nota}</Text>
       </View>
       </SafeAreaView>
     </View>

@@ -277,8 +277,16 @@ export default function Home() {
           </View>
         )}
 
-        <Button variant="ghost" onPress={() => supabase.auth.signOut()}>
-          <Text>{t.home.esci}</Text>
+        {/* Al posto di «Esci» (2026-08-29): l'uscita è una delle quattro voci
+            delle Impostazioni, non l'unica cosa che si potesse fare da qui. Di
+            lì passano anche l'invito, lo scioglimento e la cancellazione
+            dell'account — le ultime due obbligatorie per pubblicare.
+            ⚠️ Il ramo d'errore qui sopra tiene invece il suo «Esci» diretto: se
+            lo stato della coppia non si è potuto leggere, mandare l'utente in
+            una schermata che quello stato lo legge di nuovo lo lascerebbe
+            chiuso fuori senza vie d'uscita. */}
+        <Button variant="ghost" onPress={() => router.push('/impostazioni')}>
+          <Text>{t.home.impostazioni}</Text>
         </Button>
       </ScrollView>
       </SafeAreaView>

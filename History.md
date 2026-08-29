@@ -135,6 +135,66 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-78 — La portabilità dei dati è un diritto, non una voce di roadmap (2026-08-29)
+
+Stava nel backlog sotto **«Dopo l'MVP, non prima»**, accanto alle notifiche push e ai filtri nelle liste. 🔑 **Ma l'art. 20 non è una funzione: è un diritto**, esercitabile in qualunque momento da qualunque utente europeo, e *«arriverà in una versione futura»* non è una risposta ammessa. La collocazione nel backlog non era una scelta sbagliata: era una **classificazione** sbagliata, e finché è rimasta lì l'app non era distribuibile.
+
+Costruita in `lib/esporta.ts` più un comando in Impostazioni. Formato **JSON**, che è insieme leggibile da una persona e da un programma — le due cose che l'articolo chiede nella stessa frase.
+
+**Due confini, scritti dentro il file esportato e non solo nell'interfaccia**, perché il file sopravvive alla schermata che l'ha prodotto e fra sei mesi sarà l'unica cosa sotto gli occhi di chi lo apre:
+- 🔑 **Solo ciò di cui l'utente è autore**, non tutto ciò che vede. È il confine di **D-21**, e non è formalismo: esportare anche i contenuti del partner permetterebbe di portarsi via i ricordi dell'altro premendo un bottone — la ritorsione che **TB-2** esiste per impedire.
+- **Le foto come metadati, non come immagini.** Un JSON con dentro un gigabyte di binari non è portabilità: è un file che non si apre.
+
+⚠️ **Scartato**: esportare tutto ciò che la coppia possiede. Sembra più generoso e sarebbe stato più semplice da scrivere — ed è esattamente il modo in cui una funzione di conformità diventa un'arma nel confine di fiducia caratteristico del prodotto.
+
+### D-77 — La cancellazione dell'account: la regola sta nello schema, non in una funzione (2026-08-29)
+
+Apple impone che un'app che crea account permetta di cancellarli **dall'app**. Serviva, e ha richiesto la **prima infrastruttura server del progetto** — perché eliminare una riga da `auth.users` richiede la `service_role`, e dal client è impossibile per costruzione.
+
+🔴 **Il vincolo scoperto verificando**: delle **17** chiavi esterne verso `auth.users`, solo due avevano `on delete cascade`. Con una sola riga scritta, `deleteUser()` fallisce con violazione di chiave esterna.
+
+🔑 **La scelta, e perché non è quella ovvia.** Una funzione che cancella tabella per tabella sarebbe stata più esplicita da leggere, e sbagliata per la ragione che questo progetto ha già incontrato quattro volte in tre giorni (**D-60**, B-24, B-28, e la guardia di sessione di **D-75**): *è una regola affidata alla memoria di chi scriverà la prossima tabella*. `lista` è nata il 2026-08-28 con un `autore_id`; la diciottesima nascerà fra un mese. La migrazione **0026** riscrive quindi i vincoli **per regola** — non nulla → `cascade`, nullable → `set null` — con un blocco che li scopre dal catalogo invece di elencarli.
+
+⚠️ **Perché `set null` sulle tre nullable** (`invito.aperto_da`, `partita.turno_di`, `partita_round.disegnatore_id`): nessuna delle tre *appartiene* a chi vi è indicato — dicono chi ha fatto una cosa, non di chi è la riga. Cancellare un round perché chi disegnava se n'è andato distruggerebbe la partita dell'altro.
+
+**La divisione dei poteri**: la Edge Function ha la `service_role`, cioè è l'unico punto del progetto che può fare qualunque cosa a chiunque. Least privilege non dice di evitarla — dice di **restringerla a ciò che solo lei può fare**. Tutto il resto (sciogliere la coppia, e quindi applicare D-04/D-21/D-16) passa da una funzione che gira **con i permessi dell'utente**. 🔑 E **l'id da cancellare si ricava dal token, mai dal corpo della richiesta**: accettandolo dal chiamante, chiunque avesse un account potrebbe cancellare quello di chiunque altro — e con la chiave segreta in mano alla funzione, ci riuscirebbe.
+
+**Lo scioglimento non è riscritto: si chiama.** `sciogli_coppia()` porta con sé D-04, D-21 e D-16; riscriverne la logica avrebbe prodotto due versioni della stessa regola che divergono al primo ritocco.
+
+⚠️ **E l'ordine è obbligato**: prima i file dello storage, poi lo scioglimento, poi la riga di `auth.users`. Il nome del file vive **dentro la riga** (`foto.chiave_storage`): cancellando prima le righe si perdono i puntatori, e i binari diventano irraggiungibili invece che cancellati — lo stato che l'art. 17 vieta, con l'aggravante che da fuori sembra riuscito. È l'ordine che `Rule/catena-cancellazione.md` imponeva già.
+
+### D-76 — Impostazioni: la conferma dice cosa succede, non «sei sicuro?» (2026-08-29)
+
+Fino a oggi `app/` aveva 17 schermate e **nessuna di impostazioni**: `sciogli_coppia()` esisteva nel database dal 2026-08-12 **senza interfaccia**, e l'unica cosa che si poteva fare dalla home era uscire.
+
+Quattro voci — uscita, esportazione, invito, e le due senza ritorno — in **sezioni separate per gravità**. «Esci», «sciogli» e «cancella» si assomigliano in una lista di bottoni e hanno conseguenze incomparabili: la prima non tocca niente, la seconda toglie l'accesso ai ricordi dell'altro, la terza distrugge i propri.
+
+🔑 **Le due conferme dicono cosa succede, voce per voce** — quali contenuti restano, quali si duplicano, cosa sparisce per entrambi. *«Sei sicuro?» non aggiunge niente a ciò che chi preme già sa*: è la stessa regola scelta il 2026-08-28 per la cancellazione di una lista, dove la conferma dice **quante voci** porta via e di chi.
+
+⚠️ **E la più grave chiede di scrivere una parola.** Non per cerimonia: è l'unico attrito che un dito che scorre non supera per inerzia. **L'annullamento è il bottone pieno delle due strade**, perché in un bivio in cui una sola è irreversibile, quella facile da premere dev'essere l'altra.
+
+**L'invito non è riscritto**: si riusa `useInvito`, compreso il passo di conferma di **D-14** — quello che interrompe davvero l'ingresso di un estraneo che ha aperto un link inoltrato.
+
+### D-75 — Le schermate pre-accesso stanno in una cartella, non in un elenco (2026-08-29)
+
+La guardia di sessione in `_layout.tsx` aveva le schermate pubbliche **scritte a mano**: `primo === 'benvenuto' || primo === 'accedi'`. Aggiungendo `registrati` e `recupera` la guardia le ha rimandate indietro **all'istante** — e il sintomo era una schermata che non cambiava, non un errore.
+
+🔑 **È D-60 per la quinta volta in tre giorni**, e stavolta l'ho sbagliata io mentre la stavo citando. Ora le schermate pre-accesso stanno in `app/(pubbliche)/`, e **essere in quella cartella è la dichiarazione**. Il gruppo fra parentesi non cambia gli indirizzi — `/accedi` resta `/accedi` — cambia solo **chi decide**: la posizione nell'albero invece di una lista da ricordare.
+
+### D-74 — L'accesso passa a email e password (2026-08-29)
+
+Fino a oggi l'accesso era `signInWithOtp` con `shouldCreateUser: true`: registrarsi ed entrare erano **lo stesso gesto**, e non c'era password.
+
+⚠️ **Era la scelta più sicura delle due, e viene abbandonata lo stesso.** Una password che non esiste non si ruba, non si riusa altrove, non si dimentica. Ma ha un costo emerso scrivendo il piano di pubblicazione: **il revisore di Apple non può ricevere il nostro codice**. Un'app che senza partner non fa niente (**D-25**) va consegnata alla revisione con un account già appaiato, e a quell'account bisogna poter entrare. Il costo è dichiarato, non nascosto: si accetta una superficie d'attacco in più per poter pubblicare.
+
+**Due schermate distinte** invece di una che indovina: su un'app che custodisce ricordi, la differenza fra *«sto creando il mio spazio»* e *«sto tornando nel mio»* è la prima cosa che l'utente vuole sapere — e la seconda è la sola che può andare storta in modo spaventoso.
+
+🔑 **Il codice via email non è sparito: è diventato il recupero della password.** E **non è una seconda porta d'ingresso** — col solo codice non si entra da nessuna parte: la sessione che `verifyOtp` apre viene usata **immediatamente** per imporre una password nuova. Chi arriva lì esce con una password, o non esce.
+
+⚠️ **Scartato il link «reimposta password»**, che è la strada canonica di Supabase: porta il token nel frammento dell'URL e richiede di intercettare un deep link — un percorso d'ingresso nuovo, da provare su due sistemi operativi, che **oggi nessuno qui potrebbe provare**. Il codice fa la stessa cosa con un meccanismo già in uso e funzionante.
+
+⚠️ **Conseguenza per gli account esistenti**: chi è nato col codice **non ha una password**. Deve passare da «Ho dimenticato la password» per dargliene una la prima volta. Non è un difetto: è la migrazione, e non richiede nulla lato database.
+
 ### D-73 — Un evento senza foto prende in prestito l'immagine del suo posto
 
 **Chiesto dall'utente** il 2026-08-28: se un evento non ha immagini ma ha un luogo, la pagina dell'evento usa come copertina **l'immagine di default del luogo**; la vista **Diario** del calendario resta com'è.
@@ -2000,15 +2060,49 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 **Sequenza raccomandata**: rimandare P-02 **dopo** il primo ciclo completo di pubblicazione. L'obiettivo dichiarato del progetto è imparare il processo; farlo la prima volta **senza** dati di categoria particolare, e aggiungerli quando il resto funziona, separa gli errori da fare in due lotti invece di sommarli.
 
+### Pubblicazione sugli store, con i pagamenti dentro — deciso il 2026-08-29
+
+🔴 **Decisione dell'utente del 2026-08-29**: LifeCouple si pubblica **con gli abbonamenti già attivi** — download gratuito, «Insieme» acquistabile dalla versione 1.0. Ribalta la voce *«Monetizzazione — rimandata»* qui sotto, che **resta scritta**: il perché del cambio sta in [`Marketing/LifeCouple/monetizzazione.md`](../../Marketing/LifeCouple/monetizzazione.md) §0-bis, il piano operativo in [`docs/pubblicazione.md`](docs/pubblicazione.md).
+
+⚠️ **«Gratis da scaricare» non è «gratis» per gli store**: per Apple e Google conta se incassi. L'app è commerciale dal primo giorno, con gli accordi fiscali e la revisione più severa che ne seguono.
+
+**I due muri — non ritardi, esiti:**
+- [ ] 🔴 **Cancellazione dell'account dall'app.** Obbligatoria su Apple (un'app che crea account deve poterli cancellare **in-app**), dichiarata e servita anche via web su Google. **Non esiste**: `app/` ha 17 schermate e nessuna di impostazioni. E **non è una schermata**: eliminare da `auth.users` richiede `service_role`, quindi è la **prima Edge Function** del progetto — il repo non ne ha nessuna. ⚠️ Da progettare insieme allo **scioglimento** (D-04/D-21), che è un atto diverso e reversibile: chi preme «cancella account» credendo di sciogliere fa la cosa irreversibile al posto di quella che non lo è.
+- [ ] 🔴 **Licenza TMDB.** Gratuita per uso **non commerciale**; con gli abbonamenti l'uso è commerciale dal primo giorno. O licenza commerciale, o le locandine (D-69) escono dal prodotto. ⚠️ Era un debito da verificare: **con questa decisione è un blocco alla pubblicazione**.
+
+**Il pezzo che nessun documento aveva costato:**
+- [ ] 🔴 **L'abbonamento è della coppia, lo store vende a una persona.** Non esiste un abbonamento intestato a due: uno paga e il diritto va esteso all'altro, cosa che il telefono di chi non ha pagato non può fare (non ha ricevute). Servono webhook → Edge Function → colonna su `coppia` → policy RLS. ✅ Non è una migrazione di dati contesi: si aggiunge una colonna. ⚠️ **Da decidere prima del codice**: che fine fa il diritto **allo scioglimento**? Se la colonna sta su `coppia`, sparisce per entrambi — è la stessa domanda che D-16 ha già dovuto sciogliere per la creatura.
+
+**Il resto, in ordine di dipendenza:**
+- [ ] 🔴 **Richiedere il D-U-N-S** — è attesa pura e blocca gli account organizzazione, quindi si fa **per primo**, prima che l'app sia pronta. 🔑 **Verificare se esiste già**: D&B assegna numeri anche senza richiesta, e molte imprese ne hanno uno senza saperlo. ⚠️ I dati su Apple devono combaciare **alla lettera** col record D&B, o la verifica fallisce senza dire quale campo non torna.
+- [ ] Account **Apple** e **Google** come **organizzazione** (non persona fisica): l'editore diventa F.R. di Busato Fausto, e su Google si evita la regola dei **12 tester per 14 giorni** che colpisce gli account personali recenti.
+- [ ] **`eas.json`** (profili development / preview / production) e **variabili come secret su EAS**. ⚠️ Il `.env` non è versionato: è esattamente ciò che il 2026-08-29 ha lasciato la chiave TMDB su un dispositivo solo.
+- [ ] **Primo build di sviluppo** → si provano finalmente i **tre testi dei permessi** (B-20, mai visti da nessuno) e si chiude il **backlog 11-quater**: sono scritti solo in italiano mentre l'app è bilingue (D-18).
+- [ ] **Pagamenti**: libreria (`expo-in-app-purchases` è abbandonata — restano `react-native-iap` o RevenueCat), schermata del listino, **«Ripristina acquisti»**, prodotti configurati sui due store, accordi **Paid Apps** con dati bancari e fiscali. ⚠️ Cancellare l'account **non** cancella l'abbonamento: va detto all'utente nel momento in cui cancella.
+- [ ] 🔴 **Account demo già appaiato per il revisore.** D-25 dice che senza partner l'app non fa niente, e il revisore è **una persona sola**: aprirebbe l'app, non avrebbe nessuno da invitare, e la segnalerebbe come non funzionante. ⚠️ E l'accesso è **via codice email**, che un revisore non può ricevere: serve una porta d'ingresso dedicata, da progettare guardando il threat model e non la sera prima della sottomissione.
+- [ ] **Documenti privacy** adattati dai modelli in `Rule/` e **pubblicati a un URL** (ci sono già `fr-busato` e `heleox-landing` per ospitarli), più **App Privacy** e **Data safety** compilate da `threat-model.md` §1.
+- [ ] **Controlli sul nome** (EUIPO cl. 9 e 42, disponibilità sui due store, dominio, handle) — già in elenco dal 2026-08-12. ⚠️ Da fare **prima** degli screenshot in due lingue, non dopo.
+
+⚠️ **Stima: 7–11 settimane** dal 2026-08-29, D-U-N-S permettendo. È una stima, non una data: non va in `elenco-progetti.md`. 🔑 Il collo di bottiglia non è il lavoro — 17 giorni sono bastati per 25 migrazioni e due giochi — sono le **attese** e le **revisioni**, che non accelerano lavorando di più.
+
+🔴 **E una condizione che precede tutto il piano**: l'app **non è verificata**. Sei difetti su sette dei giochi sono corretti e mai riprovati, e le Liste hanno decine di punti mai visti girare. La prima partita vera ha fatto uscire sette difetti in un colpo. Pubblicare prima significa scoprirli con le recensioni — e su un'app che incassa, con le richieste di rimborso.
+
 ### Rimandato con motivo
-- **Monetizzazione** — non è l'obiettivo (V3), e introdurla presto obbligherebbe a gestire pagamenti e fatturazione su un progetto non core.
+- **Monetizzazione** — non è l'obiettivo (V3), e introdurla presto obbligherebbe a gestire pagamenti e fatturazione su un progetto non core. 🔴 **SUPERATO il 2026-08-29**: l'utente ha deciso di pubblicare già con gli abbonamenti. La voce resta perché *una decisione giusta smette di esserlo quando cambia ciò su cui poggiava*, e cancellare il ripensamento toglie l'informazione più utile delle due. Il costo che questa riga temeva — pagamenti e fatturazione su un progetto non core — **è stato accettato**, non smentito.
 - **Vista web** — nessuna domanda dimostrata; si valuta se emerge dall'uso reale.
 
 ---
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-29** — la prima partita vera ai due giochi, e i sette difetti che ne sono usciti (**B-30 → B-36**). Prima: giro di verifica, wishlist, e la sostituzione del membro (2026-08-28). Copre D-60→D-68 e B-16→B-36.
+**Aggiornato al 2026-08-29 (seconda sessione)** — l'impianto legale: accesso con password, Impostazioni, cancellazione account, portabilità (**D-74 → D-78**). Prima, in mattinata: la prima partita vera ai due giochi e i sette difetti che ne sono usciti (**B-30 → B-36**). Copre D-60→D-78 e B-16→B-36.
+
+🔴 **DA FARE PRIMA DI TUTTO IL RESTO — niente di quanto segue è mai stato eseguito.**
+
+1. **Applicare la migrazione `0026`** e rileggere con la query di verifica: attese **17 righe**, tutte `cascade` o `set null`. ✅ *L'utente dichiara di averla applicata il 2026-08-29; la rilettura non è stata mostrata.*
+2. **Deployare la Edge Function**: `npx supabase functions deploy cancella-account` (il progetto è già collegato al CLI). ⚠️ **Da rifare** dopo le modifiche del pomeriggio: la versione con la cancellazione dei file dello storage è più recente.
+3. 🔴 **La prova che conta, e va fatta su un account di prova, MAI su quello vero**: registrarsi, riempire lo spazio con foto ed eventi, cancellare l'account, e poi **ricontrollare il database e il bucket**. Non la schermata che dice di sì — è la lezione di B-23, applicata al posto più pericoloso in cui potesse servire.
+4. ⚠️ **Chi ha un account nato col codice via email non ha una password** (D-74): la prima volta si passa da «Ho dimenticato la password».
 
 ✅ **Migrazioni `0022`→`0025` applicate** dall'utente il 2026-08-28 (seconda sessione), in quest'ordine — ognuna dipende dalla precedente. ⚠️ Restava scritto qui «da applicare» anche dopo, in due punti: la riga è stata corretta il 2026-08-28 (terza sessione). *Un PUNTO DI RIPRESA che dice il falso è peggio di uno vuoto: il primo lo si crede.*
 

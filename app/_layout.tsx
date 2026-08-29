@@ -36,7 +36,21 @@ function GuardiaSessione() {
     // il gate, che sa distinguere anche i casi che qui non si vedono.
     const primo = (segments as string[])[0];
     const radice = primo === undefined;
-    const pubblica = primo === 'benvenuto' || primo === 'accedi';
+    // 🔴 **La cartella dichiara, l'elenco no** (2026-08-29).
+    //
+    // Qui c'era `primo === 'benvenuto' || primo === 'accedi'`: un elenco
+    // scritto a mano di quali schermate si possono vedere da sconnessi.
+    // Aggiungendo `registrati` e `recupera` la guardia le ha rimandate
+    // indietro **all'istante**, perche' non erano nell'elenco — e il sintomo
+    // era una schermata che non cambiava, non un errore.
+    //
+    // 🔑 E' la forma di D-60 ancora una volta: *una regola che dipende dalla
+    // memoria di chi scrive la prossima schermata non e' una regola*. Ora le
+    // schermate pre-accesso stanno tutte in `app/(pubbliche)/`, e **essere in
+    // quella cartella e' la dichiarazione**. Il gruppo fra parentesi non
+    // cambia gli indirizzi — `/accedi` resta `/accedi` — cambia solo chi
+    // decide: la posizione nell'albero invece di una lista da ricordare.
+    const pubblica = primo === '(pubbliche)';
     if (!radice && !pubblica) router.replace('/benvenuto');
   }, [session, loading, segments, router]);
 
