@@ -2100,7 +2100,9 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 🔴 **DA FARE PRIMA DI TUTTO IL RESTO — niente di quanto segue è mai stato eseguito.**
 
 1. **Applicare la migrazione `0026`** e rileggere con la query di verifica: attese **17 righe**, tutte `cascade` o `set null`. ✅ *L'utente dichiara di averla applicata il 2026-08-29; la rilettura non è stata mostrata.*
-2. **Deployare la Edge Function**: `npx supabase functions deploy cancella-account` (il progetto è già collegato al CLI). ⚠️ **Da rifare** dopo le modifiche del pomeriggio: la versione con la cancellazione dei file dello storage è più recente.
+2. **Deployare la Edge Function**: `npx supabase functions deploy cancella-account`. ⚠️ **Da rifare** dopo le modifiche del 2026-08-29 pomeriggio: la versione caricata è quella *senza* la cancellazione dei file dello storage.
+   🔑 **E prima serve `npx supabase login` su questa macchina.** Tentato il 2026-08-29 sera: il progetto risulta **collegato** (`supabase/.temp/linked-project.json` c'è, ref `uegayflvtjfhjrmbibdz`) ma il CLI **non è autenticato** — `LegacyPlatformAuthRequiredError`. *Il collegamento al progetto è nel repo, il token di accesso no*, ed è giusto così: un token in un repository sarebbe il difetto, non la comodità.
+   ⚠️ **È la terza cosa che vale su un dispositivo e non sull'altro**, dopo la chiave TMDB e i fine riga di B-36. Sta diventando una classe: *ciò che non è versionato non esiste sulla macchina nuova, e non lo dice finché non serve.*
 3. 🔴 **La prova che conta, e va fatta su un account di prova, MAI su quello vero**: registrarsi, riempire lo spazio con foto ed eventi, cancellare l'account, e poi **ricontrollare il database e il bucket**. Non la schermata che dice di sì — è la lezione di B-23, applicata al posto più pericoloso in cui potesse servire.
 4. ⚠️ **Chi ha un account nato col codice via email non ha una password** (D-74): la prima volta si passa da «Ho dimenticato la password».
 
