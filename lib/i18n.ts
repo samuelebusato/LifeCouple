@@ -141,6 +141,7 @@ const it = {
     // --- telepatia ---
     sceglieteInsieme: 'Scegliete, senza dirvelo.',
     haiScelto: 'Hai scelto. Aspettiamo il tuo partner.',
+    sceltaNonInviata: 'La scelta non è arrivata. Premi di nuovo.',
     coincidete: 'La stessa!',
     diverso: 'Stavolta no',
     haSceltoLui: (p: string): string => `Lui ha scelto: ${p}`,
@@ -590,6 +591,7 @@ const en: Dizionario = {
     eraParola: (p: string): string => `It was: ${p}`,
     sceglieteInsieme: 'Pick one, without telling each other.',
     haiScelto: 'You picked. Waiting for your partner.',
+    sceltaNonInviata: 'Your pick did not go through. Tap again.',
     coincidete: 'Same one!',
     diverso: 'Not this time',
     haSceltoLui: (p: string): string => `They picked: ${p}`,

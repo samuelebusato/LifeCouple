@@ -21,9 +21,27 @@ import { t, lingua } from '@/lib/i18n';
 /** Ciò che il round salva: il tema e le quattro opzioni, come chiavi. */
 type Opzioni = { tema: string; scelte: string[] };
 
-/** Quattro voci pescate da un tema, senza ripetizioni. */
-function pescaOpzioni(): Opzioni {
-  const tema = TEMI_TELEPATIA[Math.floor(Math.random() * TEMI_TELEPATIA.length)];
+/**
+ * Quattro voci pescate da un tema, senza ripetizioni.
+ *
+ * 🔴 **E il tema non si ripete nella partita** (B-33). Prima si pescava a caso
+ * fra i 25 temi a ogni round, senza memoria: su una partita da **10** round la
+ * probabilità di vedere almeno una categoria due volte è circa l'**84%** — cioè
+ * praticamente sempre. Non era un caso raro sfuggito alla prova: era il
+ * comportamento normale, e il calcolo si poteva fare prima di scrivere il
+ * codice.
+ *
+ * `usati` arriva dai round già giocati di **questa** partita, letti dal
+ * database e non tenuti in memoria: chi crea i round è sempre lo stesso
+ * telefono, ma può aver chiuso e riaperto la schermata.
+ */
+function pescaOpzioni(usati: Set<string>): Opzioni {
+  // Se i temi finissero si ricomincia da tutti: ripetere è meglio che non avere
+  // un round. Con 25 temi e 10 round non può succedere — ma il modo in cui un
+  // caso impossibile fallisce va deciso, non scoperto.
+  const disponibili = TEMI_TELEPATIA.filter((x) => !usati.has(x.titolo[0]));
+  const banco = disponibili.length > 0 ? disponibili : TEMI_TELEPATIA;
+  const tema = banco[Math.floor(Math.random() * banco.length)];
   const rimaste = [...tema.voci];
   const scelte: string[] = [];
   for (let i = 0; i < 4 && rimaste.length > 0; i++) {
@@ -67,6 +85,8 @@ export default function GiocoTelepatia() {
 
   const [miaScelta, setMiaScelta] = React.useState<string | null>(null);
   const [esito, setEsito] = React.useState<{ mia: string; sua: string } | null>(null);
+  /** La scelta non è arrivata al database: si può — e si deve — ripremere. */
+  const [erroreScelta, setErroreScelta] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     apri(coppiaId);
@@ -77,7 +97,19 @@ export default function GiocoTelepatia() {
   /** Chi ha creato la partita apre i round: uno solo, sempre lo stesso. */
   const ioApro = !!io && partita?.creata_da === io;
 
-  const opzioni = (roundVivo?.opzioni as Opzioni | null) ?? null;
+  /**
+   * 🔴 **Le opzioni vengono da `round`, non da `roundVivo`** (B-34).
+   *
+   * `roundVivo` diventa `null` nell'istante in cui il round si chiude — è la
+   * sua definizione. Leggendo le opzioni da lì, **le quattro carte sparivano
+   * insieme al round**: nei tre secondi della rivelazione restava una
+   * schermata vuota col titolo `…`, e la scelta del partner non si poteva
+   * vedere perché non c'era più nessuna carta su cui vederla.
+   *
+   * 🔑 Il round finito **è** il momento per cui si gioca. `roundVivo` continua
+   * a servire, ma per una cosa sola: dire se si può ancora premere.
+   */
+  const opzioni = (round?.opzioni as Opzioni | null) ?? null;
   const tema = React.useMemo(
     () => TEMI_TELEPATIA.find((x) => x.titolo[0] === opzioni?.tema) ?? null,
     [opzioni]
@@ -99,9 +131,18 @@ export default function GiocoTelepatia() {
     // l'altro — cioè tutto il gioco.
     const attesa = round?.finito_il ? PAUSA_FRA_ROUND : 0;
     const avvio = setTimeout(async () => {
+      const passati = await supabase
+        .from('partita_round')
+        .select('opzioni')
+        .eq('partita_id', partita.id);
+      const usati = new Set(
+        (passati.data ?? [])
+          .map((r) => (r.opzioni as Opzioni | null)?.tema)
+          .filter((k): k is string => !!k)
+      );
       const { data, error } = await supabase
         .from('partita_round')
-        .insert({ partita_id: partita.id, numero: numeroRound, opzioni: pescaOpzioni() })
+        .insert({ partita_id: partita.id, numero: numeroRound, opzioni: pescaOpzioni(usati) })
         .select('*')
         .single();
       if (!vivo || error || !data) return;
@@ -114,16 +155,33 @@ export default function GiocoTelepatia() {
   }, [partita?.stato, partita?.id, ioApro, round, numeroRound, p]);
 
   /* --- si sceglie ---------------------------------------------------------- */
+  /**
+   * ⚠️ **Se la scelta non arriva al database, si torna indietro** (B-35).
+   *
+   * Prima l'esito dell'`insert` non si guardava. Una scelta che non si scrive
+   * lascia la schermata dicendo «hai scelto» mentre il database non ha niente:
+   * `rivela_telepatia` non arriverà **mai** a due righe, il partner aspetta
+   * all'infinito, e il guardiano `if (miaScelta) return` impedisce pure di
+   * riprovare. È la partita che si blocca, senza un messaggio.
+   *
+   * 🔑 È la forma di B-23 spostata di un livello: lì un permesso mancante non
+   * falliva, qui un fallimento c'era e nessuno lo leggeva. *Una scrittura di
+   * cui non si guarda l'esito è una scrittura che si spera sia avvenuta.*
+   */
   async function scegli(chiave: string) {
     if (!roundVivo || miaScelta) return;
     setMiaScelta(chiave);
     tatto('scelta');
-    await supabase.from('invio_sigillato').insert({
+    const { error } = await supabase.from('invio_sigillato').insert({
       partita_id: roundVivo.partita_id,
       round: roundVivo.numero,
       natura: 'scelta',
       contenuto: { chiave },
     });
+    if (error) {
+      setMiaScelta(null);
+      setErroreScelta(t.gioco.sceltaNonInviata);
+    }
   }
 
   /* --- si aspetta l'altro, e si confronta ---------------------------------- */
@@ -155,10 +213,29 @@ export default function GiocoTelepatia() {
   }, [roundVivo, miaScelta, esito, io, ioApro, p]);
 
   /* --- cambio round -------------------------------------------------------- */
+  /**
+   * 🔴 **Si azzera quando arriva il round NUOVO, non quando finisce il vecchio**
+   * (B-34) — ed è il difetto per cui «non si vedeva se si aveva indovinato».
+   *
+   * La dipendenza era `numeroRound`, cioè `partita.round_corrente + 1`. Ma
+   * `round_corrente` lo scrive `chiudi_round` **nello stesso istante** in cui
+   * il round si chiude: `setEsito(...)` e `setEsito(null)` finivano nello
+   * stesso giro di render. L'esito veniva calcolato correttamente, scritto, e
+   * cancellato prima di comparire — poi la schermata restava tre secondi
+   * **vuota** (la pausa fra i round) e ripartiva. Da fuori si legge come
+   * «l'animazione è troppo veloce»: non lo era, non c'era proprio.
+   *
+   * 🔑 `round?.id` cambia solo quando il round successivo viene **inserito**,
+   * cioè dopo la pausa. La chiusura del round in corso è un `update` sulla
+   * stessa riga e lascia l'id dov'è — che è esattamente la distinzione che
+   * serve: *l'esito appartiene al round che l'ha prodotto, e vive finché vive
+   * lui.*
+   */
   React.useEffect(() => {
     setMiaScelta(null);
     setEsito(null);
-  }, [numeroRound]);
+    setErroreScelta(null);
+  }, [round?.id]);
 
   /* --- schermate ----------------------------------------------------------- */
   if (!partita || p.caricando) {
@@ -224,9 +301,13 @@ export default function GiocoTelepatia() {
             const sua = esito?.sua === v[0];
             return (
               <Comparsa key={v[0]} visibile ritardo={i * 60} scarto={10}>
+                {/* ⚠️ Anche `!roundVivo`: durante la rivelazione le carte
+                    restano **visibili** (è il punto di B-34) ma non si premono
+                    più. Prima bastava `miaScelta` perché a round finito le
+                    carte sparivano del tutto. */}
                 <Premibile
                   onPress={() => scegli(v[0])}
-                  disabled={!!miaScelta}
+                  disabled={!!miaScelta || !roundVivo}
                   aptico={false}
                   scala={0.97}
                 >
@@ -297,8 +378,10 @@ export default function GiocoTelepatia() {
             )}
           </Comparsa>
 
-          {!!p.errore && (
-            <Text className="pt-2 text-center text-sm text-destructive">{p.errore}</Text>
+          {!!(erroreScelta || p.errore) && (
+            <Text className="pt-2 text-center text-sm text-destructive">
+              {erroreScelta ?? p.errore}
+            </Text>
           )}
         </View>
       </SafeAreaView>

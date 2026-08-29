@@ -1253,6 +1253,92 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### La prima partita vera: sette difetti da sei sintomi (2026-08-29)
+
+I giochi erano **l'unica zona dell'app mai vista girare**, ed è la prima volta che due persone ci hanno giocato davvero. Sei sintomi riferiti dall'utente, sette difetti dietro — e quattro difetti ne spiegano più d'uno a testa.
+
+🔑 **La lezione d'insieme, prima dei singoli**: le 42 asserzioni di `tests/partita.mjs` erano tutte verdi, e non ne hanno intercettato **nessuno**. Non perché fossero scritte male: perché esercitano le funzioni Postgres — `segna_pronto`, `chiudi_round`, `rivela_telepatia` — con **due client simulati che si passano gli id a mano**. Tutti e sette i difetti stanno invece nello strato React, cioè in *chi decide quando chiamare quelle funzioni e cosa mostrare fra una chiamata e l'altra*. ⚠️ *Un test che simula i due giocatori non prova i due telefoni: prova il database sotto di loro.* Il livello mai coperto è esattamente quello in cui erano tutti e sette.
+
+### B-30 — Il turno era calcolato «rispetto a me», e sui due telefoni dava persone diverse (2026-08-29, CORRETTO — non verificato su due telefoni)
+
+**Sintomi, riferiti dall'utente**: *«dopo la prima manche i ruoli si mischiano ed entrambi devono indovinare la parola»*, *«la parola non viene mostrata»*, *«ogni tanto la partita si blocca»*. **Tre sintomi, un difetto.**
+
+**La causa**: `disegnatoreDi` in `lib/partita.ts` valeva `n % 2 === 1 ? partita.creata_da : altroId`, e `altroId` lo calcolava la schermata come *«il membro che non sono io»* (`membri.find(u => u !== io)`). Quel `!== io` rende il valore **relativo a chi guarda**: nei round pari il telefono di A concludeva «disegna B» e quello di B concludeva «disegna A».
+
+**Conseguenza a catena, ed è ciò che rende il difetto grosso**: nei round pari **nessuno dei due si riconosceva disegnatore**. Quindi (1) entrambi vedevano «indovina tu»; (2) nessuno pescava la parola, e la carta della parola restava a `…`; (3) siccome il round lo crea chi disegna, **il round 2 non nasceva mai** e la partita si fermava lì per sempre.
+
+🔑 **È D-60 in un'altra veste**: *una regola che dipende da chi la applica non è una regola*. Qui il dato condiviso c'era già — `creata_da`, che i due telefoni leggono uguale — e si è preferito farlo ricostruire a chi chiama, dal proprio punto di vista. **Il turno deve essere una funzione di dati che entrambi leggono uguali, mai di «io».**
+
+**Correzione**: la firma diventa `disegnatoreDi(n, membri)` e il non-creatore lo deduce la funzione. ⚠️ Non è solo una correzione: è la **rimozione del parametro** che permetteva l'errore. Lasciare `altroId` e documentarne il significato giusto avrebbe retto fino alla prossima schermata che lo ricalcola — che è la forma di B-24 e di `urlFotoGoogle`.
+
+**Come è stato verificato**: ⚠️ **per lettura, non giocando.** `tsc` pulito, bundle Metro reale (3236 moduli), app che rende — nessuna di queste tre cose dice che il round 2 ora parte. Serve una partita a due.
+
+### B-34 — L'esito veniva cancellato nello stesso istante in cui veniva scritto (2026-08-29, CORRETTO — non verificato)
+
+**Sintomi**: *«gli utenti non riescono nemmeno a vedere se hanno risposto correttamente o sbagliato»* e *«le animazioni sono troppo veloci»*. **Due difetti sovrapposti, che davano lo stesso effetto.**
+
+**Causa 1** — l'azzeramento di `esito` dipendeva da `numeroRound`, cioè `partita.round_corrente + 1`. Ma `round_corrente` lo scrive `chiudi_round`, **nello stesso istante** in cui il round si chiude: `setEsito(...)` e `setEsito(null)` finivano nello stesso giro di render. L'esito veniva calcolato correttamente, scritto, e cancellato **prima di comparire**.
+
+**Causa 2** — le quattro carte leggevano le opzioni da `roundVivo`, che per definizione diventa `null` appena il round si chiude: **sparivano insieme al round**. Nei tre secondi della rivelazione restava una schermata vuota col titolo `…`, senza nessuna carta su cui vedere la scelta del partner.
+
+🔑 **E questo spiega perché il sintomo si è presentato come «troppo veloce»**: `PAUSA_FRA_ROUND` funzionava — i tre secondi c'erano davvero — ma erano tre secondi di **niente**. *Chi guarda non distingue «passa troppo in fretta» da «non è mai comparso»: vede solo che non fa in tempo a leggere.* ⚠️ Per questo la costante **non è stata toccata**: tararla su un'osservazione in cui il risultato durava zero significherebbe correggere una misura sbagliata.
+
+**Correzione**: l'azzeramento dipende da `round?.id` — che cambia solo quando il round successivo viene **inserito**, mentre la chiusura del round in corso è un `update` sulla stessa riga e lascia l'id dov'è. Le opzioni vengono da `round`; `roundVivo` resta, ma per una cosa sola: dire se si può ancora premere.
+
+### B-31 — La classifica si cancellava da sola a ogni partita finita (2026-08-29, CORRETTO — non verificato)
+
+**Sintomo**: *«per i due giochi non viene mostrato il risultato se premo su classifica»*.
+
+**La causa**: le due schermate di punteggio finale chiamavano `p.abbandona()` alla chiusura, e quella funzione scrive `stato = 'abbandonata'` **sopra** `conclusa`, senza guardare cosa c'era prima. L'hub somma le partite con `stato = 'conclusa'`. Quindi **ogni partita finita usciva dalla classifica nell'istante esatto in cui la si chiudeva**, e la classifica non poteva che essere sempre vuota.
+
+🔴 **La cosa più istruttiva è che era già scritto.** La migrazione **0021** spiega, come motivo per cui non esiste una policy di `delete`: *«una partita conclusa è il punteggio della coppia: è ciò che alimenta Intesa e Sintonia nell'hub. Poterla cancellare vorrebbe dire poter riscrivere il passato condiviso»*. Il database è stato difeso da una cancellazione che il client faceva comunque, per un'altra strada. 🔑 *Una protezione scritta in un posto solo protegge solo quel posto.*
+
+⚠️ **E la chiamata non era neppure necessaria**: l'indice `partita_una_viva` copre solo `attesa` e `in_corso`, quindi una partita conclusa **non blocca** la successiva. Non era un compromesso fra due esigenze: era danno puro, a costo zero di rimuoverlo.
+
+**Correzione**: `abbandona()` esce subito, azzerando il solo stato locale, se la partita è `conclusa`.
+
+### B-33 — Le categorie si ripetevano quasi sempre (2026-08-29, CORRETTO — non verificato)
+
+**Sintomo**: *«non possono comparire più volte domande della stessa categoria»*.
+
+**La causa**: `pescaOpzioni()` pescava a caso fra i 25 temi a ogni round, **senza memoria**.
+
+⚠️ **E il numero andava fatto prima, non dopo**: su una partita da **10** round la probabilità di vedere almeno una categoria due volte è **circa l'84%**. Non un caso raro sfuggito alla prova — il comportamento normale. 🔑 *Quando una scelta è casuale, la domanda giusta non è «può ripetersi?» ma «quanto spesso?», e la risposta è un conto di due righe che nessuno ha fatto.*
+
+**Correzione**: il tema si esclude leggendo `opzioni->>tema` dei round già giocati **di quella partita** — dal database e non dalla memoria, perché chi crea i round può aver chiuso e riaperto la schermata. Stessa correzione applicata alle **parole del disegno**, dove il conto dà ~4% su 5 round: più raro, stessa forma, e la fonte lì è `chiave_rivelata` dei round chiusi e non `round_segreto` — che chi disegna adesso non può leggere per i round dell'altro, ed è giusto così.
+
+### B-35 — Una scelta che non arrivava al database bloccava la partita in silenzio (2026-08-29, CORRETTO — non verificato)
+
+**Sintomo**: concorre a *«ogni tanto la partita si blocca»*.
+
+**La causa**: in `scegli()` l'esito dell'`insert` su `invio_sigillato` **non si guardava**. Una scelta non scritta lascia la schermata che dice «hai scelto» mentre il database non ha niente: `rivela_telepatia` non arriverà **mai** a due righe, il partner aspetta all'infinito, e il guardiano `if (miaScelta) return` impedisce persino di riprovare.
+
+🔑 **È B-23 spostata di un livello.** Lì un permesso mancante non falliva — taceva. Qui il fallimento c'era, ed è stato **nessuno a leggerlo**. *Una scrittura di cui non si guarda l'esito è una scrittura che si spera sia avvenuta.*
+
+**Correzione**: in caso di errore `miaScelta` torna indietro e compare una riga che invita a ripremere. Non un messaggio tecnico: l'unica cosa che serve sapere è che si può riprovare.
+
+### B-32 — Un oggetto nuovo a ogni render azzerava tutti i timer delle partite (2026-08-29, CORRETTO — non verificato)
+
+**La causa**: `usePartita` restituiva un **oggetto letterale nuovo a ogni render**, e le due schermate lo mettono nelle dipendenze dei loro effetti (per `p.chiudi`, `p.setRound`). Dentro quegli effetti ci sono il `setTimeout` della pausa fra i round e il `setInterval` del tempo del disegno: **ogni render li smontava e li faceva ripartire da capo**.
+
+🔑 *Un valore instabile nelle dipendenze non rompe il codice che lo legge: rompe i **timer** di chi lo osserva.* Ed è un difetto che leggendo l'effetto non si vede — si vede solo sapendo cosa gli viene passato, che è in un altro file.
+
+**Correzione**: `React.useMemo` sull'oggetto restituito. ⚠️ Trovato **leggendo**, non da un sintomo: non è dimostrato che abbia prodotto uno dei sei riferiti.
+
+### B-36 — Il test dei banchi accusava il file sbagliato, e solo su questo dispositivo (2026-08-29, CHIUSO E VERIFICATO)
+
+**Sintomo**: `npm run test:parole` dava **12/15** qui, mentre `History.md` registrava 15/15 il giorno prima.
+
+**La causa**: il test non importa il modulo, lo **legge come testo** e lo spacca con espressioni regolari che contengono `\n`. Su questo dispositivo `core.autocrlf=true` — il default di Git su Windows — mette `\r\n` nella copia di lavoro, quei `\n` non combaciano più, e `TEMI_TELEPATIA` viene letto come **un tema solo** contenente tutte le voci.
+
+🔴 **Il modo in cui falliva è la parte peggiore**: non diceva «il test non sa leggere il file», diceva **«almeno 20 temi — trovati 1»** e «chiave doppia dentro un tema». Cioè **accusava il banco di parole**, che era intatto. *Un test che sbaglia indica il file sbagliato, e chi lo legge va a cercare un difetto che non esiste.*
+
+🔑 **Ed era invisibile finché il progetto è vissuto su un dispositivo solo** — stessa forma della chiave TMDB, scoperta il giorno prima: qualcosa che vale su questa macchina e non sull'altra, e nessuno dei due lato lo vede. *Un controllo che dipende dal checkout non sta verificando il codice: sta verificando il checkout.*
+
+⚠️ **E costava più di tre righe di report**: fra i controlli spenti c'era **«nessuna chiave doppia dentro un tema»**, che è precisamente la garanzia su cui si appoggia la correzione di B-33. Per un giorno quel controllo non ha verificato niente, dicendo di averlo fatto.
+
+**Correzione**: i fine riga si normalizzano prima di guardare il sorgente. **Verificato**: 15/15, contro 12/15 di prima. ⚠️ Controllati anche `tests/partita.mjs` e `tests/rls.avversariali.mjs`, che leggono il `.env` con lo stesso `split('\n')`: sono **sani**, perché fanno `.trim()` su ogni valore e il `\r` cade lì.
+
 ### B-28 — Il numero sulla carta non si aggiornava tornando dalla lista (2026-08-28, CORRETTO)
 
 **Sintomo, riferito dall'utente**: *«quando apro una lista e inserisco una voce poi chiudo la card il numero sulla card non si aggiorna»*.
@@ -1922,7 +2008,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-28 (terza sessione)** — giro di verifica, wishlist, e la sostituzione del membro. Copre D-60→D-68 e B-16→B-23.
+**Aggiornato al 2026-08-29** — la prima partita vera ai due giochi, e i sette difetti che ne sono usciti (**B-30 → B-36**). Prima: giro di verifica, wishlist, e la sostituzione del membro (2026-08-28). Copre D-60→D-68 e B-16→B-36.
 
 ✅ **Migrazioni `0022`→`0025` applicate** dall'utente il 2026-08-28 (seconda sessione), in quest'ordine — ognuna dipende dalla precedente. ⚠️ Restava scritto qui «da applicare» anche dopo, in due punti: la riga è stata corretta il 2026-08-28 (terza sessione). *Un PUNTO DI RIPRESA che dice il falso è peggio di uno vuoto: il primo lo si crede.*
 
@@ -1977,11 +2063,25 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ---
 
-### 🔴 L'unica cosa aperta: una partita vera, fra due persone
+### 🔴 I giochi: la prima partita è stata giocata, e ha rotto tutto quello che c'era da rompere
 
-⚠️ **Nessuna partita è mai stata giocata da due persone su due telefoni**, e nemmeno l'**hub** dei giochi è mai stato aperto sul dispositivo. È l'unica zona dell'app in questo stato — tutto il resto è stato usato.
+✅ **Aggiornato il 2026-08-29.** La riga qui sotto diceva *«nessuna partita è mai stata giocata da due persone»*: **non è più vero**. È stata giocata, ed è servita — sei sintomi riferiti, **sette difetti** dietro (**B-30 → B-36**), tutti nello strato React e nessuno intercettato dalle 42 asserzioni verdi.
+
+🔴 **Stato attuale: i sette difetti sono corretti, e SEI DEI SETTE non sono verificati.** Corrette per lettura, con `tsc` pulito, `expo lint` pulito, bundle Metro reale da 3236 moduli e app che rende senza errori in console — nessuna delle quali dice che una partita adesso arriva in fondo. L'unico verificato davvero è **B-36** (15/15 contro 12/15). ⚠️ *Il fatto che io non possa essere il secondo giocatore — il login manda un codice via email — è la ragione per cui questo blocco resta rosso.*
+
+**Cosa guardare alla prossima partita, in ordine di ciò che rompeva di più**:
+1. 🔴 **Il round 2 del disegno parte** (B-30). È il difetto grosso: prima nei round pari nessuno dei due si riconosceva disegnatore, quindi la partita si fermava lì. Se il round 2 nasce e i ruoli sono invertiti rispetto al round 1, B-30 è chiuso.
+2. 🔴 **A chi disegna compare la parola, al round 1 *e* al round 2.** ⚠️ **Domanda ancora senza risposta**: mancava anche al **round 1**? B-30 la spiega dal 2 in poi; al round 1, leggendo il codice, non è stato trovato niente che la rompa. Se manca anche lì, c'è un ottavo difetto non ancora trovato.
+3. 🔴 **La telepatia mostra l'esito** e le quattro carte **restano** durante la rivelazione, col pallino sulla scelta del partner (B-34). Se si vede ma è breve, **allora** si tara `PAUSA_FRA_ROUND` — non prima: i tre secondi c'erano già, erano tre secondi di niente.
+4. 🔴 **La classifica mostra un numero** dopo una partita finita (B-31). Se resta vuota, la partita non sta arrivando a `conclusa`.
+5. ⚠️ **Nessuna categoria si ripete** in una partita da 10 round (B-33). Prima capitava nell'~84% delle partite, quindi una partita pulita è già un segnale.
+6. ⚠️ **La partita non si blocca.** Le cause note erano due (B-30 e B-35); se si blocca ancora, è una terza.
 
 ✅ **I due giochi sono scritti** (**D-67**): «indovina il disegno» (5 round) e «telepatia» (10 round), versione ufficiale. Con loro: i due punteggi **Intesa** e **Sintonia** al posto della Classifica, l'anello del punteggio finale, e i due banchi da 500 voci in `lib/parole.ts` verificati con `npm run test:parole` (15 controlli verdi: nessuna chiave doppia, nessuna voce vuota, 25 temi da 20, e il normalizzatore dei tentativi provato su casi veri).
+
+⚠️ **Ma «verificati con `npm run test:parole`» va letto con B-36 in mano**: su un checkout con fine riga CRLF quel test leggeva **un tema solo** e tre dei quindici controlli non verificavano niente, dicendo di averlo fatto. Dal 2026-08-29 il test normalizza i fine riga e i 15 controlli valgono su ogni dispositivo.
+
+⚠️ **E «la meccanica è provata» va letto con B-30 in mano.** Le 42 asserzioni erano verde su verde mentre **il round 2 del disegno non partiva affatto** sui telefoni veri: il test simula i due giocatori passandosi gli id a mano, quindi non attraversa mai il codice che *decide di chi è il turno*. 🔑 *Un test che simula i due giocatori non prova i due telefoni: prova il database sotto di loro.*
 
 ✅ **La meccanica è provata**, da `tests/partita.mjs` — non dai test avversariali, che restano quelli di RLS e non sanno niente di partite. `npm run test:partita`: **42 asserzioni su 42**, con due giocatori simulati da due sessioni vere contro il database reale. Sono provati: la partita che non parte con un solo pronto e parte col secondo, i cinque round coi ruoli che si invertono, il punteggio (3/5, scelto perché né tutto né niente), la conclusione all'ultimo round, il round telepatia intero, e la pulizia — **asserita**, che è la parte che mancava prima di B-23.
 

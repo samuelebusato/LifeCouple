@@ -55,7 +55,7 @@ export default function GiocoDisegno() {
   const p = usePartita('indovina_disegno');
   const { apri, partita, round, io } = p;
 
-  const [altroId, setAltroId] = React.useState<string | null>(null);
+  const [membri, setMembri] = React.useState<string[]>([]);
   const [tratti, setTratti] = React.useState<Tratto[]>([]);
   const [parziale, setParziale] = React.useState<Tratto | null>(null);
   const [tentativi, setTentativi] = React.useState<Tentativo[]>([]);
@@ -67,21 +67,29 @@ export default function GiocoDisegno() {
     apri(coppiaId);
   }, [coppiaId, apri]);
 
-  /** L'altro membro della coppia: serve a sapere a chi tocca nei round pari. */
+  /**
+   * I membri attivi della coppia: servono a sapere a chi tocca nei round pari.
+   *
+   * 🔴 **L'elenco, non «l'altro»** (B-30). Qui prima si calcolava
+   * `altroId = membri.find(u => u !== io)`, e quel `!== io` rendeva il valore
+   * **relativo a chi guarda**: sui due telefoni valeva due persone diverse, e
+   * nei round pari nessuno dei due si riconosceva disegnatore. Il turno ora lo
+   * deduce `disegnatoreDi` da `creata_da`, che è uguale per entrambi.
+   */
   React.useEffect(() => {
-    if (!coppiaId || !io) return;
+    if (!coppiaId) return;
     supabase
       .from('membro_coppia')
       .select('utente_id')
       .eq('coppia_id', coppiaId)
       .is('uscito_il', null)
       .then(({ data }) => {
-        setAltroId((data ?? []).map((m) => m.utente_id).find((u) => u !== io) ?? null);
+        setMembri((data ?? []).map((m) => m.utente_id));
       });
-  }, [coppiaId, io]);
+  }, [coppiaId]);
 
   const numeroRound = (partita?.round_corrente ?? 0) + 1;
-  const disegnatore = p.disegnatoreDi(numeroRound, altroId);
+  const disegnatore = p.disegnatoreDi(numeroRound, membri);
   const ioDisegno = !!io && disegnatore === io;
   const roundVivo = round && round.numero === numeroRound && round.esito === 'in_corso' ? round : null;
 
@@ -125,13 +133,41 @@ export default function GiocoDisegno() {
     // leggere e si parte subito.
     const attesa = round?.finito_il ? PAUSA_FRA_ROUND : 0;
     const avvio = setTimeout(async () => {
-      const scelta = PAROLE_DISEGNO[Math.floor(Math.random() * PAROLE_DISEGNO.length)];
+      // ⚠️ **Una parola non si ripete nella stessa partita** (B-33). Pescare a
+      // caso su 250 voci sembra sicuro e non lo è: su cinque round la
+      // probabilità di un doppione è circa il 4%, cioè una partita ogni
+      // venticinque — abbastanza rara da non uscire in prova, abbastanza
+      // frequente da uscire in uso.
+      //
+      // La fonte delle parole già uscite è `chiave_rivelata` dei round chiusi,
+      // non `round_segreto`: quest'ultima **chi disegna adesso non può
+      // leggerla** per i round in cui ha disegnato l'altro, ed è giusto così.
+      const passati = await supabase
+        .from('partita_round')
+        .select('chiave_rivelata')
+        .eq('partita_id', partita.id);
+      const usate = new Set(
+        (passati.data ?? []).map((r) => r.chiave_rivelata).filter((k): k is string => !!k)
+      );
+      const disponibili = PAROLE_DISEGNO.filter((v) => !usate.has(v[0]));
+      // Se fossero finite si ricomincia da tutte: ripetere è meglio che non
+      // avere un round. Con 250 voci e 5 round non può succedere — ma il modo
+      // in cui un caso impossibile fallisce va deciso, non scoperto.
+      const banco = disponibili.length > 0 ? disponibili : PAROLE_DISEGNO;
+      const scelta = banco[Math.floor(Math.random() * banco.length)];
+
       const { data, error } = await supabase
         .from('partita_round')
         .insert({ partita_id: partita.id, numero: numeroRound, disegnatore_id: io })
         .select('*')
         .single();
       if (!vivo || error || !data) return;
+      // ⚠️ **Il round parte comunque se il segreto non si scrive**, e la scelta
+      // è deliberata. La parola vive già in memoria qui, quindi chi disegna
+      // gioca lo stesso; ciò che si perde è solo la possibilità di
+      // **ritrovarla ricaricando** la schermata. Fermarsi qui lascerebbe un
+      // round creato che nessuno fa più avanzare — cioè si scambierebbe un
+      // difetto piccolo con una partita bloccata.
       await supabase.from('round_segreto').insert({ round_id: data.id, chiave: scelta[0] });
       setVoce(scelta);
       setTratti([]);

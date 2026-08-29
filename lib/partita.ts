@@ -210,11 +210,29 @@ export function usePartita(gioco: CodiceGioco) {
       .then((r) => setPronti((r.data ?? []).map((x) => x.utente_id)));
   }, [partita]);
 
-  /** Chi disegna nel round `n`: dispari a chi ha creato, pari all'altro. */
+  /**
+   * Chi disegna nel round `n`: dispari a chi ha creato, pari all'altro.
+   *
+   * 🔴 **Prende i membri della coppia, non «l'altro»** — e la differenza è
+   * l'intero difetto B-30. La firma precedente era `(n, altroId)`, dove
+   * `altroId` lo calcolava la schermata come *«il membro che non sono io»*:
+   * un valore **relativo a chi guarda**, cioè diverso sui due telefoni. Nei
+   * round pari il telefono di A concludeva «disegna B» e quello di B
+   * concludeva «disegna A»: **nessuno dei due si riconosceva disegnatore**,
+   * entrambi vedevano «indovina tu», e siccome il round lo crea chi disegna,
+   * il round successivo non nasceva più e la partita si fermava lì.
+   *
+   * 🔑 Il turno deve essere una funzione di dati che **entrambi leggono uguali**
+   * — `creata_da` e l'elenco dei membri — e mai di «io». Che è la stessa forma
+   * di D-60: se il dato è deducibile, si deduce, invece di farlo passare da
+   * chi chiama. Per questo la funzione ora **non accetta più** un parametro
+   * che chi chiama possa calcolare dal proprio punto di vista.
+   */
   const disegnatoreDi = React.useCallback(
-    (n: number, altroId: string | null) => {
+    (n: number, membri: string[]) => {
       if (!partita) return null;
-      return n % 2 === 1 ? partita.creata_da : altroId;
+      if (n % 2 === 1) return partita.creata_da;
+      return membri.find((u) => u !== partita.creata_da) ?? null;
     },
     [partita]
   );
@@ -249,6 +267,26 @@ export function usePartita(gioco: CodiceGioco) {
    */
   const abbandona = React.useCallback(async () => {
     if (!partita) return;
+
+    // 🔴 **Una partita conclusa NON si abbandona** (B-31). La migrazione 0021 lo
+    // dice già a voce — *«una partita conclusa è il punteggio della coppia: è
+    // ciò che alimenta Intesa e Sintonia nell'hub»* — ma il codice faceva il
+    // contrario: la schermata del punteggio finale chiamava questa funzione in
+    // chiusura, e `stato` passava da `conclusa` ad `abbandonata`. L'hub conta
+    // le partite `conclusa`, quindi **ogni partita finita spariva dalla
+    // classifica nel momento esatto in cui la si chiudeva**, e la classifica
+    // restava vuota per sempre.
+    //
+    // 🔑 Qui non serve nemmeno abbandonare: l'indice `partita_una_viva` copre
+    // solo `attesa` e `in_corso`, quindi una partita conclusa **non blocca**
+    // la successiva. La chiamata non era solo dannosa: era inutile.
+    if (partita.stato === 'conclusa') {
+      setPartita(null);
+      setRound(null);
+      setPronti([]);
+      return;
+    }
+
     const { error } = await supabase
       .from('partita')
       .update({ stato: 'abbandonata' })
@@ -264,21 +302,51 @@ export function usePartita(gioco: CodiceGioco) {
     setPronti([]);
   }, [partita]);
 
-  return {
-    partita,
-    round,
-    pronti,
-    io,
-    ioSonoPronto: !!io && pronti.includes(io),
-    entrambiPronti: pronti.length >= 2,
-    caricando,
-    errore,
-    apri,
-    premiAvvia,
-    disegnatoreDi,
-    chiudi,
-    abbandona,
-    rileggi,
-    setRound,
-  };
+  /**
+   * ⚠️ **L'oggetto è memoizzato, e non è cosmesi** (B-32).
+   *
+   * Prima si restituiva un oggetto letterale nuovo a **ogni render**. Le due
+   * schermate lo mettono nelle dipendenze dei loro effetti (`p.chiudi`,
+   * `p.setRound`), quindi quegli effetti si smontavano e rimontavano di
+   * continuo — e dentro ci sono un `setTimeout` di tre secondi (la pausa fra i
+   * round) e un `setInterval` (il tempo del disegno). Ogni render li
+   * **azzerava e li faceva ripartire da capo**.
+   *
+   * 🔑 Un valore instabile nelle dipendenze non rompe il codice che lo legge:
+   * rompe i **timer** di chi lo osserva. È un difetto che non si vede leggendo
+   * l'effetto — si vede solo sapendo cosa gli viene passato.
+   */
+  return React.useMemo(
+    () => ({
+      partita,
+      round,
+      pronti,
+      io,
+      ioSonoPronto: !!io && pronti.includes(io),
+      entrambiPronti: pronti.length >= 2,
+      caricando,
+      errore,
+      apri,
+      premiAvvia,
+      disegnatoreDi,
+      chiudi,
+      abbandona,
+      rileggi,
+      setRound,
+    }),
+    [
+      partita,
+      round,
+      pronti,
+      io,
+      caricando,
+      errore,
+      apri,
+      premiAvvia,
+      disegnatoreDi,
+      chiudi,
+      abbandona,
+      rileggi,
+    ]
+  );
 }

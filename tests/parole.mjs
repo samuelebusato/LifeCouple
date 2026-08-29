@@ -20,7 +20,27 @@
  */
 import { readFileSync } from 'node:fs';
 
-const sorgente = readFileSync(new URL('../lib/parole.ts', import.meta.url), 'utf8');
+// 🔴 **I fine riga si normalizzano prima di guardare il sorgente** (B-36).
+//
+// Questo test non importa il modulo: lo **legge come testo** e lo spacca con
+// espressioni regolari che contengono `\n`. Con `core.autocrlf=true` — il
+// default di Git su Windows — la copia di lavoro ha `\r\n`, quei `\n` non
+// combaciano più, e `TEMI_TELEPATIA` si legge come **un tema solo** contenente
+// tutte le voci.
+//
+// ⚠️ E il modo in cui falliva è la parte peggiore: non diceva «il test non sa
+// leggere il file», diceva **«almeno 20 temi — trovati 1»** e «chiave doppia
+// dentro un tema», cioè accusava il banco di parole. Un test che sbaglia
+// indica il file sbagliato, e chi lo legge va a cercare un difetto che non c'è.
+//
+// 🔑 Ed era invisibile finché il progetto è vissuto su un dispositivo solo:
+// stessa forma della chiave TMDB — qualcosa che vale su questa macchina e non
+// sull'altra, dove però nessuno dei due lo vede. *Un controllo che dipende dal
+// checkout non sta verificando il codice: sta verificando il checkout.*
+const sorgente = readFileSync(new URL('../lib/parole.ts', import.meta.url), 'utf8').replace(
+  /\r\n/g,
+  '\n'
+);
 
 let errori = 0;
 let controlli = 0;
