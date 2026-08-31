@@ -44,3 +44,16 @@ app-example
 
 # chiavi locali — mai in git
 .env
+
+# Supabase CLI: file di stato che il CLI riscrive a ogni comando (versioni di
+# postgres/gotrue/storage, url del pooler, ultima versione del CLI). Sono
+# fotografie del MOMENTO in cui hai lanciato un comando su UNA macchina, non
+# configurazione del progetto: versionarli produce diff che non dicono niente.
+#
+# ⚠️ `linked-project.json` resta TRACCIATO di proposito, ed e' una decisione
+# gia' presa: il riferimento al progetto e' comodo averlo nel repo (chi clona
+# non rifa' il link), e non e' un segreto. Il token di accesso invece non c'e'
+# e non deve esserci: quello vale per dispositivo, e va sempre rifatto con
+# `npx supabase login`.
+supabase/.temp/*
+!supabase/.temp/linked-project.json
