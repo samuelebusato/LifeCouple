@@ -157,6 +157,10 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ⚠️ **Quel che la scelta NON cambia**: le commissioni (~15% con lo Small Business Program di Apple, che è legato al **fatturato** e non al tipo di account), il funzionamento dei pagamenti, e gli obblighi **DSA** di esporre nome, indirizzo, telefono ed email del professionista — anzi, come individuo il nome pubblico è quello personale. *Pubblicare come individuo non rende anonimi.*
 
+**E un alias non è praticabile** (domanda posta il 2026-08-31). Apple lo esclude alla lettera: nei campi nome e cognome va il **nome legale**, *«non alias, non soprannomi, non nomi di società»*, e usarne uno **fa ritardare l'approvazione**. Google consente un *developer name* diverso dal nome legale **solo agli account organizzazione**; per quelli personali pubblica **nome legale, paese ed email**. 🔑 **Quindi la strada dell'alias esiste ma passa dal D-U-N-S — cioè proprio quella chiusa per una ditta individuale.** E in ogni caso il **DSA** obbliga a esporre i dati del professionista: *per chi vende, l'anonimato non è un'opzione disponibile.* ⚠️ In Italia si aggiunge che la ditta di un'impresa individuale deve contenere il **cognome o la sigla dell'imprenditore**, quindi nemmeno una denominazione di fantasia lo nasconderebbe.
+
+✅ **Quel che invece resta libero è il nome dell'app.** `LifeCouple` è il brand e non ha rapporto col nome venditore: l'utente vede il nome dell'app, l'icona e le recensioni; il venditore è una riga in fondo alla scheda — che chi la cerca **deve** poter trovare, ed è lo scopo per cui esiste. Un nome venditore diverso richiederebbe una **società di capitali**, che oggi sarebbe costo e burocrazia per una riga di testo su un'app con zero utenti. 🔑 Il precedente utile è **Heartbit S.R.L.** (*Couple Joy*): app pubblicata a nome personale nel 2022 — il package `com.angcosmin.couple` lo dimostra ancora — e società dal 2024. **Prima hanno pubblicato, poi hanno costituito la società quando i numeri l'hanno giustificata.** Entrambi gli store prevedono il trasferimento a un account aziendale: partire come individuo non chiude quella porta.
+
 ### D-80 — I documenti legali dichiarano ciò che il sistema fa, non ciò che vorremmo facesse (2026-08-31)
 
 Scritti i cinque documenti in [`docs/legal/`](docs/legal/): informativa privacy, cookie policy, catena di cancellazione, registro dei trattamenti, procedura data breach. Adattati dai modelli in `Rule/`, che sono scritti per HeleoX — **non copiati**: LifeCouple tratta fotografie private, cronologie di luoghi e il legame fra due persone, categorie che HeleoX non tratta affatto.
@@ -2132,6 +2136,22 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 ⚠️ **Stima: 7–11 settimane** dal 2026-08-29, D-U-N-S permettendo. È una stima, non una data: non va in `elenco-progetti.md`. 🔑 Il collo di bottiglia non è il lavoro — 17 giorni sono bastati per 25 migrazioni e due giochi — sono le **attese** e le **revisioni**, che non accelerano lavorando di più.
 
 🔴 **E una condizione che precede tutto il piano**: l'app **non è verificata**. Sei difetti su sette dei giochi sono corretti e mai riprovati, e le Liste hanno decine di punti mai visti girare. La prima partita vera ha fatto uscire sette difetti in un colpo. Pubblicare prima significa scoprirli con le recensioni — e su un'app che incassa, con le richieste di rimborso.
+
+### 🔴 La fine del servizio — tre domande da decidere PRIMA, non quando servirà (2026-08-31)
+
+Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve costruire niente adesso: serve decidere**, perché tutte e tre vincolano cose che si stanno per scrivere.
+
+**Il fatto meccanico da cui parte tutto**: *togliere l'app dallo store non la toglie dai telefoni*. Su entrambi gli store gli utenti esistenti continuano a usarla (su Apple possono anche **riscaricarla**), e su Google un'app già pubblicata **non si può eliminare** — si toglie dalla pubblicazione e il record resta. ⚠️ **E il package name, dopo anche una sola installazione, non è più riutilizzabile da nessuno — nemmeno da noi.** `com.lifecouple.app` è per sempre.
+
+**Le tre domande:**
+
+1. **Quanto preavviso ci si impegna a dare?** Se lo si scrive nei termini diventa una promessa esigibile; se non lo si scrive, va improvvisato nel momento peggiore.
+2. **Che fine fanno gli abbonamenti annuali in corso?** 🔑 **È la domanda che decide se si può chiudere in due mesi o in dodici.** Su Apple, togliere dalla vendita un abbonamento auto-rinnovabile **ferma i rinnovi** — ma resta l'obbligo di **fornire il servizio fino alla scadenza già pagata** e di ripristinare gli acquisti. Chi ha pagato l'annuale a gennaio ha diritto fino a dicembre. L'alternativa sono i rimborsi.
+3. 🔴 **Chi cancella i dati, e come?** ✅ La **portabilità esiste già** (D-78): l'export c'è, e mezza procedura di dismissione è costruita senza essere stata pensata per questo. ❌ Ma la **catena di cancellazione è per un utente alla volta**: una cancellazione **di massa** non esiste. Spegnere Supabase e basta non è una cancellazione a norma — i dati restano finché qualcuno paga il conto, e poi spariscono in un modo che nessuno ha documentato. **Con fotografie private dentro, non è un dettaglio.**
+
+🔑 **È la domanda ricorrente del progetto applicata alla fine invece che all'inizio**: *questo si può decidere dopo, o dopo sarebbe una migrazione di dati contesi?* Ed è parente stretta del **rimborso alla rottura** già aperto in [`Marketing/LifeCouple/monetizzazione.md`](../../Marketing/LifeCouple/monetizzazione.md) §5 — là è una coppia che si scioglie, qui è il servizio che chiude, ma la domanda è identica: **chi ha pagato per qualcosa che non c'è più?**
+
+⬜ **Da fare quando si decide**: scrivere il preavviso nei termini d'uso e nell'informativa, e mettere a backlog la cancellazione di massa.
 
 ### Rimandato con motivo
 - **Monetizzazione** — non è l'obiettivo (V3), e introdurla presto obbligherebbe a gestire pagamenti e fatturazione su un progetto non core. 🔴 **SUPERATO il 2026-08-29**: l'utente ha deciso di pubblicare già con gli abbonamenti. La voce resta perché *una decisione giusta smette di esserlo quando cambia ciò su cui poggiava*, e cancellare il ripensamento toglie l'informazione più utile delle due. Il costo che questa riga temeva — pagamenti e fatturazione su un progetto non core — **è stato accettato**, non smentito.

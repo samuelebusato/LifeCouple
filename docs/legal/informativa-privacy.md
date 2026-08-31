@@ -130,6 +130,16 @@ Per gli altri diritti scrivi ai contatti della §1: rispondiamo entro **30 giorn
 
 Hai diritto di proporre **reclamo al Garante per la protezione dei dati personali** (www.garanteprivacy.it) o all'autorità di controllo dello Stato in cui risiedi.
 
+## 10-bis. Se il servizio dovesse chiudere
+
+Se un giorno LifeCouple cessasse di essere offerto, riceverai un **preavviso** all'interno dell'applicazione e all'indirizzo email del tuo account, con una data certa.
+
+Prima di quella data potrai **esportare i tuoi dati** dall'applicazione, funzione già disponibile oggi in Impostazioni. Alla chiusura i dati sono cancellati secondo la §7, con la sola eccezione dei dati contabili e fiscali che la legge impone di conservare.
+
+Gli abbonamenti in corso sono gestiti da Apple e Google: il rinnovo automatico viene disattivato e il servizio resta disponibile **fino alla scadenza del periodo già pagato**.
+
+> ⚠️ **[DA DECIDERE — la durata del preavviso non è ancora fissata]** e va scritta qui e nei termini d'uso. Non è una formula: se si dichiara un preavviso, va rispettato. E la sua durata **dipende dalla decisione sugli abbonamenti annuali** — con un annuale in corso, chiudere prima della scadenza significa gestire rimborsi. 🔴 **Va inoltre costruita una procedura di cancellazione di massa**: oggi la catena di cancellazione funziona per un utente alla volta, e spegnere l'infrastruttura non è una cancellazione a norma. Vedi il backlog di [`History.md`](../../History.md) → *«La fine del servizio»*.
+
 ## 11. Età minima
 
 Il servizio è riservato a chi ha compiuto **14 anni**, età fissata dall'ordinamento italiano ai sensi dell'art. 8 GDPR. ⚠️ L'età dichiarata deve essere coerente con la classificazione per età dichiarata sugli store.
