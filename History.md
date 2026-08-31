@@ -135,6 +135,52 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-81 — Si pubblica come individuo, e uno dei tre motivi per fare il contrario non esisteva (2026-08-31)
+
+**Decisione dell'utente**: l'app esce a nome **Fausto Busato**, non a nome F.R. di Busato Fausto. [`docs/pubblicazione.md`](docs/pubblicazione.md) §2 è stata riscritta di conseguenza; la versione superata è conservata in §2.4.
+
+🔑 **E per questa forma d'impresa non era nemmeno una scelta libera.** Apple stabilisce che chi è **ditta individuale si iscrive come individuo**: il percorso «Organization» è riservato alle **entità legali separate**, e il D-U-N-S serve a provare che quell'entità esiste come soggetto distinto dalla persona. Una ditta individuale non lo è — `F.R. di Busato Fausto` **è** `Fausto Busato` — ed è lo stesso motivo per cui D&B non censisce le *sole proprietorships*. **La ricerca del D-U-N-S che stava per partire era verosimilmente un vicolo cieco.**
+
+**Il piano precedente dava tre ragioni per scegliere organizzazione. Delle tre:**
+
+| | Esito |
+|---|---|
+| Editore = l'azienda | ❌ non è più voluto |
+| Evita il test chiuso di Google (12 tester × 14 giorni) | ✅ **era vero, e resta il prezzo da pagare** |
+| Separa la responsabilità dell'app da quella personale | 🔑 **era illusorio** |
+
+⚠️ **Il terzo merita di essere registrato, perché è un errore di ragionamento e non di fatto.** Con una ditta individuale si risponde col patrimonio personale **comunque**: il tipo di account su uno store non crea una separazione patrimoniale che l'ordinamento non prevede. Era un beneficio **dichiarato e inesistente**, ed è passato inosservato perché *suonava ovvio*. È la stessa classe di difetto che questo progetto insegue da settimane — **uno stato scritto che nessuno ha verificato** — applicata a un ragionamento invece che a un file. *Anche le premesse invecchiano, e in silenzio come i documenti.*
+
+**Cosa cambia nel piano**: sparisce l'attesa del D-U-N-S (1-2 settimane, passiva), entra il **test chiuso di Google** (+3 settimane, ma è **lavoro**, non attesa). 🔑 E coincide con un bisogno che il progetto ha già: **D-25** dice che senza partner l'app non fa niente, quindi non è collaudabile in altro modo — quei 12 tester sono **sei coppie**, e sono gli stessi beta tester del piano di marketing. *Una lista sola, due scopi.*
+
+⬜ **Non è una porta che si chiude**: se un giorno nascesse una S.r.l., entrambi gli store prevedono il trasferimento di un'app da un account individuale a uno aziendale.
+
+⚠️ **Quel che la scelta NON cambia**: le commissioni (~15% con lo Small Business Program di Apple, che è legato al **fatturato** e non al tipo di account), il funzionamento dei pagamenti, e gli obblighi **DSA** di esporre nome, indirizzo, telefono ed email del professionista — anzi, come individuo il nome pubblico è quello personale. *Pubblicare come individuo non rende anonimi.*
+
+### D-80 — I documenti legali dichiarano ciò che il sistema fa, non ciò che vorremmo facesse (2026-08-31)
+
+Scritti i cinque documenti in [`docs/legal/`](docs/legal/): informativa privacy, cookie policy, catena di cancellazione, registro dei trattamenti, procedura data breach. Adattati dai modelli in `Rule/`, che sono scritti per HeleoX — **non copiati**: LifeCouple tratta fotografie private, cronologie di luoghi e il legame fra due persone, categorie che HeleoX non tratta affatto.
+
+🔑 **La decisione vera è una sola, ed è sulla conservazione a termine.** [`conformita.md`](docs/conformita.md) §4 la segnalava come aperta: lo scioglimento revoca ma non cancella (D-04), quindi i dati restano indefinitamente. Le due strade erano dichiarare un termine, oppure dichiarare che non c'è.
+
+**Scelta: si dichiara che non c'è**, perché è ciò che il sistema fa realmente. L'alternativa — scrivere «cancelliamo dopo N mesi di inattività» — richiederebbe infrastruttura che non esiste, e ⚠️ **un'informativa che dichiara un termine senza la configurazione che lo applica è una dichiarazione falsa**: non un'imprecisione, una violazione. Se un termine si vuole, va **prima costruito e poi scritto**, in quest'ordine.
+
+> È la stessa forma delle note di allineamento tecnico dell'informativa di HeleoX (2026-07-28 e 07-29), dove ogni retention dichiarata è stata resa effettiva **contestualmente** alla stesura. Qui la si applica al contrario: non si dichiara ciò che non è stato reso effettivo.
+
+⚠️ **Quattro punti restano `[DA DECIDERE]` / `[DA VERIFICARE]` dentro i documenti, marcati e non riempiti di stime**: l'email per l'esercizio dei diritti, i dati del professionista richiesti dal DSA, la retention dei backup Supabase (va **letta** nel pannello, non stimata: finisce nell'informativa §7), e la valutazione professionale sull'art. 9. Un documento legale con un numero inventato è peggio di un documento incompleto.
+
+✅ **E uno si è chiuso oggi**: la regione del progetto Supabase, backlog aperto dal 2026-08-12, è **`eu-central-1` (Francoforte)** — verificato con `supabase projects list`, non dichiarato. Nessun trasferimento verso paese terzo per i dati degli utenti: restano nell'UE. Fuori UE vanno solo il **testo delle ricerche** di luoghi e film, non i contenuti.
+
+### D-79 — La pipeline di build, e perché i numeri di versione li tiene EAS (2026-08-31)
+
+Creato [`eas.json`](eas.json) con i tre profili previsti da [`pubblicazione.md`](docs/pubblicazione.md) §4 — `development` (build di sviluppo), `preview` (APK interno), `production` (AAB per Play, IPA per App Store) — e portata `version` da `0.1.0` a **`1.0.0`** in `app.json`.
+
+🔑 **`appVersionSource: "remote"` con `autoIncrement` sul profilo di produzione**: i numeri di build (`buildNumber` iOS, `versionCode` Android) li tiene **EAS**, non il repository. La ragione è la stessa classe di problema che questo progetto ha già incontrato quattro volte: un contatore versionato a mano si dimentica, e i due store **rifiutano un caricamento con un numero già usato**. Un rifiuto per un contatore è il tipo di errore che costa un giro di sottomissione per niente.
+
+⚠️ **Il primo build farà uscire cose, ed è il suo scopo**: in Expo Go i dialoghi dei permessi usano l'`Info.plist` di Expo Go, quindi le tre frasi in `app.json` — calendario, posizione, foto — **non sono mai comparse a nessuno** (B-20). Sono anche **solo in italiano** su un'app bilingue per decisione esplicita (D-18): il primo build di sviluppo è il momento in cui si verificano e si traducono, chiudendo il backlog 11-quater.
+
+⬜ **Non fatto, e va fatto dall'utente**: caricare le variabili d'ambiente come **secret su EAS** (`eas secret:create`). Sono chiavi API e non passano da qui. 🔑 È anche il rimedio strutturale al problema del 2026-08-29 — la chiave TMDB presente su un dispositivo e assente sull'altro: su EAS si caricano una volta e valgono per ogni build, da qualunque macchina.
+
 ### D-78 — La portabilità dei dati è un diritto, non una voce di roadmap (2026-08-29)
 
 Stava nel backlog sotto **«Dopo l'MVP, non prima»**, accanto alle notifiche push e ai filtri nelle liste. 🔑 **Ma l'art. 20 non è una funzione: è un diritto**, esercitabile in qualunque momento da qualunque utente europeo, e *«arriverà in una versione futura»* non è una risposta ammessa. La collocazione nel backlog non era una scelta sbagliata: era una **classificazione** sbagliata, e finché è rimasta lì l'app non era distribuibile.
@@ -2095,16 +2141,36 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ## 7. PUNTO DI RIPRESA
 
-**Aggiornato al 2026-08-29 (seconda sessione)** — l'impianto legale: accesso con password, Impostazioni, cancellazione account, portabilità (**D-74 → D-78**). Prima, in mattinata: la prima partita vera ai due giochi e i sette difetti che ne sono usciti (**B-30 → B-36**). Copre D-60→D-78 e B-16→B-36.
+**Aggiornato al 2026-08-31** — la pipeline di build e l'impianto legale documentale (**D-79, D-80**), e il deploy della Edge Function finalmente eseguito. Supera il punto di ripresa del 2026-08-29 (D-74 → D-78, B-30 → B-36). Copre D-60→D-80 e B-16→B-36.
 
-🔴 **DA FARE PRIMA DI TUTTO IL RESTO — niente di quanto segue è mai stato eseguito.**
+🔴 **La cosa più importante di questo aggiornamento è una correzione: il punto di ripresa precedente diceva il falso.**
 
-1. **Applicare la migrazione `0026`** e rileggere con la query di verifica: attese **17 righe**, tutte `cascade` o `set null`. ✅ *L'utente dichiara di averla applicata il 2026-08-29; la rilettura non è stata mostrata.*
-2. **Deployare la Edge Function**: `npx supabase functions deploy cancella-account`. ⚠️ **Da rifare** dopo le modifiche del 2026-08-29 pomeriggio: la versione caricata è quella *senza* la cancellazione dei file dello storage.
-   🔑 **E prima serve `npx supabase login` su questa macchina.** Tentato il 2026-08-29 sera: il progetto risulta **collegato** (`supabase/.temp/linked-project.json` c'è, ref `uegayflvtjfhjrmbibdz`) ma il CLI **non è autenticato** — `LegacyPlatformAuthRequiredError`. *Il collegamento al progetto è nel repo, il token di accesso no*, ed è giusto così: un token in un repository sarebbe il difetto, non la comodità.
-   ⚠️ **È la terza cosa che vale su un dispositivo e non sull'altro**, dopo la chiave TMDB e i fine riga di B-36. Sta diventando una classe: *ciò che non è versionato non esiste sulla macchina nuova, e non lo dice finché non serve.*
-3. 🔴 **La prova che conta, e va fatta su un account di prova, MAI su quello vero**: registrarsi, riempire lo spazio con foto ed eventi, cancellare l'account, e poi **ricontrollare il database e il bucket**. Non la schermata che dice di sì — è la lezione di B-23, applicata al posto più pericoloso in cui potesse servire.
+> Diceva che la Edge Function sul server era *«quella senza la cancellazione dei file»*. Verificato il 2026-08-31 con `supabase functions list`: **sul progetto non esisteva NESSUNA Edge Function**. La prova è nel deploy stesso — la funzione risulta `version: 1`, e se ce ne fosse stata una prima sarebbe la 2.
+>
+> ⚠️ **La differenza non è accademica**: si credeva che «Elimina account» cancellasse *parzialmente* lasciando i file orfani, mentre in realtà **falliva del tutto**. È meno grave di quanto temuto, ma per tre giorni il rischio è stato valutato sulla base di uno stato che non esisteva.
+>
+> 🔑 È la **quinta** occorrenza della stessa classe in questo progetto, e stavolta con una variante nuova: non «ciò che non è versionato non esiste sull'altra macchina», ma ***ciò che è scritto in un documento non esiste sul server***. Il rimedio è lo stesso di sempre — verificare contro la realtà, non contro il documento — e stavolta è bastato un comando.
+
+**Stato dei passi precedenti:**
+
+1. **Migrazione `0026`** — ⚠️ **rilettura ancora non mostrata.** L'utente dichiara di averla applicata il 2026-08-29; la query di verifica (attese **17 righe**, tutte `cascade` o `set null`) non è mai stata eseguita davanti a nessuno. **Resta da fare.**
+2. ~~**Deployare la Edge Function**~~ — ✅ **fatto il 2026-08-31.** `npx supabase functions deploy cancella-account` → `status ACTIVE`, `verify_jwt true`, `version 1`. Il CLI **era** già autenticato (il `LegacyPlatformAuthRequiredError` del 2026-08-29 non si è ripresentato); è servito solo `npx supabase link --project-ref uegayflvtjfhjrmbibdz`. **Nessun secret da impostare**: `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` le inietta la piattaforma.
+   ⚠️ Il `link` ha creato file di stato locale in `supabase/.temp/`, ora ignorati — **tranne** `linked-project.json`, che resta tracciato per la decisione già presa (il riferimento nel repo sì, il token no).
+3. 🔴 **LA PROVA CHE CONTA — ora è il primo passo, e va fatta su un account di prova, MAI su quello vero**: registrarsi, riempire lo spazio con foto ed eventi, cancellare l'account, e poi **ricontrollare il database e il bucket**. Non la schermata che dice di sì — è la lezione di B-23, applicata al posto più pericoloso in cui potesse servire.
+   🔑 **Adesso ha senso farla**, e prima no: fino al 2026-08-31 non c'era nessuna funzione da provare. Il protocollo dettagliato, coi controlli da fare e la tabella da compilare, è in [`docs/legal/catena-cancellazione.md`](docs/legal/catena-cancellazione.md) — *«Protocollo di prova»*.
+   ⚠️ **Finché non è eseguita, «Elimina account» resta da non premere** su un account vero.
 4. ⚠️ **Chi ha un account nato col codice via email non ha una password** (D-74): la prima volta si passa da «Ho dimenticato la password».
+
+**Poi, sul fronte pubblicazione** (piano completo in [`docs/pubblicazione.md`](docs/pubblicazione.md)):
+
+5. **Caricare le variabili d'ambiente come secret su EAS** (`eas secret:create`) — sono chiavi API, le carica l'utente. Poi **`eas init`** (genera il `projectId` in `app.json`) e il **primo build di sviluppo**: è ciò che fa uscire B-20, i tre dialoghi di permesso mai visti da nessuno, e apre la traduzione del backlog 11-quater.
+6. 🔴 **Aprire i due account come INDIVIDUO** (D-81) — giorni, nessun D-U-N-S. **E far partire subito il reclutamento dei 12 tester** per Google: i 14 giorni di permanenza continuativa non si comprimono, quindi ogni giorno perso qui si aggiunge in fondo. ⚠️ Sono **sei coppie**, sono gli stessi beta tester del piano marketing, e sono l'unico modo di collaudare un'app che da soli non fa niente (D-25).
+   🔴 **E la licenza commerciale TMDB** (`sales@themoviedb.org`, indicando il paese): con la strada individuo è rimasta **la sola coda fuori dal nostro controllo**.
+   ⚠️ **Sul perché la licenza serve**, verificato sui termini TMDB il 2026-08-31: il criterio è **a livello di applicazione, non di funzione** — *«Charging users a fee for Your Application… that includes some form of integration»*. Tenere gratuita la sola parte film **non basta**. E serve un **accordo scritto**, non una dichiarazione.
+   🔑 Con la licenza arrivano anche obblighi di **attribuzione** da costruire nell'app (dicitura e logo approvato, meno prominente del nostro, in una sezione Info/Crediti che oggi **non esiste**).
+7. **Chiudere i quattro punti aperti nei documenti legali** (marcati `[DA DECIDERE]`/`[DA VERIFICARE]`, vedi **D-80**): email per i diritti, dati del professionista per il DSA, retention dei backup Supabase da **leggere** nel pannello, valutazione professionale sull'art. 9.
+8. 🔴 **L'account demo per il revisore**, che è un ostacolo di codice e non di documentazione: l'accesso è via **codice email** e un revisore non può riceverlo, e senza partner l'app non fa niente (D-25). Serve un account **già appaiato** con dati veri dentro, e una porta d'ingresso alternativa **progettata guardando il threat model** — non aggiunta la sera prima della sottomissione.
+9. ⚠️ **I controlli sul nome** (EUIPO cl. 9 e 42, store, dominio, handle) — mai fatti. Scoprire che il nome è occupato **dopo** aver prodotto gli screenshot in due lingue costa una settimana; e l'handle serve anche per il canale TikTok deciso il 2026-08-31.
 
 ✅ **Migrazioni `0022`→`0025` applicate** dall'utente il 2026-08-28 (seconda sessione), in quest'ordine — ognuna dipende dalla precedente. ⚠️ Restava scritto qui «da applicare» anche dopo, in due punti: la riga è stata corretta il 2026-08-28 (terza sessione). *Un PUNTO DI RIPRESA che dice il falso è peggio di uno vuoto: il primo lo si crede.*
 

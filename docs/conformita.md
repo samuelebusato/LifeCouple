@@ -77,13 +77,17 @@ Costruita in [`lib/esporta.ts`](../lib/esporta.ts) + un comando in Impostazioni.
 
 I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno riadattati, non riusati.
 
-| Documento | Base | Dove vive |
-|---|---|---|
-| Informativa privacy (artt. 13-14) | `Rule/informativa-privacy-app.md` | 🔴 **URL pubblico** — obbligatorio su entrambi gli store |
-| Registro dei trattamenti (art. 30) | `Rule/registro-trattamenti.md` | interno, si esibisce al Garante |
-| Catena di cancellazione | `Rule/catena-cancellazione.md` | interno — **§2 qui sopra è ciò che deve descrivere** |
-| Procedura data breach (artt. 33-34) | `Rule/procedura-data-breach.md` | interno, cronometro di 72 ore |
-| Cookie policy | `Rule/cookie-policy-app.md` | sul **sito** che ospita l'informativa, non nell'app |
+> ✅ **Scritti tutti e cinque il 2026-08-31** in [`docs/legal/`](legal/) — vedi **D-80**. Sono **bozze non ancora in vigore**: restano quattro punti aperti, marcati dentro i documenti e non riempiti di stime (email per i diritti · dati del professionista per il DSA · retention dei backup Supabase, da **leggere** nel pannello · valutazione professionale sull'art. 9, §9 qui sotto).
+>
+> 🔑 **La decisione che li attraversa**: sulla conservazione a termine si dichiara **che non c'è**, perché è ciò che il sistema fa davvero. Dichiarare un termine senza la configurazione che lo applica non è un'imprecisione, è una dichiarazione falsa — quindi se un termine si vuole, **prima si costruisce e poi si scrive**.
+
+| Documento | Base | Dove vive | Stato |
+|---|---|---|---|
+| Informativa privacy (artt. 13-14) | `Rule/informativa-privacy-app.md` | 🔴 **URL pubblico** — obbligatorio su entrambi gli store | ✅ [`legal/informativa-privacy.md`](legal/informativa-privacy.md) — ⬜ da pubblicare |
+| Registro dei trattamenti (art. 30) | `Rule/registro-trattamenti.md` | interno, si esibisce al Garante | ✅ [`legal/registro-trattamenti.md`](legal/registro-trattamenti.md) |
+| Catena di cancellazione | `Rule/catena-cancellazione.md` | interno — **§2 qui sopra è ciò che deve descrivere** | ✅ [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) — contiene il **protocollo di prova** |
+| Procedura data breach (artt. 33-34) | `Rule/procedura-data-breach.md` | interno, cronometro di 72 ore | ✅ [`legal/procedura-data-breach.md`](legal/procedura-data-breach.md) |
+| Cookie policy | `Rule/cookie-policy-app.md` | sul **sito** che ospita l'informativa, non nell'app | ✅ [`legal/cookie-policy.md`](legal/cookie-policy.md) — ⬜ da pubblicare |
 
 ✅ Per ospitare l'informativa esistono già due siti nel brain: `fr-busato` e `heleox-landing`.
 
@@ -95,7 +99,7 @@ Ognuno riceve dati personali, va **nominato nell'informativa e nel registro**, e
 
 | Terzo | Cosa riceve | Nota |
 |---|---|---|
-| **Supabase** | tutto: account, contenuti, foto | 🔴 **regione UE mai verificata** — backlog aperto dal 2026-08-12. Fuori UE è trasferimento verso paese terzo: servono clausole contrattuali standard **e** va dichiarato |
+| **Supabase** | tutto: account, contenuti, foto | ✅ **`eu-central-1` (Francoforte) — verificato il 2026-08-31** con `supabase projects list`. Il backlog aperto dal 2026-08-12 è chiuso: **nessun trasferimento verso paese terzo**, niente clausole contrattuali standard da adottare per lui. ⬜ Resta da accettare e archiviare il **DPA art. 28** |
 | **Google Places** | testo delle ricerche, luoghi | trasferimento USA |
 | **TMDB** | ricerche film | trasferimento USA + 🔴 licenza non commerciale (vedi `pubblicazione.md` §1.2) |
 | **Apple / Google** | dati di pagamento | e RevenueCat, se adottato |

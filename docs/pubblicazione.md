@@ -12,18 +12,22 @@
 
 Non è un elenco di buoni propositi: è cosa c'è e cosa non c'è nel repo, controllato file per file.
 
+> ⚠️ **Riverificato il 2026-08-31: quattro righe sono cambiate**, e sono segnate qui sotto. La tabella non è stata riscritta perché *lo stato superato dice qualcosa che lo stato attuale non dice* — ma leggerla senza queste correzioni porta a conclusioni sbagliate.
+>
+> 🔴 **E una correzione che vale più delle altre**: il PUNTO DI RIPRESA del 2026-08-29 diceva che sul server c'era una Edge Function «vecchia». **Non c'era nessuna Edge Function.** Verificato con `supabase functions list`, e provato dal deploy stesso (`version: 1`). Si credeva che «Elimina account» cancellasse *male*; in realtà **falliva del tutto**.
+
 | | stato |
 |---|---|
-| `eas.json` | ❌ **non esiste** — nessun build è mai partito |
-| Edge Function (`supabase/functions`) | ❌ **non esiste** — nessun codice server |
+| `eas.json` | ~~❌ non esiste~~ → ✅ **creato il 2026-08-31** (D-79), tre profili. ⬜ Restano `eas init` e i secret |
+| Edge Function (`supabase/functions`) | ~~❌ non esiste~~ → ✅ **`cancella-account` scritta il 29-08 e DEPLOYATA il 2026-08-31** (`ACTIVE`, `version 1`). 🔴 Mai provata end-to-end |
 | Libreria di pagamenti | ❌ **nessuna** in `package.json` |
-| Schermata cancellazione account | ❌ **non esiste** (17 schermate in `app/`, nessuna di impostazioni) |
+| Schermata cancellazione account | ~~❌ non esiste~~ → ✅ **esiste** (`app/impostazioni.tsx`, dal 2026-08-29) |
 | `sciogli_coppia()` nel database | ✅ esiste dal 2026-08-12, **senza interfaccia** |
 | Identificatori app | ✅ `com.lifecouple.app` su entrambe le piattaforme |
 | Testi dei permessi | ⚠️ presenti in `app.json`, **solo in italiano**, mai visti da nessuno (B-20) |
 | Chiavi API | ⚠️ Google Places e TMDB **dentro il bundle** |
 | Documenti privacy | ⚠️ modelli in `Rule/`, **non adattati né pubblicati** |
-| Regione UE del progetto Supabase | ⚠️ **mai verificata** (punto di backlog aperto dal 2026-08-12) |
+| Regione UE del progetto Supabase | ~~⚠️ mai verificata~~ → ✅ **`eu-central-1` (Francoforte)** — verificato il 2026-08-31 con `supabase projects list`. **Nessun trasferimento extra-UE** per i dati degli utenti. Backlog aperto dal 2026-08-12, chiuso |
 | Controlli sul nome | ⚠️ **mai fatti** (EUIPO cl. 9 e 42, store, dominio, handle) |
 
 ---
@@ -53,33 +57,63 @@ Con gli abbonamenti attivi l'uso è **commerciale dal primo giorno**, indipenden
 
 ---
 
-## 2. Gli account: la scelta che decide due settimane
+## 2. Gli account — RISCRITTA il 2026-08-31
 
-### 2.1 Individuo o organizzazione
+> 🔴 **Questa sezione diceva «va scelto organizzazione, il prezzo è il D-U-N-S». Era sbagliata**, e la versione superata è conservata in **§2.4** perché il ragionamento che conteneva resta valido — cambia il fatto su cui poggiava.
+>
+> **Due cose l'hanno ribaltata**, verificate sulla documentazione ufficiale il 2026-08-31: che per una ditta individuale il percorso «organizzazione» su Apple **non è aperto**, e la decisione dell'utente di pubblicare **a nome proprio, non a nome dell'azienda**.
 
-| | Apple | Google |
+### 2.1 La decisione: si pubblica come INDIVIDUO
+
+**Decisa dall'utente il 2026-08-31**: l'app esce a nome **Fausto Busato**, non a nome F.R. di Busato Fausto.
+
+🔑 **E per questa forma d'impresa non è nemmeno una scelta libera su Apple.** Apple ha due percorsi — *Individual / Sole Proprietor* e *Organization* — e stabilisce che chi è **ditta individuale / impresa unipersonale si iscrive come individuo**, col proprio nome legale come venditore. Il percorso «Organization» è per **entità legali separate** (S.r.l., S.p.A.), e il D-U-N-S serve appunto a provare che quell'entità esiste come soggetto distinto dalla persona.
+
+⚠️ **Una ditta individuale non è un soggetto distinto**: fiscalmente e giuridicamente, `F.R. di Busato Fausto` **è** `Fausto Busato`. È anche il motivo per cui D&B elenca le *sole proprietorships* fra le forme che non censisce — e quindi perché la ricerca del D-U-N-S sarebbe stata verosimilmente un vicolo cieco.
+
+### 2.2 Cosa serve, per ciascuno store
+
+| | **Apple Developer Program** | **Google Play Console** |
 |---|---|---|
-| Programma | Apple Developer Program | Google Play Console |
-| Costo indicativo | ~99 $/anno | ~25 $ una tantum |
+| Costo | ~99 $/**anno**, si rinnova | ~25 $ **una tantum** |
+| D-U-N-S | ✅ **non serve** | ✅ **non serve** |
+| Identità | Apple ID con **2FA** · **nome legale** in nome e cognome · email, telefono, indirizzo (⚠️ **niente caselle postali**) · documento | Account Google · documento · nome, indirizzo, email e telefono, **verificati con codice** |
+| Tempi d'iscrizione | Giorni | Giorni |
+| 🔴 **Vincolo aggiuntivo** | — | **Test chiuso: 12 tester per 14 giorni consecutivi** prima della produzione |
+
+⚠️ **Nei campi nome e cognome va il nome legale personale, mai la denominazione dell'impresa.** Scriverci «F.R. di Busato Fausto» **fa ritardare l'approvazione**: Apple lo dice esplicitamente.
+
+**Nome venditore visibile sugli store**: `Fausto Busato`. La denominazione dell'impresa non compare da nessuna parte.
 
 ⚠️ Costi e regole **da riverificare all'iscrizione**.
 
-**Va scelto organizzazione**, e per tre ragioni concrete:
-1. l'editore risulta **F.R. di Busato Fausto**, non una persona fisica — che per un'azienda vera è il dato corretto;
-2. su Google evita la regola che impone agli account **personali** recenti un **test chiuso con 12 tester per 14 giorni consecutivi** prima della produzione;
-3. separa la responsabilità dell'app da quella personale.
+### 2.3 🔴 Il test chiuso di Google è il vero prezzo di questa strada
 
-Il prezzo è il **D-U-N-S**.
+Vale per gli account personali **creati dopo il 13 novembre 2023**. Prima di poter pubblicare in produzione servono **almeno 12 tester**, iscritti **in modo continuativo per almeno 14 giorni** e **ancora attivi** al momento della richiesta; poi si chiede l'accesso alla produzione e Google risponde di norma entro sette giorni.
 
-### 2.2 Il D-U-N-S, e come non perderci settimane
+**Sono ~3 settimane, e non sono attesa passiva**: 12 persone vere con account Google vanno trovate e coordinate. Su un'app di coppia significa realisticamente **sei coppie**.
 
-È un codice di 9 cifre assegnato da **Dun & Bradstreet**, agenzia privata americana: l'identificativo internazionale di un'**impresa**. Non c'entra con partita IVA o Camera di Commercio — è uno standard privato che Apple e Google hanno adottato come prova che l'entità legale esiste. **È gratuito.**
+🔑 **Ma coincide con un bisogno che il progetto ha già**, ed è la ragione per cui non va vissuto come una tassa: **D-25** stabilisce che senza partner l'app non fa niente, quindi **non è collaudabile in altro modo**. Quelle 12 persone sono i beta tester che [`Marketing/LifeCouple/piano-marketing.md`](../../../Marketing/LifeCouple/piano-marketing.md) voleva comunque. Il requisito di Google e il collaudo del prodotto sono **lo stesso lavoro**, con una scadenza imposta da fuori.
 
-🔑 **Prima di richiederlo, verificare se esiste già.** D&B assegna numeri anche **senza che l'azienda li chieda**, raccogliendo dati da registri pubblici: molte imprese registrate da anni ne hanno uno e non lo sanno. Se c'è già, l'attesa più lunga dell'intero piano si riduce a una ricerca.
+⚠️ **Da controllare prima di creare un account nuovo**: un account Play personale **anteriore al 13/11/2023** sarebbe esente.
 
-⚠️ **L'errore che impantana le iscrizioni**: i dati inseriti su Apple devono combaciare **alla lettera** con il record D&B — ragione sociale, indirizzo, forma giuridica. Una punteggiatura diversa fa fallire la verifica, e il messaggio d'errore non dice quale campo non torna. Si legge prima il record, poi si compila.
+### 2.4 ~~La versione superata: «va scelto organizzazione»~~ (2026-08-29)
 
-🔴 **È l'unica voce del piano che si può far partire oggi**, senza che l'app sia pronta, e blocca tutto ciò che segue. Ogni giorno di ritardo qui è un giorno aggiunto in fondo, non in mezzo.
+Conservata perché *una decisione giusta smette di esserlo quando cambia ciò su cui poggiava*, e cancellarla toglie l'informazione più utile delle due.
+
+Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta F.R. di Busato Fausto, che per un'azienda vera è il dato corretto; (2) su Google evita il test chiuso con 12 tester; (3) separa la responsabilità dell'app da quella personale. *Il prezzo è il D-U-N-S* — codice di 9 cifre di Dun & Bradstreet, gratuito, da cercare prima di richiedere perché D&B lo assegna anche senza richiesta.
+
+**Cosa è caduto di quel ragionamento:**
+
+| Ragione | Esito |
+|---|---|
+| (1) Editore = l'azienda | ❌ **Non è più voluto**: l'utente ha deciso di pubblicare a nome proprio |
+| (2) Evita il test chiuso | ✅ **Era vero e resta vero** — ed è il costo che si paga, §2.3 |
+| (3) Separa la responsabilità | ❌ **Era illusorio**: con una ditta individuale si risponde col patrimonio personale **comunque**. Diventerebbe vero solo con una società di capitali |
+
+🔑 **La lezione da tenere**: il punto (3) era un beneficio **dichiarato ma inesistente**, e nessuno se ne era accorto perché suonava ovvio. È la stessa classe di errore che questo progetto insegue da settimane — *uno stato scritto che nessuno ha verificato* — applicata però a un ragionamento invece che a un file.
+
+⬜ **Se un giorno nascesse una S.r.l.**, il percorso organizzazione si riapre e il D-U-N-S torna necessario. E il trasferimento di un'app da un account individuale a uno aziendale **è previsto da entrambi gli store**: partire come individuo non è una porta che si chiude.
 
 ---
 
@@ -150,8 +184,10 @@ Il prezzo è il **D-U-N-S**.
 
 ## 7. L'ordine, e perché è questo
 
-1. **D-U-N-S** (oggi, prima di tutto: è attesa pura e blocca gli account) → account Apple e Google come organizzazione.
-2. **In parallelo**: la prima Edge Function e la cancellazione account. Sblocca il muro §1.1 e costruisce l'infrastruttura che serve altre due volte.
+> 🔴 **Riscritto il 2026-08-31**: il passo 1 era «D-U-N-S», che con la strada individuo (§2) **non serve più**. Al suo posto entra il **reclutamento dei 12 tester**, che è la nuova voce a tempo lungo — con una differenza importante: il D-U-N-S era **attesa passiva**, i tester sono **lavoro** che si può iniziare subito e che serve comunque al collaudo.
+
+1. 🔴 **Aprire i due account come individuo** (§2.2) — giorni, non settimane. **E far partire subito il reclutamento dei 12 tester** per Google: 14 giorni consecutivi di permanenza non si comprimono, quindi ogni giorno di ritardo qui è un giorno aggiunto in fondo. ⚠️ Sono anche i beta tester del piano marketing e l'unico modo di collaudare l'app (§2.3): **una lista sola, due scopi**.
+2. **In parallelo**: ~~la prima Edge Function e~~ ✅ *(deployata il 2026-08-31)* la **prova** della cancellazione account su un account di prova — protocollo in [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md). Sblocca il muro §1.1 con l'infrastruttura che serve altre due volte.
 3. **`eas.json` + secret → primo build di sviluppo** → si provano finalmente i permessi e si traducono i dialoghi.
 4. **Chiavi dietro Edge Function**, decisione su TMDB, account demo per il revisore.
 5. **Pagamenti**: libreria, schermata, ripristino, prodotti sui due store, webhook e diritto a livello di coppia.
@@ -172,9 +208,26 @@ Il prezzo è il **D-U-N-S**.
 | + diritto a livello di coppia (webhook, funzione, colonna, RLS) | +2–4 |
 | + accordi Paid Apps | ore di lavoro, **giorni di attesa** |
 
-**Da 2026-08-29 alla pubblicazione su entrambi gli store: 7–11 settimane**, assumendo D-U-N-S che non si impunta e nessun rifiuto grave. Se il D-U-N-S risulta **già esistente**, togliere 1–2 settimane.
+~~**Da 2026-08-29 alla pubblicazione su entrambi gli store: 7–11 settimane**, assumendo D-U-N-S che non si impunta e nessun rifiuto grave.~~
 
-🔑 **Il collo di bottiglia non è il lavoro.** Il progetto è nato il 2026-08-12 e in 17 giorni ha prodotto 25 migrazioni, sei sezioni e due giochi: a quel ritmo i 15–24 giorni-uomo non sono il problema. Lo sono le **attese** (D-U-N-S, verifiche degli account, accordi fiscali) e le **revisioni**, che non accelerano lavorando di più.
+> 🔴 **Ricalcolato il 2026-08-31 con la strada individuo (§2).** Il totale non cambia molto, ma **cambia da cosa dipende**, ed è quello che conta per decidere cosa fare per primo.
+
+| Voce | Prima (organizzazione) | **Ora (individuo)** |
+|---|---|---|
+| D-U-N-S | 1–2 settimane di attesa | ✅ **eliminato** |
+| Iscrizione agli account | dopo il D-U-N-S | **giorni**, si parte subito |
+| Test chiuso Google | non richiesto | 🔴 **+3 settimane** (14 giorni di permanenza + fino a 7 di revisione) |
+| Lavoro di pubblicazione | ~10–15 giorni-uomo | invariato |
+| + pagamenti | +3–5 | invariato |
+| + diritto a livello di coppia | +2–4 | invariato |
+| Accordi Paid Apps | ore di lavoro, **giorni di attesa** | invariato |
+| 🔴 **Licenza TMDB** | non contata | **attesa ignota** — è ora la sola coda fuori dal nostro controllo |
+
+**Da 2026-08-31 alla pubblicazione su entrambi gli store: 6–10 settimane.** Su **Apple** si può arrivare prima — il test chiuso riguarda solo Google, quindi **le due pubblicazioni possono sfasarsi**, ed è accettabile.
+
+🔑 **Il collo di bottiglia si è spostato, e in meglio.** Prima era un'**attesa passiva** (il D-U-N-S: nessun lavoro lo accelerava). Ora è **lavoro coordinabile** — trovare 12 tester — che per giunta produce due risultati insieme: soddisfa Google e collauda l'app, che senza due persone non è collaudabile affatto.
+
+⚠️ **Restano fuori dal nostro controllo due sole cose**: la **licenza TMDB** e le **revisioni** degli store. Sono le uniche che non accelerano lavorando di più.
 
 ## 9. 🔴 E una condizione che viene prima di tutto il piano
 
