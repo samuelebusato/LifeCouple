@@ -63,7 +63,7 @@ export default function Giochi() {
   const { coppiaId, completa, ricarica } = useCoppia();
 
   /** Quale foglio e' aperto. Uno solo alla volta: sono due strade diverse. */
-  const [foglio, setFoglio] = React.useState<null | 'gioca' | 'classifica'>(null);
+  const [foglio, setFoglio] = React.useState<null | 'gioca' | 'punteggio'>(null);
   /**
    * Il gioco al centro.
    *
@@ -87,17 +87,39 @@ export default function Giochi() {
    * sulla relazione, e una graduatoria fra due persone lo sarebbe. Un totale
    * condiviso non lo è — non c'è nessuno che vince contro nessuno.
    */
-  const [punteggi, setPunteggi] = React.useState<Record<string, number>>({});
+  /**
+   * 🔑 **Una media, non un totale** (chiesto dall'utente il 2026-09-01).
+   *
+   * Prima si sommavano i punti e basta. Un totale che sale e non scende mai
+   * misura **quanto avete giocato**, non quanto vi capite: dopo venti partite è
+   * un numero grande comunque, e non c'è modo di andare peggio. Il rapporto
+   * `punti / round giocati` invece si muove nei due versi — è la ragione per cui
+   * l'utente l'ha chiesto: *«così il punteggio può essere migliorato o
+   * peggiorato nel tempo»*.
+   *
+   * ⚠️ Il denominatore è `round_totali`, non il numero di partite: una partita
+   * di telepatia vale 10 round e una di disegno 5, e sommare partite di lunghezza
+   * diversa darebbe una percentuale che dipende da quale gioco si è scelto.
+   */
+  const [punteggi, setPunteggi] = React.useState<
+    Record<string, { punti: number; round: number; partite: number }>
+  >({});
   React.useEffect(() => {
     if (!coppiaId) return;
     supabase
       .from('partita')
-      .select('gioco, punti')
+      .select('gioco, punti, round_totali')
       .eq('coppia_id', coppiaId)
       .eq('stato', 'conclusa')
       .then(({ data }) => {
-        const somma: Record<string, number> = {};
-        for (const r of data ?? []) somma[r.gioco] = (somma[r.gioco] ?? 0) + r.punti;
+        const somma: Record<string, { punti: number; round: number; partite: number }> = {};
+        for (const r of data ?? []) {
+          const v = somma[r.gioco] ?? { punti: 0, round: 0, partite: 0 };
+          v.punti += r.punti;
+          v.round += r.round_totali;
+          v.partite += 1;
+          somma[r.gioco] = v;
+        }
         setPunteggi(somma);
       });
   }, [coppiaId, foglio]);
@@ -143,7 +165,7 @@ export default function Giochi() {
    * foglio parla di lei. Alla chiusura torna con la molla dello scivolo, meno
    * viva di quella d'entrata — sta tornando al suo posto, non arrivando.
    */
-  function apri(quale: 'gioca' | 'classifica') {
+  function apri(quale: 'gioca' | 'punteggio') {
     zoom.value = withSpring(1.07, molla.entrata);
     setFoglio(quale);
   }
@@ -232,9 +254,9 @@ export default function Giochi() {
           */}
           {completa ? (
             <View className="flex-row gap-3">
-              <BottoneVetro style={{ flex: 1 }} onPress={() => apri('classifica')}>
+              <BottoneVetro style={{ flex: 1 }} onPress={() => apri('punteggio')}>
                 <Sparkles color={c.testo} size={18} />
-                <Text>{t.hubGiochi.classifica}</Text>
+                <Text>{t.hubGiochi.punteggio}</Text>
               </BottoneVetro>
               {/* ⚠️ Pieno e non vetro tinto: vedi il commento in
                   `components/attesa-partita.tsx`. Sopra lo sfondo chiaro il
@@ -309,7 +331,7 @@ export default function Giochi() {
       </Foglio>
 
       {/* --- «Classifica» ---------------------------------------------------- */}
-      <Foglio visibile={foglio === 'classifica'} onChiudi={chiudi}>
+      <Foglio visibile={foglio === 'punteggio'} onChiudi={chiudi}>
         <CartaVetro raggio={30} style={{ margin: 8 }}>
           <SafeAreaView edges={['bottom']}>
             <View className="gap-4 p-6">
@@ -318,38 +340,46 @@ export default function Giochi() {
                   {t.giochi[GIOCHI[scelto].codice]}
                 </Text>
                 <Text className="font-serif-bold text-2xl text-foreground">
-                  {t.hubGiochi.classificaTitolo}
+                  {t.hubGiochi.punteggioTitolo}
                 </Text>
               </View>
               {/*
-                ⚠️ **C'e' un nodo da sciogliere prima di riempire questa
-                schermata di numeri**, e non nasce in questa sessione: History.md
-                (P-03, e l'avvertenza su P-04) dice che il punteggio non deve
-                diventare *un verdetto che resta sulla relazione*. Una graduatoria
-                di partite vinte fra le due persone e' esattamente una classifica
-                persistente fra loro. Il conteggio chiesto dall'utente si fa;
-                **come** lo si formula — vittorie dell'ultima partita o totale di
-                sempre, per gioco o complessivo — e' cio' che separa un gioco da
-                una pagella, e va deciso quando le partite esisteranno davvero.
+                ✅ **Il nodo di P-03, sciolto il 2026-09-01.** Qui c'era scritto
+                che il conteggio si poteva fare ma che **come** formularlo — «un
+                gioco o una pagella» — restava da decidere quando le partite
+                esistessero davvero. Le partite ora esistono, e la decisione
+                dell'utente le scioglie tutte e due:
+
+                - **una media in percentuale**, non una graduatoria di vittorie:
+                  non c'e' nessun «chi ha vinto», quindi non c'e' il verdetto fra
+                  le due persone che P-03 vieta;
+                - **un punteggio solo, quello del gioco da cui si apre**. Il
+                  foglio porta gia' in testa il nome del gioco scelto, e mostrare
+                  sotto anche il punteggio dell'altro era la contraddizione
+                  riferita dall'utente.
               */}
-              {(punteggi.telepatia ?? 0) + (punteggi.indovina_disegno ?? 0) === 0 ? (
-                <Text className="text-base text-muted-foreground">
-                  {t.hubGiochi.classificaVuota}
-                </Text>
-              ) : (
-                <View className="gap-3">
+              {(() => {
+                const codice = GIOCHI[scelto].codice;
+                const etichette = PUNTEGGIO[codice];
+                const dato = punteggi[codice];
+                // ⚠️ Anche `round === 0`: una partita conclusa con zero round non
+                // dovrebbe esistere, ma una divisione per zero stampata a schermo
+                // come «NaN%» sarebbe il modo peggiore di scoprirlo.
+                if (!etichette || !dato || dato.round === 0)
+                  return (
+                    <Text className="text-base text-muted-foreground">
+                      {t.hubGiochi.punteggioVuoto}
+                    </Text>
+                  );
+                return (
                   <Punteggio
-                    nome={t.gioco.sintonia}
-                    valore={punteggi.telepatia ?? 0}
-                    nota={t.hubGiochi.notaSintonia}
+                    nome={etichette.nome()}
+                    percentuale={Math.round((dato.punti / dato.round) * 100)}
+                    sotto={t.hubGiochi.mediaSu(dato.partite)}
+                    nota={etichette.nota()}
                   />
-                  <Punteggio
-                    nome={t.gioco.intesa}
-                    valore={punteggi.indovina_disegno ?? 0}
-                    nota={t.hubGiochi.notaIntesa}
-                  />
-                </View>
-              )}
+                );
+              })()}
               <BottoneVetro altezza={46} onPress={chiudi}>
                 <Text>{t.hubGiochi.chiudi}</Text>
               </BottoneVetro>
@@ -362,23 +392,57 @@ export default function Giochi() {
 }
 
 /** I giochi che una partita ce l'hanno davvero, e le loro rotte. */
-const ROTTE: Partial<Record<CodiceGioco, '/gioco/disegno' | '/gioco/telepatia'>> = {
+const ROTTE: Partial<Record<CodiceGioco, '/gioco/disegno' | '/gioco/telepatia' | '/gioco/quiz'>> = {
   indovina_disegno: '/gioco/disegno',
   telepatia: '/gioco/telepatia',
+  quiz_preferenze: '/gioco/quiz',
 };
 const PRONTI = Object.keys(ROTTE) as CodiceGioco[];
 
-/** Una riga del foglio dei punteggi. */
-function Punteggio({ nome, valore, nota }: { nome: string; valore: number; nota: string }) {
+/**
+ * Come si chiama il punteggio di ciascun gioco, e cosa conta.
+ *
+ * ⚠️ **Ogni gioco ha il suo nome, e non e' un vezzo**: «Sintonia» conta le volte
+ * in cui avete scelto la stessa cosa, «Intesa» i disegni che l'altro ha
+ * indovinato. Sono due cose diverse, e chiamarle con la stessa parola farebbe
+ * sembrare confrontabili due numeri che non lo sono.
+ *
+ * I giochi che una partita non ce l'hanno ancora restano fuori: la loro
+ * classifica non e' vuota, **non esiste** — e la schermata lo dice invece di
+ * mostrare uno zero che sembrerebbe un risultato.
+ */
+const PUNTEGGIO: Partial<Record<CodiceGioco, { nome: () => string; nota: () => string }>> = {
+  telepatia: { nome: () => t.gioco.sintonia, nota: () => t.hubGiochi.notaSintonia },
+  indovina_disegno: { nome: () => t.gioco.intesa, nota: () => t.hubGiochi.notaIntesa },
+  quiz_preferenze: { nome: () => t.gioco.conoscenza, nota: () => t.hubGiochi.notaConoscenza },
+};
+
+/** Una riga del foglio dei punteggi: la media, e su quante partite. */
+function Punteggio({
+  nome,
+  percentuale,
+  sotto,
+  nota,
+}: {
+  nome: string;
+  percentuale: number;
+  sotto: string;
+  nota: string;
+}) {
   const { c } = useTema();
   return (
     <View className="flex-row items-center gap-4 rounded-3xl border border-border/60 p-4">
-      <Text className="font-serif-bold text-4xl" style={{ color: c.accento, minWidth: 56 }}>
-        {valore}
-      </Text>
+      <View style={{ minWidth: 72 }}>
+        <Text className="font-serif-bold text-4xl" style={{ color: c.accento }}>
+          {percentuale}%
+        </Text>
+      </View>
       <View className="flex-1">
         <Text className="font-serif text-lg text-foreground">{nome}</Text>
         <Text className="text-sm text-muted-foreground">{nota}</Text>
+        {/* Il denominatore sotto, piu' piccolo: senza, «34%» non dice se e'
+            la media di due partite o di venti — e le due cose valgono diverso. */}
+        <Text className="pt-1 text-xs text-muted-foreground">{sotto}</Text>
       </View>
     </View>
   );

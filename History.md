@@ -135,6 +135,74 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-85 — Le superfici che devono esserci non usano il vetro nativo (2026-09-01)
+
+**Difetto riferito, con screenshot**: nella telepatia *«alcuni riquadri con la risposta sono come evidenziati o in rilievo»*. Lo screenshot ha mostrato il contrario di come suonava: la prima carta **non aveva il riquadro affatto**: non era più in evidenza, erano le altre tre ad avere una superficie e lei no.
+
+**Causa**: `fondo="sicuro"` lascia disegnare il **vetro nativo di iOS**, e quando il sistema decide di non disegnarlo resta la sola velatura chiarissima — che sul fondo chiaro dell'app è indistinguibile dallo sfondo. È **B-15** preso in flagrante: *«il riquadro spariva, restavano le icone»*, registrato il 2026-08-27 come mitigato e con causa mai isolata.
+
+**Decisione**: le quattro carte e i pop-up di esito passano a `fondo="pieno"`, che **salta il vetro nativo** e mette una base opaca nostra. Stesso aspetto su iOS e su Android.
+
+- **Cosa si perde**: l'effetto vetro su quelle superfici.
+- **Perché si accetta**: una carta da premere che a volte non si vede non è una decorazione riuscita male, è **un comando invisibile**.
+
+🔑 **La regola generale, che il progetto aveva già scritto e non aveva applicato fin qui**: *ciò che deve reggere non può dipendere da un materiale che decide il sistema*. Era già la lezione del bottone «avvia» che sembrava spento (2026-08-28), ed è scritta nel `fondo` di [`components/ui/vetro.tsx`](components/ui/vetro.tsx): `'pieno'` è «per il vetro **dentro un foglio**». Un pop-up modale *è* un foglio — il primo pop-up è nato con `'sicuro'` per una mia disattenzione, ed è ricomparso come *«a volte il pop-up è in trasparenza»*.
+
+⚠️ **E un errore di lettura da non ripetere**: la prima correzione ha solo **uniformato** il fondo delle quattro carte (togliendo `mia ? 'pieno' : 'sicuro'`), perché la parola «in rilievo» faceva pensare a una carta *in più*. Era ragionevole e non bastava: la segnalazione descriveva una carta *in meno*. **Lo screenshot ha risolto in un colpo un'ambiguità che due giri di ipotesi non avevano sciolto.**
+
+---
+
+### D-84 — Il quiz sulle preferenze: turni alternati, e nessuna migrazione (2026-09-01)
+
+**Chiesto dall'utente**: implementare il terzo gioco. Dieci round: uno risponde per sé fra quattro opzioni, l'altro prova a indovinarlo; punto quando ci prende. Punteggio: **Conoscenza**.
+
+🔑 **I ruoli si scambiano a ogni round** (`disegnatoreDi`, la stessa alternanza del disegno), e non è varietà: senza lo scambio il gioco misurerebbe *quanto uno conosce l'altro*, cioè produrrebbe un giudizio **su una persona sola** — la cosa che P-03 vieta di far uscire da questi giochi. Cinque round per parte: entrambi esaminati ed esaminatori la stessa quantità di volte, quindi il punteggio resta della coppia.
+
+**Nessuna migrazione, e la ragione non è la fretta.** `invio_sigillato` prevede `natura = 'verita'` e `'tentativo'` fin dalla 0001, nate per questo gioco. Non sono state usate: **quale delle due righe sia la verità lo dice già il turno**, che si calcola da `creata_da` e dal numero ed è uguale sui due telefoni per costruzione (è la lezione di B-30). Un'etichetta sulla riga ripeterebbe in un secondo posto un fatto che vive già altrove, con l'unico effetto di poter divergere. Usando `'scelta'` per entrambi, **`rivela_telepatia` funziona qui senza una riga di SQL nuova**: non filtra per gioco, restituisce le due scelte sigillate di un round.
+
+**Le domande stanno nel codice** ([`lib/parole.ts`](lib/parole.ts), 14 domande da 8 risposte), come `TEMI_TELEPATIA` e `PAROLE_DISEGNO`. La tabella `domanda` resta vuota per ciò a cui serve davvero: il banco **personalizzato** della coppia (D-19, backlog 11-bis). Metterci il banco comune vorrebbe dire una migrazione di seed per ogni domanda e due lingue da tenere allineate a mano.
+
+⚠️ **Il filtro di D-08 qui morde più che altrove**: nella telepatia una scelta dice qualcosa di chi la fa, nel quiz **la domanda è su una persona per costruzione**. Nessuna domanda tocca salute, religione, opinioni politiche, origine o vita sessuale — un quiz su quelle categorie non sarebbe indiscreto, sarebbe *un trattamento progettato per raccoglierle*. Secondo filtro, di tono: niente domande la cui risposta possa **ferire**, perché rimetterebbero dalla finestra il verdetto sulla relazione che P-03 caccia dalla porta.
+
+**Il ruolo si dice due volte** (seconda richiesta dell'utente: *«vorrei che fosse più evidente chi deve rispondere e chi deve indovinare»*): una **pillola colorata** — magenta «Tocca a te», ambra «Indovina tu», i colori che le carte già usano per «mio» e «suo» — e soprattutto **la domanda che cambia persona**: «Il *tuo* piatto consolatorio» contro «Il *suo*». La seconda è quella che conta: mette il ruolo **dove gli occhi già sono**, invece di aggiungere una cosa in più da leggere. Un badge si può saltare, il titolo no.
+
+⚠️ **Il quiz non ha test automatici**: la suite copre disegno e telepatia. Dichiarato, non taciuto.
+
+---
+
+### D-83 — Il punteggio è una media in percentuale, e ogni gioco mostra il suo (2026-09-01)
+
+**Chiesto dall'utente**, e scioglie il nodo che [`app/(tabs)/giochi.tsx`](app/(tabs)/giochi.tsx) teneva aperto da agosto: *«il conteggio si fa; **come** formularlo separa un gioco da una pagella, e va deciso quando le partite esisteranno davvero»*. Le partite ora esistono.
+
+- **Una media, non un totale.** Un totale che sale e non scende mai misura **quanto avete giocato**, non quanto vi capite: dopo venti partite è un numero grande comunque, e non c'è modo di andare peggio. Il rapporto `punti / round giocati` si muove nei due versi — parole dell'utente: *«così il punteggio può essere migliorato o peggiorato nel tempo»*.
+- **Il denominatore è `round_totali`, non il numero di partite**: telepatia vale 10 round e disegno 5, e sommare partite di lunghezza diversa darebbe una percentuale che dipende da quale gioco si è scelto.
+- **Un punteggio solo, quello del gioco da cui si apre.** Il foglio portava già in testa il nome del gioco scelto e sotto mostrava entrambi i punteggi: era l'incoerenza riferita dall'utente.
+- **Ogni gioco tiene il suo nome** — Sintonia, Intesa, Conoscenza: sono tre cose diverse, e chiamarle con la stessa parola farebbe sembrare confrontabili numeri che non lo sono.
+
+⚠️ **Due testi correggevano il falso e sono stati riscritti**, senza che fosse chiesto: il foglio si intitolava *«Chi ha vinto di più»* e la schermata vuota prometteva *«chi ha vinto più partite»*. Con la media quel numero **non esiste più** — e soprattutto un «chi ha vinto» fra due persone è precisamente la graduatoria che P-03 vieta.
+
+**Rinominato «Classifica» in «Punteggio»** ovunque (richiesta dell'utente), **chiavi del codice comprese**: un codice che chiama una cosa in un modo e l'interfaccia in un altro invecchia male.
+
+---
+
+### D-82 — Fra un round e l'altro non passa un tempo, passa un gesto (2026-09-01, migrazione 0027)
+
+**Difetto riferito**: *«nel gioco telepatia le animazioni sono troppo veloci»*, con la proposta dell'utente — un pop-up con l'esito e un pulsante «Continua», per tutti i giochi.
+
+**Perché non è bastato allungare i tre secondi.** `PAUSA_FRA_ROUND` era un tempo fisso uguale per chiunque: protegge il momento dell'esito **solo per chi legge alla velocità per cui è stato tarato**, e resta un'attesa cieca identica sia che l'altro stia guardando lo schermo sia che abbia posato il telefono. La costante è stata **rimossa**, non ritoccata.
+
+**Come**: nuova tabella `round_pronto` (chiave `(round_id, utente_id)`), modellata su `partita_pronto` che fa già la stessa cosa per l'inizio della partita — stesse tre policy, stesso modo di attivare il realtime. Per round e non per partita perché «sono pronto ad andare avanti» è una risposta che **scade a ogni round**, mentre «sono pronto a giocare» si dà una volta sola: riusare la tabella esistente avrebbe voluto dire cancellarne le righe a ogni round, cioè distruggere l'informazione che fa partire la partita.
+
+**Chi preme, quanti**: entrambi (decisione dell'utente). `>= 2` e non «tutti», come in `segna_pronto`: una coppia è due persone per costruzione (D-14), e la riga esplicita dice che il meccanismo **non** regge a un gruppo.
+
+⚠️ **All'ultimo round non si aspetta nessuno**: dopo non c'è un round da far partire insieme, c'è il punteggio. Far aspettare lì sarebbe un'attesa senza scopo, e con l'altro che ha già posato il telefono un'attesa senza fine.
+
+🔑 **Il duplicato non è un errore** (`23505`): premere due volte è la cosa più naturale davanti a un bottone che non sembra aver fatto niente — e qui *non fa* niente di visibile finché non preme anche l'altro. Trattarlo come guasto mostrerebbe un messaggio rosso a chi ha solo insistito.
+
+**Verifica della migrazione, e il buco che aveva**: applicata dall'utente e verificata contro il server prima di ripartire — `round_pronto` risponde `200 []` mentre una tabella inventata dà `404`, quindi la tabella **esiste** e il controllo discrimina. ⚠️ Ma quella verifica copriva la tabella, **non la publication realtime**, che con la chiave dell'app non è leggibile: la query è stata lasciata all'utente. *Una verifica che non dice cosa non ha coperto è una verifica che si crede completa.*
+
+---
+
 ### D-81 — Si pubblica come individuo, e uno dei tre motivi per fare il contrario non esisteva (2026-08-31)
 
 **Decisione dell'utente**: l'app esce a nome **Fausto Busato**, non a nome F.R. di Busato Fausto. [`docs/pubblicazione.md`](docs/pubblicazione.md) §2 è stata riscritta di conseguenza; la versione superata è conservata in §2.4.
@@ -1435,6 +1503,58 @@ I giochi erano **l'unica zona dell'app mai vista girare**, ed è la prima volta 
 
 **Correzione**: `React.useMemo` sull'oggetto restituito. ⚠️ Trovato **leggendo**, non da un sintomo: non è dimostrato che abbia prodotto uno dei sei riferiti.
 
+### B-40 — Il guardiano del round interrogava un dato ancora in viaggio (2026-09-01, CORRETTO — verificato dall'utente)
+
+**Sintomo riferito**: *«nel gioco telepatia si apre il pop-up ma continua a passare alla pagina successiva in automatico»*. Il pop-up si affacciava e il round nuovo lo cancellava subito.
+
+**Causa**: il guardiano scritto per D-82 diceva `if (round?.finito_il && !entrambiProntiRound) return`. Ma i due dati che decidono arrivano da **strade diverse**: `chiudi` riceve dalla RPC la partita con `round_corrente` **già avanzato**, mentre `finito_il` sul round locale arriva solo col successivo evento realtime. Nell'istante fra i due, sul telefono di chi apre i round, `numeroRound` era già N+1 e `finito_il` ancora `null`: il guardiano leggeva un campo non ancora arrivato e lasciava passare.
+
+**Correzione**: `if (round && !entrambiProntiRound) return`. La condizione giusta non ha bisogno che nessun campo arrivi — il round in corso è già fermato dalla riga sopra, quindi un `round` che arriva fin lì **è** un round passato; e al primo round `round` è `null`, così la partita parte senza aspettare un «continua» che nessuno vedrebbe.
+
+🔑 ***Un guardiano che dipende da un dato in viaggio non è un guardiano.*** È la stessa famiglia di B-30 e B-34: uno stato calcolato al momento sbagliato vale cose diverse sui due telefoni, o nei due istanti.
+
+---
+
+### B-39 — Il bottone alimentava il pop-up che voleva chiudere (2026-09-01, CORRETTO — verificato dall'utente)
+
+**Sintomo riferito**: a fine partita *«entra in un loop in cui continua a comparire il pop-up "è la stessa"»*.
+
+**Causa**: il «Continua» dell'ultimo round congedava il pop-up con `setEsito(null)`. Non poteva funzionare **da quando esiste B-37**: l'effetto della rivelazione ora sopravvive alla chiusura del round, quindi trovava `esito` vuoto, richiedeva la rivelazione al database — che risponde sempre la stessa cosa — e rimetteva il pop-up. Un anello chiuso, senza uscita.
+
+**Correzione**: uno stato locale `finaleLetto`, e il punteggio finale compare quando è vero.
+
+🔑 ***Cancellare un dato non è dire che l'hai visto.*** Il dato è vero e resta vero; quello che cambia è che **questo telefono** l'ha già letto — e nessun campo del database può saperlo, perché l'altro lo legge per conto suo.
+
+⚠️ **Il difetto è nato da una correzione**, non da codice vecchio: B-37 ha reso l'effetto più resistente, e la resistenza ha rotto un congedo che si reggeva sulla sua fragilità. Corretto nello stesso giro anche nel disegno, dove non si era ancora manifestato.
+
+---
+
+### B-38 — I pin della mappa non comparivano su Android, e il difetto era lì da cinque giorni (2026-09-01, CORRETTO)
+
+**Sintomo riferito**: *«su Android appena apro l'applicazione non carica i pin sulla mappa»*. Tornando sulla mappa da un'altra scheda i pin c'erano.
+
+**Causa**: `tracksViewChanges` — ciò che permette a react-native-maps di catturare la texture dei pin disegnati da noi — si spegneva dopo 900 ms contati dal **mount**. L'effetto dipendeva dal numero dei luoghi, il che faceva credere che il conto tornasse, ma **rimandare lo spegnimento non è riaccendere**: all'apertura dell'app la mappa monta con zero luoghi (i dati stanno arrivando dal database), i 900 ms scadono sul vuoto, e quando i luoghi arrivano i marker nascono con la cattura **già spenta**.
+
+**Correzione**: `setTraccia(true)` all'inizio dell'effetto, così la finestra si apre quando i pin ci sono davvero. E la dipendenza è una **firma-stringa** che comprende conteggio eventi e «ha una serata futura», perché quelli cambiano il disegno del pin senza spostare `luoghi.length` — su Android un posto che diventa «visitato» avrebbe tenuto la texture vecchia. Firma e non gli oggetti: sono ricreati dal genitore a ogni render, e metterli fra le dipendenze riaccenderebbe la cattura di continuo (è la lezione di B-32, applicata prima che facesse danni).
+
+🔑 **Perché non si è mai visto prima.** Su iOS la view del marker viene renderizzata comunque, quindi lo **stesso identico bug** non produce nessun sintomo. Era in `mappa-vera.native.tsx` dal **2026-08-27** e tutti i giri di verifica lo hanno attraversato senza vederlo, perché fatti su un iPhone. ***Una correzione provata su un solo sistema è provata a metà*** — ed è la ragione per cui la giornata su due telefoni ha reso più di tre di rilettura.
+
+---
+
+### B-37 — La rivelazione si spegneva insieme al round, e l'esito non arrivava mai (2026-09-01, CORRETTO — verificato dall'utente)
+
+**Sintomo riferito**: *«il gioco telepatia si è bloccato»*.
+
+**Causa**: l'effetto che interroga `rivela_telepatia` era guardato da `if (!roundVivo ...)`, e `roundVivo` diventa `null` **nell'istante in cui il round si chiude** — è la sua definizione. Ma chi chiude è uno solo, chi apre i round, e lo fa appena *lui* ha ricevuto la rivelazione; sull'altro telefono il giro di domande passa ogni 1200 ms. Se la chiusura arriva prima del suo giro, l'effetto si smonta e `esito` **non viene impostato mai**.
+
+**Correzione**: si chiede a `round`, non a `roundVivo` — il round finito **è** il momento per cui si gioca (B-34), quindi l'effetto deve sopravvivergli. E `p.chiudi` si manda solo se il round è ancora `in_corso`, o adesso partirebbe una scrittura inutile ogni 1200 ms.
+
+**Seconda metà, trovata subito dopo**: `miaScelta` è stato locale, e chi ricaricava la schermata lo perdeva — senza quello l'effetto non ripartiva nemmeno con la correzione, e la partita restava bloccata **in modo permanente**. A round finito la rivelazione si chiede ora **anche senza `miaScelta`**: la scelta la dice il database. Si ripristina anche l'evidenza sulla carta, o l'esito sarebbe una frase senza il suo referente.
+
+🔑 **È la seconda metà di B-34, rimasta indietro tre giorni.** Quel difetto era stato corretto **solo dalla parte delle carte**; la parte dell'esito è rimasta rotta e non dava fastidio, perché finché il round avanzava da solo perdere l'esito era un peccato. Da quando il round successivo aspetta il «Continua», lo stesso difetto **ferma la partita**. ⚠️ *Una correzione parziale non si vede finché qualcosa non si appoggia sulla metà rimasta rotta.*
+
+---
+
 ### B-36 — Il test dei banchi accusava il file sbagliato, e solo su questo dispositivo (2026-08-29, CHIUSO E VERIFICATO)
 
 **Sintomo**: `npm run test:parole` dava **12/15** qui, mentre `History.md` registrava 15/15 il giorno prima.
@@ -1925,6 +2045,14 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
+### I giochi, dopo la giornata su due telefoni — aggiunto il 2026-09-01
+
+- ⬜ **Test automatici per il quiz sulle preferenze.** La suite copre disegno e telepatia (42 asserzioni contro il database vero); il gioco nato oggi (D-84) non è coperto, e la sua unica verifica finora è una partita giocata a mano. Da scrivere sullo schema degli altri due.
+- ⬜ **`obbligo_verita`**: l'ultimo dei quattro giochi non implementato. L'hub lo mostra come «in arrivo», che resta vero.
+- ⚠️ **Il banco personalizzato della coppia (D-19, 11-bis)** è ancora tutto da fare: la tabella `domanda` esiste dalla 0001 ed è vuota, e il quiz usa il banco comune scritto nel codice (D-84). Finché non c'è, la scelta «ufficiale / personalizzata» nell'hub **non cambia niente** — ed è oggi l'unico comando dell'app che promette una differenza che non esiste.
+- ⚠️ **Rigenerare `lib/database.types.ts`** con `supabase gen types typescript`: i blocchi scritti a mano sono ora quelli delle 0011→0016 **più** `round_pronto` della 0027. Vanno via tutti insieme, e finché restano i tipi dicono ciò che *crediamo* ci sia nello schema.
+- ⚠️ **Verificare la publication realtime di `round_pronto`** (query in coda alla migrazione 0027): se mancasse, il «continua» si bloccherebbe a intermittenza e sembrerebbe capriccioso. Prima cosa da guardare se il sintomo torna.
+
 ### Prima di scrivere codice — ✅ tutte decise il 2026-08-12
 - [x] **Modello di appaiamento** → **link condivisibile** (D-14), con le quattro condizioni
 - [x] **Economia della crescita** → **punteggio sulla chiusura del cerchio** desiderato → fatto (D-15)
@@ -2160,6 +2288,32 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+**Aggiornato al 2026-09-01** — la prima giornata di gioco su **due telefoni veri contemporaneamente** (Android + iPhone, Expo Go via LAN). Copre **D-82 → D-85** e **B-37 → B-40**, più il terzo gioco. Non supera il punto del 2026-08-31 qui sotto: quello riguarda la **pubblicazione**, che oggi non è stata toccata e resta valido riga per riga.
+
+### Dove siamo, in una riga
+
+I tre giochi **girano tutti e tre su due dispositivi**, verificati dall'utente. Resta fuori solo `obbligo_verita`.
+
+### Cosa ha prodotto la giornata
+
+✅ **Il collaudo su due sistemi ha fatto uscire quattro difetti che tre giri su iPhone non avevano visto**, e uno era lì dal **2026-08-27** (B-38, i pin della mappa su Android). 🔑 La lezione che vale più delle correzioni: ***una correzione provata su un solo sistema è provata a metà*** — e i tre giri di verifica precedenti erano tutti su iPhone.
+
+✅ **Migrazione `0027` applicata dall'utente e verificata contro il server**: `round_pronto` esiste (risposta `200 []` contro il `404` di una tabella inventata, quindi il controllo discrimina). ⚠️ **Quella verifica NON ha coperto la publication realtime**, che con la chiave dell'app non è leggibile: la query `select count(*) from pg_publication_tables where … tablename = 'round_pronto'` è stata lasciata all'utente e **non risulta eseguita**. Se desse `0`, il «continua» si bloccherebbe **a intermittenza** — chi preme per secondo rilegge e va avanti, chi preme per primo aspetta un evento che non arriva. Sembrerebbe capriccioso e sarebbe sistematico. **È la prima cosa da guardare se il sintomo torna.**
+
+✅ **Recuperato l'accesso a un account nato senza password** (D-74), e di passaggio è stato **collaudato sul dispositivo il meccanismo del passo 8**: la schermata «Ho dimenticato la password» manda un codice e impone una password nuova. Serviva provarlo perché è la strada con cui si consegnerà l'account demo al revisore Apple — l'unica ragione per cui la password esiste (D-74).
+
+### Cosa resta da fare sui giochi
+
+1. ⬜ **Il quiz non ha test automatici.** La suite (`npm run test:partita`, 42/42 verdi anche dopo oggi) copre disegno e telepatia. Aggiungerlo seguendo lo schema degli altri due.
+2. ⬜ **`obbligo_verita` è l'unico gioco non implementato.** L'hub lo mostra ancora come «in arrivo», che è vero.
+3. ⚠️ **Il banco personalizzato della coppia (D-19, backlog 11-bis) resta tutto da fare**: la tabella `domanda` esiste dalla 0001 ed è **vuota**. Il quiz usa il banco comune nel codice (D-84), quindi la scelta «ufficiale / personalizzata» nell'hub oggi non cambia niente.
+4. ⚠️ **`lib/database.types.ts` ha un blocco in più scritto a mano** (`round_pronto`, migrazione 0027), che si aggiunge al debito già dichiarato in `Architecture.md` per le 0011→0016. Alla prima rigenerazione con `supabase gen types typescript` vanno via tutti insieme.
+
+---
+
+### Il punto precedente, ancora valido: la pubblicazione
+
 
 **Aggiornato al 2026-08-31** — la pipeline di build e l'impianto legale documentale (**D-79, D-80**), e il deploy della Edge Function finalmente eseguito. Supera il punto di ripresa del 2026-08-29 (D-74 → D-78, B-30 → B-36). Copre D-60→D-80 e B-16→B-36.
 

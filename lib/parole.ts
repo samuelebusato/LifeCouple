@@ -540,3 +540,192 @@ export const TEMI_TELEPATIA: readonly TemaTelepatia[] = [
     ],
   },
 ];
+
+/**
+ * Una domanda del quiz, in **due persone**.
+ *
+ * 🔑 **Perché due titoli e non uno** (2026-09-01, chiesto dall'utente: *«vorrei
+ * che fosse più evidente chi deve rispondere e chi deve indovinare»*).
+ *
+ * Le quattro risposte sono le stesse per tutti e due, ma servono a due cose
+ * opposte: uno dice la verità su di sé, l'altro tira a indovinare. Con un
+ * titolo solo in terza persona — «Il suo piatto consolatorio» — chi era di
+ * turno leggeva una domanda che parlava di qualcun altro proprio mentre doveva
+ * rispondere per sé.
+ *
+ * Un'etichetta di ruolo aiuta, ma resta una cosa **in più** da leggere. Cambiare
+ * la persona del titolo mette l'informazione **dove gli occhi già sono**: la
+ * riga grande in cima. «Il tuo piatto consolatorio» e «Il suo piatto
+ * consolatorio» non si confondono nemmeno guardandole di sfuggita.
+ */
+export type DomandaQuiz = {
+  /** Come si legge quando tocca a te rispondere. */
+  readonly tuo: Voce;
+  /** Come si legge quando devi indovinare l'altro. */
+  readonly titolo: Voce;
+  readonly voci: readonly Voce[];
+};
+
+/**
+ * **Le domande del «quiz sulle preferenze»**, 8 risposte ciascuna.
+ *
+ * ## Perché stanno qui e non nella tabella `domanda`
+ *
+ * Lo schema ha una tabella `domanda` fin dalla 0001, ed è **vuota**: nasce per
+ * il banco *personalizzato* della coppia (D-19, backlog 11-bis), dove il
+ * contenuto lo scrivono loro. Il banco **comune** invece è nostro, è bilingue e
+ * non cambia mai — esattamente come `TEMI_TELEPATIA` e `PAROLE_DISEGNO`, che per
+ * questo vivono nel codice. Metterlo nel database vorrebbe dire una migrazione
+ * di seed per ogni domanda aggiunta, e due lingue da tenere allineate a mano in
+ * righe invece che in una coppia di stringhe che il tipo obbliga a riempire.
+ *
+ * ## Il filtro di D-08, che qui morde più che altrove
+ *
+ * ⚠️ Nella telepatia una scelta dice qualcosa di chi la fa; qui **la domanda è
+ * su di lei o su di lui per costruzione** — è il gioco. Nessuna domanda tocca
+ * salute, religione, opinioni politiche, origine o vita sessuale: un quiz che
+ * chiedesse «quale di queste quattro?» su una di quelle categorie non sarebbe un
+ * gioco indiscreto, sarebbe **un trattamento progettato per raccoglierla**, cioè
+ * il caso preciso che D-08 esiste per impedire.
+ *
+ * 🔑 E c'è un secondo filtro, che non è legale ma di tono: niente domande la cui
+ * risposta possa **ferire** («cosa cambieresti di lui», «chi dei due…»). Il
+ * punteggio è della coppia (P-03), e una domanda che mette i due uno contro
+ * l'altro rimetterebbe dalla finestra il verdetto sulla relazione che P-03
+ * caccia dalla porta.
+ */
+export const DOMANDE_QUIZ: readonly DomandaQuiz[] = [
+  {
+    tuo: ['Your comfort food', 'Il tuo piatto consolatorio'],
+    titolo: ['Their comfort food', 'Il suo piatto consolatorio'],
+    voci: [
+      ['pizza', 'pizza'], ['pasta', 'pasta'], ['ice cream', 'gelato'], ['fries', 'patatine'],
+      ['soup', 'zuppa'], ['chocolate', 'cioccolato'], ['a sandwich', 'un panino'], ['rice', 'riso'],
+    ],
+  },
+  {
+    tuo: ['Your ideal Saturday night', 'Il tuo sabato sera ideale'],
+    titolo: ['Their ideal Saturday night', 'Il suo sabato sera ideale'],
+    voci: [
+      ['dinner out', 'cena fuori'], ['a film at home', 'un film a casa'],
+      ['with friends', 'con gli amici'], ['a concert', 'un concerto'],
+      ['a long walk', 'una passeggiata lunga'], ['dancing', 'ballare'],
+      ['in bed early', 'a letto presto'], ['cooking together', 'cucinare insieme'],
+    ],
+  },
+  {
+    tuo: ['Your favourite season', 'La tua stagione preferita'],
+    titolo: ['Their favourite season', 'La sua stagione preferita'],
+    voci: [
+      ['spring', 'primavera'], ['summer', 'estate'], ['autumn', 'autunno'], ['winter', 'inverno'],
+      ['early summer', 'inizio estate'], ['late autumn', 'tardo autunno'],
+      ['the first cold days', 'i primi freddi'], ['the first warm days', 'i primi caldi'],
+    ],
+  },
+  {
+    tuo: ['What you order at the bar', 'Cosa ordini al bar'],
+    titolo: ['What they order at the bar', 'Cosa ordina al bar'],
+    voci: [
+      ['espresso', 'espresso'], ['cappuccino', 'cappuccino'], ['tea', 'tè'],
+      ['orange juice', 'spremuta'], ['hot chocolate', 'cioccolata calda'], ['water', 'acqua'],
+      ['iced coffee', 'caffè freddo'], ['a croissant too', 'anche un cornetto'],
+    ],
+  },
+  {
+    tuo: ['How you wake up', 'Come ti svegli'],
+    titolo: ['How they wake up', 'Come si sveglia'],
+    voci: [
+      ['at once', 'di colpo'], ['ten more minutes', 'altri dieci minuti'],
+      ['before the alarm', 'prima della sveglia'], ['in silence', 'in silenzio'],
+      ['talking straight away', 'parlando subito'], ['with music', 'con la musica'],
+      ['slowly', 'lentamente'], ['already late', 'già in ritardo'],
+    ],
+  },
+  {
+    tuo: ['The holiday you would pick', 'La vacanza che sceglieresti'],
+    titolo: ['The holiday they would pick', 'La vacanza che sceglierebbe'],
+    voci: [
+      ['the sea', 'il mare'], ['the mountains', 'la montagna'], ['a city', 'una città'],
+      ['a lake', 'un lago'], ['a road trip', 'un viaggio in auto'], ['an island', 'un’isola'],
+      ['the countryside', 'la campagna'], ['somewhere cold', 'un posto freddo'],
+    ],
+  },
+  {
+    tuo: ['What you watch when tired', 'Cosa guardi quando sei stanco'],
+    titolo: ['What they watch when tired', 'Cosa guarda quando è stanco'],
+    voci: [
+      ['a comedy', 'una commedia'], ['a series already seen', 'una serie già vista'],
+      ['a documentary', 'un documentario'], ['something short', 'qualcosa di corto'],
+      ['a cartoon', 'un cartone'], ['nothing at all', 'niente'], ['sport', 'lo sport'],
+      ['cooking shows', 'programmi di cucina'],
+    ],
+  },
+  {
+    tuo: ['The gift you would love', 'Il regalo che vorresti'],
+    titolo: ['The gift they would love', 'Il regalo che vorrebbe'],
+    voci: [
+      ['a trip', 'un viaggio'], ['a book', 'un libro'],
+      ['something handmade', 'una cosa fatta a mano'], ['a dinner', 'una cena'],
+      ['a plant', 'una pianta'], ['a photo album', 'un album di foto'],
+      ['a surprise', 'una sorpresa'], ['nothing, just time', 'niente, solo tempo'],
+    ],
+  },
+  {
+    tuo: ['How you unwind', 'Come ti rilassi'],
+    titolo: ['How they unwind', 'Come si rilassa'],
+    voci: [
+      ['a hot shower', 'una doccia calda'], ['music', 'la musica'], ['a walk', 'una camminata'],
+      ['the sofa', 'il divano'], ['tidying up', 'mettere in ordine'],
+      ['a phone call', 'una telefonata'], ['cooking', 'cucinare'], ['sleeping', 'dormire'],
+    ],
+  },
+  {
+    tuo: ['Your favourite spot at home', 'Il tuo posto preferito in casa'],
+    titolo: ['Their favourite spot at home', 'Il suo posto preferito in casa'],
+    voci: [
+      ['the sofa', 'il divano'], ['the kitchen', 'la cucina'], ['the bed', 'il letto'],
+      ['the balcony', 'il balcone'], ['by the window', 'vicino alla finestra'],
+      ['the desk', 'la scrivania'], ['the bathroom', 'il bagno'],
+      ['wherever you are', 'dove ci sei tu'],
+    ],
+  },
+  {
+    tuo: ['What you would never order', 'Cosa non ordineresti mai'],
+    titolo: ['What they would never order', 'Cosa non ordinerebbe mai'],
+    voci: [
+      ['pineapple pizza', 'pizza con l’ananas'], ['oysters', 'ostriche'],
+      ['very spicy food', 'roba piccantissima'], ['tripe', 'trippa'],
+      ['liquorice', 'liquirizia'], ['blue cheese', 'formaggio erborinato'],
+      ['raw fish', 'pesce crudo'], ['bitter drinks', 'amari'],
+    ],
+  },
+  {
+    tuo: ['Your small luxury', 'Il tuo piccolo lusso'],
+    titolo: ['Their small luxury', 'Il suo piccolo lusso'],
+    voci: [
+      ['good coffee', 'un buon caffè'], ['clean sheets', 'lenzuola pulite'],
+      ['a long shower', 'una doccia lunga'], ['a taxi', 'un taxi'], ['dessert', 'il dolce'],
+      ['a nap', 'un sonnellino'], ['new shoes', 'scarpe nuove'], ['silence', 'il silenzio'],
+    ],
+  },
+  {
+    tuo: ['How you arrive at an appointment', 'Come arrivi a un appuntamento'],
+    titolo: ['How they arrive at an appointment', 'Come arriva a un appuntamento'],
+    voci: [
+      ['early', 'in anticipo'], ['exactly on time', 'preciso'],
+      ['five minutes late', 'cinque minuti dopo'], ['always late', 'sempre tardi'],
+      ['running', 'di corsa'], ['calling on the way', 'chiamando per strada'],
+      ['first of everyone', 'primo di tutti'], ['last of everyone', 'ultimo di tutti'],
+    ],
+  },
+  {
+    tuo: ['The sound you like most', 'Il rumore che ti piace di più'],
+    titolo: ['The sound they like most', 'Il rumore che gli piace di più'],
+    voci: [
+      ['rain', 'la pioggia'], ['the sea', 'il mare'], ['a fire', 'il fuoco'],
+      ['wind in the trees', 'il vento fra gli alberi'], ['a coffee machine', 'la moka'],
+      ['footsteps in the snow', 'i passi sulla neve'], ['a distant train', 'un treno lontano'],
+      ['silence', 'il silenzio'],
+    ],
+  },
+];
