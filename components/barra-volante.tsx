@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
-// ⚠️ Il `Pressable` viene da **gesture-handler**, non da React Native.
-// Dentro un `GestureDetector` i due sistemi di tocco convivono male: il gesto
-// nativo di RNGH puo' vincere la contesa e i tocchi sulle icone non arrivare
-// mai. Il `Pressable` di RNGH parla la stessa lingua del gesto che gli sta
-// attorno, quindi tocco e trascinamento si spartiscono il dito invece di
-// contenderselo.
-import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
+// ⚠️ **Qui non c'e' nessun `Pressable`, e non e' una dimenticanza.**
+// Fino al 2026-09-01 le voci erano `Pressable` di gesture-handler, scelti
+// perche' «parlano la stessa lingua» del gesto che le circonda. Non e' bastato:
+// due gesti che parlano la stessa lingua ma non hanno una precedenza dichiarata
+// se la contendono, e la contesa la arbitra la piattaforma — iOS a favore del
+// figlio, Android del genitore. Su Android il tocco non arrivava mai.
+// Ora tocco e trascinamento sono **due gesti composti in `Race`**: vedi `tocca`.
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Riani, {
   useSharedValue,
   useAnimatedStyle,
@@ -93,6 +94,16 @@ export const SPAZIO_BARRA = 108;
 export const SOPRA_BARRA = SPAZIO_BARRA + 6;
 
 /** Altezza della pillola, e della lente che ci vive dentro. */
+/**
+ * L'unica azione di accessibilita' delle voci: «attiva».
+ *
+ * Sta qui e non nel corpo perche' un array nuovo a ogni render rimonterebbe il
+ * nodo di accessibilita' sei volte per fotogramma — e in questo progetto un
+ * oggetto ricreato a ogni render ha gia' azzerato tutti i timer delle partite
+ * (B-32). Stessa causa, sintomo diverso.
+ */
+const ATTIVA = [{ name: 'activate' as const }];
+
 const ALTEZZA = 66;
 const LENTE = 50;
 /** Aria fra il bordo della pillola e la prima voce. */
@@ -204,6 +215,55 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
   );
 
   /**
+   * 🔴 **Il tocco su una voce, e perche' e' un gesto e non piu' un `Pressable`**
+   * (2026-09-01, difetto riferito: *«da Android la barra funziona solo
+   * trascinando e non premendo»*).
+   *
+   * Questa e' la **quinta** stesura del pezzo, e la quarta era passata su iPhone.
+   * Il commento in testa al file racconta la scelta di allora: usare il
+   * `Pressable` di gesture-handler invece di quello di React Native, perche'
+   * *«parla la stessa lingua del gesto che gli sta attorno»*. Ragionamento
+   * giusto, risultato incompleto — parlare la stessa lingua non basta se nessuno
+   * ha detto **chi ha la precedenza**. Senza una relazione dichiarata i due si
+   * contendono il dito, e la contesa la arbitra la piattaforma: iOS la assegna al
+   * figlio, Android al genitore. Su Android il Pan vinceva sempre, e il tocco
+   * non arrivava mai.
+   *
+   * 🔑 La lezione e' la stessa che il progetto ha gia' imparato altrove: **un
+   * comportamento non deciso non e' neutro, e' deciso da qualcun altro** — qui
+   * dal sistema operativo, e i due sistemi decidono al contrario. Un `Race`
+   * esplicito toglie l'arbitrato di mano alla piattaforma: sotto gli 8 punti
+   * vince il tocco, sopra vince il trascinamento, su tutti e due i telefoni.
+   *
+   * ⚠️ **L'indice si calcola dalla x, non dal figlio premuto**: e' la stessa
+   * geometria della lente (`passo`, con `MARGINE` di lato), quindi tocco,
+   * trascinamento e lente non possono disallinearsi — e resta vero cio' che
+   * diceva il commento del `Pressable`, che toccare e trascinare devono finire
+   * nello stesso posto.
+   */
+  const tocca = React.useMemo(
+    () =>
+      Gesture.Tap()
+        // Un tocco lento resta un tocco: sulla barra non c'e' nessuna pressione
+        // prolungata da distinguere, e una soglia stretta trasformerebbe il dito
+        // indeciso in un tocco perso.
+        .maxDuration(600)
+        .onEnd((e) => {
+          if (passo <= 0) return;
+          const i = Math.min(voci - 1, Math.max(0, Math.floor((e.x - MARGINE) / passo)));
+          runOnJS(vaiA)(i);
+        }),
+    [passo, voci, vaiA]
+  );
+
+  /**
+   * ⚠️ `Race` e non `Simultaneous`: le due cose si escludono a vicenda — un
+   * trascinamento che finisse anche come tocco porterebbe a **due** navigazioni,
+   * e la seconda cancellerebbe la prima.
+   */
+  const gesti = React.useMemo(() => Gesture.Race(trascina, tocca), [trascina, tocca]);
+
+  /**
    * Posizione e deformazione della lente, calcolate sul thread della UI.
    * Si allarga e contemporaneamente si schiaccia: il volume resta costante, ed
    * e' quello che la fa sembrare un liquido invece di un rettangolo che cambia
@@ -303,7 +363,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
         stileBarra,
       ]}
     >
-      <GestureDetector gesture={trascina}>
+      <GestureDetector gesture={gesti}>
       <View style={{ width: '100%', height: ALTEZZA }}>
         {/* ⚠️ **Il piano di riserva: il riquadro non puo' sparire.**
             Sotto il vetro c'e' sempre una velatura chiarissima e un anello di
@@ -464,10 +524,16 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
         )}
 
         {/* --- le voci, sopra a tutto -------------------------------------
-            ⚠️ **La geometria sta su una `View` con stile-oggetto**, e il
-            `Pressable` ci vive dentro **senza stile**.
+            ⚠️ **La geometria sta su una `View` con stile-oggetto.**
 
-            E' la quarta stesura di questo pezzo, e le prime tre sono fallite
+            ✅ Dal 2026-09-01 qui non c'e' piu' nessun `Pressable` — il tocco lo
+            gestisce il gesto `tocca` — quindi la trappola descritta sotto non
+            puo' piu' scattare *in questo punto*. Il paragrafo resta perche' la
+            regola che ne discende vale per **tutto il repo**, e perche' e' la
+            storia di come si e' arrivati a un pezzo che sembra piu' complicato
+            del necessario.
+
+            E' stata la quarta stesura di questo pezzo, e le prime tre erano fallite
             tutte per la stessa causa, scoperta solo il 2026-08-27 guardando uno
             screenshot in cui le sei icone erano **impilate in colonna**: in
             questo progetto uno stile passato come *funzione* a `Pressable`
@@ -500,6 +566,21 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
             return (
               <View
                 key={route.key}
+                // ⚠️ **L'accessibilita' non passa piu' dal `Pressable`**, che dal
+                // 2026-09-01 non c'e' piu' (vedi il gesto `tocca`): il tocco lo
+                // gestisce il genitore, quindi questi riquadri devono dichiararsi
+                // bottoni **da soli**, o VoiceOver e TalkBack leggerebbero sei
+                // riquadri muti — e l'etichetta a schermo non c'e' piu' da D-40.
+                accessible
+                accessibilityRole="button"
+                accessibilityState={attiva ? { selected: true } : {}}
+                accessibilityLabel={etichetta}
+                // 🔑 E devono restare **attivabili**: un gesto disegnato per un
+                // dito non esiste per chi naviga con lo screen reader. Questa e'
+                // la strada che i due sistemi hanno in comune — su iOS copre il
+                // doppio tocco di VoiceOver, su Android l'attivazione di TalkBack.
+                accessibilityActions={ATTIVA}
+                onAccessibilityAction={() => vaiA(i)}
                 style={{
                   width: passo,
                   height: LENTE,
@@ -507,33 +588,11 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
                   justifyContent: 'center',
                 }}
               >
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={attiva ? { selected: true } : {}}
-                  // L'etichetta non e' piu' a schermo (D-40): qui deve restare,
-                  // o VoiceOver leggerebbe sei bottoni senza nome.
-                  accessibilityLabel={etichetta}
-                  hitSlop={10}
-                  // Stessa funzione del trascinamento: toccare e trascinare
-                  // devono finire nello stesso posto, e due percorsi separati
-                  // avrebbero potuto divergere.
-                  onPress={() => vaiA(i)}
-                >
-                  <View
-                    style={{
-                      width: passo,
-                      height: LENTE,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {options.tabBarIcon?.({
-                      focused: attiva,
-                      color: attiva ? c.accento : c.tenue,
-                      size: 23,
-                    })}
-                  </View>
-                </Pressable>
+                {options.tabBarIcon?.({
+                  focused: attiva,
+                  color: attiva ? c.accento : c.tenue,
+                  size: 23,
+                })}
               </View>
             );
           })}

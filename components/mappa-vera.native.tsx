@@ -162,11 +162,71 @@ export function MappaVera({
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;
 }) {
+  /**
+   * 🔴 **Si riaccende a ogni cambio, non solo si rimanda lo spegnimento**
+   * (B-38, 2026-09-01 — difetto riferito: *«su Android appena apro
+   * l'applicazione non carica i pin sulla mappa»*).
+   *
+   * Qui c'era solo il `setTimeout`. La dipendenza sul numero dei luoghi faceva
+   * credere che il conto tornasse, ma **rimandare lo spegnimento non è
+   * riaccendere**: all'apertura dell'app la mappa monta con zero luoghi — i dati
+   * stanno ancora arrivando dal database — i 900 ms scadono sul vuoto, e quando
+   * i luoghi arrivano i marker nascono con la cattura **già spenta**. Senza
+   * `tracksViewChanges` react-native-maps non prende mai la texture del pin
+   * disegnato da noi, e su Android il pin non si disegna affatto.
+   *
+   * 🔑 **Perché solo su Android, e perché non si è visto prima.** Su iOS la view
+   * del marker viene renderizzata comunque, quindi lo stesso identico bug non
+   * produce nessun sintomo: il difetto era in questo file dal 2026-08-27 e i
+   * giri di verifica lo hanno attraversato tutti senza vederlo, perché sono
+   * stati fatti su un iPhone. *Una correzione provata su un solo sistema è
+   * provata a metà* — la variante nuova di una classe che questo progetto
+   * conosce già bene.
+   *
+   * ⚠️ Resta il compromesso di sempre: acceso costa un ridisegno per fotogramma,
+   * spento troppo presto costa il pin vuoto. Non cambia la cura, cambia che ora
+   * la finestra dei 900 ms si apre **quando i pin ci sono davvero**.
+   */
+  /**
+   * ⚠️ **E si riaccende anche quando cambia l'*aspetto* dei pin, non solo il
+   * loro numero.** Il conteggio degli eventi e «ha una serata futura» decidono
+   * il disegno del pin (pieno/chiaro, calendario/segnalibro, il numerino), ma
+   * non spostano `luoghi.length`: segnando come visitato un posto già sulla
+   * mappa, su Android sarebbe rimasta la texture vecchia. È lo stesso difetto
+   * di sopra travestito da «il pin non si aggiorna» invece che «il pin non c'è».
+   *
+   * 🔑 **Una firma-stringa e non gli oggetti**: `eventiPerLuogo` &c. sono
+   * ricreati dal genitore a ogni render, e metterli fra le dipendenze
+   * riaccenderebbe la cattura di continuo — cioè il ridisegno per fotogramma che
+   * lo spegnimento esiste per evitare. È la lezione di B-32, applicata prima che
+   * faccia danni invece che dopo.
+   */
+  const firmaPin = React.useMemo(
+    () =>
+      [
+        luoghi.length,
+        ristoranti.length,
+        Object.values(eventiPerLuogo).reduce((s, n) => s + n, 0),
+        Object.values(eventiPerRistorante).reduce((s, n) => s + n, 0),
+        Object.values(programmatiLuogo).filter(Boolean).length,
+        Object.values(programmatiRistorante).filter(Boolean).length,
+      ].join('·'),
+    [
+      luoghi.length,
+      ristoranti.length,
+      eventiPerLuogo,
+      eventiPerRistorante,
+      programmatiLuogo,
+      programmatiRistorante,
+    ]
+  );
+
   const [traccia, setTraccia] = React.useState(true);
   React.useEffect(() => {
+    setTraccia(true);
     const id = setTimeout(() => setTraccia(false), 900);
     return () => clearTimeout(id);
-  }, [luoghi.length, ristoranti.length]);
+  }, [firmaPin]);
 
   return (
     <MapView
