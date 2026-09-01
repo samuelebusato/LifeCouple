@@ -23,6 +23,7 @@ export function Attesa({
   onAzione,
   onEsci,
   onAnnulla,
+  spiegazione,
   attesa = false,
 }: {
   titolo: string;
@@ -42,6 +43,15 @@ export function Attesa({
    * uscire che esiste.
    */
   onAnnulla?: () => void;
+  /**
+   * **Come si gioca**, in tre righe (chiesto dall'utente il 2026-09-01).
+   *
+   * ⚠️ Compare **solo quando c'e' qualcosa da premere**, cioe' prima di avviare.
+   * Nell'attesa dell'altro e nel «preparo» le regole non servono piu' — la
+   * decisione e' presa — e lascerebbero a schermo un muro di testo proprio nel
+   * momento in cui l'unica informazione che conta e' *chi stiamo aspettando*.
+   */
+  spiegazione?: string;
   /** Vero mentre si aspetta l'altra persona: mostra la rotella al posto sua. */
   attesa?: boolean;
 }) {
@@ -54,6 +64,20 @@ export function Attesa({
           <Emblema size={92} color={c.accento} />
           <Text className="text-center font-serif-bold text-3xl text-foreground">{titolo}</Text>
           <Text className="text-center text-base text-muted-foreground">{testo}</Text>
+          {!!spiegazione && !!azione && (
+            <View
+              className="rounded-3xl border border-border/60 px-5 py-4"
+              // Un riquadro e non testo nudo: cosi' si legge come *le regole*,
+              // un blocco a se', invece che come una seconda riga di quella sopra.
+              // `alone` e non `velo`: quest'ultimo e' del tema del **vetro**, ed
+              // e' una coppia di colori per una sfumatura, non una tinta piatta.
+              style={{ backgroundColor: c.alone }}
+            >
+              <Text className="text-center font-serif text-base leading-6 text-foreground">
+                {spiegazione}
+              </Text>
+            </View>
+          )}
           {attesa && <ActivityIndicator color={c.accento} />}
           {/*
             ⚠️ **`BottonePieno` e non `BottoneVetro variante="accento"`**, ed è la

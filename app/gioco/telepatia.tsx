@@ -1,18 +1,18 @@
 import * as React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Fondo } from '@/components/schermata';
-import { CartaVetro, TondoVetro } from '@/components/ui/vetro';
+import { CartaVetro, TondoVetro, BottonePieno } from '@/components/ui/vetro';
 import { Premibile } from '@/components/ui/premibile';
 import { Comparsa } from '@/components/ui/comparsa';
 import { PunteggioFinale } from '@/components/punteggio-finale';
 import { Attesa } from '@/components/attesa-partita';
 import { supabase } from '@/lib/supabase';
 import { useCoppia } from '@/lib/coppia';
-import { usePartita, PAUSA_FRA_ROUND } from '@/lib/partita';
+import { usePartita } from '@/lib/partita';
 import { TEMI_TELEPATIA, rendi, type Voce } from '@/lib/parole';
 import { useTema } from '@/lib/tema';
 import { tatto } from '@/lib/movimento';
@@ -87,6 +87,23 @@ export default function GiocoTelepatia() {
   const [esito, setEsito] = React.useState<{ mia: string; sua: string } | null>(null);
   /** La scelta non è arrivata al database: si può — e si deve — ripremere. */
   const [erroreScelta, setErroreScelta] = React.useState<string | null>(null);
+  /**
+   * 🔴 **Se l'esito dell'ultimo round è già stato letto e congedato** (B-39,
+   * 2026-09-01 — difetto riferito: *«entra in un loop in cui continua a comparire
+   * il pop-up "è la stessa"»*).
+   *
+   * Il primo tentativo congedava il pop-up con `setEsito(null)`. Non poteva
+   * funzionare: da B-37 l'effetto della rivelazione **sopravvive alla chiusura
+   * del round**, quindi trovava `esito` vuoto, richiedeva la rivelazione al
+   * database — che risponde sempre la stessa cosa — e rimetteva il pop-up. Un
+   * anello chiuso, e senza uscita: il bottone alimentava ciò che voleva togliere.
+   *
+   * 🔑 *Cancellare un dato non è dire che l'hai visto.* Il dato è vero e resta
+   * vero; quello che cambia è che **questo telefono** l'ha già letto — ed è una
+   * cosa che nessun campo del database può sapere, perché l'altro lo legge per
+   * conto suo.
+   */
+  const [finaleLetto, setFinaleLetto] = React.useState(false);
 
   React.useEffect(() => {
     apri(coppiaId);
@@ -125,11 +142,34 @@ export default function GiocoTelepatia() {
   React.useEffect(() => {
     if (partita?.stato !== 'in_corso' || !ioApro) return;
     if (round && round.numero === numeroRound) return;
+    /**
+     * 🔑 **Il round nuovo non parte più dopo un tempo: parte quando hanno
+     * premuto «continua» tutti e due** (0027, chiesto il 2026-09-01).
+     *
+     * Qui c'era `PAUSA_FRA_ROUND`, tre secondi uguali per chiunque. Il difetto
+     * riferito — *«le animazioni sono troppo veloci»* — non si sarebbe risolto
+     * allungandoli: un timer più lungo sposta il problema addosso a chi legge in
+     * fretta, e resta comunque un'attesa cieca, identica sia che l'altro stia
+     * guardando lo schermo sia che abbia posato il telefono.
+     *
+     * 🔴 **E il guardiano NON può guardare `finito_il`** (2026-09-01, secondo
+     * tentativo). La prima stesura diceva `round?.finito_il && !entrambiProntiRound`
+     * e il round passava avanti lo stesso, col pop-up che si affacciava e
+     * spariva. La causa è una corsa fra due aggiornamenti che arrivano da strade
+     * diverse: `chiudi` fa `setPartita` con `round_corrente` già avanzato — è la
+     * risposta della RPC — mentre il `round` locale prende `finito_il` **solo**
+     * quando arriva l'evento realtime, un istante dopo. In quell'istante
+     * `numeroRound` è già N+1 e `finito_il` è ancora `null`: il guardiano
+     * interrogava un campo non ancora arrivato, e lasciava passare.
+     *
+     * 🔑 La condizione giusta non ha bisogno che nessun campo arrivi: **se un
+     * round esiste ed è arrivato fin qui, è un round passato.** Quello in corso
+     * l'ha già fermato la riga sopra, e al primo round `round` è `null` — quindi
+     * la partita parte senza aspettare un «continua» che nessuno vedrebbe.
+     * *Un guardiano che dipende da un dato in viaggio non è un guardiano.*
+     */
+    if (round && !p.entrambiProntiRound) return;
     let vivo = true;
-    // Come nel disegno: chiuso un round si resta sull'esito il tempo di
-    // leggerlo, e qui l'esito è il momento in cui si scopre cosa ha scelto
-    // l'altro — cioè tutto il gioco.
-    const attesa = round?.finito_il ? PAUSA_FRA_ROUND : 0;
     const avvio = setTimeout(async () => {
       const passati = await supabase
         .from('partita_round')
@@ -147,7 +187,11 @@ export default function GiocoTelepatia() {
         .single();
       if (!vivo || error || !data) return;
       p.setRound(data);
-    }, attesa);
+      // ⚠️ Resta un `setTimeout` a zero, e non è un residuo: rimanda l'`insert`
+      // al giro successivo, così il `return` di pulizia può ancora annullarlo se
+      // la schermata si smonta nel frattempo. Una chiamata diretta partirebbe
+      // dentro il render, e non ci sarebbe più niente da annullare.
+    }, 0);
     return () => {
       vivo = false;
       clearTimeout(avvio);
@@ -185,24 +229,64 @@ export default function GiocoTelepatia() {
   }
 
   /* --- si aspetta l'altro, e si confronta ---------------------------------- */
+  /**
+   * 🔴 **Si chiede la rivelazione a `round`, non a `roundVivo`** (B-37,
+   * 2026-09-01) — ed è la seconda metà di B-34, rimasta indietro per tre giorni.
+   *
+   * `roundVivo` diventa `null` **nell'istante in cui il round si chiude**: è la
+   * sua definizione. Ma chi chiude è uno solo — chi apre i round — e lo fa
+   * appena *lui* ha ricevuto la rivelazione. Sull'altro telefono il giro di
+   * domande passa ogni 1200 ms: se la chiusura arriva prima del suo giro,
+   * `roundVivo` si spegne, questo effetto si smonta, e `esito` **non viene
+   * impostato mai**.
+   *
+   * 🔑 Fino al 2026-09-01 il difetto c'era ma non fermava niente: la pausa di
+   * tre secondi faceva partire il round dopo comunque, e chi perdeva l'esito si
+   * limitava a non vederlo — cioè esattamente il sintomo di B-34, che era stato
+   * corretto **solo dalla parte delle carte**. Da quando il round successivo
+   * aspetta il «Continua» di tutti e due, quel mancato esito non è più un
+   * fastidio: è una **partita che si blocca**, perché chi non ha visto il pop-up
+   * non ha nessun bottone da premere.
+   *
+   * ⚠️ Il round finito **è** il momento per cui si gioca (B-34): questo effetto
+   * deve sopravvivergli, non spegnersi insieme a lui.
+   */
   React.useEffect(() => {
-    if (!roundVivo || !miaScelta || esito || !io) return;
+    if (!round || esito || !io) return;
+    /**
+     * ⚠️ **A round aperto serve aver scelto; a round chiuso no.**
+     *
+     * `miaScelta` è stato locale: chi chiude e riapre la schermata lo perde. Con
+     * la sola condizione `!miaScelta` chi rientrasse a round finito non
+     * chiederebbe più la rivelazione, resterebbe senza pop-up e — da oggi che il
+     * round dopo aspetta il «Continua» — **senza modo di far ripartire la
+     * partita**. La rivelazione però non ha bisogno di sapere cosa abbiamo
+     * scelto: la scelta gliela dice il database. Quindi a round finito si chiede
+     * comunque, ed è ciò che permette di recuperare una partita ricaricata.
+     */
+    if (!miaScelta && !round.finito_il) return;
     let vivo = true;
     const chiedi = async () => {
       const { data } = await supabase.rpc('rivela_telepatia', {
-        p_partita: roundVivo.partita_id,
-        p_round: roundVivo.numero,
+        p_partita: round.partita_id,
+        p_round: round.numero,
       });
       if (!vivo || !data || data.length < 2) return;
-      const mia = data.find((r) => r.utente_id === io)?.scelta ?? miaScelta;
+      const mia = data.find((r) => r.utente_id === io)?.scelta ?? miaScelta ?? '';
       const sua = data.find((r) => r.utente_id !== io)?.scelta ?? '';
+      // Ripristina anche l'evidenza sulla carta: chi ha ricaricato deve rivedere
+      // **quale** aveva scelto, o l'esito è una frase senza il suo referente.
+      if (!miaScelta && mia) setMiaScelta(mia);
       setEsito({ mia, sua });
       const coincide = mia === sua;
       if (coincide) tatto('fatto');
-      // ⚠️ Chiude **solo chi apre i round**: la funzione regge due chiamate (la
-      // seconda trova il round non più `in_corso` e torna senza fare nulla), ma
-      // spedire una scrittura che si sa inutile è comunque rumore.
-      if (ioApro) await p.chiudi(roundVivo.id, coincide ? 'vinto' : 'perso', coincide ? 1 : 0);
+      // ⚠️ Chiude **solo chi apre i round**, e **solo se è ancora aperto**: ora
+      // che questo effetto sopravvive alla chiusura, senza la seconda condizione
+      // manderebbe una `chiudi` su un round già chiuso a ogni giro. La funzione
+      // la regge — trova il round non più `in_corso` e torna — ma sarebbe una
+      // scrittura inutile ogni 1200 ms invece che una sola.
+      if (ioApro && round.esito === 'in_corso')
+        await p.chiudi(round.id, coincide ? 'vinto' : 'perso', coincide ? 1 : 0);
     };
     chiedi();
     const id = setInterval(chiedi, 1200);
@@ -210,7 +294,7 @@ export default function GiocoTelepatia() {
       vivo = false;
       clearInterval(id);
     };
-  }, [roundVivo, miaScelta, esito, io, ioApro, p]);
+  }, [round, miaScelta, esito, io, ioApro, p]);
 
   /* --- cambio round -------------------------------------------------------- */
   /**
@@ -235,6 +319,10 @@ export default function GiocoTelepatia() {
     setMiaScelta(null);
     setEsito(null);
     setErroreScelta(null);
+    // Anche questo: un round nuovo vuol dire che si sta giocando, quindi nessun
+    // esito finale e' stato congedato. Senza, una seconda partita aperta senza
+    // smontare la schermata salterebbe il pop-up del suo ultimo round.
+    setFinaleLetto(false);
   }, [round?.id]);
 
   /* --- schermate ----------------------------------------------------------- */
@@ -242,7 +330,22 @@ export default function GiocoTelepatia() {
     return <Attesa titolo={t.giochi.telepatia} testo={t.gioco.preparo} onEsci={() => router.back()} />;
   }
 
-  if (partita.stato === 'conclusa') {
+  /**
+   * 🔴 **`&& !esito`: l'ultimo round mostrava il punteggio senza mostrare come
+   * era andato** (2026-09-01, difetto riferito: *«l'ultima domanda della
+   * telepatia non mostra il risultato»*).
+   *
+   * Chiuso il decimo round la partita passa a `conclusa` nello stesso istante,
+   * e questa riga portava dritti al punteggio finale: il pop-up del round non
+   * faceva in tempo a esistere. Si perdeva **proprio l'ultimo**, cioè quello che
+   * decide il punteggio che si sta per leggere.
+   *
+   * 🔑 Era un difetto già prima del pop-up — l'esito dell'ultimo round non l'ha
+   * mai visto nessuno — ma finché tutti gli altri sfilavano via da soli non
+   * stonava. Adesso che ogni round si chiude con un gesto, l'unico che si
+   * chiudeva da solo era quello che conta di più.
+   */
+  if (partita.stato === 'conclusa' && finaleLetto) {
     return (
       <PunteggioFinale
         titolo={t.giochi.telepatia}
@@ -269,6 +372,7 @@ export default function GiocoTelepatia() {
         }}
         azione={p.ioSonoPronto ? undefined : t.gioco.avvia}
         onAzione={p.premiAvvia}
+        spiegazione={t.hubGiochi.comeSiGioca.telepatia}
         attesa={p.ioSonoPronto}
       />
     );
@@ -311,7 +415,43 @@ export default function GiocoTelepatia() {
                   aptico={false}
                   scala={0.97}
                 >
-                  <CartaVetro raggio={26} fondo={mia ? 'pieno' : 'sicuro'}>
+                  {/* 🔴 **Lo stesso `fondo` per tutte e quattro** (2026-09-01,
+                      difetto riferito: *«alcuni riquadri con la risposta sono
+                      come evidenziati o in rilievo»*).
+
+                      Qui c'era `fondo={mia ? 'pieno' : 'sicuro'}`, e non sono due
+                      sfumature dello stesso materiale: **sono due materiali
+                      diversi**. `'pieno'` salta del tutto il vetro nativo e mette
+                      una base opaca; `'sicuro'` lo lascia fare al sistema. Nella
+                      stessa fila di quattro carte questo produce una superficie
+                      che sta su un piano diverso dalle altre — che è esattamente
+                      la parola usata nella segnalazione, «in rilievo».
+
+                      🔑 **L'evidenza della scelta non deve passare dal
+                      materiale**, perché il materiale lo decide iOS e cambia
+                      aspetto senza avvisare (B-15, causa mai isolata). Passa da
+                      cose nostre, che ci sono già e non sbiadiscono: il bordo di
+                      2 punti in accento, il testo in accento, e le altre carte
+                      portate a 0,45 di opacita'.
+
+                      🔴 **E `'pieno'` per tutte, non `'sicuro'`** (2026-09-01,
+                      secondo giro, con lo screenshot alla mano). Uniformare il
+                      fondo non bastava: nello screenshot le quattro carte
+                      avevano già lo stesso `fondo`, e **la prima non aveva il
+                      riquadro affatto** — non era «più in evidenza», erano le
+                      altre tre ad avere una superficie e lei no. È B-15 preso in
+                      flagrante: `'sicuro'` lascia disegnare il vetro **nativo**,
+                      e quando iOS decide di non disegnarlo resta la sola
+                      velatura chiarissima, che sul fondo chiaro dell'app è
+                      indistinguibile dallo sfondo.
+
+                      `'pieno'` **salta il vetro nativo** e mette una base opaca
+                      nostra: stesso aspetto su iOS e su Android, e nessuna carta
+                      può più sparire. Si perde l'effetto vetro su queste quattro
+                      superfici — ed è un prezzo che vale, perché una carta da
+                      premere che a volte non si vede non è una decorazione
+                      riuscita male: è un comando invisibile. */}
+                  <CartaVetro raggio={26} fondo="pieno">
                     <View
                       className="flex-row items-center justify-between px-6"
                       style={{
@@ -352,32 +492,7 @@ export default function GiocoTelepatia() {
           })}
         </View>
 
-        <View className="px-6 pb-6" style={{ minHeight: 84 }}>
-          <Comparsa visibile={!!esito} scarto={12}>
-            {!!esito && (
-              <CartaVetro raggio={22} fondo="sicuro">
-                <View className="items-center gap-1 px-4 py-4">
-                  <Text
-                    className="font-serif-bold text-2xl"
-                    style={{ color: esito.mia === esito.sua ? c.accento : c.tenue }}
-                  >
-                    {esito.mia === esito.sua ? t.gioco.coincidete : t.gioco.diverso}
-                  </Text>
-                  {esito.mia !== esito.sua && (
-                    <Text className="text-sm text-muted-foreground">
-                      {t.gioco.haSceltoLui(
-                        rendi(
-                          tema?.voci.find((v) => v[0] === esito.sua) ?? [esito.sua, esito.sua],
-                          lingua
-                        )
-                      )}
-                    </Text>
-                  )}
-                </View>
-              </CartaVetro>
-            )}
-          </Comparsa>
-
+        <View className="px-6 pb-6" style={{ minHeight: 40 }}>
           {!!(erroreScelta || p.errore) && (
             <Text className="pt-2 text-center text-sm text-destructive">
               {erroreScelta ?? p.errore}
@@ -385,6 +500,95 @@ export default function GiocoTelepatia() {
           )}
         </View>
       </SafeAreaView>
+
+      {/* --- il pop-up dell'esito (0027, chiesto il 2026-09-01) --------------
+          🔑 **Era un riquadro in fondo, ora è un pop-up, e il cambio non è
+          estetico.** Il riquadro conviveva con una pausa di tre secondi: si
+          affacciava e spariva, e chi non stava già guardando in basso lo
+          perdeva. Il difetto riferito — *«le animazioni sono troppo veloci»* —
+          era questo. Un pop-by al centro con un bottone toglie il cronometro
+          dalla faccenda: **la schermata resta finché non decidete voi**.
+
+          ⚠️ **Le carte sotto restano visibili** attraverso il velo, ed è
+          deliberato: è il punto di B-34: l'esito si legge guardando *quale*
+          carta ha scelto l'altro, e un pop-up opaco cancellerebbe proprio ciò
+          che si è appena finito di aspettare. */}
+      {!!esito && (
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 28,
+              backgroundColor: 'rgba(20,10,18,0.30)',
+            },
+          ]}
+        >
+          <Comparsa visibile scarto={14}>
+            {/* 🔴 `fondo="pieno"` e non `"sicuro"` (2026-09-01, difetto riferito:
+                *«a volte il pop-up è in trasparenza»*). `"sicuro"` lascia fare al
+                **vetro nativo di iOS**, che il sistema disegna quando gli pare:
+                quando non lo fa resta la sola velatura chiarissima, e sopra un
+                velo scuro quella non è un fondo — è un pop-up che si vede
+                attraverso. La regola sta gia' scritta in `vetro.tsx`: `"pieno"` è
+                *«per il vetro dentro un foglio, dove sotto c'è solo la velatura
+                scura del modale»*, che è esattamente questo. Sbagliato io a non
+                applicarla: è la stessa lezione del bottone «avvia» che sembrava
+                spento — **ciò che deve reggere non può dipendere da un materiale
+                che decide il sistema**. */}
+            <CartaVetro raggio={28} fondo="pieno">
+              <View className="items-center gap-3 px-7 py-7" style={{ minWidth: 250 }}>
+                <Text
+                  className="text-center font-serif-bold text-3xl"
+                  style={{ color: esito.mia === esito.sua ? c.accento : c.tenue }}
+                >
+                  {esito.mia === esito.sua ? t.gioco.coincidete : t.gioco.diverso}
+                </Text>
+                {esito.mia !== esito.sua && (
+                  <Text className="text-center text-base text-muted-foreground">
+                    {t.gioco.haSceltoLui(
+                      rendi(
+                        tema?.voci.find((v) => v[0] === esito.sua) ?? [esito.sua, esito.sua],
+                        lingua
+                      )
+                    )}
+                  </Text>
+                )}
+                {/* ⚠️ Premuto il bottone sparisce e al suo posto c'è **chi si sta
+                    aspettando**. Un bottone che resta premibile dopo aver fatto
+                    il suo lavoro invita a premerlo di nuovo, e qui la seconda
+                    pressione non fa niente di visibile: sembrerebbe rotto. */}
+                {/* ⚠️ **All'ultimo round non si aspetta nessuno.** Dopo di questo
+                    non c'è un round da far partire insieme: c'è il punteggio, e
+                    ognuno lo legge quando vuole. Far aspettare qui sarebbe
+                    un'attesa senza scopo — e se l'altro avesse gia' posato il
+                    telefono, un'attesa senza fine. */}
+                {partita.stato === 'conclusa' ? (
+                  <BottonePieno
+                    testo={t.gioco.continua}
+                    onPress={() => setFinaleLetto(true)}
+                    style={{ minWidth: 200 }}
+                  />
+                ) : p.ioSonoProntoRound ? (
+                  <View className="items-center gap-2 pt-1">
+                    <ActivityIndicator color={c.accento} />
+                    <Text className="text-center text-sm text-muted-foreground">
+                      {t.gioco.attendoContinua}
+                    </Text>
+                  </View>
+                ) : (
+                  <BottonePieno
+                    testo={t.gioco.continua}
+                    onPress={p.segnaProntoRound}
+                    style={{ minWidth: 200 }}
+                  />
+                )}
+              </View>
+            </CartaVetro>
+          </Comparsa>
+        </View>
+      )}
     </View>
   );
 }

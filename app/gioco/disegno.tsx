@@ -1,19 +1,27 @@
 import * as React from 'react';
-import { View, TextInput, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import {
+  View,
+  TextInput,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { X, Send } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Fondo } from '@/components/schermata';
-import { BottoneVetro, CartaVetro, TondoVetro } from '@/components/ui/vetro';
+import { BottoneVetro, BottonePieno, CartaVetro, TondoVetro } from '@/components/ui/vetro';
 import { Comparsa } from '@/components/ui/comparsa';
 import { TelaDisegno, type Tratto, type MessaggioTela } from '@/components/tela-disegno';
 import { PunteggioFinale } from '@/components/punteggio-finale';
 import { Attesa } from '@/components/attesa-partita';
 import { supabase } from '@/lib/supabase';
 import { useCoppia } from '@/lib/coppia';
-import { usePartita, SECONDI_ROUND, PAUSA_FRA_ROUND } from '@/lib/partita';
+import { usePartita, SECONDI_ROUND } from '@/lib/partita';
 import { PAROLE_DISEGNO, rendi, indovinata, type Voce } from '@/lib/parole';
 import { useTema } from '@/lib/tema';
 import { tatto } from '@/lib/movimento';
@@ -95,6 +103,20 @@ export default function GiocoDisegno() {
 
   /** La parola del round: la sa **solo** chi disegna. */
   const [voce, setVoce] = React.useState<Voce | null>(null);
+  /**
+   * Se l'esito dell'**ultimo** round è già stato letto e congedato.
+   *
+   * ⚠️ Serve uno stato locale e non si può dedurre dai dati: a partita conclusa
+   * il round finale resta lì, identico, e nessun campo dice «l'ho visto». È una
+   * cosa che sa solo questo telefono — e infatti l'altro la sa per conto suo.
+   */
+  const [finaleLetto, setFinaleLetto] = React.useState(false);
+  // Un round nuovo vuol dire che si sta giocando: nessun esito finale congedato.
+  // Senza, una seconda partita aperta senza smontare la schermata salterebbe il
+  // pop-up del proprio ultimo round.
+  React.useEffect(() => {
+    setFinaleLetto(false);
+  }, [round?.id]);
 
   /* --- il canale dei tratti, che non passa dal database -------------------- */
   React.useEffect(() => {
@@ -127,11 +149,24 @@ export default function GiocoDisegno() {
   React.useEffect(() => {
     if (partita?.stato !== 'in_corso' || !ioDisegno || !io) return;
     if (round && round.numero === numeroRound) return;
+    /**
+     * 🔑 **Il round nuovo parte quando hanno premuto «continua» tutti e due**
+     * (0027, 2026-09-01) — non più dopo `PAUSA_FRA_ROUND`.
+     *
+     * Qui il cambio pesa più che nella telepatia: chi indovina e chi disegna
+     * leggono l'esito in due momenti diversi — uno sa già la parola, l'altro la
+     * scopre in quell'istante — e tre secondi uguali per entrambi servivano male
+     * proprio la persona per cui l'esito è una notizia.
+     *
+     * 🔴 **Non si guarda `finito_il`**, per la stessa corsa spiegata in
+     * `telepatia.tsx`: `chiudi` aggiorna la partita subito (round_corrente
+     * avanzato) e il round locale solo all'arrivo dell'evento realtime, quindi
+     * per un istante il campo è ancora `null` e il guardiano lascerebbe passare.
+     * L'esistenza di un round passato non ha bisogno di viaggiare: quello in
+     * corso l'ha già fermato la riga sopra, e al primo round `round` è `null`.
+     */
+    if (round && !p.entrambiProntiRound) return;
     let vivo = true;
-    // ⚠️ Se c'è un round appena chiuso, si lascia il tempo di **leggerne
-    // l'esito**: vedi `PAUSA_FRA_ROUND`. Al primo round non c'è niente da
-    // leggere e si parte subito.
-    const attesa = round?.finito_il ? PAUSA_FRA_ROUND : 0;
     const avvio = setTimeout(async () => {
       // ⚠️ **Una parola non si ripete nella stessa partita** (B-33). Pescare a
       // caso su 250 voci sembra sicuro e non lo è: su cinque round la
@@ -174,7 +209,9 @@ export default function GiocoDisegno() {
       setParziale(null);
       setTentativi([]);
       p.setRound(data);
-    }, attesa);
+      // Zero, ma resta un `setTimeout`: rimanda l'`insert` al giro dopo, così la
+      // pulizia dell'effetto può ancora annullarlo se la schermata si smonta.
+    }, 0);
     return () => {
       vivo = false;
       clearTimeout(avvio);
@@ -255,7 +292,13 @@ export default function GiocoDisegno() {
     return <Attesa titolo={t.giochi.indovina_disegno} testo={t.gioco.preparo} onEsci={() => router.back()} />;
   }
 
-  if (partita.stato === 'conclusa') {
+  /**
+   * 🔴 Come nella telepatia: **l'esito dell'ultimo round non lo vedeva nessuno.**
+   * Chiuso il quinto round la partita passa a `conclusa` nello stesso istante e
+   * si finiva dritti sul punteggio, saltando la parola svelata — che qui pesa il
+   * doppio, perché per chi indovinava è **l'unico momento** in cui la scopre.
+   */
+  if (partita.stato === 'conclusa' && finaleLetto) {
     return (
       <PunteggioFinale
         titolo={t.giochi.indovina_disegno}
@@ -282,6 +325,7 @@ export default function GiocoDisegno() {
         }}
         azione={p.ioSonoPronto ? undefined : t.gioco.avvia}
         onAzione={p.premiAvvia}
+        spiegazione={t.hubGiochi.comeSiGioca.indovina_disegno}
         attesa={p.ioSonoPronto}
       />
     );
@@ -355,33 +399,8 @@ export default function GiocoDisegno() {
             />
           </View>
 
-          {/* --- esito del round appena chiuso ------------------------------ */}
-          <Comparsa visibile={!!esitoRound && !roundVivo} scarto={12}>
-            {esitoRound && (
-              <View className="px-5 pb-2">
-                <CartaVetro raggio={20} fondo="sicuro">
-                  <View className="items-center gap-1 px-4 py-3">
-                    <Text className="text-base font-semibold text-foreground">
-                      {esitoRound.esito === 'vinto' ? t.gioco.indovinato : t.gioco.tempoScaduto}
-                    </Text>
-                    {!!esitoRound.chiave_rivelata && (
-                      <Text className="text-sm text-muted-foreground">
-                        {t.gioco.eraParola(
-                          rendi(
-                            PAROLE_DISEGNO.find((x) => x[0] === esitoRound.chiave_rivelata) ?? [
-                              esitoRound.chiave_rivelata,
-                              esitoRound.chiave_rivelata,
-                            ],
-                            lingua
-                          )
-                        )}
-                      </Text>
-                    )}
-                  </View>
-                </CartaVetro>
-              </View>
-            )}
-          </Comparsa>
+          {/* L'esito non è più qui in mezzo alla schermata: è il pop-up in
+              fondo al file, che aspetta il «continua» di tutti e due (0027). */}
 
           {/* --- i tentativi ------------------------------------------------ */}
           <View className="px-5" style={{ maxHeight: 120 }}>
@@ -448,6 +467,76 @@ export default function GiocoDisegno() {
           )}
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* --- il pop-up dell'esito (0027, chiesto il 2026-09-01) --------------
+          Stesso pezzo della telepatia, e per la stessa ragione: la schermata
+          resta sull'esito **finché non decidete voi**, invece che per tre
+          secondi. ⚠️ Qui in più c'è la parola: chi indovinava la scopre proprio
+          adesso, e prima poteva passargli sotto gli occhi mentre scriveva. */}
+      {!!esitoRound && !roundVivo && (
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 28,
+              backgroundColor: 'rgba(20,10,18,0.30)',
+            },
+          ]}
+        >
+          <Comparsa visibile scarto={14}>
+            {/* `fondo="pieno"`: sopra un velo scuro il vetro nativo, quando iOS
+                sceglie di non disegnarlo, lascia solo una velatura — e il pop-up
+                si vede attraverso. Vedi la nota estesa in `telepatia.tsx`. */}
+            <CartaVetro raggio={28} fondo="pieno">
+              <View className="items-center gap-3 px-7 py-7" style={{ minWidth: 250 }}>
+                <Text
+                  className="text-center font-serif-bold text-3xl"
+                  style={{ color: esitoRound.esito === 'vinto' ? c.accento : c.tenue }}
+                >
+                  {esitoRound.esito === 'vinto' ? t.gioco.indovinato : t.gioco.tempoScaduto}
+                </Text>
+                {!!esitoRound.chiave_rivelata && (
+                  <Text className="text-center text-base text-muted-foreground">
+                    {t.gioco.eraParola(
+                      rendi(
+                        PAROLE_DISEGNO.find((x) => x[0] === esitoRound.chiave_rivelata) ?? [
+                          esitoRound.chiave_rivelata,
+                          esitoRound.chiave_rivelata,
+                        ],
+                        lingua
+                      )
+                    )}
+                  </Text>
+                )}
+                {/* All'ultimo round non si aspetta nessuno: dopo non c'è un round
+                    da far partire insieme, c'è il punteggio. */}
+                {partita.stato === 'conclusa' ? (
+                  <BottonePieno
+                    testo={t.gioco.continua}
+                    onPress={() => setFinaleLetto(true)}
+                    style={{ minWidth: 200 }}
+                  />
+                ) : p.ioSonoProntoRound ? (
+                  <View className="items-center gap-2 pt-1">
+                    <ActivityIndicator color={c.accento} />
+                    <Text className="text-center text-sm text-muted-foreground">
+                      {t.gioco.attendoContinua}
+                    </Text>
+                  </View>
+                ) : (
+                  <BottonePieno
+                    testo={t.gioco.continua}
+                    onPress={p.segnaProntoRound}
+                    style={{ minWidth: 200 }}
+                  />
+                )}
+              </View>
+            </CartaVetro>
+          </Comparsa>
+        </View>
+      )}
     </View>
   );
 }

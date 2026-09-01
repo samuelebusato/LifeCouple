@@ -27,20 +27,19 @@ export const ROUND_TOTALI: Record<CodiceGioco, number> = {
  */
 export const SECONDI_ROUND = 60;
 
-/**
- * Quanto si resta sull'esito prima che parta il round dopo, in millisecondi.
+/*
+ * ✅ **`PAUSA_FRA_ROUND` non esiste più** (2026-09-01, migrazione 0027).
  *
- * 🔑 Serve perché senza di essa **il risultato non si vede**. Chiuso un round,
- * chi apre il successivo lo creerebbe nel fotogramma dopo, e la riga «era: cane»
- * comparirebbe e sparirebbe prima che l'occhio ci arrivi. Il round finito è il
- * momento in cui succede la cosa per cui si sta giocando — indovinato o no, la
- * parola svelata — e mangiarselo per fretta significa togliere al gioco il suo
- * unico momento di soddisfazione.
+ * Erano i tre secondi che passavano fra un round e il successivo. La ragione per
+ * cui esisteva resta vera parola per parola — *il round finito è il momento in
+ * cui succede la cosa per cui si sta giocando, e mangiarselo per fretta toglie
+ * al gioco il suo unico momento di soddisfazione* — ed è esattamente il motivo
+ * per cui è stata **sostituita** invece che allungata: un tempo fisso protegge
+ * quel momento solo per chi legge alla velocità per cui è stato tarato.
  *
- * ⚠️ Tre secondi, non uno: il tempo di leggere una parola **e** di guardare in
- * faccia l'altra persona, che in un gioco di coppia è metà del punto.
+ * Ora il round successivo parte quando hanno premuto «continua» tutti e due:
+ * vedi `prontiRound` più sotto.
  */
-export const PAUSA_FRA_ROUND = 3000;
 
 /**
  * La macchina di una partita, condivisa dai due giochi.
@@ -211,6 +210,76 @@ export function usePartita(gioco: CodiceGioco) {
   }, [partita]);
 
   /**
+   * 🔑 **I «continua» del round in corso** (0027, chiesto il 2026-09-01).
+   *
+   * Stessa forma di `pronti`, un livello più in basso: lì è «sono pronto a
+   * giocare», qui «sono pronto ad andare avanti». La differenza che conta è che
+   * questa risposta **scade a ogni round**, ed è la ragione per cui non si
+   * poteva riusare `partita_pronto`.
+   *
+   * ⚠️ **Si azzera all'istante in cui cambia il round, prima ancora di leggere
+   * il database.** Se restassero i «continua» del round precedente, il round
+   * nuovo partirebbe da «sono pronti tutti e due» e sfilerebbe via da solo —
+   * che è precisamente il difetto che questo meccanismo esiste per togliere.
+   */
+  const [prontiRound, setProntiRound] = React.useState<string[]>([]);
+  React.useEffect(() => {
+    const idRound = round?.id;
+    setProntiRound([]);
+    if (!idRound) return;
+    let vivo = true;
+    const leggi = () =>
+      supabase
+        .from('round_pronto')
+        .select('utente_id')
+        .eq('round_id', idRound)
+        .then((r) => {
+          if (vivo) setProntiRound((r.data ?? []).map((x) => x.utente_id));
+        });
+    // Si legge **anche** all'ingresso e non solo sugli eventi: chi riapre la
+    // schermata a round già chiuso non riceverebbe mai un evento per una riga
+    // scritta prima che si iscrivesse, e resterebbe fermo su un «continua» che
+    // ha già premuto.
+    leggi();
+    const canale: RealtimeChannel = supabase
+      .channel(`round_pronto:${idRound}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'round_pronto', filter: `round_id=eq.${idRound}` },
+        () => leggi()
+      )
+      .subscribe();
+    return () => {
+      vivo = false;
+      supabase.removeChannel(canale);
+    };
+  }, [round?.id]);
+
+  /**
+   * «Continua». Il round successivo parte quando lo preme anche l'altro.
+   *
+   * ⚠️ **Il duplicato non è un errore** (`23505`): premere due volte è la cosa
+   * più naturale del mondo davanti a un bottone che non sembra aver fatto
+   * niente — e qui *non fa* niente di visibile finché non preme anche l'altro.
+   * Trattarlo come guasto mostrerebbe un messaggio rosso a chi ha solo insistito.
+   */
+  const segnaProntoRound = React.useCallback(async () => {
+    const idRound = round?.id;
+    if (!idRound) return;
+    setErrore(null);
+    const { error } = await supabase.from('round_pronto').insert({ round_id: idRound });
+    if (error && error.code !== '23505') return setErrore(error.message);
+    // Rilettura immediata, per la stessa ragione di `premiAvvia`: è il momento
+    // in cui l'utente sta guardando il bottone che ha appena premuto, e
+    // aspettare l'evento realtime lo lascerebbe senza risposta per un istante.
+    await supabase
+      .from('round_pronto')
+      .select('utente_id')
+      .eq('round_id', idRound)
+      .then((r) => setProntiRound((r.data ?? []).map((x) => x.utente_id)));
+  }, [round?.id]);
+
+  /**
    * Chi disegna nel round `n`: dispari a chi ha creato, pari all'altro.
    *
    * 🔴 **Prende i membri della coppia, non «l'altro»** — e la differenza è
@@ -324,10 +393,16 @@ export function usePartita(gioco: CodiceGioco) {
       io,
       ioSonoPronto: !!io && pronti.includes(io),
       entrambiPronti: pronti.length >= 2,
+      // ⚠️ `>= 2` e non «tutti», come in `segna_pronto`: una coppia è due persone
+      // per costruzione (D-14). Se un giorno servisse un gruppo, questo è il
+      // punto in cui il codice lo dirà invece di sbagliare in silenzio.
+      ioSonoProntoRound: !!io && prontiRound.includes(io),
+      entrambiProntiRound: prontiRound.length >= 2,
       caricando,
       errore,
       apri,
       premiAvvia,
+      segnaProntoRound,
       disegnatoreDi,
       chiudi,
       abbandona,
@@ -338,11 +413,13 @@ export function usePartita(gioco: CodiceGioco) {
       partita,
       round,
       pronti,
+      prontiRound,
       io,
       caricando,
       errore,
       apri,
       premiAvvia,
+      segnaProntoRound,
       disegnatoreDi,
       chiudi,
       abbandona,

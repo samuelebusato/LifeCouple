@@ -242,12 +242,48 @@ const it = {
     coincidete: 'La stessa!',
     diverso: 'Stavolta no',
     haSceltoLui: (p: string): string => `Lui ha scelto: ${p}`,
+    // --- quiz sulle preferenze (2026-09-01) ---
+    /**
+     * ⚠️ I due ruoli si dicono **prima** di mostrare le risposte, e con parole
+     * diverse: chi risponde per sé e chi tira a indovinare stanno guardando le
+     * stesse quattro carte per due motivi opposti, e premere quella sbagliata
+     * perché si è capito il ruolo al contrario rovina il round per tutti e due.
+     */
+    /**
+     * ⚠️ Corte e in maiuscolo: stanno in una pillola colorata, e una pillola con
+     * dentro una frase non si legge a colpo d'occhio — che è l'unico modo in cui
+     * verrà letta.
+     */
+    ruoloRispondi: 'Tocca a te',
+    ruoloIndovina: 'Indovina tu',
+    rispondiPerTe: 'Rispondi per te. Lui deve indovinarti.',
+    indovinaLui: 'Tocca a te indovinare cosa ha risposto.',
+    haiRisposto: 'Hai risposto. Aspettiamo che indovini.',
+    haiProvato: 'Hai indovinato? Aspettiamo la sua risposta.',
+    nonIndovinato: 'Non ci siamo',
+    avevaScelto: (p: string): string => `Aveva risposto: ${p}`,
+    tuAveviDetto: (p: string): string => `Il tentativo era: ${p}`,
+    // --- fra un round e l'altro (0027) ---
+    continua: 'Continua',
+    /**
+     * ⚠️ Dice **chi** si sta aspettando, non «attendere». Un'attesa senza
+     * soggetto in un gioco a due è la stessa domanda senza risposta che
+     * `attesa-partita.tsx` esiste per togliere: *sto aspettando io o lui?*
+     */
+    attendoContinua: 'Aspettiamo che anche il tuo partner prema «Continua».',
     // --- fine partita ---
     suTotale: (tot: number): string => `su ${tot}`,
     finito: 'Va bene così',
     /** I due punteggi. Nomi scelti il 2026-08-28: descrivono voi due insieme. */
     intesa: 'Intesa',
     sintonia: 'Sintonia',
+    /**
+     * Il punteggio del quiz (2026-09-01). ⚠️ **Non è «quanto sei bravo»**: è
+     * quante volte avete indovinato la risposta dell'altro, ed è comunque un
+     * numero della coppia — chi risponde e chi indovina si scambiano a ogni
+     * round, quindi non c'è un esaminato e un esaminatore.
+     */
+    conoscenza: 'Conoscenza',
     /**
      * ⚠️ Nessuna di queste frasi dice «hai perso», e non è delicatezza: il
      * punteggio è **della coppia** (P-03), quindi non c'è nessuno che ha perso
@@ -266,7 +302,7 @@ const it = {
   hubGiochi: {
     titolo: 'I vostri giochi',
     sottotitolo: 'Scorri per sceglierne uno.',
-    classifica: 'Classifica',
+    punteggio: 'Punteggio',
     gioca: 'Gioca',
     descrizioni: {
       quiz_preferenze:
@@ -278,17 +314,49 @@ const it = {
       indovina_disegno:
         'Uno disegna, l’altro prova a capire cosa sia. Non serve saper disegnare: di solito è meglio se non sapete.',
     } as Record<string, string>,
+    /**
+     * **Come si gioca**, per l'anticamera della partita (chiesto il 2026-09-01).
+     *
+     * ⚠️ **Non sono le `descrizioni` dette in altro modo**, ed è la ragione per
+     * cui sono due testi e non uno. Quelle stanno nel carosello e rispondono a
+     * *«quale gioco scelgo?»*: invogliano. Queste stanno davanti al bottone
+     * «avvia» e rispondono a *«cosa devo fare adesso?»*: dicono le regole, il
+     * numero dei round e chi fa cosa. Un testo solo servirebbe male tutte e due
+     * le domande — e la seconda è quella che, se resta senza risposta, fa
+     * cominciare una partita senza aver capito il gioco.
+     */
+    comeSiGioca: {
+      quiz_preferenze:
+        'A turno uno risponde per sé e l’altro prova a indovinarlo: stesse quattro risposte, scelte al buio. Dieci round, cinque a testa, e si fa punto ogni volta che l’altro ci prende.',
+      telepatia:
+        'Testate la vostra sintonia: vi compaiono le stesse quattro parole, e scegliete al buio. Nessuno vede la scelta dell’altro finché non avete scelto tutti e due. Dieci round, e si fa punto ogni volta che pensate la stessa cosa.',
+      indovina_disegno:
+        'Uno disegna col dito, l’altro prova a capire. Un minuto per round, poi il turno si scambia: cinque round in tutto. Non serve saper disegnare — di solito viene meglio se non sapete.',
+    } as Record<string, string>,
     modoTitolo: 'Come volete giocare?',
     ufficiale: 'Versione ufficiale',
     ufficialeNota: 'Le nostre domande, uguali per tutte le coppie.',
     personalizzata: 'Personalizzata',
     personalizzataNota:
       'Le domande le scrivete voi due. Restano vostre: non finiscono nel banco comune e non le vede nessun altro.',
-    classificaTitolo: 'Chi ha vinto di più',
+    /**
+     * ⚠️ **Era «Chi ha vinto di più», e diceva il falso due volte** (2026-09-01).
+     *
+     * Primo: qui non c'è nessun «chi» — il punteggio è **della coppia** (P-03),
+     * non di uno contro l'altro, e il titolo prometteva esattamente la
+     * graduatoria fra due persone che P-03 vieta. Secondo: dal 2026-09-01 non si
+     * contano più le vittorie ma si mostra una **media in percentuale**, quindi
+     * la parola «vinto» descriveva un numero che non c'è più.
+     */
+    punteggioTitolo: 'Come andate',
     notaSintonia: 'Volte in cui avete scelto la stessa cosa.',
     notaIntesa: 'Disegni che l’altro ha indovinato.',
-    classificaVuota:
-      'Non avete ancora giocato. Qui comparirà chi ha vinto più partite, gioco per gioco.',
+    notaConoscenza: 'Volte in cui avete indovinato la risposta dell’altro.',
+    /** Il denominatore della media, per non lasciare una percentuale sospesa. */
+    mediaSu: (n: number): string =>
+      n === 1 ? 'su una partita giocata' : `media su ${n} partite giocate`,
+    punteggioVuoto:
+      'Non avete ancora giocato a questo gioco. Qui comparirà la vostra media, e potrete vederla salire.',
     /** Onesta' verso chi tocca: la stessa regola della sezione in arrivo. */
     inArrivo: 'Le partite arrivano: manca il meccanismo di invio sigillato.',
     chiudi: 'Chiudi',
@@ -775,10 +843,22 @@ const en: Dizionario = {
     coincidete: 'Same one!',
     diverso: 'Not this time',
     haSceltoLui: (p: string): string => `They picked: ${p}`,
+    ruoloRispondi: 'Your turn',
+    ruoloIndovina: 'You guess',
+    rispondiPerTe: 'Answer for yourself. They have to guess you.',
+    indovinaLui: 'Your turn to guess what they answered.',
+    haiRisposto: 'Answered. Waiting for their guess.',
+    haiProvato: 'Guess sent. Waiting for their answer.',
+    nonIndovinato: 'Not quite',
+    avevaScelto: (p: string): string => `They answered: ${p}`,
+    tuAveviDetto: (p: string): string => `The guess was: ${p}`,
+    continua: 'Continue',
+    attendoContinua: 'Waiting for your partner to hit «Continue».',
     suTotale: (tot: number): string => `out of ${tot}`,
     finito: 'That will do',
     intesa: 'Rapport',
     sintonia: 'In sync',
+    conoscenza: 'Insight',
     commento: (p: number, tot: number): string => {
       if (tot === 0) return '';
       const q = p / tot;
@@ -791,7 +871,7 @@ const en: Dizionario = {
   hubGiochi: {
     titolo: 'Your games',
     sottotitolo: 'Swipe to pick one.',
-    classifica: 'Standings',
+    punteggio: 'Score',
     gioca: 'Play',
     descrizioni: {
       quiz_preferenze:
@@ -803,17 +883,30 @@ const en: Dizionario = {
       indovina_disegno:
         'One of you draws, the other tries to work out what it is. No drawing skills needed — it is usually better without.',
     } as Record<string, string>,
+    /** See the Italian side for why these are separate from `descrizioni`. */
+    comeSiGioca: {
+      quiz_preferenze:
+        'You take turns: one answers for themselves, the other tries to guess them — same four answers, picked blind. Ten rounds, five each, and you score every time the guess lands.',
+      telepatia:
+        'Test how in sync you are: you both get the same four words, and you pick blind. Neither of you sees the other’s pick until you have both chosen. Ten rounds, and you score every time you think the same thing.',
+      indovina_disegno:
+        'One of you draws with a finger, the other tries to work it out. One minute per round, then you swap turns: five rounds in all. No drawing skills needed — it usually works better without.',
+    } as Record<string, string>,
     modoTitolo: 'How do you want to play?',
     ufficiale: 'Official version',
     ufficialeNota: 'Our questions, the same for every couple.',
     personalizzata: 'Your own',
     personalizzataNota:
       'You two write the questions. They stay yours: they never join the shared deck and nobody else sees them.',
-    classificaTitolo: 'Who has won the most',
+    /** See the Italian side: «who won» promised a scoreboard P-03 forbids. */
+    punteggioTitolo: 'How you’re doing',
     notaSintonia: 'Times you picked the same thing.',
     notaIntesa: 'Drawings your partner guessed.',
-    classificaVuota:
-      'You haven’t played yet. This is where the win count will show up, game by game.',
+    notaConoscenza: 'Times you guessed each other’s answer.',
+    mediaSu: (n: number): string =>
+      n === 1 ? 'over one game played' : `average over ${n} games played`,
+    punteggioVuoto:
+      'You haven’t played this one yet. Your average will show up here, and you’ll get to watch it climb.',
     inArrivo: 'Matches are coming: the sealed-submission mechanism is missing.',
     chiudi: 'Close',
   },

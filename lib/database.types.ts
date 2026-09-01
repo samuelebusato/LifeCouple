@@ -675,6 +675,29 @@ export type Database = {
         }
         Relationships: []
       }
+      // ⚠️ SCRITTO A MANO, non generato — migrazione 0027 («continua» a due).
+      // Stesso debito dichiarato in `docs/Architecture.md` per le 0011→0016:
+      // finche' i tipi non si rigenerano con `supabase gen types typescript`,
+      // questo blocco dice cio' che **crediamo** ci sia nello schema, non cio'
+      // che c'e'. Va sostituito alla prima rigenerazione.
+      round_pronto: {
+        Row: {
+          pronto_il: string
+          round_id: string
+          utente_id: string
+        }
+        Insert: {
+          pronto_il?: string
+          round_id: string
+          utente_id?: string
+        }
+        Update: {
+          pronto_il?: string
+          round_id?: string
+          utente_id?: string
+        }
+        Relationships: []
+      }
       round_segreto: {
         Row: {
           chiave: string
