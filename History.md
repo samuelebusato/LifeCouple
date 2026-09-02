@@ -63,7 +63,11 @@ Con questo **i quattro giochi del catalogo hanno tutti una partita dietro**, e l
 
 ⚠️ **Ciò che di oggi NON è verificato, e va detto**: `obbligo_verita` non è mai stato giocato. È coperto da 35 asserzioni contro il database, che è più di quanto avessero gli altri tre alla nascita, ma *nessuno l'ha visto girare su un telefono*. La lezione di ieri vale al contrario: una schermata provata su zero dispositivi non è provata.
 
-⚠️ **E una cosa di questo dispositivo**: `expo-sharing` è in `package.json` (~14.0.8) ma **non è installato** in `node_modules`, quindi `npx tsc --noEmit` è rosso su `lib/esporta.ts` — l'unica riga rossa, e non è di oggi (la dipendenza è arrivata con l’esportazione, D-78). Serve un `npm install`. È la stessa forma della chiave TMDB: qualcosa che vale su una macchina e non sull'altra.
+✅ **E in coda alla giornata, `expo-sharing`**: era dichiarato in `package.json` (~14.0.8) e non installato in `node_modules`, quindi `tsc` era rosso su `lib/esporta.ts`. Durante il giorno è stato segnalato due volte, sempre come nota di secondo piano.
+
+🔑 **Non era di secondo piano.** Al momento di avviare il server per provare sull’iPhone, Expo si è **rifiutato di partire**: *«expo-sharing is added as a dependency in your project’s package.json but it doesn’t seem to be installed»*. Risolto con `npm install`; il `package-lock.json` **non è cambiato** — la versione era già bloccata a 14.0.8 — quindi nel repo non entra niente. Da lì `npx tsc --noEmit` è **completamente pulito** per la prima volta.
+
+⚠️ La lezione, terza di oggi della stessa famiglia: *una segnalazione che si ripete e resta in fondo all’elenco non è una nota, è un difetto che non ha ancora incontrato il momento in cui morde.* Qui il momento era la prima prova su dispositivo — cioè proprio la cosa che serviva per verificare tutto il resto della giornata.
 
 
 
@@ -2255,7 +2259,7 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 - ⬜ **La versione personalizzata della telepatia**, tolta il 2026-09-02 su richiesta dell'utente: costerebbe quaranta caselle da riempire prima di cominciare (dieci insiemi di quattro opzioni), che è la ragione per cui è fuori.
 - ⚠️ **Rigenerare `lib/database.types.ts`** con `supabase gen types typescript`: i blocchi scritti a mano sono quelli delle 0011→0016 **più** `round_pronto` della 0027. Vanno via tutti insieme, e finché restano i tipi dicono ciò che *crediamo* ci sia nello schema.
 - ⬜ **Test automatici per il disegno**, l'unico gioco la cui parte specifica non è coperta: la suite verifica il segreto della parola e i punti, non i tratti — che non si salvano da nessuna parte (disegni effimeri), quindi non c'è niente da interrogare. Da valutare se valga la pena.
-- ⬜ **`npm install` su questo dispositivo**: `expo-sharing` è dichiarato e non installato.
+- ✅ **`npm install` su questo dispositivo** — fatto il 2026-09-02, e non era cosmesi: senza, Expo non si avviava affatto. Lockfile invariato.
 
 
 ### Prima di scrivere codice — ✅ tutte decise il 2026-08-12
@@ -2526,7 +2530,7 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
    - la leggibilità delle due carte «Obbligo»/«Verità» su Android **e** su iPhone (B-15: `fondo="pieno"`, come nel quiz).
 2. ⚠️ **Il banco personalizzato della coppia (D-19, backlog 11-bis)** resta tutto da fare, e ora è **l'unico comando dell'app che promette una differenza inesistente**: la tabella `domanda` esiste dalla 0001 ed è vuota, tutti e quattro i giochi usano il banco comune scritto nel codice.
 3. ⚠️ **`lib/database.types.ts`** ha ancora i blocchi scritti a mano delle 0011→0016 più `round_pronto` della 0027. Vanno via tutti insieme con `supabase gen types typescript`.
-4. ⚠️ **`npm install` su questo dispositivo**: `expo-sharing` è in `package.json` ma non in `node_modules`, quindi `npx tsc --noEmit` è rosso su `lib/esporta.ts` — l'unica riga rossa, e non è di oggi.
+4. ✅ **Risolto il 2026-09-02**: `expo-sharing` non installato era ciò che impediva a Expo di avviarsi, non solo una riga rossa di `tsc`. `npm install` fatto, lockfile invariato, `tsc` pulito.
 
 ---
 
