@@ -74,8 +74,11 @@ export function PreparazioneCarte({
   const sue = altro ? mieCarte(carte, altro).length : 0;
   const finito = haFinito(carte, io, gioco);
 
+  // 🔴 Una carta senza tipo è una **domanda** del quiz (2026-09-02, B-45): il
+  // caso `null` ricadeva su `scegliCarta`, cioè «Obbligo o verità?» — la
+  // scritta del round di un altro gioco, finita in testa alle domande del quiz.
   const etichetta = (tipo: TipoCarta | null) =>
-    tipo === 'obbligo' ? t.gioco.obbligo : tipo === 'verita' ? t.gioco.verita : t.gioco.scegliCarta;
+    tipo === 'obbligo' ? t.gioco.obbligo : tipo === 'verita' ? t.gioco.verita : t.gioco.cartaDomanda;
   const segnaposto = (tipo: TipoCarta | null) =>
     tipo === 'obbligo'
       ? t.gioco.scriviObbligo

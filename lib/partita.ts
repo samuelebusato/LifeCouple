@@ -117,6 +117,42 @@ export function useAperturaRound() {
  * messaggio da scambiare, nessun accordo da raggiungere: è una funzione del
  * numero di round, e i due telefoni ci arrivano da soli alla stessa risposta.
  */
+/**
+ * 🔴 **Una partita in attesa che nessuno ha fatto propria si rimpiazza, non ci
+ * si entra** (2026-09-02, B-46).
+ *
+ * D-88 dice che il modo lo decide chi apre la partita e chi arriva secondo si
+ * aggancia. Ma «chi arriva secondo» presuppone che qualcuno sia arrivato
+ * primo: uscire dall'anticamera col tasto indietro lasciava la partita in
+ * `attesa`, e la volta dopo «versione ufficiale» apriva la personalizzata (o
+ * il contrario) — non perché l'altro l'avesse scelta, ma perché era rimasta lì.
+ *
+ * La regola: se il modo richiesto è un altro, la partita è ancora in `attesa`,
+ * **nessuno** ha premuto «Avvia»/«Ho finito» e l'altro non ha scritto carte,
+ * allora non è la partita di nessuno — si abbandona e se ne crea una col modo
+ * chiesto. Basta uno solo di questi segni di vita e ci si entra come prima: una
+ * partita `in_corso` è un gioco vero, e carte scritte dall'altro sono lavoro suo.
+ *
+ * ⚠️ In dubbio non si rimpiazza: un errore di lettura non deve far sparire una
+ * partita che magari è viva davvero.
+ */
+async function daRimpiazzare(viva: Partita, modo: ModoGioco, io: string | null): Promise<boolean> {
+  if (!io || viva.modo === modo || viva.stato !== 'attesa') return false;
+  const [pronti, carteAltrui] = await Promise.all([
+    supabase
+      .from('partita_pronto')
+      .select('utente_id', { count: 'exact', head: true })
+      .eq('partita_id', viva.id),
+    supabase
+      .from('domanda')
+      .select('id', { count: 'exact', head: true })
+      .eq('partita_id', viva.id)
+      .neq('autore_id', io),
+  ]);
+  if (pronti.error || carteAltrui.error) return false;
+  return (pronti.count ?? 0) === 0 && (carteAltrui.count ?? 0) === 0;
+}
+
 export function usePartita(gioco: CodiceGioco) {
   const { session } = useAuth();
   const io = session?.user.id ?? null;
@@ -165,10 +201,11 @@ export function usePartita(gioco: CodiceGioco) {
      * stare su un dato che entrambi leggono, non nello stato di chi ha premuto.
      *
      * ⚠️ Conseguenza da conoscere: premere «personalizzata» mentre esiste già
-     * una partita ufficiale **non** la converte, ci si entra dentro. Non è
-     * silenzioso — la schermata seguente è visibilmente un'altra cosa (un
-     * riquadro da riempire invece di quattro carte) — e la via d'uscita è quella
-     * di sempre: si abbandona la partita e se ne apre un'altra.
+     * una partita ufficiale **in corso** non la converte, ci si entra dentro.
+     * Non è silenzioso — la schermata seguente è visibilmente un'altra cosa —
+     * e la via d'uscita è quella di sempre: si abbandona e se ne apre un'altra.
+     * Se invece quella partita è ancora in `attesa` e nessuno l'ha fatta
+     * propria, si rimpiazza col modo chiesto: vedi `daRimpiazzare` (B-46).
      */
     async (coppiaId: string | null, modo: ModoGioco = 'ufficiale') => {
       if (!coppiaId) {
@@ -185,9 +222,19 @@ export function usePartita(gioco: CodiceGioco) {
         .maybeSingle();
 
       if (viva.data) {
-        await rileggi(viva.data.id);
-        setCaricando(false);
-        return;
+        if (!(await daRimpiazzare(viva.data, modo, io))) {
+          await rileggi(viva.data.id);
+          setCaricando(false);
+          return;
+        }
+        // ⚠️ `eq('stato','attesa')`: se nel frattempo l'altro l'ha fatta
+        // partire, questo update non tocca niente, l'insert qui sotto fallisce
+        // sul vincolo `partita_una_viva`, e si rientra nella sua — com'è giusto.
+        await supabase
+          .from('partita')
+          .update({ stato: 'abbandonata' })
+          .eq('id', viva.data.id)
+          .eq('stato', 'attesa');
       }
 
       const creata = await supabase
@@ -212,7 +259,7 @@ export function usePartita(gioco: CodiceGioco) {
       }
       setCaricando(false);
     },
-    [gioco, rileggi]
+    [gioco, rileggi, io]
   );
 
   /**

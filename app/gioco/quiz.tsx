@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -364,6 +365,22 @@ export default function GiocoQuiz() {
   }, [round?.id]);
 
   /* --- schermate ----------------------------------------------------------- */
+  /** La X dentro il gioco: esci (la partita resta) o annulla (B-48, vedi disegno.tsx). */
+  function chiediUscita() {
+    Alert.alert(t.gioco.uscireTitolo, t.gioco.uscireNota, [
+      { text: t.gioco.resta, style: 'cancel' },
+      { text: t.gioco.esciLasciando, onPress: () => router.back() },
+      {
+        text: t.gioco.annulla,
+        style: 'destructive',
+        onPress: async () => {
+          await p.abbandona();
+          router.back();
+        },
+      },
+    ]);
+  }
+
   if (!partita || p.caricando) {
     return (
       <Attesa titolo={t.giochi.quiz_preferenze} testo={t.gioco.preparo} onEsci={() => router.back()} />
@@ -490,7 +507,7 @@ export default function GiocoQuiz() {
             </Text>
             <Text className="text-sm text-muted-foreground">{istruzione}</Text>
           </View>
-          <TondoVetro lato={40} tinto={false} onPress={() => router.back()}>
+          <TondoVetro lato={40} tinto={false} onPress={chiediUscita}>
             <X color={c.tenue} size={18} />
           </TondoVetro>
         </View>

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Riani, {
   Extrapolation,
   interpolate,
+  runOnJS,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -75,7 +76,7 @@ export default function Giochi() {
    *
    * ⚠️ Vive in uno stato React e **non** nella `x` di Reanimated, ed e' voluto:
    * la `x` cambia sessanta volte al secondo e serve al movimento, questo cambia
-   * una volta per scorrimento e serve a **scrivere un nome**. Tenerli separati
+   * una volta per carta attraversata e serve a **scrivere un nome**. Tenerli separati
    * evita di far ridisegnare tre carte a ogni fotogramma per aggiornare un
    * titolo che nessuno sta guardando mentre scorre.
    *
@@ -159,8 +160,30 @@ export default function Giochi() {
 
   const x = useSharedValue(0);
   const zoom = useSharedValue(1);
+  /**
+   * 🔴 **Il gioco al centro si legge dallo scorrimento, non dalla fine
+   * dell'inerzia** (2026-09-02, B-44).
+   *
+   * Prima `scelto` si aggiornava solo in `onMomentumScrollEnd`, che scatta
+   * **solo se c'è inerzia**: un trascinamento lento che si ferma sulla carta
+   * accanto — lo `snapToInterval` la centra comunque — non lo fa scattare, e
+   * `scelto` restava sulla carta di prima. Era il difetto riferito dall'utente
+   * in tre forme diverse: «Gioca» apriva il gioco precedente, il foglio portava
+   * il nome di un altro gioco, e un gioco con la versione personalizzata
+   * entrava diretto perché l'hub credeva fosse la telepatia.
+   *
+   * Qui l'indice si ricava da **ogni** evento di scorrimento e passa al thread
+   * JS **solo quando cambia** (`ultimo`): la separazione fra la `x` a sessanta
+   * fotogrammi e lo stato React che scrive un nome resta intatta.
+   */
+  const ultimo = useSharedValue(0);
   const alloScorrimento = useAnimatedScrollHandler((e) => {
     x.value = e.contentOffset.x;
+    const i = Math.max(0, Math.min(GIOCHI.length - 1, Math.round(e.contentOffset.x / PAGINA)));
+    if (i !== ultimo.value) {
+      ultimo.value = i;
+      runOnJS(setScelto)(i);
+    }
   });
 
   /**
@@ -219,10 +242,6 @@ export default function Giochi() {
             snapToInterval={PAGINA}
             disableIntervalMomentum
             decelerationRate="fast"
-            onMomentumScrollEnd={(e) => {
-              const i = Math.round(e.nativeEvent.contentOffset.x / PAGINA);
-              setScelto(Math.max(0, Math.min(GIOCHI.length - 1, i)));
-            }}
             contentContainerStyle={{
               paddingHorizontal: (width - CARTA) / 2,
               gap: SPAZIO,

@@ -1167,6 +1167,116 @@ console.log('\nLa versione personalizzata (0028)');
 
 
 // =============================================================================
+// LA PARTITA DI NESSUNO SI RIMPIAZZA (B-46) — la regola vive nell'app
+// (`daRimpiazzare`, lib/partita.ts); qui si verifica che il database le dia
+// ciò di cui ha bisogno: i conteggi leggibili dall'altro membro, l'abbandono
+// condizionato allo stato, e l'indice unico che protegge la corsa.
+// =============================================================================
+console.log('\nLa partita di nessuno si rimpiazza (B-46)');
+{
+  await pulisci(a, coppia);
+
+  // --- 1. la partita lasciata in attesa da A, col modo «personalizzata» -----
+  const { data: lasciata, error: eL } = await a.c
+    .from('partita')
+    .insert({ coppia_id: coppia, gioco: 'quiz_preferenze', modo: 'personalizzata', round_totali: 10 })
+    .select('*')
+    .single();
+  esito('A apre una partita personalizzata e la lascia in attesa', !eL && lasciata?.stato === 'attesa', eL?.message);
+
+  // --- 2. B legge i due conteggi su cui si basa la regola --------------------
+  const pronti0 = await b.c
+    .from('partita_pronto')
+    .select('utente_id', { count: 'exact', head: true })
+    .eq('partita_id', lasciata.id);
+  const altrui0 = await b.c
+    .from('domanda')
+    .select('id', { count: 'exact', head: true })
+    .eq('partita_id', lasciata.id)
+    .neq('autore_id', b.id);
+  esito(
+    'B conta i pronti (zero) e le carte altrui (zero) col proprio token',
+    !pronti0.error && !altrui0.error && pronti0.count === 0 && altrui0.count === 0,
+    `pronti=${pronti0.count} (${pronti0.error?.message ?? ''}) altrui=${altrui0.count} (${altrui0.error?.message ?? ''})`
+  );
+
+  // --- 3. B la rimpiazza: abbandona (solo se ancora in attesa) e crea ufficiale
+  const { error: eAbb } = await b.c
+    .from('partita')
+    .update({ stato: 'abbandonata' })
+    .eq('id', lasciata.id)
+    .eq('stato', 'attesa');
+  const { data: dopo } = await b.c.from('partita').select('stato').eq('id', lasciata.id).single();
+  esito('B abbandona la partita di nessuno', !eAbb && dopo?.stato === 'abbandonata', eAbb?.message ?? dopo?.stato);
+
+  const { data: ufficiale, error: eU } = await b.c
+    .from('partita')
+    .insert({ coppia_id: coppia, gioco: 'quiz_preferenze', modo: 'ufficiale', round_totali: 10 })
+    .select('*')
+    .single();
+  esito('e ne crea una col modo chiesto', !eU && ufficiale?.modo === 'ufficiale', eU?.message);
+
+  // --- 4. i due segni di vita che devono fermare il rimpiazzo ---------------
+  // (a) A ha premuto «Avvia»: B lo vede nel conteggio.
+  await a.c.rpc('segna_pronto', { p_partita: ufficiale.id });
+  const pronti1 = await b.c
+    .from('partita_pronto')
+    .select('utente_id', { count: 'exact', head: true })
+    .eq('partita_id', ufficiale.id);
+  esito('🔴 se A ha premuto «Avvia», B lo conta: la partita non è più di nessuno', pronti1.count === 1, `pronti=${pronti1.count}`);
+
+  // (b) A ha scritto una carta: dal punto di vista di B è una carta altrui.
+  await pulisci(a, coppia);
+  const { data: conCarte } = await a.c
+    .from('partita')
+    .insert({ coppia_id: coppia, gioco: 'quiz_preferenze', modo: 'personalizzata', round_totali: 10 })
+    .select('*')
+    .single();
+  const { error: eCarta } = await a.c.from('domanda').insert({
+    coppia_id: coppia,
+    partita_id: conCarte.id,
+    gioco: 'quiz_preferenze',
+    tipo: null,
+    lingua: 'it',
+    testo: 'prova B-46: una domanda scritta da A',
+  });
+  const altrui1 = await b.c
+    .from('domanda')
+    .select('id', { count: 'exact', head: true })
+    .eq('partita_id', conCarte.id)
+    .neq('autore_id', b.id);
+  esito(
+    '🔴 se A ha scritto una carta, B la conta come altrui: la partita non si rimpiazza',
+    !eCarta && altrui1.count === 1,
+    eCarta?.message ?? `altrui=${altrui1.count}`
+  );
+
+  // --- 5. la corsa: una partita partita nel frattempo non si abbandona ------
+  await pulisci(a, coppia);
+  const { data: viva } = await a.c
+    .from('partita')
+    .insert({ coppia_id: coppia, gioco: 'quiz_preferenze', modo: 'personalizzata', round_totali: 10 })
+    .select('*')
+    .single();
+  await a.c.rpc('segna_pronto', { p_partita: viva.id });
+  await b.c.rpc('segna_pronto', { p_partita: viva.id });
+  const { data: inCorso } = await a.c.from('partita').select('stato').eq('id', viva.id).single();
+  esito('la partita è in corso dopo i due «Avvia»', inCorso?.stato === 'in_corso', inCorso?.stato);
+
+  await b.c.from('partita').update({ stato: 'abbandonata' }).eq('id', viva.id).eq('stato', 'attesa');
+  const { data: ancoraViva } = await b.c.from('partita').select('stato').eq('id', viva.id).single();
+  esito("🔴 l'abbandono condizionato a «attesa» non tocca una partita in corso", ancoraViva?.stato === 'in_corso', ancoraViva?.stato);
+
+  const { error: eDoppia } = await b.c
+    .from('partita')
+    .insert({ coppia_id: coppia, gioco: 'quiz_preferenze', modo: 'ufficiale', round_totali: 10 })
+    .select('*')
+    .single();
+  esito("🔴 e l'indice `partita_una_viva` blocca la seconda: chi perde la corsa rientra in quella dell'altro", !!eDoppia, 'la seconda partita è stata creata');
+}
+
+
+// =============================================================================
 console.log('\nPulizia');
 const restate = await pulisci(a, coppia);
 esito(

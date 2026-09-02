@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -434,6 +435,34 @@ export default function GiocoDisegno() {
   }, [numeroRound, ioDisegno]);
 
   /* --- schermate ---------------------------------------------------------- */
+  /**
+   * 🔴 **La X dentro il gioco chiede, e offre l'abbandono** (B-48, 2026-09-02
+   * seconda sessione). Prima faceva solo `router.back()`: la partita restava
+   * `in_corso`, e al prossimo «Gioca» ci si rientrava — **al round in cui era
+   * rimasta**. È il «parte dal round 2» riferito dall'utente: non un round
+   * saltato, la partita bloccata da B-47 ripresa da dove si era fermata. Una
+   * partita in corso non si poteva abbandonare da nessuna parte — l'anticamera
+   * ha «Annulla la partita», il gioco no — e l'unica uscita era finirla.
+   *
+   * Uscire e abbandonare sono due cose diverse, e qui si dicono entrambe per
+   * esteso: «esci» lascia la partita viva per tutti e due, «annulla» la chiude
+   * per tutti e due. Lo stesso in `telepatia`, `quiz` e `obbligo`.
+   */
+  function chiediUscita() {
+    Alert.alert(t.gioco.uscireTitolo, t.gioco.uscireNota, [
+      { text: t.gioco.resta, style: 'cancel' },
+      { text: t.gioco.esciLasciando, onPress: () => router.back() },
+      {
+        text: t.gioco.annulla,
+        style: 'destructive',
+        onPress: async () => {
+          await p.abbandona();
+          router.back();
+        },
+      },
+    ]);
+  }
+
   if (!partita || p.caricando) {
     return <Attesa titolo={t.giochi.indovina_disegno} testo={t.gioco.preparo} onEsci={() => router.back()} />;
   }
@@ -486,12 +515,30 @@ export default function GiocoDisegno() {
    * da disegnare. L'altro, intanto, vede la sua attesa — con scritto **chi** si
    * sta aspettando, che è la regola di `attesa-partita.tsx`.
    */
-  if (personalizzata && !roundVivo && partita.stato === 'in_corso' && !esitoRound) {
+  /**
+   * 🔴 **L'esito si considera congedato quando hanno premuto «continua» tutti e
+   * due** (B-47, 2026-09-02 seconda sessione). Prima la condizione era solo
+   * `!esitoRound`: vera al primo round — non c'è un round precedente — e **mai
+   * più**. Dal secondo in poi l'esito del round chiuso c'è sempre, e nella
+   * versione ufficiale sparisce solo perché l'effetto di apertura crea il round
+   * nuovo. Qui il round nuovo lo crea `dichiara`, che vive in questa schermata:
+   * senza mostrarla nessuno lo creava, e i due telefoni restavano sul pop-up
+   * con lo spinner «aspettiamo l'altro», entrambi pronti, nessuno in grado di
+   * andare avanti. Appena la parola è scritta `round.id` cambia e
+   * `prontiRound` si azzera: il giro dopo il pop-up torna a chiedere i due
+   * «continua».
+   */
+  if (
+    personalizzata &&
+    !roundVivo &&
+    partita.stato === 'in_corso' &&
+    (!esitoRound || entrambiProntiRound)
+  ) {
     if (!ioDisegno) {
       return (
         <Attesa
           titolo={t.giochi.indovina_disegno}
-          testo={t.gioco.staScegliendo}
+          testo={t.gioco.staScrivendoParola}
           onEsci={() => router.back()}
           attesa
         />
@@ -515,7 +562,7 @@ export default function GiocoDisegno() {
                 </Text>
                 <Text className="text-sm text-muted-foreground">{t.gioco.dichiaraParolaNota}</Text>
               </View>
-              <TondoVetro lato={40} tinto={false} onPress={() => router.back()}>
+              <TondoVetro lato={40} tinto={false} onPress={chiediUscita}>
                 <X color={c.tenue} size={18} />
               </TondoVetro>
             </View>
@@ -580,7 +627,7 @@ export default function GiocoDisegno() {
                   {restano}
                 </Text>
               </View>
-              <TondoVetro lato={40} tinto={false} onPress={() => router.back()}>
+              <TondoVetro lato={40} tinto={false} onPress={chiediUscita}>
                 <X color={c.tenue} size={18} />
               </TondoVetro>
             </View>

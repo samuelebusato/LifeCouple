@@ -28,6 +28,31 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-02 (seconda sessione) — La prova sui telefoni, finalmente, e quattro sintomi con tre cause
+
+**Chiesto dall'utente**: avviare il server per provare l'app da iPhone e Android. Poi, dalla prova: quattro sintomi riferiti uno dopo l'altro, con la richiesta esplicita di risolverli **tutti**.
+
+**Il server.** `expo start` in LAN non era mai arrivato ai telefoni, e stavolta si è capito perché: sul PC è attiva una VPN (NordLynx) più due adattatori VMware, e non esiste nessuna regola firewall per la 8081 né per `node.exe`. L'URL della sessione precedente (`exp://10.1.0.147:8081`) era con ogni probabilità l'interfaccia della VPN, irraggiungibile da qualunque telefono — causa probabile, non dimostrata a posteriori. Si è passati al **tunnel** (`--tunnel`, `@expo/ngrok` già in `node_modules`), verificato scaricando il manifest **attraverso il tunnel** con `expo-platform: ios` e `android`: HTTP 200, LifeCouple 1.0.0, SDK 54. ⚠️ Il processo moriva da solo dopo un paio di minuti; regge con `CI=1`, che però **spegne il watch di Metro**: ogni modifica al codice richiede un riavvio del server. La causa della morte è **attribuita, non dimostrata** (la UI interattiva senza stdin): si sa che con `CI=1` regge, non perché prima cadeva. Le due configurazioni (`lifecouple-telefoni-tunnel`, `lifecouple-telefoni-lan` con l'IP del Wi-Fi forzato) stanno nel `.claude/launch.json` del brain.
+
+**I quattro sintomi**, con le cause:
+
+1. *«apro un gioco, premo Gioca, chiudo, premo Gioca su un altro gioco e mi riapre quello precedente»* → **B-44**: l'hub aggiornava il gioco selezionato solo in `onMomentumScrollEnd`, che scatta solo se c'è inerzia.
+2. *«a volte mi apre direttamente il gioco senza farmi scegliere fra ufficiale e personalizzata»* → **stessa causa** (B-44): l'hub credeva fosse al centro la telepatia, l'unico gioco che entra diretto.
+3. *«nella versione personalizzata del quiz esce scritto obbligo o verità»* → **B-45**: l'etichetta della carta senza tipo ricadeva su `scegliCarta`, la stringa del round di un altro gioco.
+4. *«premo versione ufficiale e mi apre la personalizzata»* → **B-46**: uscire dall'anticamera lasciava la partita in `attesa`, e la volta dopo ci si rientrava col suo modo. Da qui **D-90**.
+
+🔑 Tre sintomi su quattro sono usciti **al primo uso vero** di funzioni scritte ieri e verificate solo contro il database: una schermata provata su nessun telefono non è provata. Ed è la seconda volta in due giorni che due sintomi riferiti come due difetti erano uno solo (B-43 ieri, B-44 oggi).
+
+**Poi un quinto sintomo, giocando davvero**: *«stavo giocando al gioco dei disegni in versione personalizzata e si è bloccato anche se entrambi i giocatori hanno premuto continua»* → **B-47**: la schermata «che cosa disegni?» compariva solo se non c'era un esito da mostrare — vero al primo round e mai più. Il round nuovo lo crea quella schermata, quindi dal secondo round nessuno lo creava. 🔑 Era esattamente ciò che il PUNTO DI RIPRESA della prima sessione chiedeva di provare per primo (0-ter), ed è uscito al secondo round.
+
+**E un sesto**: *«indovina il disegno parte dal round 2»* → con ogni probabilità **non un round saltato**: la partita bloccata da B-47 era rimasta `in_corso` col round 1 già chiuso, e «Gioca» l'ha ripresa da lì — perché **una partita in corso non si poteva abbandonare da dentro**: la X tornava solo indietro, e l'anticamera con «Annulla la partita» non si vede più una volta partiti. **B-48**: la X ora chiede — resta, esci lasciando la partita, annulla la partita — in tutti e quattro i giochi. ⚠️ Causa probabile, non verificata sui dati (la RLS non lascia leggere le partite della coppia dall'esterno); l'alternativa — il round 1 chiuso all'istante da un telefono con l'orologio avanti di un minuto, visto che il tempo del round è ancorato a `iniziato_il` del server — è possibile ma improbabile, ed è scritta nel PUNTO DI RIPRESA come cosa da riconoscere se ricapita.
+
+🔑 **Su richiesta esplicita dell'utente, commit e push di progetto e brain sono stati eseguiti senza conferme intermedie**, per questa volta sola: non è un cambio della regola di `CLAUDE.md` §6.
+
+`npm run test:partita` sale a **183 asserzioni** (da 174) con il blocco di B-46. `tsc` e `lint` puliti.
+
+⚠️ **Android**: l'utente riferisce che «non funziona», senza ancora un sintomo preciso. Il manifest Android è servito dal tunnel, quindi il problema è a valle del server: da capire al prossimo giro.
+
 ### 2026-09-02 — Il quarto gioco, e due test che accusavano il file sbagliato
 
 **Chiesto dall'utente**: prima i test automatici del quiz sulle preferenze (l'unico dei tre giochi coperto solo da una partita giocata a mano), poi l'implementazione di `obbligo_verita`, l'ultimo gioco mancante.
@@ -177,6 +202,22 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-90 — Una partita in attesa che nessuno ha fatto propria si rimpiazza, non ci si entra (2026-09-02, seconda sessione)
+
+D-88 dice: *il modo lo decide chi apre la partita, e chi arriva secondo si aggancia*. È giusta ed è rimasta. Ma «chi arriva secondo» presuppone che qualcuno sia arrivato **primo** — e uscire dall'anticamera col tasto indietro non abbandona la partita, la lascia in `attesa`. Il risultato riferito dall'utente (**B-46**): premere «versione ufficiale» e trovarsi nella personalizzata, non perché l'altro l'avesse scelta ma perché era rimasta lì. Il comportamento era **documentato** in `apri` come «conseguenza da conoscere», con la via d'uscita «si abbandona e se ne apre un'altra». 🔑 Una regola che l'utente deve conoscere per non restarci dentro non è una regola: è un difetto con la spiegazione accanto.
+
+**La regola nuova** (`daRimpiazzare`, `lib/partita.ts`): se il modo richiesto è diverso, la partita viva è ancora in `attesa`, **nessuno** ha premuto «Avvia»/«Ho finito» e l'altro non ha scritto carte, allora non è la partita di nessuno — si abbandona e se ne crea una col modo chiesto. Basta **uno** di quei segni di vita e ci si entra come prima: una partita `in_corso` è un gioco vero, e carte scritte dall'altro sono lavoro suo.
+
+**Alternative scartate**:
+
+- *Chiedere* («c'è una partita personalizzata aperta: entri o la sostituisci?»). Onesta, ma è una domanda in più a ogni avvio proprio nel caso più comune — la partita rimasta lì per sbaglio — per proteggere un caso raro (l'altro sta scrivendo carte e non ha ancora premuto «Ho finito»), che la regola copre già contando le carte altrui.
+- *Abbandonare all'uscita* (`onEsci` → `abbandona`). Più radicale, ma distrugge la partita dell'altro se uno dei due esce un attimo dall'anticamera mentre l'altro sta scrivendo: ricrea il difetto nel verso opposto.
+- *Cambiare il modo* della partita esistente con un `update`. Meno scritture, ma lascerebbe le carte scritte agganciate a una partita che ora è ufficiale; abbandonare e ricreare le lascia sulla partita abbandonata, fuori dal gioco, e riusa un percorso già verificato (0021 + `partita_una_viva`).
+
+🔑 **In dubbio non si rimpiazza**: se uno dei due conteggi fallisce, ci si entra come prima. Un errore di lettura non deve far sparire una partita che magari è viva davvero.
+
+⚠️ **La corsa**: l'abbandono è condizionato a `stato = 'attesa'`. Se l'altro l'ha fatta partire nel frattempo, l'update non tocca niente, l'insert fallisce su `partita_una_viva` e si rientra nella sua — il percorso di D-88, verificato nel test di B-46.
 
 ### D-89 — Il filtro del contenuto non copre il set della coppia, e va detto (2026-09-02)
 
@@ -1551,6 +1592,61 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-48 — Una partita in corso non si poteva abbandonare, e «Gioca» la riprendeva dal round in cui era rimasta (2026-09-02 seconda sessione, CORRETTO — da verificare sul telefono)
+
+*«Indovina il disegno parte dal round 2»*.
+
+**La causa, con ogni probabilità.** Non un round saltato: la partita bloccata da B-47 era rimasta `in_corso` col round 1 già chiuso e i due «continua» premuti. Riaperto il gioco, `apri` l'ha trovata viva e — giustamente, D-88 e D-90 — ci è rientrato: con la correzione di B-47 chi disegnava ha visto «che cosa disegni?» per il round **2**. Dal telefono la cosa si legge come «parte dal round 2». E non c'era modo di fare altrimenti: dentro un gioco la X faceva solo `router.back()`, l'anticamera con «Annulla la partita» non si vede più una volta partiti, quindi **una partita in corso si poteva solo finire**. Un gioco bloccato, o lasciato a metà, diventava l'unico gioco possibile.
+
+⚠️ **Non verificata sui dati**: la RLS non lascia leggere le partite della coppia dall'esterno, quindi la sequenza è dedotta dal codice e dal racconto, non letta dal database. L'alternativa che spiegherebbe lo stesso sintomo in una partita **nuova**: il round 1 chiuso all'istante per «tempo scaduto» da un telefono con l'orologio avanti di almeno un minuto — il conto alla rovescia è `Date.now() - iniziato_il`, con `iniziato_il` scritto dal server. Improbabile su un telefono con l'ora automatica, ma se il sintomo ricapitasse su una partita appena creata è la prima cosa da guardare.
+
+**La correzione** (i quattro `app/gioco/*.tsx`, `lib/i18n.ts`): la X dentro il gioco apre un `Alert` — lo stesso mezzo di «elimina foto» — con tre scelte scritte per esteso: **«Resta»**, **«Esci, la partita resta»** (indietro, la partita continua a esistere per tutti e due) e **«Annulla la partita»** (`abbandona`, finisce per tutti e due). Uscire e abbandonare sono due cose diverse e vanno dette entrambe: prima l'app ne offriva una sola, e la chiamava con l'icona dell'altra.
+
+**Come è stato verificato**: `tsc` e `lint` puliti. ⚠️ Sul telefono: la X in partita deve chiedere; dopo «Annulla la partita», «Gioca» deve ripartire dal round 1 in attesa. Se una partita **nuova** partisse ancora dal round 2, la causa è l'altra (l'orologio), non questa.
+
+### B-47 — Il disegno personalizzato si fermava fra un round e l'altro, con i due «continua» premuti (2026-09-02 seconda sessione, CORRETTO — da verificare sul telefono)
+
+*«Stavo giocando al gioco dei disegni in versione personalizzata e si è bloccato anche se entrambi i giocatori hanno premuto continua»*.
+
+**La causa.** Nella versione ufficiale il round nuovo lo crea un effetto, quando hanno premuto «continua» tutti e due. Nella personalizzata quell'effetto si ferma apposta (D-19: la parola la dichiara chi disegna) e il round lo crea `dichiara`, che vive nella schermata «che cosa disegni?». Quella schermata compariva solo con `!esitoRound`: vero al **primo** round, perché non c'è un round precedente, e **mai più** — dal secondo in poi l'esito del round appena chiuso c'è sempre, e nella versione ufficiale sparisce solo perché l'effetto crea il round nuovo e `round` cambia. Qui nessuno lo creava: i due telefoni restavano sul pop-up dell'esito con lo spinner «aspettiamo l'altro», entrambi pronti, nessuno in grado di andare avanti. 🔑 Il primo round funzionava, e infatti la versione personalizzata del disegno era stata «provata» solo fino a lì.
+
+**La correzione** (`app/gioco/disegno.tsx`): l'esito si considera congedato quando hanno premuto «continua» tutti e due — la condizione diventa `!esitoRound || entrambiProntiRound`. Chi disegna vede «che cosa disegni?», l'altro «sta scrivendo la parola…» (stringa nuova `staScrivendoParola`: prima c'era «sta scegliendo la carta…», presa in prestito da obbligo o verità). Appena la parola è scritta il round nuovo esiste, `prontiRound` si azzera col cambio di `round.id`, e il giro dopo il pop-up torna a chiedere i due «continua». All'ultimo round non cambia niente: la partita è `conclusa`, la condizione chiede `in_corso`, e il «continua» porta al punteggio come prima.
+
+**Come è stato verificato**: `tsc` e `lint` puliti. ⚠️ Il difetto è nella condizione di una schermata e **non è esercitabile da un test in Node**: la prova è giocare almeno due round del disegno personalizzato su due telefoni. È la stessa famiglia di B-43 e B-44 — difetti di un *passaggio* (i primi secondi, il cambio di carta, il cambio di round) che un giro di prova a mano salta perché guarda gli stati, non le transizioni.
+
+### B-46 — «Versione ufficiale» apriva la personalizzata: la partita di nessuno restava viva (2026-09-02 seconda sessione, CORRETTO E VERIFICATO contro il database — da provare sul telefono)
+
+*«Premo su Gioca versione ufficiale ma mi apre la versione personalizzata»*. `apri` (`lib/partita.ts`) cerca la partita viva della coppia per quel gioco e, se c'è, **ci entra col suo modo** — il parametro serve solo a creare (D-88). Uscire dall'anticamera con «indietro» (`onEsci` → `router.back()`) non abbandona niente: la partita resta in `attesa`, e la volta dopo si rientra lì dentro, qualunque riga si sia premuta. Il comportamento era **documentato** nel commento di `apri` come «conseguenza da conoscere»: era la descrizione del difetto, non la sua giustificazione.
+
+**Correzione**: `daRimpiazzare`, la regola di **D-90**. Prima di entrare in una partita viva col modo diverso da quello chiesto, si contano i pronti (`partita_pronto`) e le carte scritte dall'altro (`domanda`, `autore_id <> io`), con `head: true` per non scaricare righe. Se la partita è in `attesa` e i due conteggi sono zero, si abbandona (`update … eq('stato','attesa')`) e se ne crea una col modo chiesto; altrimenti — o se un conteggio fallisce — ci si entra come prima.
+
+**Come è stato verificato** — `tests/partita.mjs`, blocco «La partita di nessuno si rimpiazza (B-46)», **9 asserzioni** nuove, suite a **183/183** contro il database vero. La regola vive nell'app; il test prova ciò che il database deve garantirle:
+
+- B legge **col proprio token** i due conteggi (zero e zero) della partita lasciata da A. Se la RLS li avesse negati, la regola avrebbe deciso «non rimpiazzare» in silenzio e il difetto sarebbe rimasto identico: era l'asserzione che valeva tutto il blocco;
+- B abbandona la partita di nessuno e ne crea una `ufficiale`: l'indice unico non la blocca;
+- 🔴 dopo un «Avvia» di A il conteggio dei pronti è 1; dopo una carta scritta da A il conteggio delle carte altrui, visto da B, è 1 — i due segni di vita che fermano il rimpiazzo si vedono davvero dall'altro telefono;
+- 🔴 l'abbandono condizionato a `attesa` **non tocca** una partita `in_corso`, e la seconda partita **fallisce** su `partita_una_viva`: chi perde la corsa rientra in quella dell'altro, come D-88 vuole.
+
+⚠️ **Cosa NON prova**: che la schermata, sul telefono, faccia la sequenza giusta. La prova è: aprire la personalizzata del quiz, uscire con «indietro», premere «versione ufficiale» — deve comparire l'attesa con le carte ufficiali, non la preparazione.
+
+### B-45 — Nel quiz personalizzato le domande si chiamavano «Obbligo o verità?» (2026-09-02 seconda sessione, CORRETTO — da verificare sul telefono)
+
+*«Nella versione personalizzata di quiz sulle preferenze esce scritto obbligo o verità»*. In `components/preparazione-carte.tsx` l'etichetta di una carta si sceglieva per tipo: `obbligo` → «Obbligo», `verita` → «Verità», *tutto il resto* → `t.gioco.scegliCarta`. E «tutto il resto» è la carta senza tipo, cioè la **domanda** del quiz — mentre `scegliCarta` è «Obbligo o verità?», la stringa del round in cui si sceglie la carta in *un altro gioco*. La funzione era stata scritta guardando obbligo o verità e provata solo lì; la preparazione del quiz non l'aveva mai aperta nessuno.
+
+**Correzione**: chiave nuova `cartaDomanda` («Domanda» / «Question») in tutte e due le lingue, usata per il caso senza tipo.
+
+⚠️ Il difetto era **invisibile ai test**: è una stringa a schermo, e l'unica verifica è aprire la preparazione del quiz sul telefono. Va guardata insieme a B-44, perché lo stesso schermo può comparire per la ragione sbagliata (l'hub che apre il gioco di prima).
+
+### B-44 — L'hub avviava il gioco di prima: la selezione si aggiornava solo a fine inerzia (2026-09-02 seconda sessione, CORRETTO — da verificare sul telefono)
+
+**Riferiti dall'utente due sintomi**, che sono uno: *«apro un gioco, premo Gioca, chiudo, premo Gioca su un altro gioco e mi riapre quello precedente»* e *«a volte mi apre direttamente il gioco e non mi fa scegliere tra ufficiale e personalizzata»*.
+
+**La causa.** `scelto` — l'indice del gioco al centro del carosello — si aggiornava **solo** in `onMomentumScrollEnd`. Quell'evento scatta solo se lo scorrimento ha **inerzia**: un trascinamento lento che si ferma sulla carta accanto — `snapToInterval` la centra comunque — non lo fa scattare, e `scelto` restava sulla carta di prima. Da lì tutto il resto: «Gioca» apriva la rotta del gioco precedente; il foglio «come volete giocare?» portava in testa il nome sbagliato; e quando la carta rimasta in memoria era la telepatia — l'unico gioco senza versione personalizzata — «Gioca» entrava diretto senza foglio. 🔑 Il *«a volte»* del racconto è esattamente la differenza fra un colpo di dito e un trascinamento.
+
+**La correzione** (`app/(tabs)/giochi.tsx`): l'indice si ricava da **ogni** evento di scorrimento nello stesso handler Reanimated che già muove le carte, e passa al thread JS con `runOnJS` **solo quando cambia**. La separazione voluta fra la `x` a sessanta fotogrammi e lo stato React che scrive un nome resta: cambia una volta per carta attraversata, non per fotogramma. `onMomentumScrollEnd` è tolto: due sorgenti per lo stesso stato sarebbero state la prossima corsa.
+
+**Come è stato verificato**: `tsc` e `lint` puliti. ⚠️ La correzione vive in un gesto sul touch screen e **non è esercitabile da un test in Node**: la prova è scorrere *lentamente* fino alla carta accanto e premere «Gioca». Finché non è fatta sul telefono, resta corretto ma non verificato.
+
 ### B-43 — Il round nasceva a metà, e chi non l'aveva creato non lo sapeva (2026-09-02, CORRETTO — da verificare su due telefoni)
 
 **Riferiti dall'utente due sintomi**, che sembravano due difetti e sono **uno solo**:
@@ -2254,7 +2350,7 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 - ✅ **Test automatici per il quiz** — fatti (`npm run test:partita`, 152 asserzioni in tutto).
 - ✅ **`obbligo_verita`** — fatto (**D-86**, **D-87**). ⚠️ Mai giocato su un telefono: vedi il PUNTO DI RIPRESA.
 - ✅ **Publication realtime di `round_pronto`** — verificata: l'evento arriva (B-42 per il modo in cui la prima verifica sbagliava).
-- ✅ **Il banco personalizzato della coppia (D-19, 11-bis)** — fatto (**D-88**, migrazione `0028`) per disegno, quiz e obbligo o verità. ⚠️ Mai usato: vedi il PUNTO DI RIPRESA.
+- ✅ **Il banco personalizzato della coppia (D-19, 11-bis)** — fatto (**D-88**, migrazione `0028`) per disegno, quiz e obbligo o verità. ⚠️ Aperto per la prima volta su un telefono il 2026-09-02 (seconda sessione), e ha dato subito **B-45** e **B-46**; una partita personalizzata intera non è ancora stata giocata. Vedi il PUNTO DI RIPRESA.
 - 🔴 **Da decidere in futuro, chiesto dall'utente il 2026-09-02**: le carte scritte dalla coppia **restano sue e si accumulano**, oppure valgono solo per la partita in cui sono state scritte? Oggi si salvano sul server e si usano per-partita; `domanda.partita_id` tiene la porta aperta in tutte e due le direzioni, e togliere il filtro è più facile che ricostruire un'attribuzione che non c'è.
 - ⬜ **La versione personalizzata della telepatia**, tolta il 2026-09-02 su richiesta dell'utente: costerebbe quaranta caselle da riempire prima di cominciare (dieci insiemi di quattro opzioni), che è la ragione per cui è fuori.
 - ⚠️ **Rigenerare `lib/database.types.ts`** con `supabase gen types typescript`: i blocchi scritti a mano sono quelli delle 0011→0016 **più** `round_pronto` della 0027. Vanno via tutti insieme, e finché restano i tipi dicono ciò che *crediamo* ci sia nello schema.
@@ -2497,6 +2593,36 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+**Aggiornato al 2026-09-02 (seconda sessione)** — la prova sui telefoni è cominciata, e ha dato subito cinque difetti (**B-44**, **B-45**, **B-46**, **B-47**, **B-48**, **D-90**). Supera il punto della prima sessione di oggi su una riga: **il server arriva ai telefoni** (tunnel), cosa che in LAN con ogni probabilità non era mai successa. Tutto il resto di quel punto resta valido ed è riportato sotto.
+
+### Dove siamo, in una riga
+
+**L'app gira su iPhone attraverso il tunnel**; su Android l'utente riferisce che non funziona, senza ancora un sintomo preciso. Le cinque correzioni di oggi sono a bordo e **nessuna è stata ancora vista girare**.
+
+### Cosa ha prodotto la giornata
+
+✅ **Il server raggiunge i telefoni**: `expo start --tunnel` con `CI=1`, configurazione `lifecouple-telefoni-tunnel` nel `.claude/launch.json` del brain. Verificato scaricando il manifest attraverso il tunnel per iOS e Android (HTTP 200, SDK 54). ⚠️ `CI=1` spegne il watch di Metro: **ogni modifica al codice richiede il riavvio del server**, e i telefoni devono ricaricare.
+
+✅ **Cinque difetti corretti** dai sei sintomi riferiti, e la suite a **183 asserzioni** (da 174) con il blocco di B-46.
+
+### 🔴 Cosa guardare al prossimo giro, in ordine
+
+00. 🔴 **Android**: capire cosa vede l'utente (resta a caricare? un errore, e quale? Expo Go non si apre?) e la versione di Expo Go installata. Il manifest Android è servito dal tunnel, quindi il problema è **a valle del server**.
+
+0-a. 🔴 **B-44 sul telefono**: scorrere *lentamente* fino alla carta accanto e premere «Gioca» — deve aprire quella carta, e per quiz, obbligo o verità e disegno deve comparire il foglio ufficiale/personalizzata.
+
+0-b. 🔴 **B-46 sul telefono**: aprire la personalizzata del quiz, uscire con «indietro», premere «versione ufficiale» — deve comparire l'attesa ufficiale, non la preparazione.
+
+0-c. 🔴 **B-45 sul telefono**: nella preparazione del quiz l'etichetta sopra il riquadro è «Domanda».
+
+0-c-bis. 🔴 **B-47 sul telefono**: nel disegno personalizzato, chiuso il primo round e premuto «continua» da tutti e due, chi disegna il secondo deve vedere «che cosa disegni?» e l'altro «sta scrivendo la parola…». Poi almeno un terzo round, per vedere che i «continua» tornano a essere richiesti.
+
+0-c-ter. 🔴 **B-48 sul telefono**: la X dentro un gioco deve chiedere «Resta / Esci, la partita resta / Annulla la partita»; dopo «Annulla», «Gioca» deve ripartire dal round 1. ⚠️ Se una partita **nuova** partisse ancora dal round 2, la causa è un'altra: l'orologio del telefono (il tempo del round è ancorato a `iniziato_il` del server, e un telefono avanti di un minuto chiude il round 1 all'istante).
+
+0-d. ⚠️ **Le versioni dei pacchetti**: Expo segnala `expo` 54.0.36, `expo-constants` 18.0.13 e `expo-file-system` 19.0.23 sotto le attese (`~54.0.37`, `~18.0.14`, `~19.0.24`). Non toccate oggi, di proposito: non si cambiano dipendenze nel mezzo di una prova sui telefoni.
+
+### Il punto precedente: la prima sessione del 2026-09-02
 
 **Aggiornato al 2026-09-02** — il quarto gioco e i test che mancavano (**D-86**, **D-87**, **B-41**, **B-42**). Supera il punto del 2026-09-01 su due righe: la publication di `round_pronto` **è verificata**, e `obbligo_verita` **esiste**. Il punto del 2026-08-31 sulla pubblicazione resta valido riga per riga: oggi non è stato toccato.
 
