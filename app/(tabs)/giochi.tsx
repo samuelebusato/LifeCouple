@@ -35,7 +35,7 @@ import { t } from '@/lib/i18n';
  *
  * Una griglia di tre icone era la soluzione ovvia e piu' corta da scrivere. Il
  * carosello vince per una ragione che non e' estetica: i giochi qui sono
- * **tre**, e resteranno pochi anche dopo (P-04 ne propone altri quattro, non
+ * **quattro**, e resteranno pochi anche dopo (P-04 ne propone altri quattro, non
  * altri quaranta). Con pochi elementi la griglia spreca lo schermo e li mostra
  * tutti alla stessa distanza dall'occhio, mentre il carosello ne **sceglie uno
  * alla volta** e quindi puo' permettersi di dire, di ognuno, cosa e': un disegno
@@ -47,14 +47,20 @@ import { t } from '@/lib/i18n';
  * no. Se ogni carta avesse i suoi bottoni, cambiare gioco sposterebbe anche i
  * comandi, e ogni scorrimento costringerebbe a ritrovarli.
  *
- * ## Cosa NON c'e', di proposito
+ * ## Cosa manca ancora, e si dice invece di nasconderlo
  *
- * Le partite non esistono ancora: manca la voce 8 del backlog, il meccanismo di
- * invio sigillato (D-12). Questo hub quindi **non finge**. I due comandi si
- * aprono davvero e mostrano cio' che mostreranno, e dicono anche cosa manca
- * perche' facciano qualcosa. E' la regola di `SezioneInArrivo` — *nessun gap
- * silenzioso* vale anche verso chi usa l'app — applicata a una schermata che
- * ormai e' troppo piena per essere un cartellino.
+ * ✅ Le partite **ci sono tutte e quattro** dal 2026-09-02 (la voce 8 del backlog
+ * e' chiusa dalla 0020: il sigillo D-12 esiste, e i tre giochi che ne hanno
+ * bisogno lo usano).
+ *
+ * ✅ E dal 2026-09-02 **anche la riga «personalizzata» fa qualcosa** (D-19): per
+ * tre sessioni di fila era stata segnalata come *l'unico comando dell'app che
+ * prometteva una differenza inesistente*. Ora avvia la partita col set scritto
+ * dalla coppia — tranne nella telepatia, dove è stata tolta su richiesta
+ * dell'utente e il bottone «Gioca» entra diretto (vedi `CON_PERSONALIZZATA`).
+ *
+ * Questo hub **non finge**: è la regola di `SezioneInArrivo` — *nessun gap
+ * silenzioso* — che vale anche verso chi usa l'app.
  */
 export default function Giochi() {
   const router = useRouter();
@@ -165,6 +171,21 @@ export default function Giochi() {
    * foglio parla di lei. Alla chiusura torna con la molla dello scivolo, meno
    * viva di quella d'entrata — sta tornando al suo posto, non arrivando.
    */
+  /**
+   * Avvia il gioco scelto, dicendo alla schermata **con che set** si gioca.
+   *
+   * ⚠️ Il modo viaggia come parametro di rotta, ma decide **solo se la partita
+   * va creata**: se una è già viva ci si entra dentro, col suo modo (`apri`, in
+   * `lib/partita.ts`). I due telefoni non si accordano su niente — chi arriva
+   * secondo si aggancia — quindi il modo deve stare sulla riga della partita.
+   */
+  function avvia(modo: ModoGioco) {
+    const rotta = ROTTE[GIOCHI[scelto].codice];
+    if (!rotta) return;
+    chiudi();
+    router.push({ pathname: rotta, params: { modo } });
+  }
+
   function apri(quale: 'gioca' | 'punteggio') {
     zoom.value = withSpring(1.07, molla.entrata);
     setFoglio(quale);
@@ -269,7 +290,19 @@ export default function Giochi() {
                 style={{ flex: 1 }}
                 altezza={54}
                 testo={t.hubGiochi.gioca}
-                onPress={() => apri('gioca')}
+                onPress={() => {
+                  // ⚠️ **Un gioco con una sola sorgente non apre il foglio.**
+                  // «Come volete giocare?» con una risposta sola è una domanda
+                  // finta: costa un tocco e non decide niente. Dalla telepatia
+                  // la versione personalizzata è stata tolta il 2026-09-02
+                  // (vedi `CON_PERSONALIZZATA`), quindi lei entra diretta.
+                  const codice = GIOCHI[scelto].codice;
+                  if (ROTTE[codice] && !CON_PERSONALIZZATA.includes(codice)) {
+                    avvia('ufficiale');
+                    return;
+                  }
+                  apri('gioca');
+                }}
               />
             </View>
           ) : (
@@ -301,22 +334,27 @@ export default function Giochi() {
                 titolo={t.hubGiochi.ufficiale}
                 nota={t.hubGiochi.ufficialeNota}
                 modo="ufficiale"
-                // ⚠️ Solo due giochi su quattro hanno una partita dietro. Gli
-                // altri due restano toccabili e **dicono** che manca il sigillo,
-                // invece di essere spenti senza spiegazione.
+                // ✅ Dal 2026-09-02 la partita ce l'hanno tutti e quattro. Il
+                // controllo resta perche' il tipo di `ROTTE` e' `Partial`: un
+                // quinto gioco aggiunto al catalogo resterebbe toccabile e
+                // **direbbe** che non ha ancora una partita, invece di essere
+                // spento senza spiegazione.
                 pronto={PRONTI.includes(GIOCHI[scelto].codice)}
-                onPress={() => {
-                  const rotta = ROTTE[GIOCHI[scelto].codice];
-                  if (!rotta) return;
-                  chiudi();
-                  router.push(rotta);
-                }}
+                onPress={() => avvia('ufficiale')}
               />
-              <Scelta
-                titolo={t.hubGiochi.personalizzata}
-                nota={t.hubGiochi.personalizzataNota}
-                modo="personalizzata"
-              />
+              {CON_PERSONALIZZATA.includes(GIOCHI[scelto].codice) && (
+                <Scelta
+                  titolo={t.hubGiochi.personalizzata}
+                  nota={t.hubGiochi.personalizzataNota}
+                  modo="personalizzata"
+                  // ✅ Dal 2026-09-02 questa riga **fa** qualcosa (D-19): era
+                  // l'unico comando dell'app che prometteva una differenza
+                  // inesistente, ed è stato scritto per tre sessioni di fila nel
+                  // punto di ripresa.
+                  pronto={PRONTI.includes(GIOCHI[scelto].codice)}
+                  onPress={() => avvia('personalizzata')}
+                />
+              )}
               {!PRONTI.includes(GIOCHI[scelto].codice) && (
                 <Text className="text-center text-xs text-muted-foreground">
                   {t.hubGiochi.inArrivo}
@@ -391,13 +429,48 @@ export default function Giochi() {
   );
 }
 
-/** I giochi che una partita ce l'hanno davvero, e le loro rotte. */
-const ROTTE: Partial<Record<CodiceGioco, '/gioco/disegno' | '/gioco/telepatia' | '/gioco/quiz'>> = {
+/**
+ * I giochi che una partita ce l'hanno davvero, e le loro rotte.
+ *
+ * ✅ **Dal 2026-09-02 ci sono tutti e quattro.** Il guardiano `PRONTI` resta
+ * dov'e': il tipo e' `Partial`, quindi il compilatore non sa che la mappa e'
+ * completa, e il giorno che si aggiunge un quinto gioco al catalogo di
+ * `lib/giochi.ts` la sua carta dira' «non ha ancora una partita» invece di non
+ * rispondere al tocco. Togliere il guardiano perche' oggi non serve vorrebbe
+ * dire riscoprirlo con un bottone morto.
+ */
+const ROTTE: Partial<
+  Record<CodiceGioco, '/gioco/disegno' | '/gioco/telepatia' | '/gioco/quiz' | '/gioco/obbligo'>
+> = {
   indovina_disegno: '/gioco/disegno',
   telepatia: '/gioco/telepatia',
   quiz_preferenze: '/gioco/quiz',
+  obbligo_verita: '/gioco/obbligo',
 };
 const PRONTI = Object.keys(ROTTE) as CodiceGioco[];
+
+/**
+ * I giochi che hanno **due** sorgenti di contenuto (D-19, backlog 11-bis).
+ *
+ * ⚠️ **La telepatia non c'è, per richiesta dell'utente del 2026-09-02** — *«per
+ * il momento rimuovi la versione personalizzata da telepatia»*. Finché non c'è,
+ * la sua riga nel foglio «Gioca» non si mostra affatto: una scelta con una sola
+ * risposta non è una scelta, e mostrarla disattivata prometterebbe qualcosa che
+ * nessuno ha in programma. Il gioco entra diretto dal bottone «Gioca».
+ *
+ * 🔑 E c'è una ragione tecnica dietro la richiesta, che vale la pena scrivere:
+ * negli altri tre il contenuto lo mette **una persona nel proprio turno** — la
+ * parola da disegnare, la risposta scritta, le carte di obbligo o verità. La
+ * telepatia invece pretende **insiemi di quattro opzioni**, cioè quaranta
+ * caselle da riempire prima di cominciare una partita da dieci round. Non è che
+ * personalizzarla sia sbagliato: è che costa una schermata di data entry, e
+ * nessuno la riempirebbe due volte.
+ */
+const CON_PERSONALIZZATA: readonly CodiceGioco[] = [
+  'quiz_preferenze',
+  'obbligo_verita',
+  'indovina_disegno',
+];
 
 /**
  * Come si chiama il punteggio di ciascun gioco, e cosa conta.
@@ -410,11 +483,18 @@ const PRONTI = Object.keys(ROTTE) as CodiceGioco[];
  * I giochi che una partita non ce l'hanno ancora restano fuori: la loro
  * classifica non e' vuota, **non esiste** — e la schermata lo dice invece di
  * mostrare uno zero che sembrerebbe un risultato.
+ *
+ * 🔑 **«Coraggio» conta le carte portate a termine dalla coppia**, non da uno
+ * dei due (2026-09-02). In «obbligo o verita'» la tentazione di contare i pass
+ * *di ciascuno* c'era scritta perfino in D-13: sarebbe stata l'unica voce di
+ * questo elenco a mettere i due uno contro l'altro, cioe' il verdetto sulla
+ * relazione che P-03 vieta e che D-83 aveva appena tolto dagli altri.
  */
 const PUNTEGGIO: Partial<Record<CodiceGioco, { nome: () => string; nota: () => string }>> = {
   telepatia: { nome: () => t.gioco.sintonia, nota: () => t.hubGiochi.notaSintonia },
   indovina_disegno: { nome: () => t.gioco.intesa, nota: () => t.hubGiochi.notaIntesa },
   quiz_preferenze: { nome: () => t.gioco.conoscenza, nota: () => t.hubGiochi.notaConoscenza },
+  obbligo_verita: { nome: () => t.gioco.coraggio, nota: () => t.hubGiochi.notaCoraggio },
 };
 
 /** Una riga del foglio dei punteggi: la media, e su quante partite. */

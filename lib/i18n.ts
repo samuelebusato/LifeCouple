@@ -263,6 +263,65 @@ const it = {
     nonIndovinato: 'Non ci siamo',
     avevaScelto: (p: string): string => `Aveva risposto: ${p}`,
     tuAveviDetto: (p: string): string => `Il tentativo era: ${p}`,
+    // --- obbligo o verità (2026-09-02) ---
+    /**
+     * ⚠️ **Il ruolo si dice prima della carta**, come nel quiz e per la stessa
+     * ragione: la stessa carta significa due cose opposte a seconda di chi la
+     * legge — «adesso tocca a te farla» oppure «adesso guarda».
+     */
+    tuoTurno: 'Tocca a te',
+    turnoAltro: 'Tocca all’altro',
+    obbligo: 'Obbligo',
+    verita: 'Verità',
+    obbligoNota: 'Una cosa da fare adesso, qui, seduti.',
+    veritaNota: 'Una domanda a cui rispondere a voce.',
+    scegliCarta: 'Obbligo o verità?',
+    scegliCartaNota: 'Scegli tu. La carta la leggete tutti e due.',
+    staScegliendo: 'Sta scegliendo la carta…',
+    tuaCarta: 'Falla, oppure passa: sono tutte e due mosse del gioco.',
+    aspettaEsito: 'Aspettiamo che decida.',
+    fatta: 'Fatta',
+    passo: 'Passo',
+    esitoFatta: 'Fatta!',
+    esitoPassata: 'Passata',
+    /**
+     * 🔑 **La riga che rende visibile D-13**, sciolta il 2026-09-02: passare
+     * non fa perdere, e non lascia niente addosso a chi passa. Contare i pass
+     * di ciascuno sarebbe una graduatoria fra le due persone, cioè l'unica cosa
+     * che P-03 vieta — la stessa che D-83 aveva appena tolto dagli altri giochi.
+     */
+    passataNota: 'Nessun punto, e nessun problema: passare non fa perdere.',
+    // --- versione personalizzata (2026-09-02, D-19) ---
+    /**
+     * ⚠️ **La preparazione dice sempre chi si sta aspettando.** È la stessa
+     * regola di `attesa-partita.tsx`: in un gioco a due, un'attesa senza
+     * soggetto è la domanda *«tocca a me o a lui?»* lasciata senza risposta.
+     */
+    preparaDomande: 'Scrivete le vostre domande',
+    preparaCarte: 'Scrivete le vostre carte',
+    preparaNota: 'Cinque a testa. Le vedrete una per round, a turno.',
+    quanteTue: (fatte: number, tot: number): string => `Tu: ${fatte} su ${tot}`,
+    quanteSue: (fatte: number, tot: number): string => `Il tuo partner: ${fatte} su ${tot}`,
+    scriviDomanda: 'Scrivi una domanda…',
+    scriviObbligo: 'Scrivi un obbligo…',
+    scriviVerita: 'Scrivi una verità…',
+    aggiungi: 'Aggiungi',
+    togli: 'Togli',
+    hoFinito: 'Ho finito',
+    attendoCarte: 'Hai finito. Aspettiamo che finisca anche il tuo partner.',
+    cartaNonSalvata: 'La carta non è arrivata. Prova di nuovo.',
+    // Il quiz scritto a mano: niente quattro opzioni, si risponde in un riquadro.
+    tuaRisposta: 'La tua risposta',
+    suaRisposta: 'Cosa pensi che abbia risposto?',
+    manda: 'Manda',
+    rispostaNonInviata: 'La risposta non è arrivata. Premi di nuovo.',
+    tuAveviRisposto: (r: string): string => `Tu avevi risposto: ${r}`,
+    avevaRisposto: (r: string): string => `Aveva risposto: ${r}`,
+    // Il disegno scritto a mano: la parola la dichiara chi disegna.
+    dichiaraParola: 'Che cosa disegni?',
+    dichiaraParolaNota: 'Scrivila: la vedi solo tu, e lui deve indovinarla.',
+    cominciaDisegno: 'Comincia',
+    parolaNonSalvata: 'La parola non è arrivata. Premi di nuovo.',
     // --- fra un round e l'altro (0027) ---
     continua: 'Continua',
     /**
@@ -284,6 +343,13 @@ const it = {
      * round, quindi non c'è un esaminato e un esaminatore.
      */
     conoscenza: 'Conoscenza',
+    /**
+     * Il punteggio di «obbligo o verità» (2026-09-02). ⚠️ Conta le carte che
+     * **avete** portato a termine, non quelle che ha fatto uno dei due: è la
+     * stessa regola degli altri tre, e qui vale doppio, perché il gioco ha di
+     * suo una tentazione di classifica che D-13 aveva lasciato aperta.
+     */
+    coraggio: 'Coraggio',
     /**
      * ⚠️ Nessuna di queste frasi dice «hai perso», e non è delicatezza: il
      * punteggio è **della coppia** (P-03), quindi non c'è nessuno che ha perso
@@ -330,6 +396,8 @@ const it = {
         'A turno uno risponde per sé e l’altro prova a indovinarlo: stesse quattro risposte, scelte al buio. Dieci round, cinque a testa, e si fa punto ogni volta che l’altro ci prende.',
       telepatia:
         'Testate la vostra sintonia: vi compaiono le stesse quattro parole, e scegliete al buio. Nessuno vede la scelta dell’altro finché non avete scelto tutti e due. Dieci round, e si fa punto ogni volta che pensate la stessa cosa.',
+      obbligo_verita:
+        'A turno uno sceglie obbligo o verità e legge la carta: la vedete tutti e due. Si può sempre passare — il round non fa punto e non perde nessuno. Dieci round, cinque a testa.',
       indovina_disegno:
         'Uno disegna col dito, l’altro prova a capire. Un minuto per round, poi il turno si scambia: cinque round in tutto. Non serve saper disegnare — di solito viene meglio se non sapete.',
     } as Record<string, string>,
@@ -352,6 +420,7 @@ const it = {
     notaSintonia: 'Volte in cui avete scelto la stessa cosa.',
     notaIntesa: 'Disegni che l’altro ha indovinato.',
     notaConoscenza: 'Volte in cui avete indovinato la risposta dell’altro.',
+    notaCoraggio: 'Carte che avete portato a termine.',
     /** Il denominatore della media, per non lasciare una percentuale sospesa. */
     mediaSu: (n: number): string =>
       n === 1 ? 'su una partita giocata' : `media su ${n} partite giocate`,
@@ -852,6 +921,47 @@ const en: Dizionario = {
     nonIndovinato: 'Not quite',
     avevaScelto: (p: string): string => `They answered: ${p}`,
     tuAveviDetto: (p: string): string => `The guess was: ${p}`,
+    // --- truth or dare ---
+    tuoTurno: 'Your turn',
+    turnoAltro: 'Their turn',
+    obbligo: 'Dare',
+    verita: 'Truth',
+    obbligoNota: 'Something to do right now, sitting here.',
+    veritaNota: 'A question to answer out loud.',
+    scegliCarta: 'Truth or dare?',
+    scegliCartaNota: 'Your call. You will both read the card.',
+    staScegliendo: 'Picking a card…',
+    tuaCarta: 'Do it, or pass: both are moves in this game.',
+    aspettaEsito: 'Waiting for them to decide.',
+    fatta: 'Done',
+    passo: 'Pass',
+    esitoFatta: 'Done!',
+    esitoPassata: 'Passed',
+    passataNota: 'No point, and no hard feelings: passing does not lose anything.',
+    // --- your own version ---
+    preparaDomande: 'Write your questions',
+    preparaCarte: 'Write your cards',
+    preparaNota: 'Five each. You will see them one per round, taking turns.',
+    quanteTue: (fatte: number, tot: number): string => `You: ${fatte} of ${tot}`,
+    quanteSue: (fatte: number, tot: number): string => `Your partner: ${fatte} of ${tot}`,
+    scriviDomanda: 'Write a question…',
+    scriviObbligo: 'Write a dare…',
+    scriviVerita: 'Write a truth…',
+    aggiungi: 'Add',
+    togli: 'Remove',
+    hoFinito: 'I am done',
+    attendoCarte: 'You are done. Waiting for your partner to finish.',
+    cartaNonSalvata: 'The card did not go through. Try again.',
+    tuaRisposta: 'Your answer',
+    suaRisposta: 'What do you think they answered?',
+    manda: 'Send',
+    rispostaNonInviata: 'The answer did not go through. Tap again.',
+    tuAveviRisposto: (r: string): string => `You had answered: ${r}`,
+    avevaRisposto: (r: string): string => `They had answered: ${r}`,
+    dichiaraParola: 'What are you drawing?',
+    dichiaraParolaNota: 'Write it down: only you see it, and they have to guess it.',
+    cominciaDisegno: 'Start',
+    parolaNonSalvata: 'The word did not go through. Tap again.',
     continua: 'Continue',
     attendoContinua: 'Waiting for your partner to hit «Continue».',
     suTotale: (tot: number): string => `out of ${tot}`,
@@ -859,6 +969,7 @@ const en: Dizionario = {
     intesa: 'Rapport',
     sintonia: 'In sync',
     conoscenza: 'Insight',
+    coraggio: 'Nerve',
     commento: (p: number, tot: number): string => {
       if (tot === 0) return '';
       const q = p / tot;
@@ -889,6 +1000,8 @@ const en: Dizionario = {
         'You take turns: one answers for themselves, the other tries to guess them — same four answers, picked blind. Ten rounds, five each, and you score every time the guess lands.',
       telepatia:
         'Test how in sync you are: you both get the same four words, and you pick blind. Neither of you sees the other’s pick until you have both chosen. Ten rounds, and you score every time you think the same thing.',
+      obbligo_verita:
+        'Each turn one of you picks truth or dare and reads the card out — you both see it. You can always pass: the round scores nothing and nobody loses. Ten rounds, five each.',
       indovina_disegno:
         'One of you draws with a finger, the other tries to work it out. One minute per round, then you swap turns: five rounds in all. No drawing skills needed — it usually works better without.',
     } as Record<string, string>,
@@ -903,6 +1016,7 @@ const en: Dizionario = {
     notaSintonia: 'Times you picked the same thing.',
     notaIntesa: 'Drawings your partner guessed.',
     notaConoscenza: 'Times you guessed each other’s answer.',
+    notaCoraggio: 'Cards you saw through.',
     mediaSu: (n: number): string =>
       n === 1 ? 'over one game played' : `average over ${n} games played`,
     punteggioVuoto:

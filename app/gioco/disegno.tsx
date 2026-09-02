@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { X, Send } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
@@ -21,7 +21,7 @@ import { PunteggioFinale } from '@/components/punteggio-finale';
 import { Attesa } from '@/components/attesa-partita';
 import { supabase } from '@/lib/supabase';
 import { useCoppia } from '@/lib/coppia';
-import { usePartita, SECONDI_ROUND } from '@/lib/partita';
+import { usePartita, useAperturaRound, SECONDI_ROUND } from '@/lib/partita';
 import { PAROLE_DISEGNO, rendi, indovinata, type Voce } from '@/lib/parole';
 import { useTema } from '@/lib/tema';
 import { tatto } from '@/lib/movimento';
@@ -63,6 +63,21 @@ export default function GiocoDisegno() {
   const p = usePartita('indovina_disegno');
   const { apri, partita, round, io } = p;
 
+  /**
+   * 🔴 **I due valori si estraggono da `p`, e `p` NON va nelle dipendenze**
+   * (B-43, 2026-09-02).
+   *
+   * `usePartita` restituisce un oggetto memoizzato su tutto lo stato della
+   * partita: punteggio, pronti, round, «continua». Metterlo fra le dipendenze
+   * dell'effetto che **crea** il round significa rimontare quell'effetto a ogni
+   * evento realtime, cioè proprio mentre il round si sta creando.
+   *
+   * `setRound` è una `setState` (identità stabile) e `entrambiProntiRound` è un
+   * booleano: le dipendenze diventano valori che cambiano **quando cambia la
+   * risposta**, non quando arriva un evento qualsiasi.
+   */
+  const { setRound, entrambiProntiRound, personalizzata } = p;
+  const apriRound = useAperturaRound();
   const [membri, setMembri] = React.useState<string[]>([]);
   const [tratti, setTratti] = React.useState<Tratto[]>([]);
   const [parziale, setParziale] = React.useState<Tratto | null>(null);
@@ -71,9 +86,14 @@ export default function GiocoDisegno() {
   const [restano, setRestano] = React.useState(SECONDI_ROUND);
   const canale = React.useRef<RealtimeChannel | null>(null);
 
+  /**
+   * Il modo arriva dalla rotta, e serve **solo a creare** la partita: se una è
+   * già viva si entra in quella, col suo modo (vedi `apri`).
+   */
+  const { modo } = useLocalSearchParams<{ modo?: string }>();
   React.useEffect(() => {
-    apri(coppiaId);
-  }, [coppiaId, apri]);
+    apri(coppiaId, modo === 'personalizzata' ? 'personalizzata' : 'ufficiale');
+  }, [coppiaId, apri, modo]);
 
   /**
    * I membri attivi della coppia: servono a sapere a chi tocca nei round pari.
@@ -148,6 +168,10 @@ export default function GiocoDisegno() {
   /* --- chi disegna apre il round e pesca la parola ------------------------- */
   React.useEffect(() => {
     if (partita?.stato !== 'in_corso' || !ioDisegno || !io) return;
+    // 🔑 **In personalizzata il round non nasce da solo** (D-19): la parola la
+    // dichiara chi disegna, quindi il round si apre quando l'ha scritta — non
+    // prima. Vedi `dichiara` più sotto.
+    if (personalizzata) return;
     if (round && round.numero === numeroRound) return;
     /**
      * 🔑 **Il round nuovo parte quando hanno premuto «continua» tutti e due**
@@ -165,9 +189,11 @@ export default function GiocoDisegno() {
      * L'esistenza di un round passato non ha bisogno di viaggiare: quello in
      * corso l'ha già fermato la riga sopra, e al primo round `round` è `null`.
      */
-    if (round && !p.entrambiProntiRound) return;
-    let vivo = true;
-    const avvio = setTimeout(async () => {
+    if (round && !entrambiProntiRound) return;
+    // 🔴 **Una volta sola, e fino in fondo** (B-43): la sequenza qui sotto è
+    // «crea il round → scrivi la parola → tienila», e interromperla al primo
+    // passo lascia un round che nessuno può giocare. Vedi `useAperturaRound`.
+    apriRound(`${partita.id}:${numeroRound}`, async (montata) => {
       // ⚠️ **Una parola non si ripete nella stessa partita** (B-33). Pescare a
       // caso su 250 voci sembra sicuro e non lo è: su cinque round la
       // probabilità di un doppione è circa il 4%, cioè una partita ogni
@@ -196,41 +222,161 @@ export default function GiocoDisegno() {
         .insert({ partita_id: partita.id, numero: numeroRound, disegnatore_id: io })
         .select('*')
         .single();
-      if (!vivo || error || !data) return;
-      // ⚠️ **Il round parte comunque se il segreto non si scrive**, e la scelta
-      // è deliberata. La parola vive già in memoria qui, quindi chi disegna
-      // gioca lo stesso; ciò che si perde è solo la possibilità di
-      // **ritrovarla ricaricando** la schermata. Fermarsi qui lascerebbe un
-      // round creato che nessuno fa più avanzare — cioè si scambierebbe un
-      // difetto piccolo con una partita bloccata.
+
+      if (error || !data) {
+        // Il round c'è già (l'ha scritto un tentativo precedente di questa
+        // stessa schermata, interrotto prima di aggiornare lo stato): si
+        // **rilegge** invece di lasciarlo lì. È lo stesso «chi perde la corsa
+        // rilegge» di `apri`, applicato alla corsa contro sé stessi.
+        const { data: gia } = await supabase
+          .from('partita_round')
+          .select('*')
+          .eq('partita_id', partita.id)
+          .eq('numero', numeroRound)
+          .maybeSingle();
+        if (gia && montata()) setRound(gia);
+        return;
+      }
+
+      // ⚠️ **La parola si scrive PRIMA di dichiarare il round aperto**, e la
+      // scrittura non si salta mai. Chi disegna è l'unico che giudica i
+      // tentativi (`indovinata` più sotto): un round senza parola non si può
+      // né vincere né perdere, si può solo **lasciar scadere**.
       await supabase.from('round_segreto').insert({ round_id: data.id, chiave: scelta[0] });
+      if (!montata()) return;
       setVoce(scelta);
       setTratti([]);
       setParziale(null);
       setTentativi([]);
-      p.setRound(data);
-      // Zero, ma resta un `setTimeout`: rimanda l'`insert` al giro dopo, così la
-      // pulizia dell'effetto può ancora annullarlo se la schermata si smonta.
-    }, 0);
-    return () => {
-      vivo = false;
-      clearTimeout(avvio);
-    };
-  }, [partita?.stato, partita?.id, ioDisegno, io, round, numeroRound, p]);
+      setRound(data);
+    });
+  }, [
+    partita?.stato,
+    partita?.id,
+    ioDisegno,
+    io,
+    round,
+    numeroRound,
+    entrambiProntiRound,
+    setRound,
+    apriRound,
+    personalizzata,
+  ]);
 
-  /** Chi disegna rilegge la parola se ricarica la schermata a round aperto. */
+  /**
+   * Chi disegna rilegge la parola se ricarica la schermata a round aperto —
+   * **e se non c'è, la scrive** (B-43).
+   *
+   * 🔴 La seconda metà è la riparazione, e serve per due ragioni distinte. La
+   * prima è che i round nati a metà **esistono già** nel database di chi ha
+   * giocato prima di questa correzione, e senza questo pezzo resterebbero
+   * ingiocabili per sempre. La seconda è che nessuna precauzione rende
+   * impossibile un'interruzione fra due scritture: la si può rendere
+   * *recuperabile*, e un round senza parola ha una sola riparazione sensata —
+   * scriverne una.
+   *
+   * ⚠️ **Alla fine si rilegge, e vince ciò che è nel database.** Se in quello
+   * stesso istante la parola l'ha scritta l'altra strada (l'apertura del round),
+   * il nostro `insert` prende un duplicato sulla chiave primaria e va perso: la
+   * parola vera è quella salvata, non quella che avevamo in mano. Tenere la
+   * nostra darebbe a chi disegna una parola che chi indovina non potrà mai
+   * azzeccare, ed è un difetto che si vedrebbe come «ha indovinato e non gliel'ha
+   * contato».
+   */
   React.useEffect(() => {
     if (!roundVivo || !ioDisegno || voce) return;
-    supabase
-      .from('round_segreto')
-      .select('chiave')
-      .eq('round_id', roundVivo.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        const v = PAROLE_DISEGNO.find((x) => x[0] === data?.chiave);
-        if (v) setVoce(v);
-      });
+    let vivo = true;
+    (async () => {
+      const { data } = await supabase
+        .from('round_segreto')
+        .select('chiave')
+        .eq('round_id', roundVivo.id)
+        .maybeSingle();
+      if (!vivo) return;
+
+      if (data?.chiave) {
+        const v = PAROLE_DISEGNO.find((x) => x[0] === data.chiave);
+        // Una chiave fuori banco non è un errore: sarà la parola dichiarata
+        // dalla coppia (D-19). Si rende com'è scritta.
+        setVoce(v ?? [data.chiave, data.chiave]);
+        return;
+      }
+
+      const passati = await supabase
+        .from('partita_round')
+        .select('chiave_rivelata')
+        .eq('partita_id', roundVivo.partita_id);
+      const usate = new Set(
+        (passati.data ?? []).map((r) => r.chiave_rivelata).filter((k): k is string => !!k)
+      );
+      const disponibili = PAROLE_DISEGNO.filter((v) => !usate.has(v[0]));
+      const banco = disponibili.length > 0 ? disponibili : PAROLE_DISEGNO;
+      const scelta = banco[Math.floor(Math.random() * banco.length)];
+      await supabase.from('round_segreto').insert({ round_id: roundVivo.id, chiave: scelta[0] });
+
+      const { data: salvata } = await supabase
+        .from('round_segreto')
+        .select('chiave')
+        .eq('round_id', roundVivo.id)
+        .maybeSingle();
+      if (!vivo) return;
+      const chiave = salvata?.chiave ?? scelta[0];
+      setVoce(PAROLE_DISEGNO.find((x) => x[0] === chiave) ?? [chiave, chiave]);
+    })();
+    return () => {
+      vivo = false;
+    };
   }, [roundVivo, ioDisegno, voce]);
+
+  /**
+   * **La parola dichiarata** (D-19, versione personalizzata).
+   *
+   * Stessa sequenza dell'apertura automatica — crea il round, scrivi la parola,
+   * tienila — e stessa protezione: passa da `useAperturaRound`, quindi non parte
+   * due volte e non si interrompe a metà (B-43). Cambia solo da dove viene la
+   * parola: non dal banco, dalla tastiera.
+   *
+   * ⚠️ La parola **non** viene resa in due lingue: è quella che è stata scritta.
+   * Una `Voce` con la stessa stringa nei due posti fa funzionare `indovinata`
+   * senza inventare una traduzione che nessuno ha chiesto — e il confronto resta
+   * tollerante su maiuscole, accenti e articoli, che è ciò che serve davvero.
+   */
+  const [parolaScritta, setParolaScritta] = React.useState('');
+  const [erroreParola, setErroreParola] = React.useState<string | null>(null);
+  async function dichiara() {
+    const parola = parolaScritta.trim();
+    if (!parola || !partita || !io) return;
+    setErroreParola(null);
+    await apriRound(`${partita.id}:${numeroRound}`, async (montata) => {
+      const { data, error } = await supabase
+        .from('partita_round')
+        .insert({ partita_id: partita.id, numero: numeroRound, disegnatore_id: io })
+        .select('*')
+        .single();
+      if (error || !data) {
+        const { data: gia } = await supabase
+          .from('partita_round')
+          .select('*')
+          .eq('partita_id', partita.id)
+          .eq('numero', numeroRound)
+          .maybeSingle();
+        if (gia && montata()) setRound(gia);
+        else if (montata()) setErroreParola(t.gioco.parolaNonSalvata);
+        return;
+      }
+      const { error: eS } = await supabase
+        .from('round_segreto')
+        .insert({ round_id: data.id, chiave: parola });
+      if (!montata()) return;
+      if (eS) return setErroreParola(t.gioco.parolaNonSalvata);
+      setVoce([parola, parola]);
+      setTratti([]);
+      setParziale(null);
+      setTentativi([]);
+      setParolaScritta('');
+      setRound(data);
+    });
+  }
 
   /* --- il tempo, tenuto da chi disegna ------------------------------------ */
   React.useEffect(() => {
@@ -332,6 +478,77 @@ export default function GiocoDisegno() {
   }
 
   const esitoRound = round && round.numero === numeroRound - 1 ? round : null;
+
+  /**
+   * ⚠️ **Chi disegna scrive la parola prima che il round esista**, e per questo
+   * la schermata è una schermata e non un riquadro dentro il gioco: finché non
+   * l'ha scritta non c'è un round, non c'è un tempo che scorre e non c'è niente
+   * da disegnare. L'altro, intanto, vede la sua attesa — con scritto **chi** si
+   * sta aspettando, che è la regola di `attesa-partita.tsx`.
+   */
+  if (personalizzata && !roundVivo && partita.stato === 'in_corso' && !esitoRound) {
+    if (!ioDisegno) {
+      return (
+        <Attesa
+          titolo={t.giochi.indovina_disegno}
+          testo={t.gioco.staScegliendo}
+          onEsci={() => router.back()}
+          attesa
+        />
+      );
+    }
+    return (
+      <View className="flex-1">
+        <Fondo />
+        <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            className="flex-1"
+          >
+            <View className="flex-row items-start justify-between px-6 pb-4 pt-1">
+              <View className="flex-1 gap-1">
+                <Text className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t.gioco.round(numeroRound, partita.round_totali)}
+                </Text>
+                <Text className="font-serif-bold text-3xl text-foreground">
+                  {t.gioco.dichiaraParola}
+                </Text>
+                <Text className="text-sm text-muted-foreground">{t.gioco.dichiaraParolaNota}</Text>
+              </View>
+              <TondoVetro lato={40} tinto={false} onPress={() => router.back()}>
+                <X color={c.tenue} size={18} />
+              </TondoVetro>
+            </View>
+            <View className="flex-1 justify-center gap-4 px-6">
+              <View
+                className="rounded-3xl border border-border/60 px-5"
+                style={{ backgroundColor: c.alone }}
+              >
+                <TextInput
+                  value={parolaScritta}
+                  onChangeText={setParolaScritta}
+                  placeholder={t.gioco.tuaParola}
+                  placeholderTextColor={c.tenue}
+                  style={{ color: c.testo, paddingVertical: 16, fontSize: 20 }}
+                  autoFocus
+                  onSubmitEditing={dichiara}
+                  returnKeyType="done"
+                />
+              </View>
+              {!!parolaScritta.trim() && (
+                <BottonePieno testo={t.gioco.cominciaDisegno} altezza={54} onPress={dichiara} />
+              )}
+              {!!(erroreParola || p.errore) && (
+                <Text className="text-center text-sm text-destructive">
+                  {erroreParola ?? p.errore}
+                </Text>
+              )}
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1">

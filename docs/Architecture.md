@@ -15,7 +15,8 @@ Architettura completa, con **trade-off** e **alternative scartate col loro costo
 | **Database** (Postgres con RLS) | Coppie, membri, eventi, luoghi, elementi delle liste, metadati foto | Supabase, regione UE |
 | **Storage** (Supabase Storage) | File delle fotografie | Supabase, regione UE |
 | **Policy RLS** | **Il controllo di autorizzazione vero**: chi vede quale riga | Dentro il database |
-| **Invio sigillato** | Macchina a stati condivisa dai tre giochi: invito → accettazione → invio segreto di entrambi → **rivelazione solo quando entrambi hanno inviato**. Il confronto avviene in una **funzione Postgres**, mai nel client | Database |
+| **Macchina della partita** | Condivisa da **tutti e quattro** i giochi: partita → entrambi pronti → round → «continua» in due → conclusa, col punteggio. Scritta una volta (`usePartita`, migrazioni 0020 e 0027) | Database + app |
+| **Invio sigillato** | Il congegno di **tre** giochi su quattro (quiz, telepatia, disegno): invio segreto di entrambi → **rivelazione solo quando entrambi hanno inviato**. Il confronto avviene in una **funzione Postgres**, mai nel client. ⚠️ «Obbligo o verità» **non lo usa** (D-86): la carta la devono leggere tutti e due, quindi non c'è nessun segreto da proteggere | Database |
 | **Creatura — stato** | Punti di crescita, stadio derivato, umore. **Non sa come viene disegnata** | Database + app |
 | **Creatura — disegno** | Riceve `stadio` e `umore`, restituisce il visivo. **Non sa da dove vengono** | App |
 
@@ -178,10 +179,11 @@ erDiagram
 
 | Tabella | Colonne | Nota |
 |---|---|---|
-| `domanda` | **`coppia_id` che può essere NULL**, `gioco`, `lingua`, `testo` | 🔑 `NULL` = banco comune scritto da noi (D-08 garantito); valorizzato = **domanda personalizzata di quella coppia** (D-19, contenuto non controllabile). Una sola tabella, il NULL fa la distinzione |
-| `partita` | `coppia_id`, `gioco`, `stato`, `round_totali`, `round_corrente`, `punti` | Stati **dal 2026-08-28** (migrazione 0020): `attesa` → `in_corso` → `conclusa`, più `abbandonata`. I vecchi (`invito` → `deposito` → `tentativi`) descrivevano una partita a domande e non reggevano né «entrambi premono avvia» né i round |
+| `domanda` | **`coppia_id` che può essere NULL**, `gioco`, `lingua`, `testo`, e dal 2026-09-02 `partita_id`, `autore_id`, `tipo` | 🔑 `NULL` = banco comune scritto da noi (D-08 garantito); valorizzato = **contenuto di quella coppia** (D-19, non controllabile — vedi R-06). Il banco comune non ci è mai entrato: vive in `lib/parole.ts` perché è bilingue e immutabile, quindi qui dentro ci sono **solo** le righe scritte dai due. `partita_id` è la decisione rimandata resa visibile (D-88): oggi si legge filtrando per partita, e il giorno che si decidesse per un banco della coppia che cresce basta togliere il filtro — la strada opposta non si recupera. `autore_id` serve a due cose: contare quante ne ha scritte l'altro durante la preparazione, e impedire di cancellare le sue |
+| `partita` | `coppia_id`, `gioco`, `modo`, `stato`, `round_totali`, `round_corrente`, `punti` | `modo` (**0028**): `ufficiale` o `personalizzata`, sulla **riga della partita** e non nello stato dell'app — i due telefoni non si accordano, chi arriva secondo si aggancia, quindi lo decide chi apre e l'altro lo trova scelto (D-88). Stati **dal 2026-08-28** (migrazione 0020): `attesa` → `in_corso` → `conclusa`, più `abbandonata`. I vecchi (`invito` → `deposito` → `tentativi`) descrivevano una partita a domande e non reggevano né «entrambi premono avvia» né i round |
 | `partita_pronto` | `partita_id`, `utente_id` | Una riga per persona. **Non due colonne booleane**: «puoi scrivere solo la TUA colonna» in RLS si esprime male, `utente_id = auth.uid()` si legge da solo |
-| `partita_round` | `partita_id`, `numero`, `disegnatore_id`, `opzioni`, `chiave_rivelata`, `esito`, `punti` | `opzioni`: le quattro della telepatia, **uguali per entrambi**. `chiave_rivelata`: la parola del disegno, scritta solo **a round finito** |
+| `partita_round` | `partita_id`, `numero`, `disegnatore_id`, `opzioni`, `chiave_rivelata`, `esito`, `punti` | `opzioni` è **ciò che i due devono vedere uguale**: le quattro scelte della telepatia, la domanda e le quattro risposte del quiz, la carta di obbligo o verità (`{tipo, chiave}`). `chiave_rivelata`: la parola del disegno, scritta solo **a round finito**. ⚠️ `disegnatore_id` lo riempie **solo** il disegno: quiz e obbligo o verità deducono il turno da `creata_da` e dal numero (B-30), e non registrarlo è ciò che rende non calcolabile «chi ha passato di più» (D-87) |
+| `round_pronto` | `round_id`, `utente_id` | **Dal 2026-09-01** (migrazione 0027): «sono pronto ad andare avanti», una riga per persona **per round**. Stessa forma di `partita_pronto` un piano più in basso, e non la stessa tabella perché questa risposta **scade a ogni round**: riusarla avrebbe voluto dire cancellarne le righe, cioè distruggere l'informazione che fa partire la partita |
 | `round_segreto` | `round_id`, `chiave` | 🔴 **La parola che chi indovina non legge.** Sta in una tabella a parte e non in una colonna di `partita_round` per una ragione tecnica precisa: **la RLS decide quali righe si leggono, non quali colonne** — e la riga del round a chi indovina serve, perché contiene numero e ruoli |
 | `invio_sigillato` | `partita_id`, `round`, `autore_id`, `natura` (verità/tentativo/scelta), `domanda_id`, `contenuto` | 🔴 **La tabella che l'altro non legge mai** |
 | `partita_risultato` | `partita_id`, `esito`, `punti_assegnati`, `rivelato_il` | Ciò che diventa visibile a entrambi **dopo** la rivelazione |
@@ -195,7 +197,7 @@ erDiagram
 
 **I tratti del disegno non toccano il database.** Viaggiano nel canale **broadcast** di Supabase Realtime, normalizzati fra 0 e 1 (non in punti-schermo: due telefoni di larghezza diversa riceverebbero il disegno tagliato), e non si salvano da nessuna parte. Conseguenza voluta: **le tre domande aperte da P-04 — contenuto personale o condiviso (D-04/D-21), conservazione, tetto di 1 GB (D-22) — non esistono più**, invece di essere risolte.
 
-**In publication realtime** stanno `partita`, `partita_pronto` e `partita_round`: i cambi di stato, la prontezza e i round. ⚠️ **Non** `invio_sigillato`, e non è una dimenticanza: la sua RLS nasconde la riga dell'altro, quindi l'evento non arriverebbe comunque a chi aspetta. Per questo la telepatia **interroga `rivela_telepatia` a intervalli** invece di ascoltare.
+**In publication realtime** stanno `partita`, `partita_pronto`, `partita_round`, `round_pronto` (0027) e `domanda` (0028, per vedere la preparazione dell'altro mentre scrive): i cambi di stato, la prontezza, i round e i «continua». ✅ Che `round_pronto` ci sia davvero è stato **verificato il 2026-09-02**, e non leggendo `pg_publication_tables` (con la chiave dell'app non è leggibile) ma facendo arrivare l'evento a un secondo client dentro `tests/partita.mjs`: il catalogo dice che la tabella è *dichiarata*, l'evento dice che il meccanismo *funziona*. ⚠️ **Non** `invio_sigillato`, e non è una dimenticanza: la sua RLS nasconde la riga dell'altro, quindi l'evento non arriverebbe comunque a chi aspetta. Per questo la telepatia **interroga `rivela_telepatia` a intervalli** invece di ascoltare.
 
 ### 4.2 Le regole di accesso (policy RLS)
 
@@ -215,7 +217,7 @@ Due funzioni di supporto, e tutto il resto ne discende:
 | Modificarlo o cancellarlo | **Solo `e_autore`** — per **ogni** tipo di contenuto |
 | `invio_sigillato` | **SELECT solo sulle proprie righe.** Nessuna eccezione, in nessuna fase |
 | `registro_azioni` | INSERT sì, UPDATE e DELETE **nessuna policy** = impossibili |
-| `domanda` | Leggibile se `coppia_id IS NULL` **oppure** `e_membro_attivo(coppia_id)` |
+| `domanda` | Leggibile se `coppia_id IS NULL` **oppure** `e_membro_attivo(coppia_id)`. 🔴 Dalla **0028** si **scrive e si cancella solo per sé** (`autore_id = auth.uid()`): senza, un telefono potrebbe riempire il set a nome del partner e far partire la partita da solo, o svuotare il suo. Nessuna policy di `update`: una carta si cancella e si riscrive, perché correggerla dopo che è stata giocata cambierebbe il passato di una partita |
 
 > **Le foto legate a un luogo non sono una collezione separata**: `foto.luogo_id` è facoltativo, la galleria generale è *tutte le foto della coppia* e la vista di un luogo è *le foto con quel `luogo_id`*. Una foto sta in entrambe le viste perché è **una sola riga**, non due — nessuna duplicazione, nessuna sincronizzazione da mantenere.
 

@@ -1,7 +1,14 @@
 import * as React from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Fondo } from '@/components/schermata';
@@ -10,10 +17,12 @@ import { Premibile } from '@/components/ui/premibile';
 import { Comparsa } from '@/components/ui/comparsa';
 import { PunteggioFinale } from '@/components/punteggio-finale';
 import { Attesa } from '@/components/attesa-partita';
+import { PreparazioneCarte } from '@/components/preparazione-carte';
 import { supabase } from '@/lib/supabase';
 import { useCoppia } from '@/lib/coppia';
-import { usePartita } from '@/lib/partita';
-import { DOMANDE_QUIZ, rendi, type Voce } from '@/lib/parole';
+import { usePartita, useAperturaRound } from '@/lib/partita';
+import { DOMANDE_QUIZ, rendi, normalizza, type Voce } from '@/lib/parole';
+import { useCarte, pescaCarta } from '@/lib/carte';
 import { useTema } from '@/lib/tema';
 import { tatto } from '@/lib/movimento';
 import { t, lingua } from '@/lib/i18n';
@@ -83,6 +92,21 @@ export default function GiocoQuiz() {
   const p = usePartita('quiz_preferenze');
   const { apri, partita, round, io } = p;
 
+  /**
+   * 🔴 **I due valori si estraggono da `p`, e `p` NON va nelle dipendenze**
+   * (B-43, 2026-09-02).
+   *
+   * `usePartita` restituisce un oggetto memoizzato su tutto lo stato della
+   * partita: punteggio, pronti, round, «continua». Metterlo fra le dipendenze
+   * dell'effetto che **crea** il round significa rimontare quell'effetto a ogni
+   * evento realtime, cioè proprio mentre il round si sta creando.
+   *
+   * `setRound` è una `setState` (identità stabile) e `entrambiProntiRound` è un
+   * booleano: le dipendenze diventano valori che cambiano **quando cambia la
+   * risposta**, non quando arriva un evento qualsiasi.
+   */
+  const { setRound, entrambiProntiRound } = p;
+  const apriRound = useAperturaRound();
   const [membri, setMembri] = React.useState<string[]>([]);
   const [miaScelta, setMiaScelta] = React.useState<string | null>(null);
   const [esito, setEsito] = React.useState<{ mia: string; sua: string } | null>(null);
@@ -90,9 +114,15 @@ export default function GiocoQuiz() {
   /** L'esito dell'ultimo round è già stato letto e congedato (B-39). */
   const [finaleLetto, setFinaleLetto] = React.useState(false);
 
+  /** Il modo arriva dalla rotta e serve **solo a creare**: vedi `apri`. */
+  const { modo } = useLocalSearchParams<{ modo?: string }>();
   React.useEffect(() => {
-    apri(coppiaId);
-  }, [coppiaId, apri]);
+    apri(coppiaId, modo === 'personalizzata' ? 'personalizzata' : 'ufficiale');
+  }, [coppiaId, apri, modo]);
+
+  /** Le domande scritte dai due, quando la partita è personalizzata (D-19). */
+  const set = useCarte(coppiaId, partita?.id ?? null, 'quiz_preferenze');
+  const [rispostaScritta, setRispostaScritta] = React.useState('');
 
   /**
    * I membri attivi: servono a sapere di chi si parla nei round pari.
@@ -124,6 +154,17 @@ export default function GiocoQuiz() {
   const ioSonoSoggetto = !!io && soggetto === io;
 
   /** Le opzioni vengono da `round`, non da `roundVivo` (B-34). */
+  /**
+   * La domanda scritta dalla coppia, quando la partita è personalizzata.
+   *
+   * ⚠️ Il round salva **solo l'id**: il testo sta in `domanda` e si legge da lì.
+   * Copiarlo dentro `opzioni` avrebbe risparmiato questa riga e reso possibile
+   * che le due copie divergessero — la stessa ragione per cui il turno non si
+   * scrive sul round (D-87).
+   */
+  const cartaId = (round?.opzioni as { cartaId?: string } | null)?.cartaId ?? null;
+  const cartaDomanda = cartaId ? (set.carte.find((x) => x.id === cartaId) ?? null) : null;
+
   const opzioni = (round?.opzioni as Opzioni | null) ?? null;
   const domanda = React.useMemo(
     () => DOMANDE_QUIZ.find((d) => d.titolo[0] === opzioni?.tema) ?? null,
@@ -144,9 +185,13 @@ export default function GiocoQuiz() {
     // ⚠️ Non si guarda `finito_il`: arriva col realtime, mentre `round_corrente`
     // arriva dalla RPC — e nell'istante fra i due il guardiano lascerebbe
     // passare. Vedi la nota estesa in `telepatia.tsx`.
-    if (round && !p.entrambiProntiRound) return;
-    let vivo = true;
-    const avvio = setTimeout(async () => {
+    if (round && !entrambiProntiRound) return;
+    // 🔴 **Una volta sola, e il risultato non si butta** (B-43): se questo
+    // effetto si rimontava mentre l'inserimento era in volo, il round finiva
+    // nel database e lo stato locale non lo sapeva. Il giro dopo riprovava,
+    // prendeva un duplicato e taceva: la partita restava ferma su un round che
+    // **esisteva** — e per giocarlo bisognava uscire e rientrare.
+    apriRound(`${partita.id}:${numeroRound}`, async (montata) => {
       const passati = await supabase
         .from('partita_round')
         .select('opzioni')
@@ -156,19 +201,62 @@ export default function GiocoQuiz() {
           .map((r) => (r.opzioni as Opzioni | null)?.tema)
           .filter((k): k is string => !!k)
       );
+      /**
+       * 🔑 **In personalizzata la domanda viene dal set della coppia**, e le
+       * quattro opzioni non esistono: si risponde scrivendo. Il round salva solo
+       * *quale* carta è uscita — il testo vive in `domanda`, e duplicarlo qui
+       * vorrebbe dire poterlo far divergere.
+       *
+       * ⚠️ Le carte già uscite si leggono dai round passati, come le domande del
+       * banco comune: è la stessa regola di B-33, applicata a un set di dieci
+       * dove una ripetizione si noterebbe subito.
+       */
+      const opzioni = p.personalizzata
+        ? (() => {
+            const usateId = new Set(
+              (passati.data ?? [])
+                .map((r) => (r.opzioni as { cartaId?: string } | null)?.cartaId)
+                .filter((k): k is string => !!k)
+            );
+            const carta = pescaCarta(set.carte, usateId, null);
+            return carta ? { cartaId: carta.id } : null;
+          })()
+        : pescaOpzioni(usate);
+      // Senza carte non si apre un round vuoto: si aspetta che il set arrivi.
+      if (!opzioni) return;
+
       const { data, error } = await supabase
         .from('partita_round')
-        .insert({ partita_id: partita.id, numero: numeroRound, opzioni: pescaOpzioni(usate) })
+        .insert({ partita_id: partita.id, numero: numeroRound, opzioni })
         .select('*')
         .single();
-      if (!vivo || error || !data) return;
-      p.setRound(data);
-    }, 0);
-    return () => {
-      vivo = false;
-      clearTimeout(avvio);
-    };
-  }, [partita?.stato, partita?.id, ioApro, round, numeroRound, p]);
+
+      if (error || !data) {
+        // Il round c'è già: si rilegge invece di lasciarlo lì. È «chi perde la
+        // corsa rilegge» di `apri`, applicato alla corsa contro sé stessi.
+        const { data: gia } = await supabase
+          .from('partita_round')
+          .select('*')
+          .eq('partita_id', partita.id)
+          .eq('numero', numeroRound)
+          .maybeSingle();
+        if (gia && montata()) setRound(gia);
+        return;
+      }
+      if (montata()) setRound(data);
+    });
+  }, [
+    partita?.stato,
+    partita?.id,
+    ioApro,
+    round,
+    numeroRound,
+    entrambiProntiRound,
+    setRound,
+    apriRound,
+    p.personalizzata,
+    set.carte,
+  ]);
 
   /* --- si sceglie ---------------------------------------------------------- */
   /**
@@ -192,6 +280,34 @@ export default function GiocoQuiz() {
     }
   }
 
+  /**
+   * **La risposta scritta** (D-19). Stessa tabella e stesso sigillo della
+   * versione ufficiale: cambia solo che nel contenuto va `testo` invece di
+   * `chiave`.
+   *
+   * 🔑 **`chiave` non si riusa per il testo libero**, ed è la ragione per cui la
+   * 0028 tocca `rivela_telepatia`: in tutto il progetto `chiave` vuol dire *la
+   * chiave neutra rispetto alla lingua*, quella che permette a due partner con
+   * il telefono in lingue diverse di giocare la stessa partita. Una frase
+   * scritta a mano non è neutra rispetto a niente.
+   */
+  async function mandaRisposta() {
+    const testo = rispostaScritta.trim();
+    if (!roundVivo || miaScelta || !testo) return;
+    setMiaScelta(testo);
+    tatto('scelta');
+    const { error } = await supabase.from('invio_sigillato').insert({
+      partita_id: roundVivo.partita_id,
+      round: roundVivo.numero,
+      natura: 'scelta',
+      contenuto: { testo },
+    });
+    if (error) {
+      setMiaScelta(null);
+      setErroreScelta(t.gioco.rispostaNonInviata);
+    }
+  }
+
   /* --- si aspetta l'altro, e si confronta ---------------------------------- */
   /**
    * 🔴 Si chiede a `round` e non a `roundVivo` (B-37), e a round finito si chiede
@@ -212,7 +328,20 @@ export default function GiocoQuiz() {
       const sua = data.find((r) => r.utente_id !== io)?.scelta ?? '';
       if (!miaScelta && mia) setMiaScelta(mia);
       setEsito({ mia, sua });
-      const preso = mia === sua;
+      /**
+       * ⚠️ **A mano il confronto è tollerante**, e usa lo stesso normalizzatore
+       * dei tentativi del disegno: maiuscole, accenti, articolo iniziale e spazi
+       * doppi non fanno perdere un punto. Non corregge i refusi e non conosce i
+       * sinonimi — «la pizza» e «pizza» sono la stessa risposta, «pizza» e
+       * «margherita» no.
+       *
+       * 🔴 È un rischio accettato e va detto: su testo libero il confronto esatto
+       * dirà «no» dove due persone direbbero «sì». La via alternativa era far
+       * giudicare al soggetto se l'altro ci avesse preso — scartata perché mette
+       * una persona a dare un voto all'altra dentro un gioco il cui punteggio è
+       * della coppia. Da rivedere dopo la prima partita vera.
+       */
+      const preso = p.personalizzata ? normalizza(mia) === normalizza(sua) : mia === sua;
       if (preso) tatto('fatto');
       if (ioApro && round.esito === 'in_corso')
         await p.chiudi(round.id, preso ? 'vinto' : 'perso', preso ? 1 : 0);
@@ -231,6 +360,7 @@ export default function GiocoQuiz() {
     setEsito(null);
     setErroreScelta(null);
     setFinaleLetto(false);
+    setRispostaScritta('');
   }, [round?.id]);
 
   /* --- schermate ----------------------------------------------------------- */
@@ -248,6 +378,32 @@ export default function GiocoQuiz() {
         totali={partita.round_totali}
         etichetta={t.gioco.conoscenza}
         onChiudi={async () => {
+          await p.abbandona();
+          router.back();
+        }}
+      />
+    );
+  }
+
+  if (partita.stato === 'attesa' && p.personalizzata) {
+    return (
+      <PreparazioneCarte
+        gioco="quiz_preferenze"
+        titolo={t.giochi.quiz_preferenze}
+        carte={set.carte}
+        io={io}
+        altro={membri.find((u) => u !== io) ?? null}
+        scrivi={set.scrivi}
+        cancella={set.cancella}
+        errore={set.errore}
+        caricando={set.caricando}
+        ioSonoPronto={p.ioSonoPronto}
+        // 🔑 «Ho finito» **è** «sono pronto»: stessa funzione del bottone
+        // «Avvia partita», quindi la partita comincia quando la seconda persona
+        // ha finito di scrivere. Nessuno stato nuovo da inventare.
+        onPronto={p.premiAvvia}
+        onEsci={() => router.back()}
+        onAnnulla={async () => {
           await p.abbandona();
           router.back();
         }}
@@ -326,7 +482,11 @@ export default function GiocoQuiz() {
                 che conta davvero — mette il ruolo dove gli occhi già sono,
                 invece di aggiungere una cosa in più da leggere. */}
             <Text className="font-serif-bold text-3xl text-foreground">
-              {domanda ? rendi(ioSonoSoggetto ? domanda.tuo : domanda.titolo, lingua) : '…'}
+              {p.personalizzata
+                ? (cartaDomanda?.testo ?? '…')
+                : domanda
+                  ? rendi(ioSonoSoggetto ? domanda.tuo : domanda.titolo, lingua)
+                  : '…'}
             </Text>
             <Text className="text-sm text-muted-foreground">{istruzione}</Text>
           </View>
@@ -335,6 +495,72 @@ export default function GiocoQuiz() {
           </TondoVetro>
         </View>
 
+        {/* --- personalizzata: si scrive, non si sceglie ------------------ */}
+        {p.personalizzata ? (
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View className="flex-1 justify-center gap-4 px-6">
+              {!miaScelta ? (
+                <>
+                  <View
+                    className="rounded-3xl border border-border/60 px-5"
+                    style={{ backgroundColor: c.alone }}
+                  >
+                    <TextInput
+                      value={rispostaScritta}
+                      onChangeText={setRispostaScritta}
+                      // ⚠️ Il segnaposto dice **cosa** si sta scrivendo, e non è
+                      // lo stesso testo per i due: la propria risposta e il
+                      // tentativo sull'altro sono due cose diverse scritte nello
+                      // stesso riquadro, ed è il punto in cui si può sbagliare
+                      // gioco senza accorgersene.
+                      placeholder={ioSonoSoggetto ? t.gioco.tuaRisposta : t.gioco.suaRisposta}
+                      placeholderTextColor={c.tenue}
+                      style={{ color: c.testo, paddingVertical: 16, fontSize: 18 }}
+                      multiline
+                      editable={!!roundVivo}
+                      onSubmitEditing={mandaRisposta}
+                      returnKeyType="done"
+                    />
+                  </View>
+                  {!!rispostaScritta.trim() && (
+                    <BottonePieno testo={t.gioco.manda} altezza={54} onPress={mandaRisposta} />
+                  )}
+                </>
+              ) : (
+                <CartaVetro raggio={26} fondo="pieno">
+                  <View className="gap-2 px-6 py-6" style={{ borderRadius: 26 }}>
+                    <Text
+                      className="text-xs font-semibold uppercase tracking-widest"
+                      style={{ color: c.accento }}
+                    >
+                      {ioSonoSoggetto ? t.gioco.tuaRisposta : t.gioco.suaRisposta}
+                    </Text>
+                    <Text className="font-serif text-xl text-foreground">{miaScelta}</Text>
+                    {/* La risposta dell'altro compare **solo a rivelazione
+                        avvenuta**: prima non esiste per questo telefono, ed è la
+                        policy `sigillato_select` a garantirlo, non questa riga. */}
+                    {!!esito && (
+                      <View className="gap-1 pt-3">
+                        <Text
+                          className="text-xs font-semibold uppercase tracking-widest"
+                          style={{ color: c.ambra }}
+                        >
+                          {ioSonoSoggetto ? t.gioco.ruoloIndovina : t.gioco.ruoloRispondi}
+                        </Text>
+                        <Text className="font-serif text-xl" style={{ color: c.ambra }}>
+                          {esito.sua}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </CartaVetro>
+              )}
+            </View>
+          </KeyboardAvoidingView>
+        ) : (
         <View className="flex-1 justify-center gap-3 px-6">
           {voci.map((v, i) => {
             const mia = miaScelta === v[0];
@@ -380,6 +606,7 @@ export default function GiocoQuiz() {
             );
           })}
         </View>
+        )}
 
         <View className="px-6 pb-6" style={{ minHeight: 40 }}>
           {!!(erroreScelta || p.errore) && (
@@ -416,9 +643,13 @@ export default function GiocoQuiz() {
                     è l'unica delle due che insegna qualcosa, e per il soggetto il
                     proprio tentativo mancato non esiste — la sua riga *era* la
                     verità. Chi è chi lo dice il turno, quindi la frase cambia. */}
-                {esito.mia !== esito.sua && (
+                {(p.personalizzata ? normalizza(esito.mia) !== normalizza(esito.sua) : esito.mia !== esito.sua) && (
                   <Text className="text-center text-base text-muted-foreground">
-                    {ioSonoSoggetto
+                    {p.personalizzata
+                      ? ioSonoSoggetto
+                        ? t.gioco.tuAveviRisposto(esito.sua)
+                        : t.gioco.avevaRisposto(esito.sua)
+                      : ioSonoSoggetto
                       ? t.gioco.tuAveviDetto(
                           rendi(
                             domanda?.voci.find((v) => v[0] === esito.sua) ?? [esito.sua, esito.sua],

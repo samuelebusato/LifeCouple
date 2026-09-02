@@ -139,30 +139,41 @@ export type Database = {
           },
         ]
       }
+      // ⚠️ `partita_id`, `autore_id` e `tipo` (0028) SCRITTI A MANO — da
+      // sostituire rigenerando i tipi.
       domanda: {
         Row: {
+          autore_id: string | null
           coppia_id: string | null
           creato_il: string
           gioco: string
           id: string
           lingua: string
+          partita_id: string | null
           testo: string
+          tipo: string | null
         }
         Insert: {
+          autore_id?: string | null
           coppia_id?: string | null
           creato_il?: string
           gioco: string
           id?: string
           lingua: string
+          partita_id?: string | null
           testo: string
+          tipo?: string | null
         }
         Update: {
+          autore_id?: string | null
           coppia_id?: string | null
           creato_il?: string
           gioco?: string
           id?: string
           lingua?: string
+          partita_id?: string | null
           testo?: string
+          tipo?: string | null
         }
         Relationships: [
           {
@@ -716,6 +727,7 @@ export type Database = {
         }
         Relationships: []
       }
+      // ⚠️ `modo` (0028) SCRITTO A MANO — da sostituire rigenerando i tipi.
       partita: {
         Row: {
           conclusa_il: string | null
@@ -724,6 +736,7 @@ export type Database = {
           creata_il: string
           gioco: string
           id: string
+          modo: string
           punti: number
           round_corrente: number
           round_totali: number
@@ -737,6 +750,7 @@ export type Database = {
           creata_il?: string
           gioco: string
           id?: string
+          modo?: string
           punti?: number
           round_corrente?: number
           round_totali?: number
@@ -754,6 +768,7 @@ export type Database = {
           round_corrente?: number
           round_totali?: number
           stato?: string
+          modo?: string
           turno_di?: string | null
         }
         Relationships: [

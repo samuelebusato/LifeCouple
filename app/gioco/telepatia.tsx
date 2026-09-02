@@ -12,7 +12,7 @@ import { PunteggioFinale } from '@/components/punteggio-finale';
 import { Attesa } from '@/components/attesa-partita';
 import { supabase } from '@/lib/supabase';
 import { useCoppia } from '@/lib/coppia';
-import { usePartita } from '@/lib/partita';
+import { usePartita, useAperturaRound } from '@/lib/partita';
 import { TEMI_TELEPATIA, rendi, type Voce } from '@/lib/parole';
 import { useTema } from '@/lib/tema';
 import { tatto } from '@/lib/movimento';
@@ -83,6 +83,21 @@ export default function GiocoTelepatia() {
   const p = usePartita('telepatia');
   const { apri, partita, round, io } = p;
 
+  /**
+   * 🔴 **I due valori si estraggono da `p`, e `p` NON va nelle dipendenze**
+   * (B-43, 2026-09-02).
+   *
+   * `usePartita` restituisce un oggetto memoizzato su tutto lo stato della
+   * partita: punteggio, pronti, round, «continua». Metterlo fra le dipendenze
+   * dell'effetto che **crea** il round significa rimontare quell'effetto a ogni
+   * evento realtime, cioè proprio mentre il round si sta creando.
+   *
+   * `setRound` è una `setState` (identità stabile) e `entrambiProntiRound` è un
+   * booleano: le dipendenze diventano valori che cambiano **quando cambia la
+   * risposta**, non quando arriva un evento qualsiasi.
+   */
+  const { setRound, entrambiProntiRound } = p;
+  const apriRound = useAperturaRound();
   const [miaScelta, setMiaScelta] = React.useState<string | null>(null);
   const [esito, setEsito] = React.useState<{ mia: string; sua: string } | null>(null);
   /** La scelta non è arrivata al database: si può — e si deve — ripremere. */
@@ -168,35 +183,52 @@ export default function GiocoTelepatia() {
      * la partita parte senza aspettare un «continua» che nessuno vedrebbe.
      * *Un guardiano che dipende da un dato in viaggio non è un guardiano.*
      */
-    if (round && !p.entrambiProntiRound) return;
-    let vivo = true;
-    const avvio = setTimeout(async () => {
+    if (round && !entrambiProntiRound) return;
+    // 🔴 **Una volta sola, e il risultato non si butta** (B-43): se questo
+    // effetto si rimontava mentre l'inserimento era in volo, il round finiva
+    // nel database e lo stato locale non lo sapeva. Il giro dopo riprovava,
+    // prendeva un duplicato e taceva: la partita restava ferma su un round che
+    // **esisteva** — e per giocarlo bisognava uscire e rientrare.
+    apriRound(`${partita.id}:${numeroRound}`, async (montata) => {
       const passati = await supabase
         .from('partita_round')
         .select('opzioni')
         .eq('partita_id', partita.id);
-      const usati = new Set(
+      const usate = new Set(
         (passati.data ?? [])
           .map((r) => (r.opzioni as Opzioni | null)?.tema)
           .filter((k): k is string => !!k)
       );
       const { data, error } = await supabase
         .from('partita_round')
-        .insert({ partita_id: partita.id, numero: numeroRound, opzioni: pescaOpzioni(usati) })
+        .insert({ partita_id: partita.id, numero: numeroRound, opzioni: pescaOpzioni(usate) })
         .select('*')
         .single();
-      if (!vivo || error || !data) return;
-      p.setRound(data);
-      // ⚠️ Resta un `setTimeout` a zero, e non è un residuo: rimanda l'`insert`
-      // al giro successivo, così il `return` di pulizia può ancora annullarlo se
-      // la schermata si smonta nel frattempo. Una chiamata diretta partirebbe
-      // dentro il render, e non ci sarebbe più niente da annullare.
-    }, 0);
-    return () => {
-      vivo = false;
-      clearTimeout(avvio);
-    };
-  }, [partita?.stato, partita?.id, ioApro, round, numeroRound, p]);
+
+      if (error || !data) {
+        // Il round c'è già: si rilegge invece di lasciarlo lì. È «chi perde la
+        // corsa rilegge» di `apri`, applicato alla corsa contro sé stessi.
+        const { data: gia } = await supabase
+          .from('partita_round')
+          .select('*')
+          .eq('partita_id', partita.id)
+          .eq('numero', numeroRound)
+          .maybeSingle();
+        if (gia && montata()) setRound(gia);
+        return;
+      }
+      if (montata()) setRound(data);
+    });
+  }, [
+    partita?.stato,
+    partita?.id,
+    ioApro,
+    round,
+    numeroRound,
+    entrambiProntiRound,
+    setRound,
+    apriRound,
+  ]);
 
   /* --- si sceglie ---------------------------------------------------------- */
   /**

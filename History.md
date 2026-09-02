@@ -28,6 +28,45 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-02 — Il quarto gioco, e due test che accusavano il file sbagliato
+
+**Chiesto dall'utente**: prima i test automatici del quiz sulle preferenze (l'unico dei tre giochi coperto solo da una partita giocata a mano), poi l'implementazione di `obbligo_verita`, l'ultimo gioco mancante.
+
+🔑 **Il filo della giornata è lo stesso di ieri, spostato di un piano.** Ieri il collaudo su due sistemi aveva fatto uscire quattro difetti che tre giri su un solo telefono non vedevano. Oggi sono uscite **due verifiche che non verificavano**: una rossa da un giorno senza che nessuno lo sapesse, l'altra verde o rossa a caso. In entrambi i casi il test non diceva *«non so leggere»*, diceva *«il tuo banco è sbagliato»* e *«manca la publication»* — cioè mandava a cercare un difetto dove non era. È la famiglia di **B-36**, ed è la terza volta.
+
+**I test del quiz** (`npm run test:partita`, ora **152 asserzioni** contro il database vero, da 42). Dieci round giocati per intero da due client con due sessioni vere, ruoli alternati come in partita. Le due asserzioni che valgono il gioco stanno nei primi due round, uno per verso:
+
+- 🔴 **chi indovina non legge la risposta vera**, nemmeno interrogando l'API col proprio token;
+- 🔴 **e non se la fa dire nemmeno dalla rivelazione**, che con un solo invio tace (`rivela_telepatia`, D-12).
+
+⚠️ Nel quiz quella policy vale più che nella telepatia, e la differenza è scritta nel test: là la risposta giusta non ce l'ha nessuno dei due e leggere in anticipo è un vantaggio; **qui la verità è in tasca a uno**, e chi la leggesse non starebbe più giocando — indovinerebbe sempre, e il punteggio racconterebbe il falso su una coppia vera.
+
+✅ **E da qui è passata la verifica della publication realtime di `round_pronto`**, che il punto di ripresa di ieri lasciava aperta come «prima cosa da guardare». Con la chiave dell'app `pg_publication_tables` non è leggibile, quindi la query in coda alla migrazione `0027` da lì non si può eseguire — ma la domanda per cui esiste sì: *l'evento arriva all'altro telefono?* B si iscrive, A preme «continua», l'evento **arriva**. La publication c'è.
+
+🔑 **Ed è la migliore delle due verifiche, non un ripiego**: il catalogo dice che la tabella è *dichiarata*, l'evento dice che il meccanismo *funziona*. Se divergessero conterebbe il secondo — è la lezione del 2026-08-31, quando un documento dichiarava sul server una funzione che non c'era.
+
+**Il controllo dei banchi** (`npm run test:parole`, ora **31 controlli**, da 15) copriva ancora due giochi su tre: né le domande del quiz né le carte nuove. Estendendolo è venuto fuori **B-41** — era rosso da ieri. Aggiunti, fra gli altri, due controlli che nascono da come funziona il codice e non da come è fatta la lista: nessun **titolo di domanda doppio** (la regola «una domanda non si ripete» identifica la domanda dal titolo, quindi due titoli uguali la confonderebbero) e nessuna **chiave in comune fra obblighi e verità** (la schermata tiene le carte già uscite in un insieme solo).
+
+**Il quarto gioco, `obbligo_verita`** (**D-86**, **D-87**): dieci carte, i ruoli si alternano cinque e cinque, chi ha il turno sceglie obbligo o verità, legge la carta — che vedono tutti e due — e la fa o la passa. Nessuna migrazione. Trenta obblighi e trenta verità bilingui in `lib/parole.ts`, col filtro di D-08 e le due esclusioni di D-13.
+
+Con questo **i quattro giochi del catalogo hanno tutti una partita dietro**, e l'hub non ha più carte «in arrivo».
+
+**Poi l'utente ha riferito due difetti** che si trascinavano da giorni: nel disegno *«la prima parola non viene mai caricata e il primo round va perso»*, e in tutti i giochi *«all'avvio si rompe e bisogna uscire e rientrare»*. Sono **un difetto solo** (**B-43**): l'effetto che apre il round si rimontava a ogni evento e abbandonava il lavoro a metà — nel disegno fra la creazione del round e la scrittura della parola, cioè lasciando un round che nessuno può giudicare — mentre l'altro telefono non lo scopriva perché l'evento realtime era stato emesso **prima** che il suo canale fosse attivo.
+
+🔑 **E la corsa era già stata vista, il giorno prima, dentro un test** (B-42): fu diagnosticata come un difetto del test e non come una domanda sul prodotto. *Quando una corsa si presenta in un test, la prima domanda è se il codice vero ce l'ha* — qui la risposta era sì, in tre schermate.
+
+**Poi la versione personalizzata, ripresa e finita** (**D-88**, **D-89**, migrazione `0028`): il modo sta sulla partita e non nell'app, il set della coppia vive nella tabella `domanda` — vuota dalla 0001, nata per questo — e la preparazione riusa `segna_pronto` invece di inventarsi uno stato. Con questo la riga «personalizzata» dell'hub **fa** qualcosa: era stata segnalata per tre sessioni di fila come l'unico comando dell'app che prometteva una differenza inesistente.
+
+✅ **La `0028` è stata applicata dall'utente in giornata, e la suite l'ha verificata**: il blocco che si saltava da solo si è acceso e passa — vincolo sul modo, le tre policy, il `coalesce` di `rivela_telepatia` e il realtime sulla preparazione. 🔑 È il modello opposto a quello del 2026-09-01, quando la publication della 0027 restò non verificata per un giorno perché la verifica era una query da ricordarsi: qui la verifica **è** il test, e applicare la migrazione la accende da sola.
+
+⚠️ E andava applicata prima di usare questa versione, non è una raccomandazione: da ora l'app scrive `modo` quando crea una partita, quindi senza la colonna **nessuna partita si apre più** (`PGRST204`, verificato contro il server). Il blocco nuovo di `tests/partita.mjs` si salta da solo finché la migrazione manca, e lo dice: applicarla accende le sue asserzioni senza che nessuno debba ricordarsi di una query — che è ciò che il 2026-09-01 non è successo con la publication della 0027.
+
+⚠️ **Ciò che di oggi NON è verificato, e va detto**: `obbligo_verita` non è mai stato giocato. È coperto da 35 asserzioni contro il database, che è più di quanto avessero gli altri tre alla nascita, ma *nessuno l'ha visto girare su un telefono*. La lezione di ieri vale al contrario: una schermata provata su zero dispositivi non è provata.
+
+⚠️ **E una cosa di questo dispositivo**: `expo-sharing` è in `package.json` (~14.0.8) ma **non è installato** in `node_modules`, quindi `npx tsc --noEmit` è rosso su `lib/esporta.ts` — l'unica riga rossa, e non è di oggi (la dipendenza è arrivata con l’esportazione, D-78). Serve un `npm install`. È la stessa forma della chiave TMDB: qualcosa che vale su una macchina e non sull'altra.
+
+
+
 ### 2026-08-28 (seconda sessione) — Il giro di verifica, e le liste che si creano
 
 **Chiesto dall'utente**: nessuno sviluppo. Un giro di verifica sull'iPhone di tutte le novità del 2026-08-27 e del 2026-08-28, e l'aggiornamento della documentazione con l'esito.
@@ -134,6 +173,83 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-89 — Il filtro del contenuto non copre il set della coppia, e va detto (2026-09-02)
+
+🔴 **La versione personalizzata toglie la mitigazione di D-13, e non c'è modo di rimetterla.** D-08 e D-13 proteggono i giochi con un banco scritto da noi: niente categorie dell'art. 9, nessun obbligo fisico, nessuna verità sulle relazioni precedenti. Quel filtro è una *nostra* garanzia sul *nostro* contenuto. Nel momento in cui le carte le scrivono i due, il contenuto non passa più da noi.
+
+**Cosa resta in piedi, e non è poco:**
+
+- **il pass** (D-87) vale identico, e in personalizzata vale di più: è l'unica difesa rimasta, ed è per questo che passare non fa perdere niente a nessuno. Una meccanica che punisse il rifiuto sarebbe stata discutibile col banco filtrato; con un banco scritto dal partner sarebbe stata **l'app che aiuta a insistere**;
+- **il set è visibile a entrambi prima di giocare** (`domanda_select`): chi si trova davanti dieci carte che non gli vanno se ne accorge nella preparazione, non a partita cominciata;
+- **si scrive solo per sé** (`domanda_insert`, `autore_id = auth.uid()`): nessuno può riempire il set a nome dell'altro e far partire la partita da solo;
+- **la partita si abbandona** in qualunque momento, e le carte muoiono con lei (`on delete cascade`).
+
+**Cosa NON facciamo, e perché**: nessun filtro automatico sul testo scritto dalla coppia. Un elenco di parole vietate su contenuti intimi fra due persone che si sono scelte sarebbe **inefficace** (si aggira scrivendo diversamente) e **invadente** (l'app che legge e giudica le confidenze è precisamente ciò che il progetto ha evitato ovunque, TB-2). Il confine di fiducia fra i due partner **non lo presidia un filtro**: lo presidiano le uscite — passare, vedere prima, chiudere.
+
+⚠️ **Conseguenza da tenere presente al momento di pubblicare**: `Architecture.md` dice già che il contenuto della coppia è *«non controllabile»*. Da oggi non è più un'ipotesi di schema, è una funzione che gira. Se un giorno arrivasse una segnalazione su un contenuto, la risposta onesta è che quel testo **non è mai passato da noi** e vive solo nel loro spazio — la stessa cosa che vale per le foto e per le note, ed è coerente con tutto il resto del prodotto.
+
+### D-88 — La versione personalizzata: il modo sta sulla partita, il set in `domanda` (2026-09-02, migrazione 0028)
+
+**Chiesta dall'utente**, gioco per gioco:
+
+| Gioco | Come funziona la versione personalizzata |
+|---|---|
+| **indovina il disegno** | chi disegna **dichiara la parola** all'inizio del proprio turno, poi si procede col gioco normale |
+| **quiz sulle preferenze** | all'inizio ognuno scrive **5 domande** (dieci in tutto). Niente quattro opzioni: chi ha il turno scrive la propria risposta, l'altro scrive quella che crede, e le due si confrontano |
+| **obbligo o verità** | all'inizio ognuno scrive **5 obblighi e 5 verità**: quelle venti carte sono il set della partita |
+| **telepatia** | **niente versione personalizzata**, per ora |
+
+🔑 **Il modo è una proprietà della partita, non di chi la guarda** (`partita.modo`). I due telefoni non si accordano: chi arriva secondo **si aggancia** alla partita viva invece di crearne un'altra (`partita_una_viva`, 0020), quindi il modo deve stare su un dato che entrambi leggono. Tenerlo nello stato dell'app avrebbe voluto dire che chi ha premuto «personalizzata» gioca a un gioco e chi ha premuto «ufficiale» a un altro, **sulla stessa partita**.
+
+Conseguenza voluta: **lo decide chi apre**, e l'altro lo trova scelto. Una negoziazione fra i due sarebbe stato un meccanismo intero — con la sua attesa, il suo annullamento e i suoi modi di rompersi — per una decisione che si risolve abbandonando la partita e riaprendola.
+
+**Perché il set vive in `domanda`**, che era vuota dalla 0001: è la tabella nata per questo, col commento accanto che lo diceva già. Il banco comune non ci è mai finito — vive in `lib/parole.ts` perché è bilingue e immutabile — quindi qui dentro entrano **solo** le righe scritte dai due.
+
+⚠️ **`partita_id` è la decisione rimandata, resa visibile nello schema.** L'utente ha chiesto di salvarle sul server ma di usarle *come se* valessero solo per quella partita, lasciando aperta per il futuro la scelta se debbano accumularsi in un banco della coppia. Con la colonna: oggi si legge filtrando, domani si toglie il filtro e le righe scritte finora sono già lì. La strada opposta non si recupera — una riga senza `partita_id` non saprebbe più da che partita viene.
+
+**Perché la preparazione non è uno stato nuovo**: «Ho finito» chiama `segna_pronto`, cioè la stessa funzione del bottone «Avvia partita». *«Ho scritto le mie carte»* e *«sono pronto a giocare»* sono la stessa affermazione detta in due momenti diversi, e un secondo meccanismo avrebbe avuto una sua attesa e un suo modo di bloccarsi.
+
+**Perché ognuno ne scrive cinque e cinque in obbligo o verità**, e non dieci a caso: chi ha il turno **sceglie** obbligo o verità, quindi le due colonne si consumano in modo imprevedibile. Con un mucchio solo, verso la fine il gioco costringerebbe alla scelta che avanza.
+
+⚠️ **Il confronto delle risposte scritte è tollerante ma esatto** (`normalizza`: maiuscole, accenti, articolo iniziale, spazi). Non conosce i sinonimi: *«pizza»* e *«margherita»* restano risposte diverse. 🔴 È un rischio accettato e dichiarato: su testo libero dirà «no» dove due persone direbbero «sì». L'alternativa era far giudicare al soggetto se l'altro ci avesse preso — scartata perché mette **una persona a dare un voto all'altra** dentro un gioco il cui punteggio è della coppia. Da rivedere dopo la prima partita vera.
+
+**Alternativa scartata sul quiz**: usare le domande del banco comune togliendo solo le quattro opzioni. Costava molto meno — nessuna schermata di scrittura — ma «personalizzata» avrebbe voluto dire *«le risposte sono libere»* invece di *«le domande le scrivete voi»*, che è ciò che D-19 e il testo già scritto nell'hub promettono da settimane. L'utente ha scelto le domande scritte dai due.
+
+⚠️ **La telepatia è fuori per richiesta dell'utente**, e c'è una ragione tecnica che vale la pena scrivere: negli altri tre il contenuto lo mette **una persona nel proprio turno** — la parola, la risposta, la carta. La telepatia pretende **insiemi di quattro opzioni**, cioè quaranta caselle da riempire prima di cominciare. Non è che personalizzarla sia sbagliato: è che costa una schermata di data entry che nessuno riempirebbe due volte.
+
+
+### D-87 — Il pass non fa perdere nessuno: D-13 aveva due teste (2026-09-02)
+
+🔴 **D-13 diceva due cose incompatibili, e nessuna delle due era sbagliata quando è stata scritta.** Il titolo: *«in obbligo o verità il pass non fa perdere»*. Il corpo: teneva la proposta dell'utente *«chi passa di più perde»*, la dichiarava accettabile perché il banco è filtrato, e **scartava esplicitamente** l'alternativa di togliere la condizione di sconfitta. Non si potevano applicare entrambe.
+
+**Scelta dell'utente, oggi**: vale il titolo. Il punteggio è **della coppia** — carte portate a termine su dieci, in percentuale come gli altri tre — e passare costa il punto del round, **niente altro**. Si chiama **«Coraggio»** (en: *Nerve*), accanto a Intesa, Sintonia e Conoscenza.
+
+**Il perché, che è il motivo per cui la contraddizione andava sciolta e non ignorata**: contare i pass *di ciascuno* è una graduatoria fra le due persone. È esattamente ciò che P-03 vieta, ed è ciò che **D-83** aveva tolto dagli altri giochi il giorno prima, riscrivendo due testi che dicevano «chi ha vinto di più». Tenere D-13 alla lettera avrebbe rimesso nel quarto gioco la cosa appena cacciata dagli altri tre — e in quello dove pesa di più, perché lì il numero non conterebbe le partite vinte ma **i rifiuti**.
+
+⚠️ **La parte di D-13 che resta in piedi è quella che conta**: la mitigazione non è la meccanica addolcita, è il **contenuto filtrato**. Le due esclusioni specifiche (nessun obbligo fisico, nessuna verità sulle relazioni precedenti) valgono parola per parola e sono scritte nel banco, dove si vedono.
+
+🔑 **E la garanzia non è nell'interfaccia, è nella forma dei dati.** Il round registra l'esito della carta e **non chi aveva il turno** (`disegnatore_id` resta vuoto, come nel quiz): «chi ha passato di più» non è una query che si possa scrivere, nemmeno volendo, nemmeno da un'app futura che ci ripensasse. È la logica di D-12 portata su un'altra minaccia — *se non deve essere possibile, non basta non farlo: non va reso rappresentabile* — e c'è un'asserzione nel test che la controlla.
+
+### D-86 — Obbligo o verità: il quarto gioco, e l'unico senza sigillo (2026-09-02)
+
+**Cos'è**: dieci carte, i ruoli si alternano (cinque a testa, come nel quiz). Chi ha il turno sceglie **obbligo** o **verità**, la carta compare **su tutti e due i telefoni**, e chi ha il turno la fa o la passa. Poi «Continua» premuto da entrambi (0027) e si passa alla prossima. Nessuna migrazione: la carta sta in `partita_round.opzioni`, come le quattro opzioni della telepatia.
+
+🔴 **Perché NON usa il sigillo D-12, mentre gli altri tre sì.** Quiz, telepatia e disegno esistono perché c'è **qualcosa da nascondere fino al momento giusto**: la risposta vera, la scelta dell'altro, la parola. Da lì viene tutto il congegno — `invio_sigillato`, `round_segreto`, `rivela_telepatia` — e la regola che l'autorizzazione sta nel database.
+
+Qui non c'è niente da nascondere: **la carta la deve leggere anche l'altro**, o non c'è nessuno davanti a cui farla. Un invio sigillato proteggerebbe un segreto che il gioco non ha, e in cambio pretenderebbe due invii dove agisce una persona sola.
+
+⚠️ **E va detto perché contraddice tre righe di questo stesso documento**: `History.md` classifica «obbligo o verità» fra i tre giochi del sigillo (D-12, e le note su P-04). Quelle righe guardavano all'**infrastruttura di turni e stato condiviso** — partita, round, pronti, punteggio — che infatti è la stessa e non è stata scritta una seconda volta. Il sigillo no. La riga di D-12 *«si costruisce un meccanismo solo e si ottengono tre giochi»* resta vera contando il disegno: i giochi che riusano il sigillo sono tre su quattro.
+
+**Chi crea il round**: **chi ha il turno**, non chi ha creato la partita. È diverso dal quiz e dalla telepatia, e la ragione è che qui il round nasce da una scelta — obbligo o verità — che conosce solo lui. È la stessa forma del disegno (crea chi disegna), e il turno lo deduce `disegnatoreDi` da `creata_da` e dal numero, che i due telefoni calcolano uguale (**B-30**). L'indice unico `(partita_id, numero)` è la rete sotto: se per un difetto futuro i due calcolassero turni diversi, non nascerebbero due round 1 — il secondo prende un duplicato. C'è un'asserzione anche per questo.
+
+**Il banco**: trenta obblighi e trenta verità bilingui in `lib/parole.ts`, chiave inglese + testo italiano come gli altri tre. Filtro di **D-08** (niente categorie art. 9) più le due esclusioni di **D-13**.
+
+🔑 **Sull'esclusione degli obblighi fisici, la ragione non è il pudore** — è che un obbligo fisico è l'unico che non si può passare *senza che si veda*, e quindi l'unico che trasforma il pass in una scena. Tutti gli obblighi del banco si fanno **da seduti**, con la voce o col telefono in mano. E c'è un secondo criterio, pratico: una carta che richiede di alzarsi o di uscire verrebbe passata da chiunque per logistica, non per scelta — e il pass deve costare una decisione, non un trasloco.
+
+**Alternativa scartata**: dare al partner un bottone per confermare che la carta è stata fatta davvero. Scartata perché è un **giudizio di una persona sull'altra** dentro un gioco il cui punteggio è della coppia, e perché il precedente esiste già: la creatura non verifica che la coppia sia andata davvero a New York, ed è scritto che *va bene così*. Il gioco è cooperativo: non c'è nessuno da battere e quindi nessuno da controllare.
+
+
 
 ### D-85 — Le superfici che devono esserci non usano il vetro nativo (2026-09-01)
 
@@ -1431,6 +1547,89 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-43 — Il round nasceva a metà, e chi non l'aveva creato non lo sapeva (2026-09-02, CORRETTO — da verificare su due telefoni)
+
+**Riferiti dall'utente due sintomi**, che sembravano due difetti e sono **uno solo**:
+
+1. *«nella versione ufficiale di indovina il disegno la prima parola non viene mai caricata e il primo round va perso»*;
+2. *«anche per gli altri giochi quando si avvia l'applicazione si rompe e bisogna uscire e rientrare dal gioco per poter partire»*.
+
+⚠️ **Si trascinavano da giorni**, e nessuna delle tre sessioni di verifica precedenti li aveva presi: sono difetti dei **primi due secondi** di una partita, e chi prova a mano apre la schermata, guarda, e riprova — cioè fa esattamente la cosa che li nasconde.
+
+## La causa, che è una sola
+
+Le schermate creano il round dentro un `useEffect` che dipendeva da `p`, l'oggetto restituito da `usePartita`. Quell'oggetto è memoizzato su **tutto** lo stato della partita: punteggio, pronti, round, «continua». All'avvio cambia più volte in pochi istanti — arriva la coppia, arriva la partita, arrivano i pronti, arriva il primo evento realtime — e ogni cambio **rimontava** l'effetto. La pulizia alzava `vivo = false`, e il lavoro già partito veniva abbandonato **a metà**.
+
+**Nel disegno** la sequenza è: crea il round → scrivi la parola in `round_segreto` → tienila in memoria. Interrotta dopo il primo passo lascia **un round senza parola**. E chi disegna è l'unico che può giudicare i tentativi — è l'unico a cui la RLS lascia leggere la parola — quindi senza parola **nessuno giudica niente**: il tempo scade e il round è perso. 🔑 Era *il primo* round perché è l'unico che nasce mentre tutto il resto si sta ancora assestando.
+
+**Negli altri giochi** la sequenza è una scrittura sola, quindi non resta niente a metà nel database — ma il risultato veniva buttato lo stesso: `if (!vivo) return` **prima** di `setRound`. Il round esisteva e lo stato locale non lo sapeva; il giro dopo riprovava, prendeva un duplicato di `(partita_id, numero)` e taceva.
+
+## E il secondo pezzo: l'evento che non arriva
+
+L'altro telefono avrebbe potuto scoprire il round dall'evento realtime. **A volte lo scopriva e a volte no**, ed è la parte che ha richiesto una correzione della diagnosi.
+
+`subscribe()` ritorna **prima** che la sottoscrizione sia attiva sul server. Un evento emesso in quella finestra non è però perso *per definizione*: Realtime legge il WAL a lotti e li consegna ai canali iscritti **nel momento della consegna**, non in quello della scrittura. Quindi una riga scritta un istante prima dell'iscrizione cade in una **lotteria** — se il lotto viene servito dopo che il canale è entrato l'evento arriva, se prima è perso.
+
+⚠️ **La prima stesura di questo paragrafo diceva «non arriva mai», e il test l'ha smentita**: asseriva la perdita, è passata una volta ed è fallita quella dopo perché l'evento era arrivato. Tre giri consecutivi hanno poi dato *arrivato · perso · arrivato*. La versione forte era comoda — spiegava tutto — ed era falsa.
+
+🔑 E la versione vera spiega **meglio** il sintomo riferito: non «non parte mai», ma *«ogni tanto bisogna uscire e rientrare»*. All'avvio la finestra cade nel punto peggiore, perché la schermata apre la partita e crea il round mentre il socket si sta ancora collegando.
+
+🔑 *Uscire e rientrare funzionava perché **rientrare rilegge**.* Era la rilettura a mancare, non il canale.
+
+⚠️ **È la stessa corsa di B-42**, trovata il giorno prima *dentro un test* e non riconosciuta come un difetto **del prodotto**. La lezione mancata: quando una corsa si presenta in un test, la prima domanda è *«e il codice vero, quella corsa ce l'ha?»* — qui la risposta era sì, in tre schermate.
+
+## Le correzioni
+
+1. **`useAperturaRound`** (`lib/partita.ts`): apre il round **una volta sola per (partita, numero)** e non abbandona il lavoro a metà. La bandierina non ferma più le scritture — dice soltanto se la schermata è ancora montata, cioè se ha senso aggiornare lo stato locale. 🔑 *Una scrittura sul database che si può annullare a metà non è annullabile: è solo incompleta.*
+2. **`p` esce dalle dipendenze** dei tre effetti di apertura: si usano `setRound` (identità stabile) e `entrambiProntiRound` (un booleano). Le dipendenze cambiano quando cambia **la risposta**, non a ogni evento.
+3. **Si rilegge quando il canale è davvero attivo**: `subscribe((stato) => stato === 'SUBSCRIBED' && rileggi(id))`, sul canale della partita e su quello di `round_pronto`. Chiude la finestra per **tutti e quattro** i giochi, ed è anche la spiegazione vera del «continua» che si bloccava a intermittenza — non la publication, che c'è.
+4. **Il duplicato si rilegge invece di tacere**: se l'inserimento del round fallisce, si cerca il round per `(partita_id, numero)` e si adotta quello. È «chi perde la corsa rilegge» di `apri`, applicato alla corsa contro sé stessi.
+5. **Il round senza parola si ripara** (`disegno.tsx`): chi disegna, se trova il proprio round vivo senza `round_segreto`, **scrive la parola adesso** e poi la rilegge dal database. Serve per due ragioni: i round nati a metà **esistono già** nel database di chi ha giocato — senza questo resterebbero ingiocabili per sempre — e nessuna precauzione rende impossibile un'interruzione fra due scritture: la si può rendere *recuperabile*.
+   ⚠️ La rilettura finale non è pignoleria: se la parola l'ha scritta l'altra strada, il nostro `insert` prende un duplicato e va perso. Tenere la nostra darebbe a chi disegna una parola che chi indovina non può azzeccare — un difetto che si vedrebbe come *«ha indovinato e non gliel'ha contato»*.
+
+## Come è stato verificato
+
+`tests/partita.mjs` sale a **162 asserzioni** con un blocco che riproduce lo stato rotto contro il database vero:
+
+- un round si crea **senza** parola, e `round_segreto` resta vuota: lo stato ingiocabile è raggiungibile;
+- 🔴 chi disegna **può** scrivere la parola a round già aperto (è il presupposto della riparazione: se la RLS l'avesse impedito, la riparazione sarebbe fallita in silenzio);
+- una seconda parola sullo stesso round **non passa**, quindi rileggere è l'unico modo di sapere quale vale;
+- riaprire lo stesso round dà `23505`, e il round si **ritrova per numero**;
+- 🔴 **la prova della causa**: A crea il round *prima* che B si iscriva, B si iscrive e aspetta sei secondi. Qui il test **non asserisce**: stampa se l'evento è arrivato o no, e asserisce solo ciò che è certo — che **leggendo** lo si trova. Su tre giri: *arrivato · perso · arrivato*. Un'asserzione su un esito che è una lotteria sarebbe stato un test che fallisce a caso, cioè la cosa che B-41 e B-42 avevano appena insegnato a non scrivere.
+
+⚠️ **Cosa questo NON prova**: che le tre schermate ora si comportino bene sul telefono. Le correzioni 1, 2, 4 e 5 vivono in React e un test in Node non le esercita. La prova vera è una partita su due dispositivi, e finché non c'è questo difetto resta **corretto ma non verificato**.
+
+
+### B-42 — La verifica del realtime era una corsa, e persa una volta su due (2026-09-02, CORRETTO E VERIFICATO)
+
+**Il sintomo**: la nuova asserzione sul «continua» a due — B si iscrive al canale, A inserisce, l'evento deve arrivare — è fallita al primo giro con *«nessun evento entro 12s»*, e passata al secondo. Un test che dà due risposte diverse sullo stesso codice.
+
+🔴 **La parte pericolosa non era il fallimento: era cosa diceva.** Il messaggio accusava la publication `supabase_realtime`, cioè **esattamente il sospetto che il punto di ripresa del 2026-09-01 aveva lasciato in cima all'elenco**. Un test che conferma il dubbio che già si aveva è la forma più credibile di diagnosi sbagliata: chiude l'indagine invece di aprirla.
+
+**Come è stata isolata la causa vera**: uno script di diagnosi che prova lo stesso meccanismo su **tre tabelle** — `partita_pronto` e `partita` (nella publication dalla 0020, e il realtime dei giochi funziona in app) e `round_pronto`. Se l'evento arrivava per le prime due e non per la terza, la colpa era della 0027; se non arrivava per nessuna, la colpa era dello script. **Sono arrivati tutti e tre.** Il controllo discriminava, e ha scagionato la migrazione.
+
+**La causa**: l'ack `SUBSCRIBED` arriva **prima** che la sottoscrizione sia attiva sul server. Una scrittura fatta in quella finestra non produce nessun evento, e l'evento perso non si recupera.
+
+**La correzione**, in due parti perché una sola l'avrebbe resa fortunata invece che deterministica: una pausa dopo `SUBSCRIBED`, e un **secondo tentativo** sulla stessa riga (A si ripensa e ripreme — è la policy `round_pronto_delete`, quindi una cosa che l'app può fare davvero). Se non arriva nemmeno il secondo evento, non è più una corsa persa: è il meccanismo rotto, che è ciò che l'asserzione deve dire.
+
+**Come è stata verificata**: la suite girata **tre volte** dopo la correzione, sempre verde: 117/117 due volte di fila, poi 152/152 col quarto gioco aggiunto.
+
+🔑 **La lezione, che è la terza della stessa famiglia** (B-36, B-41): *un test che sbaglia non dice «ho sbagliato io», indica il file sbagliato*. E quando il file che indica è quello che già si sospettava, la conferma va cercata con un controllo che possa anche **smentirlo** — qui, provare due tabelle che dovevano funzionare.
+
+### B-41 — Il controllo dei banchi era rosso da un giorno, e accusava la lista di parole (2026-09-02, CORRETTO E VERIFICATO)
+
+**Il difetto**: in `tests/parole.mjs` l'espressione che ritaglia il blocco `TEMI_TELEPATIA` era **greedy** (`[\s\S]*`), quindi arrivava fino all'**ultima** chiusura `\n];` del file. Finché la telepatia era l'ultimo banco funzionava. Dal 2026-09-01, con l'arrivo di `DOMANDE_QUIZ` (commit `a5785c3`), il blocco della telepatia si portava dentro anche le domande del quiz: le voci contate diventavano **612 invece di 500**.
+
+⚠️ **Ed era rosso da ventiquattro ore senza che nessuno lo sapesse**, perché questa suite **non gira nel `pre-commit`** — sta scritto in testa al file — e ieri, aggiungendo il banco del quiz, non è stata lanciata. Il commit è passato verde perché nessuno ha chiesto niente a questo controllo.
+
+🔴 **Il modo in cui falliva è la parte che conta**: diceva *«500 voci di telepatia in tutto — trovate 612»*. Cioè accusava una lista di cinquecento voci scritte a mano di avere centododici righe di troppo. Chi lo leggesse andrebbe a cercare un difetto che non c'è, nel posto più scomodo in cui cercarlo. È **la stessa forma di B-36** — dove la causa erano i fine riga — e la regola che ne esce è la stessa: *un test che non sa leggere il proprio input deve dirlo, non incolpare l'input*.
+
+**La correzione**: espressione non greedy, e — perché il difetto non si ripresenti alla prossima lista aggiunta in fondo — **ogni banco ha ora il suo blocco di controlli** con la propria chiusura riconoscibile, quiz e carte di obbligo o verità compresi.
+
+**Come è stato verificato**: `npm run test:parole` → **31/31**, con le 500 voci di telepatia contate giuste (era il numero sbagliato che ha fatto scoprire il difetto, ed è quello che ora torna).
+
+
+
 ### La prima partita vera: sette difetti da sei sintomi (2026-08-29)
 
 I giochi erano **l'unica zona dell'app mai vista girare**, ed è la prima volta che due persone ci hanno giocato davvero. Sei sintomi riferiti dall'utente, sette difetti dietro — e quattro difetti ne spiegano più d'uno a testa.
@@ -2038,6 +2237,7 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 | R-03 | **Nessuna revisione legale professionale** dei testi privacy alla partenza | I documenti si adattano da quelli già scritti per HeleoX, rivisti da persona non legale | Prima della pubblicazione pubblica sugli store |
 | R-04 | **Costi di pubblicazione ricorrenti** — Apple Developer 99 €/anno, Google Play 25 $ una tantum | Sono il prezzo minimo di V3: senza store non si impara la parte che si vuole imparare | Se l'app viene ritirata |
 | R-05 | **22 segnalazioni di `npm audit`** (12 alte, 10 moderate) sul progetto appena inizializzato | Risalgono a **tre soli pacchetti**: `image-size` e `postcss` (dentro **Metro**, il bundler) e `uuid` (dentro `xcode` → `@expo/config-plugins`). Tutte le altre voci compaiono come *effetto* perché dipendono da questi. Sono **strumenti di build**: non finiscono nel bundle che arriva sul telefono, e sfruttarle richiederebbe di dare in pasto al bundler un input malevolo — cioè avere già accesso al codice. ⚠️ **`npm audit fix --force` NON va eseguito**: cambierebbe le versioni maggiori di `expo` e `react-native`, rompendo il vincolo SDK 54 di D-23 | Al prossimo aggiornamento di SDK, oppure se una segnalazione tocca una dipendenza **runtime** invece della toolchain |
+| R-06 | **Il contenuto della versione personalizzata non è filtrato da noi** (D-89): le carte le scrivono i due, quindi D-08 e le due esclusioni di D-13 non lo coprono | Un filtro automatico sul testo scritto fra due persone che si sono scelte sarebbe inefficace (si aggira riscrivendo) e invadente (l'app che legge e giudica le confidenze è ciò che TB-2 esiste per evitare). Restano in piedi le uscite: il pass che non fa perdere, il set visibile a entrambi **prima** di giocare, e la partita abbandonabile | Se arrivasse una segnalazione su un contenuto, o se il prodotto smettesse di essere un esperimento fra persone che si conoscono |
 
 ---
 
@@ -2045,13 +2245,18 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
-### I giochi, dopo la giornata su due telefoni — aggiunto il 2026-09-01
+### I giochi — aggiornato il 2026-09-02
 
-- ⬜ **Test automatici per il quiz sulle preferenze.** La suite copre disegno e telepatia (42 asserzioni contro il database vero); il gioco nato oggi (D-84) non è coperto, e la sua unica verifica finora è una partita giocata a mano. Da scrivere sullo schema degli altri due.
-- ⬜ **`obbligo_verita`**: l'ultimo dei quattro giochi non implementato. L'hub lo mostra come «in arrivo», che resta vero.
-- ⚠️ **Il banco personalizzato della coppia (D-19, 11-bis)** è ancora tutto da fare: la tabella `domanda` esiste dalla 0001 ed è vuota, e il quiz usa il banco comune scritto nel codice (D-84). Finché non c'è, la scelta «ufficiale / personalizzata» nell'hub **non cambia niente** — ed è oggi l'unico comando dell'app che promette una differenza che non esiste.
-- ⚠️ **Rigenerare `lib/database.types.ts`** con `supabase gen types typescript`: i blocchi scritti a mano sono ora quelli delle 0011→0016 **più** `round_pronto` della 0027. Vanno via tutti insieme, e finché restano i tipi dicono ciò che *crediamo* ci sia nello schema.
-- ⚠️ **Verificare la publication realtime di `round_pronto`** (query in coda alla migrazione 0027): se mancasse, il «continua» si bloccherebbe a intermittenza e sembrerebbe capriccioso. Prima cosa da guardare se il sintomo torna.
+- ✅ **Test automatici per il quiz** — fatti (`npm run test:partita`, 152 asserzioni in tutto).
+- ✅ **`obbligo_verita`** — fatto (**D-86**, **D-87**). ⚠️ Mai giocato su un telefono: vedi il PUNTO DI RIPRESA.
+- ✅ **Publication realtime di `round_pronto`** — verificata: l'evento arriva (B-42 per il modo in cui la prima verifica sbagliava).
+- ✅ **Il banco personalizzato della coppia (D-19, 11-bis)** — fatto (**D-88**, migrazione `0028`) per disegno, quiz e obbligo o verità. ⚠️ Mai usato: vedi il PUNTO DI RIPRESA.
+- 🔴 **Da decidere in futuro, chiesto dall'utente il 2026-09-02**: le carte scritte dalla coppia **restano sue e si accumulano**, oppure valgono solo per la partita in cui sono state scritte? Oggi si salvano sul server e si usano per-partita; `domanda.partita_id` tiene la porta aperta in tutte e due le direzioni, e togliere il filtro è più facile che ricostruire un'attribuzione che non c'è.
+- ⬜ **La versione personalizzata della telepatia**, tolta il 2026-09-02 su richiesta dell'utente: costerebbe quaranta caselle da riempire prima di cominciare (dieci insiemi di quattro opzioni), che è la ragione per cui è fuori.
+- ⚠️ **Rigenerare `lib/database.types.ts`** con `supabase gen types typescript`: i blocchi scritti a mano sono quelli delle 0011→0016 **più** `round_pronto` della 0027. Vanno via tutti insieme, e finché restano i tipi dicono ciò che *crediamo* ci sia nello schema.
+- ⬜ **Test automatici per il disegno**, l'unico gioco la cui parte specifica non è coperta: la suite verifica il segreto della parola e i punti, non i tratti — che non si salvano da nessuna parte (disegni effimeri), quindi non c'è niente da interrogare. Da valutare se valga la pena.
+- ⬜ **`npm install` su questo dispositivo**: `expo-sharing` è dichiarato e non installato.
+
 
 ### Prima di scrivere codice — ✅ tutte decise il 2026-08-12
 - [x] **Modello di appaiamento** → **link condivisibile** (D-14), con le quattro condizioni
@@ -2288,6 +2493,46 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+**Aggiornato al 2026-09-02** — il quarto gioco e i test che mancavano (**D-86**, **D-87**, **B-41**, **B-42**). Supera il punto del 2026-09-01 su due righe: la publication di `round_pronto` **è verificata**, e `obbligo_verita` **esiste**. Il punto del 2026-08-31 sulla pubblicazione resta valido riga per riga: oggi non è stato toccato.
+
+### Dove siamo, in una riga
+
+**I quattro giochi del catalogo hanno tutti una partita dietro**, e tre su quattro sono stati giocati su due telefoni veri. Il quarto no.
+
+### Cosa ha prodotto la giornata
+
+✅ **`npm run test:partita` passa da 42 a 152 asserzioni** contro il database vero, e copre tutti e quattro i giochi. Le due che valgono il quiz: chi indovina non legge la risposta vera nemmeno interrogando l'API col proprio token, e non se la fa dire nemmeno dalla rivelazione.
+
+✅ **La publication realtime di `round_pronto` c'è.** Era l'unica parte della migrazione `0027` mai verificata, ed era in cima all'elenco di ieri. Verificata **non** leggendo il catalogo — con la chiave dell'app non è leggibile — ma facendo arrivare l'evento: B si iscrive, A preme «continua», l'evento arriva. 🔑 Ed è la verifica migliore delle due: il catalogo dice che la tabella è *dichiarata*, l'evento dice che il meccanismo *funziona*.
+
+✅ **`npm run test:parole` passa da 15 a 31 controlli** e copre tutti e quattro i banchi. Estendendolo è uscito **B-41**: era **rosso da ieri**, e accusava la lista di cinquecento parole di averne centododici di troppo.
+
+⚠️ **Due test su due hanno indicato il file sbagliato** (B-41, B-42), e uno dei due puntava proprio sul sospetto che si aveva già. È la terza volta di questa famiglia dopo B-36: quando un controllo conferma il dubbio che avevi, va cercata una prova che possa **smentirlo**.
+
+### 🔴 Cosa guardare al prossimo giro, in ordine
+
+0-bis. ✅ **Migrazione `0028` applicata dall'utente il 2026-09-02, e verificata.** Non «applicata» per dichiarazione: il blocco di `tests/partita.mjs` che si saltava da solo **si è acceso e passa**, quindi il vincolo sul modo, le tre policy di `domanda`, il `coalesce` di `rivela_telepatia` e il realtime sulla preparazione sono verificati contro il server. La suite è a **174 asserzioni**, verdi su tre giri consecutivi.
+
+0-ter. ⬜ **Provare la versione personalizzata**, che è scritta e non è mai stata usata: nel disegno la parola dichiarata al proprio turno, nel quiz le cinque domande a testa e le risposte scritte, in obbligo o verità i cinque obblighi e le cinque verità a testa. ⚠️ Il pezzo più incerto è il **confronto delle risposte del quiz**: è tollerante su maiuscole, accenti e articoli, ma non conosce i sinonimi — *«pizza»* e *«margherita»* restano risposte diverse (D-88). Se in partita risultasse fastidioso, è la prima cosa da rivedere.
+
+0. 🔴 **Provare una partita di ciascun gioco, dall'avvio.** È la verifica di **B-43**: due sintomi riferiti dall'utente (la prima parola del disegno che non arriva, e i giochi che all'avvio pretendono di uscire e rientrare) sono corretti ma **provati solo contro il database**. Le correzioni vivono in React e un test in Node non le esercita. Cosa deve succedere:
+   - **il primo round del disegno parte con la sua parola**, e chi disegna la vede subito;
+   - **chi non crea il round lo vede lo stesso**, senza uscire e rientrare;
+   - se una partita era rimasta rotta da prima, chi disegna trova la parola scritta **adesso** (la riparazione) invece di un round muto.
+1. 🔴 **Giocare `obbligo_verita` su due telefoni.** È l'unico gioco mai visto girare: ha 35 asserzioni contro il database, ma *zero* dispositivi. La lezione di ieri al contrario — una correzione provata su un solo sistema è provata a metà, una schermata provata su nessuno non è provata. Cose da guardare in particolare:
+   - il passaggio fra un round e l'altro **quando il turno cambia telefono**: chi ha appena chiuso deve vedere «sta scegliendo la carta», l'altro le due carte della scelta;
+   - il titolo grande **non deve** restare «Obbligo» mentre si sceglie (era un difetto mio, corretto prima di consegnare: la carta a schermo è quella del round vivo, o quella appena chiusa finché il pop-up è a schermo);
+   - la leggibilità delle due carte «Obbligo»/«Verità» su Android **e** su iPhone (B-15: `fondo="pieno"`, come nel quiz).
+2. ⚠️ **Il banco personalizzato della coppia (D-19, backlog 11-bis)** resta tutto da fare, e ora è **l'unico comando dell'app che promette una differenza inesistente**: la tabella `domanda` esiste dalla 0001 ed è vuota, tutti e quattro i giochi usano il banco comune scritto nel codice.
+3. ⚠️ **`lib/database.types.ts`** ha ancora i blocchi scritti a mano delle 0011→0016 più `round_pronto` della 0027. Vanno via tutti insieme con `supabase gen types typescript`.
+4. ⚠️ **`npm install` su questo dispositivo**: `expo-sharing` è in `package.json` ma non in `node_modules`, quindi `npx tsc --noEmit` è rosso su `lib/esporta.ts` — l'unica riga rossa, e non è di oggi.
+
+---
+
+### Il punto precedente: la giornata su due telefoni (2026-09-01)
+
+
 
 **Aggiornato al 2026-09-01** — la prima giornata di gioco su **due telefoni veri contemporaneamente** (Android + iPhone, Expo Go via LAN). Copre **D-82 → D-85** e **B-37 → B-40**, più il terzo gioco. Non supera il punto del 2026-08-31 qui sotto: quello riguarda la **pubblicazione**, che oggi non è stata toccata e resta valido riga per riga.
 

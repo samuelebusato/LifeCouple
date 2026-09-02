@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import type { CodiceGioco } from '@/lib/giochi';
+import type { CodiceGioco, ModoGioco } from '@/lib/giochi';
 import type { Database } from '@/lib/database.types';
 
 export type Partita = Database['public']['Tables']['partita']['Row'];
@@ -40,6 +40,58 @@ export const SECONDI_ROUND = 60;
  * Ora il round successivo parte quando hanno premuto «continua» tutti e due:
  * vedi `prontiRound` più sotto.
  */
+
+/**
+ * 🔴 **Apre il round una volta sola, e non lo lascia a metà** (2026-09-02, B-43).
+ *
+ * ## Il difetto che questa funzione esiste per togliere
+ *
+ * Le schermate creano il round dentro un effetto, e l'effetto dipende da valori
+ * che cambiano in continuazione all'avvio (la coppia che arriva, la partita, i
+ * pronti, il primo evento realtime). Ogni cambio **rimontava** l'effetto: la sua
+ * pulizia alzava una bandierina `vivo = false` e il lavoro già partito veniva
+ * abbandonato **a metà di una sequenza di scritture**.
+ *
+ * Nel disegno la sequenza è: crea il round → scrivi la parola in `round_segreto`
+ * → tieni la parola in memoria. Interrotta dopo il primo passo lascia
+ * **un round senza parola**, e chi disegna è l'unico che giudica i tentativi:
+ * senza parola non giudica niente, il tempo scade e *il round è perso*. Era il
+ * primo round, sempre, perché è l'unico che nasce mentre tutto il resto si sta
+ * ancora assestando.
+ *
+ * ## Le due regole che applica
+ *
+ * 1. **Una sola esecuzione per chiave** (qui: partita + numero del round). Un
+ *    effetto che si rimonta mentre il lavoro è in corso non ne fa partire un
+ *    secondo, e non prende un errore di chiave duplicata.
+ * 2. **Il lavoro non si abbandona.** La bandierina non ferma più le *scritture*:
+ *    dice soltanto se questa schermata è ancora montata, cioè se ha senso
+ *    aggiornare lo stato locale. 🔑 *Una scrittura sul database che si può
+ *    annullare a metà non è annullabile: è solo incompleta.*
+ */
+export function useAperturaRound() {
+  const inCorso = React.useRef<string | null>(null);
+  const montato = React.useRef(true);
+  React.useEffect(() => {
+    montato.current = true;
+    return () => {
+      montato.current = false;
+    };
+  }, []);
+
+  return React.useCallback(
+    async (chiave: string, lavoro: (montata: () => boolean) => Promise<void>) => {
+      if (inCorso.current === chiave) return;
+      inCorso.current = chiave;
+      try {
+        await lavoro(() => montato.current);
+      } finally {
+        if (inCorso.current === chiave) inCorso.current = null;
+      }
+    },
+    []
+  );
+}
 
 /**
  * La macchina di una partita, condivisa dai due giochi.
@@ -104,7 +156,21 @@ export function usePartita(gioco: CodiceGioco) {
    * non si vedono.
    */
   const apri = React.useCallback(
-    async (coppiaId: string | null) => {
+    /**
+     * 🔑 **Il modo lo decide chi apre la partita** (D-88, migrazione 0028).
+     *
+     * Il parametro serve solo a **creare**: se una partita viva c'è già, si
+     * entra in quella e il modo è il suo. I due telefoni non si accordano — chi
+     * arriva secondo si aggancia (`partita_una_viva`) — quindi il modo deve
+     * stare su un dato che entrambi leggono, non nello stato di chi ha premuto.
+     *
+     * ⚠️ Conseguenza da conoscere: premere «personalizzata» mentre esiste già
+     * una partita ufficiale **non** la converte, ci si entra dentro. Non è
+     * silenzioso — la schermata seguente è visibilmente un'altra cosa (un
+     * riquadro da riempire invece di quattro carte) — e la via d'uscita è quella
+     * di sempre: si abbandona la partita e se ne apre un'altra.
+     */
+    async (coppiaId: string | null, modo: ModoGioco = 'ufficiale') => {
       if (!coppiaId) {
         setCaricando(false);
         return;
@@ -126,7 +192,7 @@ export function usePartita(gioco: CodiceGioco) {
 
       const creata = await supabase
         .from('partita')
-        .insert({ coppia_id: coppiaId, gioco, round_totali: ROUND_TOTALI[gioco] })
+        .insert({ coppia_id: coppiaId, gioco, modo, round_totali: ROUND_TOTALI[gioco] })
         .select('*')
         .single();
 
@@ -183,12 +249,35 @@ export function usePartita(gioco: CodiceGioco) {
         { event: '*', schema: 'public', table: 'partita_round', filter: `partita_id=eq.${id}` },
         (m) => setRound(m.new as Round)
       )
-      .subscribe();
+      /**
+       * 🔴 **Si rilegge quando il canale è DAVVERO attivo** (2026-09-02, B-43).
+       *
+       * `subscribe()` ritorna subito, ma la sottoscrizione diventa attiva sul
+       * server **dopo**. Un evento emesso in quella finestra **a volte arriva e
+       * a volte no**: Realtime legge il WAL a lotti e li consegna ai canali
+       * iscritti nel momento della consegna, quindi la riga scritta un istante
+       * prima dell'iscrizione è una lotteria — e l'esito perso non si recupera.
+       * All'avvio dell'app la finestra cade nel punto peggiore: la schermata
+       * apre la partita e crea il round 1 nello stesso istante in cui il socket
+       * si sta ancora collegando.
+       *
+       * Effetto sul telefono, che è il difetto riferito dall'utente: **chi non
+       * crea il round non lo vede mai**, resta sull'attesa, e per giocare deve
+       * uscire e rientrare — perché *rientrare* rilegge, e la rilettura è la
+       * cosa che qui mancava.
+       *
+       * 🔑 La regola generale: *un canale in tempo reale non è una garanzia di
+       * consegna, è un risparmio di letture.* Chi ci si appoggia deve leggere
+       * una volta **da quando ascolta**, non una volta prima di ascoltare.
+       */
+      .subscribe((stato) => {
+        if (stato === 'SUBSCRIBED') rileggi(id);
+      });
 
     return () => {
       supabase.removeChannel(canale);
     };
-  }, [partita?.id]);
+  }, [partita?.id, rileggi]);
 
   /** «Avvia partita». La partita comincia quando lo preme anche l'altro. */
   const premiAvvia = React.useCallback(async () => {
@@ -248,7 +337,13 @@ export function usePartita(gioco: CodiceGioco) {
         { event: '*', schema: 'public', table: 'round_pronto', filter: `round_id=eq.${idRound}` },
         () => leggi()
       )
-      .subscribe();
+      // Stessa cosa del canale della partita, e qui il sintomo è il «continua»
+      // che si blocca a intermittenza: se l'altro preme mentre noi non stiamo
+      // ancora ascoltando, la sua riga esiste e il suo evento è perso. La
+      // lettura all'ingresso non basta — è **prima** della sottoscrizione.
+      .subscribe((stato) => {
+        if (stato === 'SUBSCRIBED') leggi();
+      });
     return () => {
       vivo = false;
       supabase.removeChannel(canale);
@@ -391,6 +486,9 @@ export function usePartita(gioco: CodiceGioco) {
       round,
       pronti,
       io,
+      /** Il modo di **questa** partita, non quello che si è premuto. */
+      modo: (partita?.modo ?? 'ufficiale') as ModoGioco,
+      personalizzata: partita?.modo === 'personalizzata',
       ioSonoPronto: !!io && pronti.includes(io),
       entrambiPronti: pronti.length >= 2,
       // ⚠️ `>= 2` e non «tutti», come in `segna_pronto`: una coppia è due persone

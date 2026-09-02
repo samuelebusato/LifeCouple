@@ -1,6 +1,7 @@
 /**
- * I **banchi di parole** dei due giochi: 500 per «indovina il disegno», 500 per
- * «telepatia».
+ * I **banchi di parole** dei giochi: 500 per «indovina il disegno», 500 per
+ * «telepatia», le domande del «quiz sulle preferenze» e le carte di «obbligo o
+ * verità».
  *
  * ## Perché stanno qui e non nella tabella `domanda`
  *
@@ -729,3 +730,127 @@ export const DOMANDE_QUIZ: readonly DomandaQuiz[] = [
     ],
   },
 ];
+
+/**
+ * **Le carte di «obbligo o verità»** (D-13, backlog voce 10).
+ *
+ * Due liste separate e non una sola con un'etichetta: il tipo lo sceglie chi ha
+ * il turno **prima** di vedere la carta, quindi la lista da cui pescare è già
+ * decisa nel momento in cui si pesca. Una lista unica da filtrare a ogni round
+ * farebbe lo stesso lavoro tenendo aperta la possibilità di pescare dalla parte
+ * sbagliata.
+ *
+ * ## Il filtro, che qui è la funzione di sicurezza del gioco
+ *
+ * ⚠️ In questo gioco il contenuto **non è** un dettaglio di tono: è la
+ * mitigazione. D-13 ha esaminato la proposta *«chi passa di più perde»* e ha
+ * concluso che una meccanica che punisce il rifiuto, in un'app di coppia, è
+ * l'app che si schiera dalla parte della pressione — sul confine di fiducia
+ * TB-2, quello caratteristico del prodotto. La risposta scelta non è stata
+ * addolcire la meccanica ma **rendere innocuo ciò che c'è scritto sulle carte**.
+ *
+ * Da lì i tre filtri, in ordine di durezza:
+ *
+ * 1. **D-08, le categorie dell'art. 9**: niente salute, religione, opinioni
+ *    politiche, origine, vita sessuale. Qui morde quanto nel quiz — una carta
+ *    che chiede di *raccontare* una di quelle è un trattamento di dato
+ *    particolare travestito da gioco.
+ * 2. **D-13, prima esclusione: nessun obbligo che comporti atti fisici.** Non è
+ *    pudore ed è il filtro meno ovvio dei tre: un obbligo fisico è l'unico che
+ *    non si può passare *senza che si veda*, ed è quindi l'unico che trasforma
+ *    il pass in una scena. Gli obblighi qui sotto si fanno tutti **da seduti**,
+ *    con la voce o col telefono in mano.
+ * 3. **D-13, seconda esclusione: nessuna verità sui dettagli delle relazioni
+ *    precedenti.** È la domanda che in coppia non si dimentica più, e un gioco
+ *    non deve poterla fare al posto di chi non l'avrebbe fatta.
+ *
+ * 🔑 E un quarto filtro, di tono, che vale come per `DOMANDE_QUIZ`: **niente
+ * carte la cui risposta possa ferire**, e niente carte che mettano i due uno
+ * contro l'altro. Il punteggio è della coppia (P-03): una carta come *«chi dei
+ * due…»* rimetterebbe dalla finestra il verdetto sulla relazione.
+ *
+ * ⚠️ Come per gli altri banchi: **le chiavi non si rinominano mai** (una partita
+ * in corso ne ha salvata una), si aggiunge solo in fondo.
+ */
+
+/**
+ * Gli **obblighi**: si fanno da seduti, con la voce o col telefono.
+ *
+ * ⚠️ Ognuno è scritto per essere **eseguibile subito e finito in un minuto**. Un
+ * obbligo che richiede di alzarsi, di uscire o di aspettare non è un obbligo
+ * difficile: è un obbligo che interrompe la partita, e che quindi verrà passato
+ * da chiunque — non per pudore, per praticità. Il pass deve costare una scelta,
+ * non la logistica.
+ */
+export const OBBLIGHI: readonly Voce[] = [
+  ['Do your best impression of the other', 'Fai la tua migliore imitazione dell’altro'],
+  ['Say three things you like about them, without stopping', 'Di’ tre cose che ti piacciono di lui, senza fermarti'],
+  ['Tell your day as if it were a film trailer', 'Racconta la tua giornata come il trailer di un film'],
+  ['Read your last message out loud, in a news anchor voice', 'Leggi a voce alta il tuo ultimo messaggio, con la voce del telegiornale'],
+  ['Name five things in this room you would take on a trip', 'Elenca cinque cose in questa stanza che porteresti in viaggio'],
+  ['Talk for a minute without saying the word no', 'Parla per un minuto senza dire «no»'],
+  ['Invent a name for the next place you will go together', 'Inventa un nome per il prossimo posto in cui andrete insieme'],
+  ['Tell how you met, but from the other’s side', 'Racconta come vi siete conosciuti, ma dalla parte dell’altro'],
+  ['Choose the film for the next evening, no appeals', 'Scegli tu il film della prossima serata, senza appello'],
+  ['Say out loud one thing you want to do together this month', 'Di’ a voce alta una cosa che volete fare insieme questo mese'],
+  ['Make a two line speech thanking them for something small', 'Fai un discorso di due righe per ringraziarlo di una cosa piccola'],
+  ['Repeat the last thing that made you laugh', 'Ripeti l’ultima cosa che ti ha fatto ridere'],
+  ['Send them a voice note right now, with whatever you like in it', 'Mandagli un vocale adesso, con dentro quello che vuoi'],
+  ['Show the last photo in your gallery and explain it', 'Mostra l’ultima foto della tua galleria e spiegala'],
+  ['Describe the other in three words, and defend them', 'Descrivi l’altro in tre parole, e difendile'],
+  ['Choose the dish for the next dinner at home', 'Scegli tu il piatto della prossima cena a casa'],
+  ['Tell a story from when you were little that they have never heard', 'Racconta una storia di quando eri piccolo che non ha mai sentito'],
+  ['Say what you would take to a desert island, apart from them', 'Di’ cosa porteresti su un’isola deserta, a parte lui'],
+  ['Do an impression of how the other wakes up in the morning', 'Imita come si sveglia l’altro la mattina'],
+  ['Choose the next place to put on your map', 'Scegli tu il prossimo posto da segnare sulla vostra mappa'],
+  ['Pay a compliment you have thought and never said', 'Fai un complimento che hai pensato e non hai mai detto'],
+  ['Announce the score of this game like a sports commentator', 'Annuncia il punteggio di questa partita come un telecronista'],
+  ['Tell what you would do with an unexpected free day', 'Racconta cosa faresti con un giorno libero a sorpresa'],
+  ['Recite the shopping list as if it were a poem', 'Recita la lista della spesa come se fosse una poesia'],
+  ['Pick a nickname for the other and use it for the rest of the game', 'Scegli un soprannome per l’altro e usalo per il resto della partita'],
+  ['Say what you were thinking the first time you saw them', 'Di’ cosa stavi pensando la prima volta che l’hai visto'],
+  ['Plan out loud a perfect Sunday for the two of you', 'Progetta a voce alta una domenica perfetta per voi due'],
+  ['Tell the plot of the last film you saw, badly', 'Racconta la trama dell’ultimo film che hai visto, male'],
+  ['Give this evening a title, like a book', 'Dai un titolo a questa serata, come a un libro'],
+  ['Say the first thing you would buy with a small win', 'Di’ la prima cosa che compreresti con una piccola vincita'],
+] as const;
+
+/**
+ * Le **verità**: si rispondono a parole, e nessuna chiede un dato che poi resti.
+ *
+ * ⚠️ Nessuna riguarda relazioni precedenti (D-13), nessuna tocca le categorie
+ * dell'art. 9 (D-08), e nessuna chiede *«chi dei due…»*: la risposta va sul
+ * mondo di chi parla, mai sulla graduatoria fra i due (P-03).
+ */
+export const VERITA: readonly Voce[] = [
+  ['What is the smallest thing that makes your day better?', 'Qual è la cosa più piccola che ti migliora la giornata?'],
+  ['What have you never told them about the way they cook?', 'Cosa non gli hai mai detto di come cucina?'],
+  ['Which of your habits would you defend to the end?', 'Quale tua abitudine difenderesti fino alla fine?'],
+  ['What is the nicest present you have ever been given?', 'Qual è il regalo più bello che ti abbiano fatto?'],
+  ['What would you like to learn to do together?', 'Cosa ti piacerebbe imparare a fare insieme?'],
+  ['Which trip would you do again exactly as it was?', 'Quale viaggio rifaresti identico?'],
+  ['What was the first thing you noticed about them?', 'Qual è la prima cosa che hai notato di lui?'],
+  ['What are you proudest of, this year?', 'Di cosa sei più orgoglioso, quest’anno?'],
+  ['Which compliment stayed with you the longest?', 'Quale complimento ti è rimasto più a lungo?'],
+  ['What do you always put off?', 'Cosa rimandi sempre?'],
+  ['Which film would you watch again tonight?', 'Quale film rivedresti stasera?'],
+  ['What is your most useless talent?', 'Qual è il tuo talento più inutile?'],
+  ['What did you want to be when you were ten?', 'Cosa volevi fare a dieci anni?'],
+  ['What makes you laugh even when it should not?', 'Cosa ti fa ridere anche quando non dovrebbe?'],
+  ['Which small thing of theirs do you copy without saying so?', 'Quale piccola cosa dell’altro copi senza dirlo?'],
+  ['What is the best decision you have made together?', 'Qual è la decisione migliore che avete preso insieme?'],
+  ['What do you never leave the house without?', 'Cosa non esci mai di casa senza?'],
+  ['Which day of the last year would you live again?', 'Quale giorno dell’ultimo anno rivivresti?'],
+  ['What do you think about on the way home?', 'A cosa pensi mentre torni a casa?'],
+  ['Which promise to yourself do you keep?', 'Quale promessa che ti sei fatto mantieni?'],
+  ['What is the nicest thing you have done without telling anyone?', 'Qual è la cosa più bella che hai fatto senza dirlo a nessuno?'],
+  ['Which song reminds you of them?', 'Quale canzone ti ricorda l’altro?'],
+  ['What would you change about an ordinary day of yours?', 'Cosa cambieresti di una tua giornata normale?'],
+  ['What do you always order the first time in a new place?', 'Cosa ordini sempre la prima volta in un posto nuovo?'],
+  ['What are you better at than you admit?', 'In cosa sei più bravo di quanto ammetti?'],
+  ['What would you like to be asked more often?', 'Cosa ti piacerebbe ti chiedessero più spesso?'],
+  ['What is the thing you would never throw away?', 'Qual è la cosa che non butteresti via mai?'],
+  ['Which place do you go back to in your head?', 'In quale posto torni con la testa?'],
+  ['What did you understand late that now seems obvious?', 'Cosa hai capito tardi che adesso ti sembra ovvio?'],
+  ['What would you like this evening to be remembered for?', 'Per cosa ti piacerebbe che questa serata fosse ricordata?'],
+] as const;
