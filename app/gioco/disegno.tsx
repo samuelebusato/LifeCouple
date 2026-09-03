@@ -740,7 +740,7 @@ export default function GiocoDisegno() {
       {!!esitoRound && !roundVivo && (
         <View
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             {
               alignItems: 'center',
               justifyContent: 'center',

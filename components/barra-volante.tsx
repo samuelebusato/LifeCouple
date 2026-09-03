@@ -18,7 +18,7 @@ import Riani, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from "expo-router/js-tabs";
 import { Vetro, GlassView, GlassContainer } from '@/components/ui/vetro';
 import { useTastiera } from '@/lib/tastiera';
 import { useTema } from '@/lib/tema';
@@ -378,7 +378,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
         <View
           pointerEvents="none"
           style={{
-            ...StyleSheet.absoluteFillObject,
+            ...StyleSheet.absoluteFill,
             borderRadius: ALTEZZA / 2,
             backgroundColor: 'rgba(255,255,255,0.16)',
             borderWidth: StyleSheet.hairlineWidth * 2,
@@ -414,7 +414,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
           <Scatola spacing={18} style={{ width: '100%', height: ALTEZZA }}>
             <Lastra
               style={{
-                ...StyleSheet.absoluteFillObject,
+                ...StyleSheet.absoluteFill,
                 borderRadius: ALTEZZA / 2,
               }}
               glassEffectStyle="clear"
@@ -449,7 +449,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
                 <View
                   pointerEvents="none"
                   style={{
-                    ...StyleSheet.absoluteFillObject,
+                    ...StyleSheet.absoluteFill,
                     borderRadius: LENTE / 2,
                     borderWidth: 1.5,
                     borderColor: 'rgba(255,255,255,0.95)',
@@ -473,7 +473,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
               raggio={ALTEZZA / 2}
               intensita={72}
               ombra={false}
-              style={{ ...StyleSheet.absoluteFillObject, width: '100%' }}
+              style={{ ...StyleSheet.absoluteFill, width: '100%' }}
             >
               <View style={{ width: '100%', height: ALTEZZA }} />
             </Vetro>
@@ -483,7 +483,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
             <View
               pointerEvents="none"
               style={{
-                ...StyleSheet.absoluteFillObject,
+                ...StyleSheet.absoluteFill,
                 borderRadius: ALTEZZA / 2,
                 borderWidth: 1,
                 borderColor: 'rgba(255,255,255,0.75)',
@@ -552,7 +552,7 @@ export function BarraVolante({ state, descriptors, navigation }: BottomTabBarPro
         <View
           pointerEvents="box-none"
           style={{
-            ...StyleSheet.absoluteFillObject,
+            ...StyleSheet.absoluteFill,
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: MARGINE,

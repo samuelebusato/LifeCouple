@@ -448,7 +448,7 @@ export default function GiocoObbligo() {
       {mostraEsito && (
         <View
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             {
               alignItems: 'center',
               justifyContent: 'center',

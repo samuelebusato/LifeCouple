@@ -594,7 +594,7 @@ export default function PaginaEvento() {
                     {indice === MINIATURE - 1 && foto.length > MINIATURE && (
                       <View
                         style={{
-                          ...StyleSheet.absoluteFillObject,
+                          ...StyleSheet.absoluteFill,
                           backgroundColor: 'rgba(18,7,11,0.58)',
                           alignItems: 'center',
                           justifyContent: 'center',

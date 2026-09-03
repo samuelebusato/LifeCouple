@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { File } from 'expo-file-system';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -70,8 +71,12 @@ export async function caricaFoto(
   const una = async (img: { uri: string }): Promise<string | null> => {
     try {
       const piccola = await comprimi(img.uri);
-      const risposta = await fetch(piccola.uri);
-      const dati = await risposta.arrayBuffer();
+      // 🔑 Il file compresso si legge con expo-file-system, non con `fetch`
+      // (aggiornamento a SDK 56, 2026-09-03): da SDK 56 il `fetch` globale è
+      // `expo/fetch`, che su Android passa da OkHttp e non apre gli URI
+      // `file://`. La classe `File` legge un file locale su tutte e due le
+      // piattaforme, ed è la stessa API già usata in `lib/esporta.ts`.
+      const dati = await new File(piccola.uri).arrayBuffer();
       const chiave = `${coppiaId}/${Date.now()}-${Math.round(dati.byteLength)}.jpg`;
 
       const su = await supabase.storage

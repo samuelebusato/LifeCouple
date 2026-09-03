@@ -604,7 +604,7 @@ export function ElencoElementi({
       {serateDi && (
         <View
           style={{
-            ...StyleSheet.absoluteFillObject,
+            ...StyleSheet.absoluteFill,
             zIndex: 50,
             justifyContent: 'flex-end',
             backgroundColor: 'rgba(20,8,14,0.45)',

@@ -161,7 +161,7 @@ export function Vetro({
   const piano = colorePiano ? (
     <View
       pointerEvents="none"
-      style={[StyleSheet.absoluteFillObject, { backgroundColor: colorePiano }]}
+      style={[StyleSheet.absoluteFill, { backgroundColor: colorePiano }]}
     />
   ) : null;
 
@@ -207,7 +207,7 @@ export function Vetro({
           <View
             pointerEvents="none"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               { borderRadius: raggio, backgroundColor: colorePiano },
             ]}
           />
@@ -263,7 +263,7 @@ export function Vetro({
         <View
           pointerEvents="none"
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             { borderRadius: raggio, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: vetro.bordo },
           ]}
         />

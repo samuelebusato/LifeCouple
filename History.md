@@ -28,6 +28,33 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-03 (seconda parte) — Da SDK 54 a SDK 57, un passo alla volta
+
+**Chiesto dall'utente**, dopo l'ok al commit di D-91: *«poi aggiorniamo a sdk 57 adesso»*. Il perché è nella voce qui sotto: l'Expo Go dell'App Store è alla 57.0.9 e include un solo SDK, quindi su SDK 54 l'iPhone non apriva più il progetto.
+
+**Come**: tre passi, 54 → 55 → 56 → 57, come chiede la guida ufficiale, e a ogni passo la stessa scala: `npm install expo@^N` → `npx expo install --fix` → `expo-doctor` → `tsc` → `eslint` → bundle web. Il codice è stato toccato **solo dove un controllo lo chiedeva**, e ogni tocco è registrato in **D-92**.
+
+**Passo 55** (RN 0.83, React 19.2). ⚠️ `npx expo install --fix` si è fermato su un conflitto di peer che non esiste: `@react-native-community/datetimepicker` dichiara `react-native-windows` come peer *opzionale*, e npm nel calcolare l'albero ha provato a soddisfarlo lo stesso, trovando una React Native diversa. Il pacchetto non è installato. Risolto con `--legacy-peer-deps`, passato a Expo dopo il `--`; il giudice che conta è poi `expo-doctor`. Tolte da `app.json` `newArchEnabled` ed `edgeToEdgeEnabled`, che SDK 55 non accetta più (la nuova architettura è l'unica, l'edge-to-edge è obbligatorio). `expo-blur`: il nuovo `BlurTargetView` è dichiarato non-breaking, non toccato. Verde: doctor 20/20, `tsc`, `eslint`, bundle web.
+
+**Passo 56** (RN 0.85, TypeScript 6.0). Tre cose vere:
+1. `expo-router` non dipende più da react-navigation. Il codemod ufficiale ha cambiato **una riga** (`components/barra-volante.tsx`: `BottomTabBarProps` da `expo-router/js-tabs`), e i tre `@react-navigation/*` di `package.json` — con `@expo/vector-icons`, mai importato — sono stati **disinstallati**: nessuno li richiede più, nemmeno come transitivi.
+2. `expo/fetch` è diventato il `fetch` globale. Nel suo sorgente non c'è alcuna gestione di `file://`, e su Android la richiesta passa da OkHttp, che apre solo http/https: `fetch(piccola.uri)` in `lib/foto.ts` — la lettura della foto compressa prima del caricamento — sarebbe stato **un caricamento foto rotto su Android**, e solo lì. Sostituito con `new File(uri).arrayBuffer()` di expo-file-system, la stessa API già usata in `lib/esporta.ts`, invece di spegnere `expo/fetch` per tutta l'app con `EXPO_PUBLIC_USE_RN_FETCH=1`. ⚠️ **Non verificato su un telefono**: è nel PUNTO DI RIPRESA.
+3. `StyleSheet.absoluteFillObject` non esiste più in React Native 0.85: 15 punti in 8 file, tutti → `absoluteFill`, che in 0.85 è tipizzato come oggetto (`AbsoluteFillStyle`) e quindi regge anche negli otto punti con lo spread. `tsc` è tornato pulito da solo.
+Ed `eslint` è passato da 0 a **63 errori** senza che una riga fosse cambiata: `eslint-config-expo` 56 accende tre regole del React Compiler (`set-state-in-effect` 27, `refs` 19, `immutability` 17). Portate ad **avviso** in `eslint.config.js`, con la ragione scritta lì. `expo-doctor` ha segnalato la regressione di memoria di Hermes V1 — attesa, si chiude col 57.
+
+**Passo 57** (RN 0.86.3, reanimated 4.5.1, worklets 0.10.1): nessun breaking change dichiarato e nessuno trovato. `expo` alla **57.0.19**, sopra la 57.0.9 che chiude la regressione di Hermes. Verde: doctor **21/21**, `tsc`, `eslint` (0 errori, 65 avvisi), bundle web che **contiene le stringhe dell'insegna**, e le tre suite Node — `test:parole` 31/31, `test:rls` tutti verdi, `test:partita` 183 asserzioni verdi — che provano che il backend non è stato toccato.
+
+⚠️ **Tutto questo è verificato a compilazione e contro il database, non su un telefono.** Le cose che solo un telefono può dire sono nel PUNTO DI RIPRESA, in ordine di probabilità che siano rotte: il vetro (`expo-glass-effect` da 0.1 a 57.0), NativeWind su RN 0.86, il selettore data (da 8.4 a **9.1**, un major), le mappe (1.20 → 1.27), il caricamento foto con `File`, l'edge-to-edge su Android.
+
+**Poi, sul telefono (terza parte).** L'utente ha avviato Expo Go e ha ricevuto *«There was a problem running the requested project: you need to be signed in to Expo Go and Expo CLI to open your project»*. Non è un difetto dell'aggiornamento: è l'Expo Go 57 che, per aprire un progetto da un tunnel pubblico, vuole un manifest **firmato**. E firmato vuol dire due cose insieme, lette nel codice del CLI (`@expo/cli/build/src/utils/codesigning.js`, `getExpoRootDevelopmentCodeSigningInfoAsync`): il **login** al CLI *e* un **progetto EAS collegato** (`extra.eas.projectId` in `app.json`); senza il secondo il CLI torna in silenzio al manifest anonimo e non firmato. Il solo login non è bastato — verificato chiedendo il manifest attraverso il tunnel con l'header `expo-expect-signature` che manda Expo Go: scope key `@anonymous/…` e nessun `Expo-Signature`. Dopo `eas init` (eseguito dall'utente, collegato al team `samududjhdnss-team`, **D-93**): scope key `@samududjhdnss-team/lifecouple` e header `Expo-Signature` presente, per iOS e Android. **L'app si è aperta su iPhone**, e l'utente riferisce che *«funziona tutto»* — un giro d'uso; i controlli mirati (vetro, foto, selettore data, mappe, insegna) restano nel PUNTO DI RIPRESA.
+
+⚠️ **Tre cose vere sul tunnel, da sapere la prossima volta**:
+1. In modalità `CI=1` il CLI **non stampa** né QR né indirizzo. L'host si legge da `hostUri` nel manifest servito in locale (`curl -H "expo-platform: ios" http://localhost:8081/`), ed è `<urlRandomness>-<utente>-8081.exp.direct`, con la casualità in `.expo/settings.json`. Il QR si genera in locale (`qrcode` da npm, fuori dal progetto).
+2. **Il primo avvio dopo aver ucciso un server precedente fallisce** con `failed to start tunnel — session closed`: la sessione ngrok vecchia è ancora viva e chiude la nuova; su conflitto di sottodominio il CLI **azzera la casualità** (`5r3A908` → `xjAQxrg`), quindi l'host cambia. Il secondo avvio di fila va. E `preview_start` perde i log quando il processo muore: la diagnosi è venuta da un `expo start --tunnel` lanciato in una shell in background con l'output su file.
+3. `npm` da PowerShell è bloccato dalla policy sugli script (`npm.ps1`): nel `.claude/launch.json` del brain le due configurazioni dei telefoni ora usano `npm.cmd`, che non tocca impostazioni di sistema.
+
+⚠️ **`eas init` ha riscritto `app.json`** oltre a `projectId` e `owner`: una lista esplicita di permessi Android (calendario, posizione, `RECORD_AUDIO`), quattro plugin in più (`expo-image`, `expo-sharing`, `expo-status-bar`, `expo-web-browser`) ed `extra.router: {}`. Coerenti con ciò che l'app usa, ma **non scelti da nessuno**: nel backlog, da rileggere prima del primo build. Il bundle web di RN 0.86 segnala anche due deprecazioni (`pointerEvents` come prop, `shadow*` → `boxShadow`): avvisi, in backlog.
+
 ### 2026-09-03 — Il quiz dice grande chi risponde e chi indovina (D-91)
 
 **Chiesto dall'utente**: *«ieri ho giocato ai giochi e mi sembrava funzionare tutto. Quello che vorrei però è che nel gioco "indovina cosa risponde l'altro" fosse più chiaro e più evidente a chi tocca rispondere e a chi inserire la risposta corretta. Questo vale sia per il gioco ufficiale che la versione personalizzata. Vorrei che fosse molto più evidente»*.
@@ -218,6 +245,35 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-93 — Il progetto è collegato a EAS, sotto il team (2026-09-03)
+
+Fatto dall'utente con `eas init`, su richiesta motivata: l'Expo Go 57 apre dal tunnel solo un manifest firmato, e la firma di sviluppo richiede login **e** `extra.eas.projectId`. Il progetto su expo.dev è `lifecouple`, owner **`samududjhdnss-team`** (un team, non l'utente `samududjhdns` con cui il CLI è loggato: conta l'appartenenza), `projectId` `322f00d8-59ff-4ae6-9572-255e22124291` in `app.json` — è un identificatore pubblico, sta nel repo.
+
+**Conseguenze**: (1) `owner` in `app.json` decide sotto quale account finiranno build e update EAS: era nel piano di pubblicazione, oggi è deciso; (2) chi lavora al progetto da un altro dispositivo deve fare `npx expo login` con un utente **membro del team**, o il tunnel torna anonimo ed Expo Go rifiuta; (3) in LAN il requisito non c'è, ma in LAN i telefoni non sono mai arrivati (2026-09-02).
+
+**Alternativa scartata**: restare anonimi e usare la LAN spegnendo la VPN. Avrebbe evitato di creare la risorsa oggi per ricrearla al primo build, e avrebbe rimesso in gioco firewall e adattatori virtuali.
+
+### D-92 — L'aggiornamento a SDK 57: un passo alla volta, e il codice si tocca solo dove un controllo lo chiede (2026-09-03)
+
+Il contesto è nel log: l'Expo Go dell'App Store è alla 57.0.9, include un solo SDK, e il progetto su 54 non si apriva più su iPhone. Le tre strade erano nel backlog; l'utente ha scelto l'aggiornamento, subito.
+
+**Le regole seguite, e perché**:
+
+1. **Un SDK alla volta** (54 → 55 → 56 → 57), come chiede la guida ufficiale, e a ogni passo la stessa scala di controlli: `expo install --fix` → `expo-doctor` → `tsc` → `eslint` → bundle web. Saltare al 57 in un colpo avrebbe fatto arrivare tutti i breaking change insieme, senza sapere a quale passo appartenesse ciascun errore.
+2. **Il codice si tocca solo dove un controllo lo chiede**, e ogni tocco è di un tipo solo — *rimpiazzo* — mai *miglioramento*. Un aggiornamento che porta con sé refactor «già che ci siamo» è un aggiornamento che non si può più annullare senza perdere altro.
+3. **`--legacy-peer-deps` sì, `--force` no.** Il conflitto era su un peer *opzionale* non installato (`react-native-windows`, dichiarato dal selettore data): `--legacy-peer-deps` dice a npm di non risolvere i peer da solo, che è esattamente ciò che si voleva; `--force` avrebbe accettato qualunque cosa. Il giudice è `expo-doctor`, che a fine corsa dà 21/21.
+4. **Le tre regole nuove del React Compiler diventano avvisi, non errori — e non si spengono.** 63 segnalazioni su codice invariato non sono 63 difetti comparsi in un pomeriggio: sono una regola nuova applicata a schemi vecchi (lo stato che segue un evento realtime, il reset a cambio round), che nei giochi sono deliberati e documentati (B-43, D-90). Rivederli uno a uno è nel backlog, come refactor. ⚠️ Con `reactCompiler: true` in `app.json` quegli schemi possono far rinunciare il compilatore a ottimizzare quei componenti — non a compilarli male — quindi il costo è di prestazione, non di correttezza.
+5. **Le dipendenze che nessuno importa si tolgono** (`@react-navigation/*`, `@expo/vector-icons`): SDK 56 ha tolto la ragione per cui c'erano, e npm conferma che non restano nemmeno come transitive. Una dipendenza diretta senza un import è un aggiornamento in più a ogni SDK, per niente.
+
+**I tre rimpiazzi**, tutti nel log: `absoluteFillObject` → `absoluteFill` (15 punti); `BottomTabBarProps` da `expo-router/js-tabs` (codemod); `fetch(uri)` → `new File(uri).arrayBuffer()` in `lib/foto.ts`. 🔑 Il terzo è l'unico deciso leggendo il **sorgente** e non un changelog: il changelog di SDK 56 dice che `expo/fetch` è il nuovo `fetch` e come spegnerlo, non cosa non sa fare. Nel sorgente di `expo/fetch` non c'è `file://`, e su Android sotto c'è OkHttp. Si è cambiata la riga invece di spegnere `expo/fetch` per tutta l'app, perché lo spegnimento avrebbe protetto un punto rinunciando al resto — e sarebbe stato invisibile a chi legge il codice fra un mese.
+
+**Alternative scartate**:
+- *`eas go` + TestFlight* per restare su 54: rimanda lo stesso aggiornamento di qualche settimana, e lega la prova a EAS e all'account Apple da subito.
+- *Saltare al 57 in un colpo*: regola 1.
+- *Correggere i 63 avvisi adesso*: regola 4. Un aggiornamento con dentro un refactor dei giochi sarebbe stato impossibile da verificare in una sessione.
+
+**Verifica**: doctor 21/21, `tsc` pulito, `eslint` 0 errori, bundle web con le stringhe di D-91, `test:parole` 31/31, `test:rls` verde, `test:partita` 183 verdi. ⚠️ **Nessun telefono l'ha ancora visto**: è la prima voce del PUNTO DI RIPRESA, e la lista di cosa può essere rotto sta lì.
 
 ### D-91 — L'insegna del ruolo nel quiz: il ruolo si dice grande, e si dice di tutti e due (2026-09-03)
 
@@ -2393,12 +2449,16 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 ### La piattaforma — aggiornato il 2026-09-03
 
-- 🔴 **Aggiornare a SDK 57** (da 54). Necessario dal 2026-09-03: l'Expo Go dell'App Store è alla 57.0.9 e include un solo SDK, quindi il progetto su 54 non si apre più su iPhone. La guida ufficiale chiede di salire **un SDK alla volta** — `npm install expo@^55.0.0` → `npx expo install --fix` → `npx expo-doctor`, poi 56, poi 57 — leggendo il changelog di ciascuno. Cosa tocca **questo** progetto, dai changelog letti e da un grep sul codice del 2026-09-03:
+- ✅ **Aggiornare a SDK 57** — **fatto il 2026-09-03** (**D-92**): tre passi, tutti verdi a compilazione e contro il database. ⚠️ Mai visto su un telefono: vedi il PUNTO DI RIPRESA. La lista qui sotto è quella scritta **prima** di farlo, e ha retto; in più sono usciti `absoluteFillObject` (sparito in RN 0.85) e le tre regole del React Compiler. Era necessario dal 2026-09-03: l'Expo Go dell'App Store è alla 57.0.9 e include un solo SDK, quindi il progetto su 54 non si apre più su iPhone. La guida ufficiale chiede di salire **un SDK alla volta** — `npm install expo@^55.0.0` → `npx expo install --fix` → `npx expo-doctor`, poi 56, poi 57 — leggendo il changelog di ciascuno. Cosa tocca **questo** progetto, dai changelog letti e da un grep sul codice del 2026-09-03:
   - **55** (RN 0.83, React 19.2): `newArchEnabled` ed `edgeToEdgeEnabled` **spariscono da `app.json`** — le abbiamo entrambe a `true`, vanno tolte; `expo-blur` rinomina `experimentalBlurMethod` → non lo usiamo; `expo-av` esce da Expo Go → non lo usiamo.
   - **56** (RN 0.85, TypeScript 6.0): `expo-router` **non dipende più da react-navigation** — `components/barra-volante.tsx` importa `BottomTabBarProps` da `@react-navigation/bottom-tabs` e i tre pacchetti `@react-navigation/*` sono in `package.json`; c'è un codemod (`npx expo-codemod sdk-56-expo-router-react-navigation-replace`). **`expo/fetch` diventa il `fetch` globale**: cinque `fetch(` diretti (Google Places, TMDB, e `fetch(piccola.uri)` in `lib/foto.ts` su un URI **locale** — ⚠️ da verificare che `expo/fetch` accetti `file://`, altrimenti `EXPO_PUBLIC_USE_RN_FETCH=1` nel `.env`). `copy()`/`move()` di `expo-file-system` diventano asincroni → `lib/esporta.ts` non li usa. `@expo/vector-icons` non è più dipendenza di `expo` → è in `package.json` ma il codice non lo importa: si può togliere.
   - **57** (RN 0.86, reanimated 4.5): nessun breaking change dichiarato; usare `expo` ≥ 57.0.9 (regressione di memoria di worklets/reanimated, corretta lì).
   - ⚠️ **Fuori dai changelog, da verificare compilando**: NativeWind 4.2 + Tailwind 3.4 su RN 0.86; `expo-glass-effect` (siamo alla 0.1.x, l'API di `GlassContainer` può essere cambiata — `components/ui/vetro-nativo.native.ts`); `react-native-maps`; `@react-native-community/datetimepicker`. A ogni passo: `tsc`, `eslint`, bundle web, e **poi** il telefono. Le tre suite Node (`test:rls`, `test:parole`, `test:partita`) non dipendono dall'SDK e restano la prova che il backend non è stato toccato.
   - Le due alternative, scartate salvo ripensamenti: **`eas go` + TestFlight** (un Expo Go a SDK 54 costruito da noi — richiede l'account sviluppatore Apple, che serve comunque per pubblicare, ma lega la prova a EAS da subito) e **restare su 54 provando solo su Android** con `npx expo-go install --sdk 54 --platform android` (l'iPhone è il telefono su cui si è provato tutto finora).
+- ⬜ **Rivedere i 65 avvisi del React Compiler** (`react-hooks/set-state-in-effect` 27, `refs` 19, `immutability` 17, più due `no-unused-vars` in `lib/luoghi.ts`), portati ad avviso in `eslint.config.js` con D-92. Uno a uno, a mano: la maggior parte è deliberata (B-43, D-90) e la correzione «da manuale» — stato derivato, ref non letti in render — cambierebbe il comportamento dei giochi. Sessione dedicata, con i telefoni.
+- ⬜ **`@react-native-community/datetimepicker` è passato da 8.4 a 9.1** (un major) con `expo install --fix`, e il suo changelog non è stato letto. Se il selettore data si comporta diversamente, è il primo sospetto.
+- ⬜ **Rileggere `app.json` dopo `eas init`** (2026-09-03): ha aggiunto una lista esplicita di permessi Android (`READ/WRITE_CALENDAR`, `ACCESS_COARSE/FINE_LOCATION`, `RECORD_AUDIO`), quattro plugin (`expo-image`, `expo-sharing`, `expo-status-bar`, `expo-web-browser`) ed `extra.router: {}`. Coerenti con l'uso, ma non scelti da nessuno: `RECORD_AUDIO` in particolare va tolto se non serve (viene dal selettore immagini, per i video), prima del primo build — è un permesso che il revisore vede.
+- ⬜ **Deprecazioni di RN 0.86 segnalate dal bundle web**: `props.pointerEvents` → `style.pointerEvents`, `shadow*` → `boxShadow`. Solo avvisi; da sistemare quando si toccano `components/ui/vetro.tsx` e le carte.
 
 ### I giochi — aggiornato il 2026-09-03
 
@@ -2651,6 +2711,30 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
+**Aggiornato al 2026-09-03 (seconda parte)** — il progetto è su **SDK 57** (**D-92**): tre passi, tutti verdi a compilazione e contro il database. Supera il punto della prima parte di oggi su una riga: la precondizione per tornare sull'iPhone **c'è**. Tutto il resto di quel punto resta valido ed è riportato sotto.
+
+### Dove siamo, in una riga
+
+**SDK 57 a bordo e mai visto su un telefono.** L'Expo Go dell'App Store (57.0.9) ora può aprirlo; con lui si vedranno per la prima volta anche l'insegna (D-91) e le cinque correzioni del 2026-09-02.
+
+### 🔴 Cosa guardare al prossimo giro, in ordine
+
+00000. ✅ **L'app parte su iPhone con l'Expo Go nuovo** (2026-09-03, riferito dall'utente: *«l'app si apre, funziona tutto»*). ⚠️ Con una **precondizione nuova**, D-93: CLI loggato con un membro del team **e** progetto EAS collegato, altrimenti dal tunnel Expo Go risponde *«you need to be signed in to Expo Go and Expo CLI»*. E il primo avvio dopo un server ucciso fallisce con `session closed`: si riavvia, e si rilegge l'host dal manifest locale perché la casualità può essere cambiata.
+
+00000-a. 🔴 **Il vetro**: `expo-glass-effect` è passato da 0.1 a 57.0. La barra volante, i tondi e le carte di vetro devono avere la loro superficie (B-15 è il precedente). Se il vetro nativo sparisse, `components/ui/vetro-nativo.native.ts` è il posto, e il ripiego a tre strati (D-35) dovrebbe comunque disegnare qualcosa: il sintomo sarebbe «vetro finto», non «niente».
+
+00000-b. 🔴 **Il caricamento di una foto** — è l'unica riga di logica cambiata dall'aggiornamento (`lib/foto.ts`, `File` al posto di `fetch`). Su iPhone **e** su Android: la foto deve arrivare nello storage e comparire in galleria. Se fallisse solo su Android, non è la riga nuova: è il motivo per cui la riga nuova esiste, e allora va cercato `expo/fetch` altrove.
+
+00000-c. ⚠️ **Il selettore data** (da 8.4 a 9.1, un major): aprire «aggiungi evento», scegliere data e ora, salvare. E **le mappe** (1.20 → 1.27): i pin, l'anteprima, il «+».
+
+00000-d. ⚠️ **Android, edge-to-edge**: da SDK 55 è obbligatorio e la chiave in `app.json` è sparita; l'app la aveva già a `true`, quindi non dovrebbe cambiare niente — ma è la definizione di «dovrebbe».
+
+00000-e. ⚠️ **NativeWind su React Native 0.86**: se una schermata perdesse gli stili è la prima cosa da sospettare, e l'ultima che un `tsc` può vedere.
+
+Poi la lista della prima parte (0000 → 0-d), che resta valida: l'insegna del ruolo, i cinque difetti del 2026-09-02, Android.
+
+### Il punto precedente: la prima parte del 2026-09-03
+
 **Aggiornato al 2026-09-03** — l'insegna del ruolo nel quiz (**D-91**), chiesta dall'utente dopo una giornata di gioco che **non ha dato sintomi nuovi**. Supera il punto della seconda sessione del 2026-09-02 su una riga: i cinque difetti (B-44→B-48) sono stati giocati e non hanno morso. Tutto il resto di quel punto resta valido ed è riportato sotto.
 
 ### Dove siamo, in una riga
@@ -2661,7 +2745,7 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ### 🔴 Cosa guardare al prossimo giro, in ordine
 
-0000. 🔴 **Decidere come tornare sull'iPhone**, prima di tutto il resto — le tre strade sono nel backlog («Aggiornare a SDK 57»). La raccomandazione è l'aggiornamento **54 → 55 → 56 → 57**, un passo alla volta come chiede la guida ufficiale, in una sessione dedicata e **dopo** aver committato D-91: così l'aggiornamento è un commit a sé, che si può annullare senza perdere l'insegna. ⚠️ Nel frattempo l'Android può usare l'Expo Go di SDK 54 (`npx expo-go install --sdk 54 --platform android`), che è anche un modo per capire il «non funziona» di ieri senza mischiarlo con l'aggiornamento.
+0000. ✅ **Come tornare sull'iPhone — deciso e fatto nella seconda parte di oggi** (**D-92**): aggiornamento 54 → 55 → 56 → 57, dopo il commit di D-91, come raccomandato. Vedi il punto sopra.
 
 000. 🔴 **L'insegna del ruolo nel quiz** (D-91), in tutti e due i modi. Cosa deve succedere: in testa al round un blocco **rosa** con la penna e «Rispondi per te» quando tocca a te dare la risposta vera, **ambra** col fumetto e «Indovina tu» quando devi indovinare; sotto, due cartellini — *Tu: …* pieno, *Partner: …* bianco; sopra le carte (o sopra il riquadro, in personalizzata) la scritta «Scegli / Scrivi la tua risposta vera» oppure «… cosa pensi che abbia risposto». Al round dopo il blocco **cambia colore** e rientra. La domanda a cui deve rispondere l'utente è una sola: **si capisce a colpo d'occhio chi fa cosa, senza leggere?** Se la risposta è «più di prima ma non abbastanza», la mossa successiva è fra le alternative scartate di D-91 (tingere la schermata), non un'altra pillola.
 

@@ -564,7 +564,7 @@ export default function GiocoTelepatia() {
       {!!esito && (
         <View
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             {
               alignItems: 'center',
               justifyContent: 'center',
