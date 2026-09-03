@@ -261,8 +261,31 @@ const it = {
      */
     ruoloRispondi: 'Tocca a te',
     ruoloIndovina: 'Indovina tu',
-    rispondiPerTe: 'Rispondi per te. Lui deve indovinarti.',
-    indovinaLui: 'Tocca a te indovinare cosa ha risposto.',
+    /**
+     * 🔑 **L'insegna del ruolo** (2026-09-03, D-91). La pillola qui sopra era
+     * stata giocata due giorni e l'utente ha chiesto che fosse *molto* più
+     * evidente chi dà la risposta vera e chi indovina. Il titolo dice il
+     * proprio ruolo; la nota dice **anche quello dell'altro**, perché in due
+     * davanti allo stesso gioco la domanda è «chi dei due sta dando quella
+     * giusta?»; i due cartellini li mettono uno accanto all'altro.
+     *
+     * ⚠️ «Rispondi per te» e non «Rispondi tu»: *rispondere* qui lo fanno
+     * tutti e due — uno per sé, l'altro al posto dell'altro — e un titolo con
+     * il solo verbo lascia intatta l'ambiguità che l'insegna deve togliere.
+     */
+    insegnaRispondi: 'Rispondi per te',
+    insegnaIndovina: 'Indovina tu',
+    rispondiPerTe: 'È la tua risposta vera: il tuo partner deve indovinarla.',
+    indovinaLui: 'Il tuo partner ha risposto per sé: tu devi indovinare cosa.',
+    chipTuRispondi: 'Tu: la risposta vera',
+    chipPartnerIndovina: 'Partner: indovina',
+    chipTuIndovini: 'Tu: indovini',
+    chipPartnerRisponde: 'Partner: la risposta vera',
+    /** La didascalia sopra le carte o il riquadro: il ruolo ripetuto dove si preme. */
+    scegliVera: 'Scegli la tua risposta vera',
+    scegliSua: 'Scegli cosa pensi che abbia risposto',
+    scriviVera: 'Scrivi la tua risposta vera',
+    scriviSua: 'Scrivi cosa pensi che abbia risposto',
     haiRisposto: 'Hai risposto. Aspettiamo che indovini.',
     haiProvato: 'Hai indovinato? Aspettiamo la sua risposta.',
     nonIndovinato: 'Non ci siamo',
@@ -927,8 +950,18 @@ const en: Dizionario = {
     haSceltoLui: (p: string): string => `They picked: ${p}`,
     ruoloRispondi: 'Your turn',
     ruoloIndovina: 'You guess',
-    rispondiPerTe: 'Answer for yourself. They have to guess you.',
-    indovinaLui: 'Your turn to guess what they answered.',
+    insegnaRispondi: 'Answer for yourself',
+    insegnaIndovina: 'You guess',
+    rispondiPerTe: 'This is your real answer: your partner has to guess it.',
+    indovinaLui: 'Your partner answered for themselves: you have to guess what.',
+    chipTuRispondi: 'You: the real answer',
+    chipPartnerIndovina: 'Partner: guesses',
+    chipTuIndovini: 'You: guess',
+    chipPartnerRisponde: 'Partner: the real answer',
+    scegliVera: 'Pick your real answer',
+    scegliSua: 'Pick what you think they answered',
+    scriviVera: 'Write your real answer',
+    scriviSua: 'Write what you think they answered',
     haiRisposto: 'Answered. Waiting for their guess.',
     haiProvato: 'Guess sent. Waiting for their answer.',
     nonIndovinato: 'Not quite',

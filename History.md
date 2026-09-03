@@ -28,6 +28,22 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-03 — Il quiz dice grande chi risponde e chi indovina (D-91)
+
+**Chiesto dall'utente**: *«ieri ho giocato ai giochi e mi sembrava funzionare tutto. Quello che vorrei però è che nel gioco "indovina cosa risponde l'altro" fosse più chiaro e più evidente a chi tocca rispondere e a chi inserire la risposta corretta. Questo vale sia per il gioco ufficiale che la versione personalizzata. Vorrei che fosse molto più evidente»*.
+
+**La prima frase vale da sola.** I cinque difetti del 2026-09-02 (B-44→B-48) sono stati giocati e non hanno dato sintomi. ⚠️ È un giro d'**uso**, non l'esecuzione dei cinque casi di prova stretti del PUNTO DI RIPRESA — la stessa distinzione del 2026-08-28 — quindi i cinque restano «corretti, non visti singolarmente»; ma dalla prova non è uscito **niente di nuovo**, ed è la prima sessione dal 2026-09-01 in cui succede.
+
+**La richiesta.** Il quiz aveva già una pillola del ruolo (2026-09-01) e una riga d'istruzione sotto la domanda: dodici punti di maiuscolo in un ovale, più testo grigio. Dopo due giorni di partite vere non bastava. 🔑 E rileggendo la richiesta la parola che pesa è *«a chi»*: non «cosa devo fare io», ma **chi dei due** sta dando la risposta giusta e chi la sta cercando — il ruolo di **entrambi**, che la pillola non diceva.
+
+**Fatto**: `components/insegna-ruolo.tsx`, nuovo, e la testata di `app/gioco/quiz.tsx` riscritta attorno (**D-91**). Un blocco a tutta larghezza tinto col ruolo — rosa quando rispondi per te, ambra quando indovini, la stessa coppia di colori della pillola ingrandita — con un'icona, un titolo a corpo grande («Rispondi per te» / «Indovina tu»), una riga che nomina anche l'altro, e **due cartellini** affiancati (*Tu: la risposta vera* · *Partner: indovina*) col proprio pieno e quello dell'altro bianco. Sopra le quattro carte e sopra il riquadro della personalizzata una didascalia ripete il ruolo **dove si preme**. La testata è una per i due modi, quindi «vale per entrambi» è vero per costruzione. Dizionario aggiornato in italiano e inglese (`lib/i18n.ts`); `tsc` ed `eslint` puliti; bundle web compilato da Metro.
+
+⚠️ **Non vista su un telefono**: è una schermata, e la suite non la esercita. È in cima al PUNTO DI RIPRESA.
+
+⚠️ **Un inciampo di strumenti, da ricordare**: il working tree è **misto** — `lib/i18n.ts`, `app/gioco/quiz.tsx` e questo file sono CRLF, `components/carta-gioco.tsx` è LF — con `core.autocrlf=true` che normalizza al commit. Un `grep` di Git Bash su `\r` **non lo vede** e dice «LF»; lo ha detto Node. Uno script che sostituisce testo deve leggere i fine riga del file e riscriverli uguali, o la prima sostituzione non trova niente.
+
+🔴 **A fine sessione, dall'utente**: *«expo go è stato aggiornato e ora supporta fino a sdk 57.0.0»*. Verificato sulle fonti, non dedotto: **ogni build di Expo Go include un solo SDK** («Each build of Expo Go includes one Expo SDK version», docs.expo.dev), e l'App Store distribuisce la **57.0.9** dal 2026-09-02. «Fino a» in pratica vuol dire «solo»: un progetto su SDK 54 **non si apre più** nell'Expo Go dell'App Store. Su iOS non esiste una via indietro senza account sviluppatore Apple (`eas go` + TestFlight); su Android sì (`npx expo-go install --sdk 54 --platform android`). La conseguenza è nel PUNTO DI RIPRESA e nel backlog («Aggiornare a SDK 57», con ciò che tocca questo progetto): l'aggiornamento in tre passi è diventato la **precondizione** per vedere qualunque cosa su iPhone — D-91 compresa. Decisione rimandata all'utente.
+
 ### 2026-09-02 (seconda sessione) — La prova sui telefoni, finalmente, e quattro sintomi con tre cause
 
 **Chiesto dall'utente**: avviare il server per provare l'app da iPhone e Android. Poi, dalla prova: quattro sintomi riferiti uno dopo l'altro, con la richiesta esplicita di risolverli **tutti**.
@@ -202,6 +218,36 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-91 — L'insegna del ruolo nel quiz: il ruolo si dice grande, e si dice di tutti e due (2026-09-03)
+
+Il quiz sulle preferenze aveva il ruolo in una pillola (2026-09-01): un ovale colorato con dodici punti di maiuscolo — «Tocca a te» / «Indovina tu» — e una riga grigia d'istruzione sotto la domanda. Due giorni di partite vere sui telefoni, e l'utente ha chiesto che fosse *molto* più evidente a chi tocca rispondere e a chi inserire la risposta corretta, in ufficiale e in personalizzata.
+
+**La decisione**: sostituire la pillola con un'**insegna** (`components/insegna-ruolo.tsx`), un blocco a tutta larghezza in testa al round che dice il ruolo in quattro modi che si sommano, non in uno più grande:
+
+1. **la tinta** — tutto il blocco è rosa quando si risponde per sé e ambra quando si indovina: la stessa coppia di colori della pillola, che chi ha già giocato conosce; cambia la grandezza, non il codice;
+2. **l'icona** — la penna di chi scrive la propria risposta, il fumetto col punto di domanda di chi la cerca;
+3. **il titolo** a corpo grande — «Rispondi per te» / «Indovina tu» — e una riga che nomina **anche l'altro** («È la tua risposta vera: il tuo partner deve indovinarla»);
+4. **due cartellini** affiancati — *Tu: la risposta vera* · *Partner: indovina*, o il contrario — col proprio pieno e quello dell'altro bianco.
+
+E sopra le carte (o sopra il riquadro, in personalizzata) una didascalia ripete il ruolo **dove si preme** — «Scegli la tua risposta vera» / «Scegli cosa pensi che abbia risposto» — e si spegne a scelta fatta. La testata del quiz è una per i due modi, quindi «vale per entrambi» è vero per costruzione, non per due modifiche parallele.
+
+🔑 **Perché di tutti e due, e non solo il mio.** Rileggendo la richiesta, la parola che pesa è *«a chi»*: in due davanti allo stesso gioco la domanda non è «cosa faccio io» ma «**chi dei due** sta dando la risposta giusta». La pillola rispondeva alla prima; i cartellini rispondono alla seconda, e sono la parte dell'insegna che nessun ingrandimento della pillola avrebbe dato.
+
+🔑 **«Rispondi per te», non «Rispondi tu».** *Rispondere* nel quiz lo fanno tutti e due — uno per sé, l'altro al posto dell'altro — e un titolo col solo verbo lascia intatta proprio l'ambiguità che l'insegna deve togliere. Nei cartellini, per lo stesso motivo, c'è scritto *la risposta vera* e non *risponde*.
+
+**Alternative scartate**:
+
+- *Ingrandire la pillola.* Avrebbe reso più visibile il ruolo di uno solo; il problema era il ruolo di entrambi.
+- *Tingere l'intera schermata col ruolo.* È il segnale più forte possibile, ma le quattro carte e il riquadro stanno sopra vetro e fondo chiaro tarati per quel bianco (B-15, D-55): cambiare lo sfondo riaprirebbe una taratura chiusa a fatica per una cosa che l'insegna ottiene da sola. È la prima mossa se l'insegna non bastasse.
+- *Bianco su tinta piena*, come la pillola. Il bianco sull'ambra piena stava sotto il minimo di contrasto anche per un titolo; i pastelli del calendario — fondo tenue, testo scuro della stessa famiglia — si leggono sempre, ed erano già i colori delle carte dell'hub. Il costo è che l'insegna è meno «accesa» di un blocco pieno: si compensa con la grandezza, il bordo nella tinta di mezzo e il cartellino pieno.
+
+⚠️ **Due conseguenze da conoscere**:
+
+- L'insegna **non compare finché non si sa chi è il soggetto**: nei round pari lo si deduce dall'elenco dei membri, che arriva dopo la partita. Mostrare «Indovina tu» per un istante e poi cambiarla sarebbe il genere di segnale che l'insegna esiste per togliere. È un'assenza di qualche decimo di secondo al primo round pari, non un difetto.
+- L'insegna **rientra a ogni round** (chiave sull'id del round): il cambio di ruolo si vede succedere. Non vibra: la vibrazione è dell'azione, non del cambio di stato (D-53).
+
+**Verifica**: `tsc` ed `eslint` puliti, bundle web compilato da Metro. ⚠️ **Non vista su un telefono**: è la prima voce del PUNTO DI RIPRESA. La misura che conta — *si capisce a colpo d'occhio chi fa cosa?* — la dà solo l'utente.
 
 ### D-90 — Una partita in attesa che nessuno ha fatto propria si rimpiazza, non ci si entra (2026-09-02, seconda sessione)
 
@@ -2345,8 +2391,19 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
-### I giochi — aggiornato il 2026-09-02
+### La piattaforma — aggiornato il 2026-09-03
 
+- 🔴 **Aggiornare a SDK 57** (da 54). Necessario dal 2026-09-03: l'Expo Go dell'App Store è alla 57.0.9 e include un solo SDK, quindi il progetto su 54 non si apre più su iPhone. La guida ufficiale chiede di salire **un SDK alla volta** — `npm install expo@^55.0.0` → `npx expo install --fix` → `npx expo-doctor`, poi 56, poi 57 — leggendo il changelog di ciascuno. Cosa tocca **questo** progetto, dai changelog letti e da un grep sul codice del 2026-09-03:
+  - **55** (RN 0.83, React 19.2): `newArchEnabled` ed `edgeToEdgeEnabled` **spariscono da `app.json`** — le abbiamo entrambe a `true`, vanno tolte; `expo-blur` rinomina `experimentalBlurMethod` → non lo usiamo; `expo-av` esce da Expo Go → non lo usiamo.
+  - **56** (RN 0.85, TypeScript 6.0): `expo-router` **non dipende più da react-navigation** — `components/barra-volante.tsx` importa `BottomTabBarProps` da `@react-navigation/bottom-tabs` e i tre pacchetti `@react-navigation/*` sono in `package.json`; c'è un codemod (`npx expo-codemod sdk-56-expo-router-react-navigation-replace`). **`expo/fetch` diventa il `fetch` globale**: cinque `fetch(` diretti (Google Places, TMDB, e `fetch(piccola.uri)` in `lib/foto.ts` su un URI **locale** — ⚠️ da verificare che `expo/fetch` accetti `file://`, altrimenti `EXPO_PUBLIC_USE_RN_FETCH=1` nel `.env`). `copy()`/`move()` di `expo-file-system` diventano asincroni → `lib/esporta.ts` non li usa. `@expo/vector-icons` non è più dipendenza di `expo` → è in `package.json` ma il codice non lo importa: si può togliere.
+  - **57** (RN 0.86, reanimated 4.5): nessun breaking change dichiarato; usare `expo` ≥ 57.0.9 (regressione di memoria di worklets/reanimated, corretta lì).
+  - ⚠️ **Fuori dai changelog, da verificare compilando**: NativeWind 4.2 + Tailwind 3.4 su RN 0.86; `expo-glass-effect` (siamo alla 0.1.x, l'API di `GlassContainer` può essere cambiata — `components/ui/vetro-nativo.native.ts`); `react-native-maps`; `@react-native-community/datetimepicker`. A ogni passo: `tsc`, `eslint`, bundle web, e **poi** il telefono. Le tre suite Node (`test:rls`, `test:parole`, `test:partita`) non dipendono dall'SDK e restano la prova che il backend non è stato toccato.
+  - Le due alternative, scartate salvo ripensamenti: **`eas go` + TestFlight** (un Expo Go a SDK 54 costruito da noi — richiede l'account sviluppatore Apple, che serve comunque per pubblicare, ma lega la prova a EAS da subito) e **restare su 54 provando solo su Android** con `npx expo-go install --sdk 54 --platform android` (l'iPhone è il telefono su cui si è provato tutto finora).
+
+### I giochi — aggiornato il 2026-09-03
+
+- ✅ **L'insegna del ruolo nel quiz** — fatta (**D-91**, 2026-09-03): chi risponde per sé e chi indovina, grande e per tutti e due, in ufficiale e in personalizzata. ⚠️ Non vista su un telefono: vedi il PUNTO DI RIPRESA.
+- ⬜ **La stessa insegna negli altri giochi?** Obbligo o verità ha ancora la pillola piccola (`app/gioco/obbligo.tsx`), il disegno un titolo a corpo 2xl. **Non chiesto**: si decide dopo aver visto se l'insegna del quiz funziona sul telefono, non prima.
 - ✅ **Test automatici per il quiz** — fatti (`npm run test:partita`, 152 asserzioni in tutto).
 - ✅ **`obbligo_verita`** — fatto (**D-86**, **D-87**). ⚠️ Mai giocato su un telefono: vedi il PUNTO DI RIPRESA.
 - ✅ **Publication realtime di `round_pronto`** — verificata: l'evento arriva (B-42 per il modo in cui la prima verifica sbagliava).
@@ -2593,6 +2650,26 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+**Aggiornato al 2026-09-03** — l'insegna del ruolo nel quiz (**D-91**), chiesta dall'utente dopo una giornata di gioco che **non ha dato sintomi nuovi**. Supera il punto della seconda sessione del 2026-09-02 su una riga: i cinque difetti (B-44→B-48) sono stati giocati e non hanno morso. Tutto il resto di quel punto resta valido ed è riportato sotto.
+
+### Dove siamo, in una riga
+
+**I giochi girano su iPhone e nessuno dei cinque difetti di ieri si è ripresentato** — riferito dall'utente come *«mi sembrava funzionare tutto»*. L'insegna del ruolo è a bordo e **nessuno l'ha vista**.
+
+🔴 **E da oggi l'iPhone non apre più il progetto**: l'Expo Go dell'App Store è passato alla **57.0.9** (2026-09-02) e ogni build di Expo Go include un solo SDK; il progetto è su **54**. Verificato su docs.expo.dev e sull'App Store. Finché il progetto resta su 54, su iPhone non si vede niente — né l'insegna né i cinque difetti di ieri — a meno di un account sviluppatore Apple (`eas go` + TestFlight).
+
+### 🔴 Cosa guardare al prossimo giro, in ordine
+
+0000. 🔴 **Decidere come tornare sull'iPhone**, prima di tutto il resto — le tre strade sono nel backlog («Aggiornare a SDK 57»). La raccomandazione è l'aggiornamento **54 → 55 → 56 → 57**, un passo alla volta come chiede la guida ufficiale, in una sessione dedicata e **dopo** aver committato D-91: così l'aggiornamento è un commit a sé, che si può annullare senza perdere l'insegna. ⚠️ Nel frattempo l'Android può usare l'Expo Go di SDK 54 (`npx expo-go install --sdk 54 --platform android`), che è anche un modo per capire il «non funziona» di ieri senza mischiarlo con l'aggiornamento.
+
+000. 🔴 **L'insegna del ruolo nel quiz** (D-91), in tutti e due i modi. Cosa deve succedere: in testa al round un blocco **rosa** con la penna e «Rispondi per te» quando tocca a te dare la risposta vera, **ambra** col fumetto e «Indovina tu» quando devi indovinare; sotto, due cartellini — *Tu: …* pieno, *Partner: …* bianco; sopra le carte (o sopra il riquadro, in personalizzata) la scritta «Scegli / Scrivi la tua risposta vera» oppure «… cosa pensi che abbia risposto». Al round dopo il blocco **cambia colore** e rientra. La domanda a cui deve rispondere l'utente è una sola: **si capisce a colpo d'occhio chi fa cosa, senza leggere?** Se la risposta è «più di prima ma non abbastanza», la mossa successiva è fra le alternative scartate di D-91 (tingere la schermata), non un'altra pillola.
+
+⚠️ **Se al primo round pari il blocco compare con un attimo di ritardo**, è voluto (D-91): finché l'elenco dei membri non è arrivato non si sa chi è il soggetto, e l'insegna preferisce non esserci a dire una cosa e poi cambiarla.
+
+⚠️ **Sui cinque difetti di ieri** vale la distinzione del 2026-08-28: è stato un giro d'**uso**, non l'esecuzione dei cinque casi stretti (0-a → 0-c-ter qui sotto). Se uno di quei sintomi si ripresenta non è una regressione: è la finestra che il giro non ha attraversato, e la prima mossa è il suo caso di prova.
+
+### Il punto precedente: la seconda sessione del 2026-09-02
 
 **Aggiornato al 2026-09-02 (seconda sessione)** — la prova sui telefoni è cominciata, e ha dato subito cinque difetti (**B-44**, **B-45**, **B-46**, **B-47**, **B-48**, **D-90**). Supera il punto della prima sessione di oggi su una riga: **il server arriva ai telefoni** (tunnel), cosa che in LAN con ogni probabilità non era mai successa. Tutto il resto di quel punto resta valido ed è riportato sotto.
 

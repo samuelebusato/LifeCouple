@@ -19,6 +19,7 @@ import { Comparsa } from '@/components/ui/comparsa';
 import { PunteggioFinale } from '@/components/punteggio-finale';
 import { Attesa } from '@/components/attesa-partita';
 import { PreparazioneCarte } from '@/components/preparazione-carte';
+import { InsegnaRuolo, pastelloRuolo, type Ruolo } from '@/components/insegna-ruolo';
 import { supabase } from '@/lib/supabase';
 import { useCoppia } from '@/lib/coppia';
 import { usePartita, useAperturaRound } from '@/lib/partita';
@@ -451,7 +452,18 @@ export default function GiocoQuiz() {
    * risposte servono a due cose opposte a seconda di chi guarda, e chi capisce
    * il ruolo al contrario non sbaglia solo il proprio round: lo rovina a
    * entrambi, perché la risposta «vera» finisce per essere un tentativo.
+   *
+   * 🔑 **E si scrive grande** (2026-09-03, D-91). La pillola del 2026-09-01 —
+   * dodici punti di maiuscolo in un ovale, più una riga grigia sotto la
+   * domanda — è stata giocata due giorni, e l'utente ha chiesto che fosse
+   * *molto* più evidente chi risponde e chi indovina. L'insegna dice il ruolo
+   * in quattro modi che si sommano — tinta, icona, titolo, e i due cartellini
+   * che nominano **anche il ruolo dell'altro** — perché la domanda vera non
+   * era «cosa faccio io» ma «chi dei due sta dando la risposta giusta».
+   * Vale per l'ufficiale e per la personalizzata: la testata è una sola.
    */
+  const ruolo: Ruolo = ioSonoSoggetto ? 'rispondi' : 'indovina';
+  const tinta = pastelloRuolo(ruolo);
   const istruzione = miaScelta
     ? ioSonoSoggetto
       ? t.gioco.haiRisposto
@@ -464,52 +476,39 @@ export default function GiocoQuiz() {
     <View className="flex-1">
       <Fondo />
       <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
-        <View className="flex-row items-start justify-between px-6 pb-4 pt-1">
-          <View className="flex-1 gap-1">
-            <Text className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t.gioco.round(numeroRound, partita.round_totali)}
-            </Text>
-            {/* 🔑 **La pillola del ruolo** (2026-09-01, chiesto dall'utente).
-                Il ruolo stava solo in una riga grigia sotto la domanda, cioè
-                nella parte della schermata che si legge per ultima — o non si
-                legge. Qui è un blocco **colorato**, e i due colori sono quelli
-                che l'app già usa per «tuo» e «suo»: magenta l'accento di chi
-                agisce, ambra la tinta con cui, nelle carte, si segna la scelta
-                dell'altro. Chi ha giocato un round li ha già imparati. */}
-            <View
-              style={{
-                alignSelf: 'flex-start',
-                backgroundColor: ioSonoSoggetto ? c.accento : c.ambra,
-                borderRadius: 999,
-                paddingHorizontal: 12,
-                paddingVertical: 5,
-                marginTop: 2,
-                marginBottom: 4,
-              }}
-            >
-              <Text
-                className="text-xs font-semibold uppercase tracking-wide"
-                style={{ color: c.suAccento }}
-              >
-                {ioSonoSoggetto ? t.gioco.ruoloRispondi : t.gioco.ruoloIndovina}
-              </Text>
-            </View>
-            {/* 🔑 **E la domanda cambia persona**: «Il tuo piatto consolatorio»
-                quando tocca a te, «Il suo» quando devi indovinarlo. È la metà
-                che conta davvero — mette il ruolo dove gli occhi già sono,
-                invece di aggiungere una cosa in più da leggere. */}
-            <Text className="font-serif-bold text-3xl text-foreground">
-              {p.personalizzata
-                ? (cartaDomanda?.testo ?? '…')
-                : domanda
-                  ? rendi(ioSonoSoggetto ? domanda.tuo : domanda.titolo, lingua)
-                  : '…'}
-            </Text>
-            <Text className="text-sm text-muted-foreground">{istruzione}</Text>
-          </View>
+        <View className="flex-row items-center justify-between px-6 pb-3 pt-1">
+          <Text className="text-xs uppercase tracking-wide text-muted-foreground">
+            {t.gioco.round(numeroRound, partita.round_totali)}
+          </Text>
           <TondoVetro lato={40} tinto={false} onPress={chiediUscita}>
             <X color={c.tenue} size={18} />
           </TondoVetro>
+        </View>
+
+        {/* ⚠️ Finché non si sa chi è il soggetto — nei round pari lo si deduce
+            dall'elenco dei membri, che arriva dopo — l'insegna non compare:
+            mostrare «indovina tu» per un istante e poi cambiarla è proprio il
+            genere di segnale che l'insegna esiste per togliere. La chiave sul
+            round la fa rientrare a ogni cambio: il passaggio di ruolo si
+            **vede** succedere, non lo si deduce rileggendo. */}
+        {!!soggetto && (
+          <View className="px-6 pb-3">
+            <InsegnaRuolo key={round?.id ?? numeroRound} ruolo={ruolo} nota={istruzione} />
+          </View>
+        )}
+
+        <View className="px-6 pb-2">
+          {/* 🔑 **La domanda cambia persona**: «Il tuo piatto consolatorio»
+              quando tocca a te, «Il suo» quando devi indovinarlo. Mette il
+              ruolo dove gli occhi già sono, invece di aggiungere una cosa in
+              più da leggere. */}
+          <Text className="font-serif-bold text-3xl text-foreground">
+            {p.personalizzata
+              ? (cartaDomanda?.testo ?? '…')
+              : domanda
+                ? rendi(ioSonoSoggetto ? domanda.tuo : domanda.titolo, lingua)
+                : '…'}
+          </Text>
         </View>
 
         {/* --- personalizzata: si scrive, non si sceglie ------------------ */}
@@ -521,6 +520,12 @@ export default function GiocoQuiz() {
             <View className="flex-1 justify-center gap-4 px-6">
               {!miaScelta ? (
                 <>
+                  <Text
+                    className="text-xs font-semibold uppercase tracking-widest"
+                    style={{ color: tinta.testo }}
+                  >
+                    {ioSonoSoggetto ? t.gioco.scriviVera : t.gioco.scriviSua}
+                  </Text>
                   <View
                     className="rounded-3xl border border-border/60 px-5"
                     style={{ backgroundColor: c.alone }}
@@ -579,6 +584,16 @@ export default function GiocoQuiz() {
           </KeyboardAvoidingView>
         ) : (
         <View className="flex-1 justify-center gap-3 px-6">
+          {/* La didascalia sopra le carte ripete il ruolo **dove si preme**
+              (D-91), e si spegne a scelta fatta: l'insegna in alto dice già
+              che si sta aspettando. Resta nel flusso, spenta, per non far
+              saltare le carte di una riga. */}
+          <Text
+            className="text-xs font-semibold uppercase tracking-widest"
+            style={{ color: tinta.testo, opacity: miaScelta ? 0 : 1 }}
+          >
+            {ioSonoSoggetto ? t.gioco.scegliVera : t.gioco.scegliSua}
+          </Text>
           {voci.map((v, i) => {
             const mia = miaScelta === v[0];
             const sua = esito?.sua === v[0];
