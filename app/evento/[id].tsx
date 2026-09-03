@@ -51,6 +51,7 @@ import { useEventoDettaglio } from '@/lib/evento-dettaglio';
 import { caricaFoto, cancellaFoto, indirizziFirmati, scegliFoto, staccaDaEvento } from '@/lib/foto';
 import { TIPI, type TipoEvento } from '@/lib/eventi';
 import { cascata } from '@/lib/movimento';
+import { chiediConferma } from '@/lib/conferma';
 import { lingua, t } from '@/lib/i18n';
 
 /**
@@ -705,7 +706,13 @@ export default function PaginaEvento() {
                           </Text>
                           {mioCommento && (
                             <Premibile
-                              onPress={() => cancellaCommento(commento.id)}
+                              onPress={() =>
+                                chiediConferma({
+                                  titolo: t.conferma.commentoTitolo,
+                                  nota: t.conferma.commentoNota,
+                                  onConferma: () => cancellaCommento(commento.id),
+                                })
+                              }
                               hitSlop={8}
                               scala={0.82}
                             >

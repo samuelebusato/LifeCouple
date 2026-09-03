@@ -28,6 +28,24 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-03 (terza parte) — La domanda prima di buttare via, e l'importazione del calendario che era rotta
+
+**Chiesto dall'utente**: *«vorrei che quando si elimina un evento/qualcosa in generale uscisse un messaggio che chiede conferma. Inoltre controlla l'import del calendario dal dispositivo»*.
+
+**Le conferme (D-94).** Nel progetto c'erano **nove** cancellazioni e solo tre chiedevano qualcosa — le due foto e il «togli dall'evento» — più i fogli di lista e account. Le altre sei partivano al primo tocco: l'**evento dal calendario** (il caso citato), la **cartella** della galleria, il **commento**, il **posto** dalla mappa, il **posto o la voce** dalle liste, la **carta** in preparazione di una partita personalizzata. 🔑 Non per distrazione: perché la regola non aveva un posto dove vivere, e ogni schermata nuova ripartiva dalla memoria di chi la scriveva — la forma esatta di **D-60** e **D-85**. Ora vive in `lib/conferma.ts`, e per gli eventi e le schede sta **nel componente che possiede il bottone** (`riga-evento.tsx`, `scheda-elemento.tsx`), non nel punto di chiamata: così una schermata nuova che li usi non può perderla.
+
+⚠️ **Le note dicono cosa si porta via, e sono state verificate contro lo schema, non scritte a orecchio**: le foto di una cartella cancellata **restano** (`on delete set null`, 0011); un posto cancellato se ne va **anche dalle liste** (`lib/luoghi.ts`, la correzione del 2026-08-30); una voce di lista no. La scheda dice due frasi diverse a seconda che sia un posto o un film, perché una frase sola sarebbe stata falsa per metà dei casi.
+
+🔴 **E lungo la strada è saltato fuori che `Alert.alert` sul web è una funzione vuota** — in `react-native-web` è letteralmente `class Alert { static alert() {} }`. Senza accorgersene, le sei conferme nuove avrebbero reso **morti nella preview** tutti quei comandi, e le due conferme sulle foto lo erano **già da prima**, in silenzio. Ripiego con `confirm` del browser, in un punto solo: è il vantaggio di aver fatto un modulo invece di sei copie.
+
+**L'importazione del calendario (B-49): era rotta, e l'aggiornamento a SDK 57 l'aveva rotta.** Le tre funzioni che `lib/importa.ts` usa — `requestCalendarPermissionsAsync`, `getCalendarsAsync`, `getEventsAsync` — in `expo-calendar` 57 esistono ancora **nei tipi** ma a runtime **lanciano**: sono state spostate dietro `expo-calendar/legacy`. 🔑 Ecco perché `tsc` non ha visto niente: i tipi ci sono, con un `@deprecated` che non è un errore. È il buco esatto che il PUNTO DI RIPRESA dichiarava — *«verificato a compilazione, non su un telefono»* — e stava in una schermata che nessuno dei controlli mirati toccava.
+
+⚠️ **E il sintomo sarebbe stato il peggiore possibile**: in `app/importa.tsx` la chiamata al permesso era **fuori** dal `try`, quindi l'eccezione non la prendeva nessuno e lo stato restava `'attesa'` — la schermata avrebbe **caricato per sempre**, senza un errore da leggere. Corretti tutti e due: import da `expo-calendar/legacy`, e il permesso dentro il `try`.
+
+🔑 **Perché `legacy` e non la nuova API a oggetti**, che è la migrazione "giusta": `getCalendars()` e `listEvents()` **non esistono in Expo Go** — lo stub `ExpoGoCalendarNextStub` lancia *«Calendar@next functionality is not available in Expo Go»*. Migrare lì oggi vorrebbe dire un'importazione che non si può provare fino al primo development build, cioè scambiare una funzione rotta con una non verificabile. Nel backlog, per quando ci sarà il build.
+
+**Verificato**: `tsc` pulito, `eslint` 0 errori (65 avvisi, gli stessi di prima), bundle web compilato — che è anche la prova che `expo-calendar/legacy` si risolve — con dentro le stringhe nuove, l'app che carica nella preview senza errori in console, e le tre suite Node verdi (`parole` 31/31, `rls`, `partita` 183/183). ⚠️ **Nessuna delle sei conferme è stata vista su un telefono**, e l'importazione nemmeno: è la prima voce del PUNTO DI RIPRESA.
+
 ### 2026-09-03 (seconda parte) — Da SDK 54 a SDK 57, un passo alla volta
 
 **Chiesto dall'utente**, dopo l'ok al commit di D-91: *«poi aggiorniamo a sdk 57 adesso»*. Il perché è nella voce qui sotto: l'Expo Go dell'App Store è alla 57.0.9 e include un solo SDK, quindi su SDK 54 l'iPhone non apriva più il progetto.
@@ -245,6 +263,27 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-94 — La domanda prima di buttare via vive in un posto solo, e dice cosa si porta via (2026-09-03)
+
+Chiesto dall'utente: una conferma quando si elimina un evento «o qualcosa in generale». Il conto ha trovato **nove** cancellazioni e **sei senza domanda**.
+
+**La decisione ha tre parti, e la prima conta più delle altre due.**
+
+1. **Una funzione sola** (`lib/conferma.ts`), non sei `Alert` copiati. Il motivo non è il risparmio di righe: è che tre conferme scritte a mano non hanno impedito a sei schermate di nascere senza. 🔑 *Una regola che dipende dalla memoria di chi scrive la prossima schermata non è una regola, è una speranza* (D-60, D-85) — e qui la prova è che la regola c'era, in tre punti, e non ha protetto gli altri sei.
+2. **Per gli eventi e le schede la conferma sta nel componente che possiede il bottone**, non nel punto di chiamata: `riga-evento.tsx` è usato dal calendario in due posti, `scheda-elemento.tsx` dalle liste in due; con la domanda nel chiamante bastava una schermata nuova per perderla. Dove il bottone è unico e locale (cartella, commento, posto sulla mappa, carta) la conferma sta accanto ad esso.
+3. **La nota dice cosa si porta via, mai «sei sicuro?»** — che non è una domanda, non aggiunge niente a quello che chi preme già sa, e insegna a confermare senza leggere. È la regola scritta per le liste il 2026-08-30 (*«la conferma dice quante voci si porta via»*), qui estesa. ⚠️ **E le note sono state verificate contro lo schema**: le foto di una cartella restano (`on delete set null`), un posto se ne va anche dalle liste, una voce di lista no. Una nota falsa è peggio di nessuna nota: insegna a non fidarsi delle altre.
+
+**Il bottone rosso è il secondo**, con `style: 'destructive'`; il primo è «Annulla» con `style: 'cancel'`. Su iOS è quello che il pollice trova per primo, su Android il tocco fuori annulla: in tutti e due i casi **la via facile è non cancellare**.
+
+⚠️ **Il caso discutibile è la carta di gioco**: è appena stata scritta e si riscrive in un momento, quindi la domanda pesa più di quanto protegga. È stata inclusa lo stesso perché *«in generale»* era la richiesta, e perché un'eccezione lasciata al giudizio di chi scrive la schermata riapre esattamente il problema del punto 1. La nota lo dice: si può riscrivere.
+
+**Alternative scartate**:
+- *Un foglio di conferma nostro* (`components/foglio.tsx`) invece dell'`Alert` di sistema, come già fanno liste e impostazioni. Più bello e coerente con la direzione visiva, ma richiede uno stato per ogni schermata che cancella — cioè di nuovo qualcosa da ricordarsi — mentre una funzione si chiama e basta. I fogli che già esistono **restano**: dove la conferma è un momento della schermata (la lista, l'account con la parola da digitare) sono migliori dell'`Alert`.
+- *Un annullamento dopo il fatto* («eliminato — annulla»), che eviterebbe la domanda. È la soluzione migliore in assoluto, e costa una cancellazione differita o un cestino: su contenuti condivisi fra due persone, con la RLS di mezzo, è un progetto suo. Nel backlog.
+- *Chiedere solo per ciò che non si può rifare*, saltando la carta di gioco: vedi sopra.
+
+**Verifica**: `tsc`, `eslint`, bundle web con le stringhe nuove, app che carica nella preview. ⚠️ **Non provata su un telefono**: la domanda che conta — *si legge, e dice qualcosa di utile?* — la dà solo l'uso.
 
 ### D-93 — Il progetto è collegato a EAS, sotto il team (2026-09-03)
 
@@ -1694,6 +1733,23 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-49 — L'importazione dal calendario era rotta da SDK 57, e sarebbe rimasta a caricare per sempre (2026-09-03, CORRETTO — da provare sul telefono)
+
+**Il sintomo che non si è visto**, perché nessuno ha aperto quella schermata dopo l'aggiornamento: «Importa dal calendario» sarebbe rimasta a caricare **all'infinito**, senza errore.
+
+**La causa, doppia.**
+
+1. In `expo-calendar` 57 le tre funzioni usate da `lib/importa.ts` — `requestCalendarPermissionsAsync`, `getCalendarsAsync`, `getEventsAsync` — sono state spostate dietro il sottopercorso `expo-calendar/legacy`. Quelle importate da `expo-calendar` esistono ancora **nei tipi**, marcate `@deprecated … This method will throw in runtime`, e la loro implementazione è letteralmente `throw errorOnLegacyMethodUse(...)`. 🔑 **Per questo `tsc` non ha visto niente**: un `@deprecated` non è un errore di tipo, e il controllo che sarebbe servito — aprire la schermata — non era fra quelli fatti.
+2. In `app/importa.tsx` la chiamata a `chiediPermesso()` era **fuori** dal `try/catch`. L'eccezione diventava una promise rifiutata e non gestita, lo stato restava `'attesa'`, e la schermata **non finiva mai di caricare**. 🔑 *Un errore non gestito non produce un errore visibile: produce una schermata che non finisce*, che è il sintomo più difficile da diagnosticare — e sarebbe stato letto come «lentezza» o «l'app si è impallata».
+
+**Le correzioni**: import da `expo-calendar/legacy` (una riga), e il permesso dentro il `try` insieme al resto. Il messaggio d'errore ora usa `e.message` invece di `String(e)`, che su un `Error` stampava il prefisso `Error:` davanti alla frase.
+
+**Perché non la nuova API**: `getCalendars()` / `listEvents()` **non sono disponibili in Expo Go** (`ExpoGoCalendarNextStub` lancia). Con tutto il collaudo su Expo Go, migrare oggi significherebbe rendere l'importazione non provabile. Nel backlog per il primo development build.
+
+**Come è stato verificato**: leggendo il **sorgente** del pacchetto installato (`build/legacyWarnings.js`, `build/ExpoCalendar.js`, `package.json` con l'export `./legacy`), non un changelog; e compilando il bundle web, che è la prova che `expo-calendar/legacy` si risolve davvero. ⚠️ **Non provato su un telefono**: serve aprire «Importa dal calendario», concedere il permesso e vedere l'elenco. È in cima al PUNTO DI RIPRESA.
+
+🔑 **La lezione, che vale oltre questo difetto**: l'aggiornamento a SDK 57 era stato dichiarato *«verde a compilazione e contro il database»* con l'avvertenza che il telefono non aveva visto niente. Questo è il primo pezzo di quell'avvertenza che si è materializzato, ed era in una schermata che **non compariva nella lista dei controlli mirati** — la lista era stata fatta a partire da ciò che l'aggiornamento *toccava* (vetro, foto, date, mappe), non da ciò che *usa un pacchetto Expo*. Le due liste non coincidono.
+
 ### B-48 — Una partita in corso non si poteva abbandonare, e «Gioca» la riprendeva dal round in cui era rimasta (2026-09-02 seconda sessione, CORRETTO — da verificare sul telefono)
 
 *«Indovina il disegno parte dal round 2»*.
@@ -2449,6 +2505,9 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 ### La piattaforma — aggiornato il 2026-09-03
 
+- ⬜ **Migrare `lib/importa.ts` alla nuova API di `expo-calendar`** (`getCalendars()`, `listEvents()`, `requestCalendarPermissions()`), oggi impossibile: la nuova API **non esiste in Expo Go**. Si fa alla prima development build, insieme ai permessi di **B-20** che pure lì aspettano. Fino ad allora `expo-calendar/legacy` è la scelta giusta, non un ripiego provvisorio da correggere.
+- ⚠️ **Cercare altri usi di API Expo spostate o rimosse da SDK 55/56/57**, con lo stesso metodo che ha trovato **B-49**: non i changelog, ma un giro sui pacchetti `expo-*` che il progetto importa, a caccia di `@deprecated … will throw in runtime`. `tsc` non li vede e il bundle nemmeno.
+
 - ✅ **Aggiornare a SDK 57** — **fatto il 2026-09-03** (**D-92**): tre passi, tutti verdi a compilazione e contro il database. ⚠️ Mai visto su un telefono: vedi il PUNTO DI RIPRESA. La lista qui sotto è quella scritta **prima** di farlo, e ha retto; in più sono usciti `absoluteFillObject` (sparito in RN 0.85) e le tre regole del React Compiler. Era necessario dal 2026-09-03: l'Expo Go dell'App Store è alla 57.0.9 e include un solo SDK, quindi il progetto su 54 non si apre più su iPhone. La guida ufficiale chiede di salire **un SDK alla volta** — `npm install expo@^55.0.0` → `npx expo install --fix` → `npx expo-doctor`, poi 56, poi 57 — leggendo il changelog di ciascuno. Cosa tocca **questo** progetto, dai changelog letti e da un grep sul codice del 2026-09-03:
   - **55** (RN 0.83, React 19.2): `newArchEnabled` ed `edgeToEdgeEnabled` **spariscono da `app.json`** — le abbiamo entrambe a `true`, vanno tolte; `expo-blur` rinomina `experimentalBlurMethod` → non lo usiamo; `expo-av` esce da Expo Go → non lo usiamo.
   - **56** (RN 0.85, TypeScript 6.0): `expo-router` **non dipende più da react-navigation** — `components/barra-volante.tsx` importa `BottomTabBarProps` da `@react-navigation/bottom-tabs` e i tre pacchetti `@react-navigation/*` sono in `package.json`; c'è un codemod (`npx expo-codemod sdk-56-expo-router-react-navigation-replace`). **`expo/fetch` diventa il `fetch` globale**: cinque `fetch(` diretti (Google Places, TMDB, e `fetch(piccola.uri)` in `lib/foto.ts` su un URI **locale** — ⚠️ da verificare che `expo/fetch` accetti `file://`, altrimenti `EXPO_PUBLIC_USE_RN_FETCH=1` nel `.env`). `copy()`/`move()` di `expo-file-system` diventano asincroni → `lib/esporta.ts` non li usa. `@expo/vector-icons` non è più dipendenza di `expo` → è in `package.json` ma il codice non lo importa: si può togliere.
@@ -2459,6 +2518,10 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 - ⬜ **`@react-native-community/datetimepicker` è passato da 8.4 a 9.1** (un major) con `expo install --fix`, e il suo changelog non è stato letto. Se il selettore data si comporta diversamente, è il primo sospetto.
 - ⬜ **Rileggere `app.json` dopo `eas init`** (2026-09-03): ha aggiunto una lista esplicita di permessi Android (`READ/WRITE_CALENDAR`, `ACCESS_COARSE/FINE_LOCATION`, `RECORD_AUDIO`), quattro plugin (`expo-image`, `expo-sharing`, `expo-status-bar`, `expo-web-browser`) ed `extra.router: {}`. Coerenti con l'uso, ma non scelti da nessuno: `RECORD_AUDIO` in particolare va tolto se non serve (viene dal selettore immagini, per i video), prima del primo build — è un permesso che il revisore vede.
 - ⬜ **Deprecazioni di RN 0.86 segnalate dal bundle web**: `props.pointerEvents` → `style.pointerEvents`, `shadow*` → `boxShadow`. Solo avvisi; da sistemare quando si toccano `components/ui/vetro.tsx` e le carte.
+
+### Le funzioni — aggiornato il 2026-09-03
+
+- ⬜ **«Eliminato — annulla» al posto della domanda** (da D-94): una cancellazione differita di qualche secondo, o un cestino, toglierebbe la conferma da tutti e sei i punti e proteggerebbe meglio. Costa una colonna `cancellato_il` sulle tabelle interessate, le policy RLS che la rispettano, e la decisione su cosa succede se l'altro guarda in quei secondi. È un progetto suo, non un ritocco.
 
 ### I giochi — aggiornato il 2026-09-03
 
@@ -2710,6 +2773,24 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+**Aggiornato al 2026-09-03 (terza parte)** — le conferme di eliminazione (**D-94**) e l'importazione dal calendario riparata (**B-49**). Supera il punto della seconda parte su una riga: **il primo difetto vero dell'aggiornamento a SDK 57 è stato trovato**, e non era in nessuna delle voci della lista dei controlli mirati.
+
+### Dove siamo, in una riga
+
+**Sei eliminazioni ora chiedono conferma e l'importazione dal calendario non è più rotta** — tutto verificato a compilazione, nella preview e contro il database; **niente su un telefono**.
+
+### 🔴 Cosa guardare al prossimo giro, in ordine
+
+000000. 🔴 **«Importa dal calendario» sul telefono** (B-49): deve chiedere il permesso, poi mostrare l'elenco delle voci raggruppate per calendario. ⚠️ Se restasse a caricare, la correzione non è bastata e il prossimo posto da guardare è il messaggio d'errore ora visibile in schermata. Provare anche a **importare davvero** qualcosa: la scrittura sul database non è cambiata, ma non la si vede da settimane.
+
+000000-a. 🔴 **Le sei conferme nuove** (D-94), una per una: evento dal calendario · cartella nella galleria · commento in un evento · posto dalla mappa · posto o voce dalle liste · carta in preparazione di una partita personalizzata. Cosa deve succedere: compare la domanda, **«Annulla» è il primo bottone**, e la nota dice cosa si porta via. Poi la parte che conta: **premendo «Annulla» non deve cancellare niente**, e premendo «Elimina» deve cancellare *davvero* — una conferma che non cancella è peggio di nessuna conferma.
+
+000000-b. ⚠️ **Le due conferme che c'erano già** (le foto in galleria e nell'evento) non sono state toccate, ma il ripiego web di `chiediConferma` non le riguarda: se un giorno le si vorrà uniformare, passano anche loro da `chiediConferma`.
+
+Poi la lista della seconda parte (00000-a → 00000-e: vetro, foto, selettore data, mappe, edge-to-edge, NativeWind) e quella della prima (l'insegna del quiz, i cinque difetti del 2026-09-02, Android), tutte ancora valide.
+
+### Il punto precedente: la seconda parte del 2026-09-03
 
 **Aggiornato al 2026-09-03 (seconda parte)** — il progetto è su **SDK 57** (**D-92**): tre passi, tutti verdi a compilazione e contro il database. Supera il punto della prima parte di oggi su una riga: la precondizione per tornare sull'iPhone **c'è**. Tutto il resto di quel punto resta valido ed è riportato sotto.
 

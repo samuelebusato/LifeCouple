@@ -39,6 +39,7 @@ import {
   type Cartella,
 } from '@/lib/cartelle';
 import { useTema } from '@/lib/tema';
+import { chiediConferma } from '@/lib/conferma';
 import { t } from '@/lib/i18n';
 
 type Scatto = {
@@ -330,10 +331,17 @@ export default function Galleria() {
                         {cart.autore_id === session?.user.id && (
                           <Pressable
                             hitSlop={10}
-                            onPress={async () => {
-                              await cancellaCartella(cart.id);
-                              await ricarica();
-                            }}
+                            onPress={() =>
+                              chiediConferma({
+                                titolo: t.conferma.cartellaTitolo(cart.nome),
+                                nota: t.conferma.cartellaNota,
+                                onConferma: async () => {
+                                  const err = await cancellaCartella(cart.id);
+                                  await ricarica();
+                                  return err;
+                                },
+                              })
+                            }
                           >
                             <Trash2 color={c.pericolo} size={15} />
                           </Pressable>

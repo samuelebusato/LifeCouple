@@ -8,6 +8,7 @@ import { BottoneVetro, BottonePieno, CartaVetro, TondoVetro } from '@/components
 import { useTema } from '@/lib/tema';
 import { CARTE_A_TESTA, mieCarte, haFinito, type Carta, type TipoCarta } from '@/lib/carte';
 import type { CodiceGioco } from '@/lib/giochi';
+import { chiediConferma } from '@/lib/conferma';
 import { t } from '@/lib/i18n';
 
 /**
@@ -154,7 +155,23 @@ export function PreparazioneCarte({
                         </Text>
                         {/* Si può togliere solo ciò che si è scritto: la policy
                             `domanda_delete` non lascia toccare le carte dell'altro. */}
-                        <BottoneVetro altezza={34} onPress={() => cancella(carta.id)}>
+                        {/* ⚠️ Anche qui si chiede, ed è il caso più discutibile
+                            dei sei: la carta è appena stata scritta e si
+                            riscrive in un momento. Ma «in generale» era la
+                            richiesta, e una regola con un'eccezione a
+                            discrezione di chi scrive la schermata è di nuovo
+                            una speranza. La nota lo dice: si può riscrivere. */}
+                        <BottoneVetro
+                          altezza={34}
+                          onPress={() =>
+                            chiediConferma({
+                              titolo: t.conferma.cartaTitolo,
+                              nota: t.conferma.cartaNota,
+                              azione: t.conferma.togli,
+                              onConferma: () => cancella(carta.id),
+                            })
+                          }
+                        >
                           <Text className="text-xs">{t.gioco.togli}</Text>
                         </BottoneVetro>
                       </View>

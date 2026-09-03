@@ -16,6 +16,7 @@ import { BottoneVetro, CartaVetro } from '@/components/ui/vetro';
 import { useTema } from '@/lib/tema';
 import type { Elemento } from '@/lib/preferiti';
 import type { Evento } from '@/lib/eventi';
+import { chiediConferma } from '@/lib/conferma';
 import { t } from '@/lib/i18n';
 
 /**
@@ -199,7 +200,23 @@ export function Scheda({
               <View />
             )}
             {e.autore_id === mioId && (
-              <Pressable onPress={onElimina} hitSlop={8}>
+              /* La conferma sta nel componente che possiede il cestino (D-94),
+                 e **dice due cose diverse**: un posto se ne va anche dalla
+                 mappa, una voce di lista no. Una nota sola sarebbe stata falsa
+                 per metà dei casi. */
+              <Pressable
+                onPress={() =>
+                  chiediConferma({
+                    titolo:
+                      e.tipo === 'luogo'
+                        ? t.conferma.luogoTitolo(e.titolo)
+                        : t.conferma.voceTitolo(e.titolo),
+                    nota: e.tipo === 'luogo' ? t.conferma.luogoNota : t.conferma.voceNota,
+                    onConferma: onElimina,
+                  })
+                }
+                hitSlop={8}
+              >
                 <Trash2 color={c.pericolo} size={16} />
               </Pressable>
             )}

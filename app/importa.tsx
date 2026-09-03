@@ -51,14 +51,20 @@ export default function Importa() {
   React.useEffect(() => {
     (async () => {
       if (Platform.OS === 'web') return setStato('nonSupportato');
-      if (!(await chiediPermesso())) return setStato('negato');
+      // 🔴 **Il permesso sta DENTRO il `try`** (2026-09-03, B-49). Era fuori, e
+      // quando `chiediPermesso` ha cominciato a lanciare — l'API di calendario
+      // spostata in `legacy` da SDK 57 — l'eccezione non la prendeva nessuno:
+      // lo stato restava `'attesa'` e la schermata **caricava per sempre**.
+      // 🔑 Un errore non gestito non produce un errore visibile: produce una
+      // schermata che non finisce mai, che è il sintomo più difficile da capire.
       try {
+        if (!(await chiediPermesso())) return setStato('negato');
         const tutti = await leggiCandidati();
         const gia = coppiaId ? await giaImportati(coppiaId) : new Set<string>();
         setCandidati(tutti.filter((c) => !gia.has(c.id)));
         setStato('pronto');
       } catch (e) {
-        setErrore(String(e));
+        setErrore(e instanceof Error ? e.message : String(e));
         setStato('pronto');
       }
     })();

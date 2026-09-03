@@ -11,6 +11,32 @@ import { getLocales } from 'expo-localization';
  */
 
 const it = {
+  /**
+   * **Le conferme prima di buttare via** (D-94, 2026-09-03).
+   *
+   * ⚠️ Ogni nota dice **cosa si porta via**, mai «sei sicuro?»: la seconda non
+   * aggiunge niente a quello che chi preme già sa, e insegna a confermare senza
+   * leggere. Sono verificate contro lo schema, non scritte a orecchio — le foto
+   * di una cartella restano davvero (`on delete set null`, 0011), e un posto
+   * cancellato se ne va davvero anche dalle liste (`lib/luoghi.ts`).
+   */
+  conferma: {
+    annulla: 'Annulla',
+    elimina: 'Elimina',
+    togli: 'Togli',
+    eventoTitolo: (nome: string): string => `Eliminare «${nome}»?`,
+    eventoNota: 'Sparisce per tutti e due, con i suoi commenti. Non si recupera.',
+    cartellaTitolo: (nome: string): string => `Eliminare la cartella «${nome}»?`,
+    cartellaNota: 'Le foto restano nella galleria: sparisce solo la cartella.',
+    commentoTitolo: 'Eliminare il commento?',
+    commentoNota: 'Sparisce per tutti e due.',
+    luogoTitolo: (nome: string): string => `Eliminare «${nome}»?`,
+    luogoNota: 'Sparisce dalla mappa e dalle vostre liste. Le foto restano nella galleria.',
+    voceTitolo: (nome: string): string => `Eliminare «${nome}»?`,
+    voceNota: 'Sparisce dalla lista per tutti e due.',
+    cartaTitolo: 'Togliere la carta?',
+    cartaNota: 'Torna a mancare dal vostro set. Puoi riscriverla prima di cominciare.',
+  },
   benvenuto: {
     sottotitolo:
       'Il vostro diario condiviso. Un posto solo per voi due, dove tenere quello che vivete insieme.',
@@ -739,6 +765,23 @@ const it = {
 type Dizionario = typeof it;
 
 const en: Dizionario = {
+  conferma: {
+    annulla: 'Cancel',
+    elimina: 'Delete',
+    togli: 'Remove',
+    eventoTitolo: (nome: string): string => `Delete \u201c${nome}\u201d?`,
+    eventoNota: 'It disappears for both of you, with its comments. There is no undo.',
+    cartellaTitolo: (nome: string): string => `Delete the \u201c${nome}\u201d folder?`,
+    cartellaNota: 'The photos stay in the gallery: only the folder goes.',
+    commentoTitolo: 'Delete the comment?',
+    commentoNota: 'It disappears for both of you.',
+    luogoTitolo: (nome: string): string => `Delete \u201c${nome}\u201d?`,
+    luogoNota: 'It goes from the map and from your lists. The photos stay in the gallery.',
+    voceTitolo: (nome: string): string => `Delete \u201c${nome}\u201d?`,
+    voceNota: 'It goes from the list for both of you.',
+    cartaTitolo: 'Remove the card?',
+    cartaNota: 'It goes back out of your set. You can write it again before you start.',
+  },
   benvenuto: {
     sottotitolo:
       'Your shared diary. A place just for the two of you, to keep what you live together.',

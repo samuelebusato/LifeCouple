@@ -1,4 +1,12 @@
-import * as Calendar from 'expo-calendar';
+// 🔴 **`expo-calendar/legacy`, non `expo-calendar`** (2026-09-03, B-49).
+// In SDK 57 le funzioni che questo file usa — `requestCalendarPermissionsAsync`,
+// `getCalendarsAsync`, `getEventsAsync` — esistono ancora nei tipi ma a runtime
+// **lanciano**: sono le vecchie firme spostate dietro `expo-calendar/legacy`.
+// La nuova API a oggetti (`getCalendars()`, `listEvents()`) **non è disponibile
+// in Expo Go** — lo stub `ExpoGoCalendarNextStub` lancia a sua volta — quindi
+// migrare lì renderebbe l'importazione non provabile fino al primo build vero.
+// Vedi il backlog: la migrazione si fa quando ci sarà una development build.
+import * as Calendar from 'expo-calendar/legacy';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import type { TipoEvento } from '@/lib/eventi';

@@ -6,6 +6,7 @@ import { CartaVetro } from '@/components/ui/vetro';
 import { cn } from '@/lib/utils';
 import type { Evento } from '@/lib/eventi';
 import { C, pastelli, useTema } from '@/lib/tema';
+import { chiediConferma } from '@/lib/conferma';
 import { lingua, t } from '@/lib/i18n';
 
 /**
@@ -128,7 +129,7 @@ export function RigaEvento({
                 </View>
               </View>
               {mio && onElimina && (
-                <Pressable onPress={onElimina} hitSlop={8} className="pt-1">
+                <Pressable onPress={() => chiediElimina(e, onElimina)} hitSlop={8} className="pt-1">
                   <Text className="text-xs text-destructive">{t.calendario.elimina}</Text>
                 </Pressable>
               )}
@@ -174,7 +175,7 @@ export function RigaEvento({
               {/* Solo l'autore cancella (D-21): la policy lo impone comunque, qui
                   si evita di offrire un gesto che finirebbe in errore. */}
               {mio && onElimina && (
-                <Pressable onPress={onElimina} hitSlop={8}>
+                <Pressable onPress={() => chiediElimina(e, onElimina)} hitSlop={8}>
                   <Text className="text-xs text-destructive">{t.calendario.elimina}</Text>
                 </Pressable>
               )}
@@ -195,4 +196,19 @@ export function RigaLuogo({ nome }: { nome: string }) {
       <Text className="text-xs text-muted-foreground">{nome}</Text>
     </View>
   );
+}
+
+/**
+ * 🔑 **La conferma sta qui, non nelle schermate** (D-94): questo componente
+ * possiede il bottone «Elimina», e finché la domanda viveva nel punto di
+ * chiamata bastava una schermata nuova che passasse `onElimina` per perderla —
+ * ed è esattamente com'era: dal calendario un evento spariva al primo tocco,
+ * senza chiedere niente.
+ */
+function chiediElimina(e: Evento, onElimina: () => void) {
+  chiediConferma({
+    titolo: t.conferma.eventoTitolo(e.titolo),
+    nota: t.conferma.eventoNota,
+    onConferma: onElimina,
+  });
 }

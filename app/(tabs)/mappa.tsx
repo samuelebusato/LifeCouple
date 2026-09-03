@@ -30,6 +30,7 @@ import type { Evento } from '@/lib/eventi';
 import { useTastiera } from '@/lib/tastiera';
 import { useTema } from '@/lib/tema';
 import { molla, durata } from '@/lib/movimento';
+import { chiediConferma } from '@/lib/conferma';
 import { t } from '@/lib/i18n';
 
 /**
@@ -767,11 +768,18 @@ export default function Mappa() {
                     <BottoneVetro
                       altezza={48}
                       variante="pericolo"
-                      onPress={() => {
-                        elimina(dettagli.id);
-                        setDettagli(null);
-                        setToccato(null);
-                      }}
+                      onPress={() =>
+                        chiediConferma({
+                          titolo: t.conferma.luogoTitolo(dettagli.nome),
+                          nota: t.conferma.luogoNota,
+                          onConferma: async () => {
+                            const err = await elimina(dettagli.id);
+                            setDettagli(null);
+                            setToccato(null);
+                            return err;
+                          },
+                        })
+                      }
                     >
                       <Trash2 color={c.pericolo} size={18} />
                     </BottoneVetro>
