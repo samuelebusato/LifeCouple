@@ -1,0 +1,25 @@
+assets/mascotte/ — immagini della mascotte (la lontra)
+
+Qui vanno le immagini della mascotte: il riferimento di partenza e gli stadi
+generati con i prompt di docs/mascotte.md.
+
+Nomi da usare:
+
+  riferimento.png     lo sticker originale fornito dall'utente il 2026-09-04.
+                      E' la sorgente di verita' visiva: ogni prompt di
+                      docs/mascotte.md lo allega come immagine di riferimento.
+
+  stadio-cucciolo.png   generato con docs/mascotte.md §4 (col ciuccio)
+  stadio-adulta.png     generato con docs/mascotte.md §5
+
+  Per gli stadi intermedi previsti da D-09 (~5-6 in tutto), usare lo stesso
+  schema: stadio-<nome>.png. Per gli umori: stadio-<nome>-<umore>.png.
+
+Al 2026-09-04 la cartella e' VUOTA a parte questo file: nessuna immagine e'
+stata ancora generata, e il riferimento originale non e' nel repo perche' era
+stato incollato in chat e non esisteva come file su disco. Va salvato qui a
+mano.
+
+Nessun codice dell'app legge ancora questa cartella. Il nodo "come si anima un
+PNG" e' aperto ed e' descritto in docs/mascotte.md §9: prima di generare in
+massa, leggerlo.

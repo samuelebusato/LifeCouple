@@ -28,6 +28,26 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-04 — La lontra: una mascotte prima che ci sia una creatura da vestire
+
+**Chiesto dall'utente**: partendo da uno sticker kawaii di una **lontra** fornito in chat, prima *«rappresentare questo soggetto da cucciolo»*, poi *«anche come più adulta, è importante che rimanga ugualmente tenera»*, e infine — la frase che ha cambiato la natura del lavoro — *«tutte queste immagini e prompt servono per creare una mascotte e animarla per lifecouple»*.
+
+**Fatto**: scritto [`docs/mascotte.md`](docs/mascotte.md) — identità visiva del personaggio (tavolozza, tratti invariabili) e gli script per **Nano Banana 2** che ne generano gli stadi. Creata `assets/mascotte/` col suo `LEGGIMI.txt`. **Nessuna riga di codice toccata, nessuna immagine generata**: il file è lo script, non il risultato.
+
+**Perché sta nel repo del progetto e non in `Marketing/LifeCouple/`.** Perché la richiesta è *«animarla»*, e animare vuol dire codice dell'app. Se si scoprisse che serve solo per i contenuti social, la casa giusta sarebbe l'altra — ed è la prima delle domande aperte del documento.
+
+🔑 **La cosa che vale la pena aver capito, e che il documento porta a verbale**: **l'età di un personaggio sta nelle proporzioni e nella postura, non nella durezza del viso.** Chiesto un personaggio animale «adulto», un modello generativo lo rende *figo* — corpo slanciato, mascella squadrata, occhi socchiusi — e la tenerezza sparisce. Il prompt dell'adulta perciò tiene **due blocchi separati**: uno che invecchia (rapporto testa/corpo 1:2,4, arti e coda più lunghi, orecchie più alte) e uno che *difende la tenerezza* (occhi grandi e rotondi, sagoma di sole curve, niente mascella). Il secondo non è decorativo: senza, il risultato contraddice la richiesta.
+
+⚠️ **E la conseguenza sul costo, che è la ragione per cui il documento è fatto così**: l'età è parametrizzata su **una sola manopola numerica**, il rapporto testa/corpo. Gli stadi intermedi si ottengono muovendo quel numero, non riscrivendo il prompt. Serve perché **D-09 fissa ~5-6 stadi discreti**, e cinque prompt scritti a mano sarebbero cinque personaggi leggermente diversi.
+
+**Tre cose sono state lasciate aperte invece di deciderle**, perché erano dell'utente e non mie. **La prima ha avuto risposta in giornata**:
+
+- ✅ **la mascotte è la creatura di P-01** — risposto dall'utente lo stesso giorno, **D-95**. Da lì discende tutto il resto: la lontra ricade sotto D-09 e D-11, il materiale resta nel repo del progetto, e il vincolo *«cresce e basta, non deperisce»* di P-01 diventa un vincolo **sul disegno**.
+- ❓ **quanti stadi e quanti umori**: D-09 dice ~5-6 stadi e oggi ce ne sono due; gli umori non sono mai stati contati, e il conto delle immagini è `stadi × umori`.
+- 🔴 **come si anima un PNG** (§9 del documento): Nano Banana produce **raster**, mentre D-09 prevedeva `react-native-svg` e un percorso di sostituzione **Lottie**, che è vettoriale. Tre strade, con costi diversi, nessuna scelta. La meno cara (raster + trasformazioni con Reanimated) non chiude nessuna porta, proprio perché D-09 aveva separato stato e disegno.
+
+⚠️ **Questo lavoro non anticipa niente: è D-11 applicata** — *«si progetta subito, si implementa per ultima»*. Progettare il disegno mentre il resto si costruisce è ciò che quella decisione chiede, e non sposta di un giorno l'implementazione, che resta ultima.
+
 ### 2026-09-03 (terza parte) — La domanda prima di buttare via, e l'importazione del calendario che era rotta
 
 **Chiesto dall'utente**: *«vorrei che quando si elimina un evento/qualcosa in generale uscisse un messaggio che chiede conferma. Inoltre controlla l'import del calendario dal dispositivo»*.
@@ -263,6 +283,26 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-95 — La mascotte **è** la creatura di P-01: la lontra è il disegno che D-09 aveva lasciato sostituibile (2026-09-04)
+
+**Deciso dall'utente il 2026-09-04**, rispondendo alla domanda lasciata aperta in [`docs/mascotte.md`](docs/mascotte.md) §0: *«è la creatura di P-01»*. La lontra non è una mascotte di marca che vive accanto al prodotto: **è la creatura**.
+
+**Perché è una decisione e non un dettaglio estetico**: finché la risposta era aperta, il disegno era un oggetto di marketing e le sue regole erano quelle di `Marketing/`. Da ora ricade sotto **D-09** e **D-11**, che gli impongono vincoli precisi — e sotto **P-01**, che gliene impone uno che non c'entra niente col disegno ma lo governa (l'ultimo punto qui sotto).
+
+**Cosa NON cambia, ed è il motivo per cui questa decisione costa poco**: **D-09 resta intatta**. Lo stato è astratto (punti → stadio + umore), il disegno è un componente che riceve **solo `stadio` e `umore`** e non sa altro. La lontra è precisamente il *«qualcosa di più elaborato»* che D-09 prevedeva di sostituire alle forme geometriche, e la sostituzione non tocca la logica di crescita. Se D-09 non avesse separato stato e disegno il 2026-08-12, oggi questa decisione richiederebbe di riscrivere la crescita.
+
+**Cosa cambia, in concreto**:
+
+1. 🔴 **Il numero degli stadi non è più libero.** D-09 fissa **~5-6 stadi discreti** e la ragione è di costo: il costo dell'upgrade grafico cresce **linearmente col numero di stati visivi**. Oggi ne esistono due sulla carta (cucciolo, adulta) più il riferimento: ne mancano **3-4**, e vanno ottenuti muovendo il rapporto testa/corpo, non riscrivendo i prompt.
+2. 🔴 **Il conto delle immagini è `stadi × umori`, non `stadi`** — perché il componente riceve anche l'umore. **Gli umori non sono mai stati contati**, e vanno contati *prima* di generare, non dopo: è la differenza fra ~6 immagini e ~30.
+3. ⚠️ **Il percorso di sostituzione previsto da D-09 è cambiato di natura, e va detto**: quella decisione scriveva *«un illustratore consegna file **Lottie**, uno per stadio»*. Ora il disegno arriva da un modello generativo, che produce **raster**. Non è un dettaglio di fornitura: Lottie è vettoriale e un PNG non ci si converte. Le tre strade e il loro costo sono in `docs/mascotte.md` §9, e **la scelta resta aperta** — è oggi il vero nodo tecnico della creatura.
+4. ⚠️ **Il materiale resta nel repo del progetto** (`docs/mascotte.md`, `assets/mascotte/`) e non passa a `Marketing/LifeCouple/`. Con la decisione, la collocazione scelta il 2026-09-04 diventa quella giusta per la ragione giusta: è un asset dell'app, non della comunicazione.
+5. 🔑 **P-01 impone un vincolo al disegno che non nasce dal disegno**: *«la creatura cresce e basta: non muore, non deperisce, non rimprovera»*, perché una creatura che deperisce applica una punizione a una relazione, e se la coppia sta attraversando un periodo difficile l'app aggiunge senso di colpa nel momento peggiore. **Conseguenza diretta sugli stadi e sugli umori**: nessuno stadio può rappresentare deperimento, e nessun umore può leggersi come rimprovero per l'assenza. Un umore «triste» che significa *«non vi occupate di me»* violerebbe P-01 pur essendo solo un disegno. L'assenza rallenta la crescita, non la imbruttisce.
+
+**L'alternativa è caduta con la decisione**: una mascotte di marca **distinta** dalla creatura. Vale la pena scrivere il costo che si evita, perché è il genere di duplicazione che si nota solo dopo — due personaggi significano due serie di asset da produrre e da tenere coerenti, e soprattutto due volti per un prodotto la cui **unica funzione non-commodity è proprio la creatura**. Un volto solo, che compare nell'app e nella comunicazione, è più economico e più forte.
+
+⚠️ **Non cambia l'ordine di implementazione**: **D-11 resta** — *«si progetta subito, si implementa per ultima»*. La creatura è ancora l'ultima funzione della sequenza, e nulla di questa decisione anticipa il codice. Ciò che è stato fatto il 2026-09-04 è esattamente la metà «si progetta subito».
 
 ### D-94 — La domanda prima di buttare via vive in un posto solo, e dice cosa si porta via (2026-09-03)
 
@@ -2606,6 +2646,12 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
     - **Come si risolve**: il campo `expo.locales` di `app.json` (funzione documentata di Expo, verificata nello schema `@expo/config-types`) mappa una lingua a un file JSON che sovrascrive le chiavi dell'`Info.plist`. Costa tre stringhe per lingua e un file.
     - ⚠️ **Non è verificabile prima di un build** (vedi **B-20**): in Expo Go i dialoghi usano l'`Info.plist` di Expo Go. Va fatto insieme al primo build, non prima e non dopo.
 12. [ ] **Creatura** (P-01): stato, stadi, disegno in `react-native-svg` (D-09)
+    - ✅ **Il disegno è deciso dal 2026-09-04** (**D-95**): è la **lontra** di [`docs/mascotte.md`](docs/mascotte.md) — tavolozza, tratti invariabili e prompt di generazione per stadio. Sostituisce le forme geometriche previste da D-09, senza toccare la logica di crescita.
+    - [ ] ❓ **Decidere quanti stadi e quanti umori.** D-09 fissa ~5-6 stadi discreti e oggi ne esistono **due** sulla carta (cucciolo, adulta): ne mancano 3-4. Gli **umori** non sono mai stati contati, e il conto delle immagini da produrre è `stadi × umori`, non `stadi` — la differenza fra ~6 e ~30.
+    - [ ] 🔴 **Decidere come si anima.** Nano Banana produce **raster**; D-09 prevedeva `react-native-svg` e una sostituzione con **Lottie**, che è vettoriale. Tre strade con costi diversi in `docs/mascotte.md` §9, nessuna scelta. Va deciso **prima** di generare in massa, perché cambia quante immagini servono.
+    - [ ] ⚠️ **Vincolo di P-01 da applicare al disegno** (D-95 §5): nessuno stadio può rappresentare **deperimento** e nessun umore può leggersi come **rimprovero** per l'assenza. *La creatura cresce e basta.*
+    - [ ] **Salvare l'immagine di riferimento** in `assets/mascotte/riferimento.png`: senza, i prompt "con immagine allegata" non sono utilizzabili.
+    - [ ] ⚠️ **Verificare le condizioni d'uso commerciale** del servizio di generazione, se la mascotte finisce nell'icona o negli screenshot dello store. Non verificato.
 
 > **Le partite completate alimentano la creatura** (P-03): la ricompensa è la crescita condivisa, **non** un punteggio di compatibilità che resta.
 > **Dettaglio emerso il 2026-08-12 sulla mappa**: ogni luogo può avere **foto associate**. Lo schema lo prevede dal primo giorno — una foto può appartenere a un luogo — anche se l'interfaccia arriva dopo.
@@ -2773,6 +2819,8 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-04 — l'ordine qui sotto NON è cambiato.** La sessione del 4 settembre ha prodotto solo documentazione ([`docs/mascotte.md`](docs/mascotte.md) e `assets/mascotte/`): **nessuna riga di codice, nessun comportamento dell'app toccato**, quindi tutto ciò che segue resta valido parola per parola e i controlli sul telefono restano la prima cosa da fare. Il lavoro sulla mascotte non ha una posizione in questa lista perché non è codice da verificare: sono **tre decisioni da prendere** (mascotte di marca o creatura · quanti stadi e umori · come si anima un raster), registrate nel backlog alla voce 12 e in §0/§10 di quel documento.
 
 **Aggiornato al 2026-09-03 (terza parte)** — le conferme di eliminazione (**D-94**) e l'importazione dal calendario riparata (**B-49**). Supera il punto della seconda parte su una riga: **il primo difetto vero dell'aggiornamento a SDK 57 è stato trovato**, e non era in nessuna delle voci della lista dei controlli mirati.
 
