@@ -40,10 +40,11 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ⚠️ **E la conseguenza sul costo, che è la ragione per cui il documento è fatto così**: l'età è parametrizzata su **una sola manopola numerica**, il rapporto testa/corpo. Gli stadi intermedi si ottengono muovendo quel numero, non riscrivendo il prompt. Serve perché **D-09 fissa ~5-6 stadi discreti**, e cinque prompt scritti a mano sarebbero cinque personaggi leggermente diversi.
 
-**Tre cose sono state lasciate aperte invece di deciderle**, perché erano dell'utente e non mie. **La prima ha avuto risposta in giornata**:
+**Tre cose sono state lasciate aperte invece di deciderle**, perché erano dell'utente e non mie. **Due hanno avuto risposta in giornata**:
 
 - ✅ **la mascotte è la creatura di P-01** — risposto dall'utente lo stesso giorno, **D-95**. Da lì discende tutto il resto: la lontra ricade sotto D-09 e D-11, il materiale resta nel repo del progetto, e il vincolo *«cresce e basta, non deperisce»* di P-01 diventa un vincolo **sul disegno**.
-- ❓ **quanti stadi e quanti umori**: D-09 dice ~5-6 stadi e oggi ce ne sono due; gli umori non sono mai stati contati, e il conto delle immagini è `stadi × umori`.
+- ✅ **gli stadi sono tre** — **D-96**, sempre il 2026-09-04, insieme al file di riferimento (ora `assets/mascotte/riferimento.jpg`, che **è** lo stadio 2). Sotto il tetto di ~5-6 di D-09, e i tre coincidono col materiale già prodotto: **non resta nessuno stadio da inventare**.
+- ❓ **quanti umori**: non sono mai stati contati, e il conto delle immagini è `3 × umori`. È l'ultima cosa che separa il documento dalla produzione.
 - 🔴 **come si anima un PNG** (§9 del documento): Nano Banana produce **raster**, mentre D-09 prevedeva `react-native-svg` e un percorso di sostituzione **Lottie**, che è vettoriale. Tre strade, con costi diversi, nessuna scelta. La meno cara (raster + trasformazioni con Reanimated) non chiude nessuna porta, proprio perché D-09 aveva separato stato e disegno.
 
 ⚠️ **Questo lavoro non anticipa niente: è D-11 applicata** — *«si progetta subito, si implementa per ultima»*. Progettare il disegno mentre il resto si costruisce è ciò che quella decisione chiede, e non sposta di un giorno l'implementazione, che resta ultima.
@@ -283,6 +284,20 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-96 — La creatura ha **tre** stadi, e i tre esistono già (2026-09-04)
+
+**Deciso dall'utente il 2026-09-04**: *«la mascotte avrà 3 stadi»*. Con la stessa richiesta è arrivato il file di riferimento, ora in [`assets/mascotte/riferimento.jpg`](assets/mascotte/riferimento.jpg) (2048×2048).
+
+**Rapporto con D-09, che diceva ~5-6**: quel numero era un **tetto dettato dal costo** — *«il costo dell'upgrade grafico cresce linearmente col numero di stati visivi; cinque o sei si possono far illustrare, cinquanta no»*. Tre sta **sotto** il tetto: la ragione di D-09 non è contraddetta, è servita meglio. Il numero scritto lì è superato da questo; il vincolo che lo generava resta.
+
+🔑 **La conseguenza migliore: il disegno degli stadi è già finito.** I tre coincidono col materiale prodotto oggi — **1** cucciolo (prompt, `docs/mascotte.md` §4), **2** intermedio (**è il file di riferimento**, già un'immagine finita), **3** adulta (prompt, §5). Non c'è nessuno stadio da inventare, e questo è vero solo perché l'età era stata parametrizzata su una sola manopola: i tre valori del rapporto testa/corpo (1:1,5 · ~1:1,8 · 1:2,4) erano già fissati.
+
+⚠️ **Il prezzo dei tre stadi, che va saputo adesso e non quando si implementa**: tre stadi significano **due sole transizioni** in tutta la vita della creatura, quindi per quasi tutto il tempo la coppia vede un'immagine ferma.
+- **Ogni transizione deve essere inequivocabile.** Se lo stadio 2 non si stacca a colpo d'occhio dall'1 e dal 3, la coppia percepisce **due** stati e uno dei tre è stato disegnato per niente. Il salto fra i tre rapporti non va ammorbidito «per dolcezza».
+- ❓ **E il senso di crescita quotidiano non può venire dagli stadi.** P-03 lega le partite completate alla crescita della creatura: se il riscontro visivo arriva due volte in tutta la vita, il ciclo *«si gioca → la creatura cresce»* è vero nei punti ma invisibile nel disegno. Se serve un riscontro più frequente deve venire da qualcosa che **non è uno stadio** (micro-variazioni, posa, accessori) e che quindi non moltiplica il costo. **Non deciso**, e da decidere quando la creatura si implementa — non ora.
+
+**Conseguenza sul conto delle immagini**: `3 × umori`. **Quanti umori resta l'unica cosa non decisa** prima di poter generare.
 
 ### D-95 — La mascotte **è** la creatura di P-01: la lontra è il disegno che D-09 aveva lasciato sostituibile (2026-09-04)
 
@@ -2647,10 +2662,12 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
     - ⚠️ **Non è verificabile prima di un build** (vedi **B-20**): in Expo Go i dialoghi usano l'`Info.plist` di Expo Go. Va fatto insieme al primo build, non prima e non dopo.
 12. [ ] **Creatura** (P-01): stato, stadi, disegno in `react-native-svg` (D-09)
     - ✅ **Il disegno è deciso dal 2026-09-04** (**D-95**): è la **lontra** di [`docs/mascotte.md`](docs/mascotte.md) — tavolozza, tratti invariabili e prompt di generazione per stadio. Sostituisce le forme geometriche previste da D-09, senza toccare la logica di crescita.
-    - [ ] ❓ **Decidere quanti stadi e quanti umori.** D-09 fissa ~5-6 stadi discreti e oggi ne esistono **due** sulla carta (cucciolo, adulta): ne mancano 3-4. Gli **umori** non sono mai stati contati, e il conto delle immagini da produrre è `stadi × umori`, non `stadi` — la differenza fra ~6 e ~30.
+    - ✅ **Gli stadi sono tre** (**D-96**, 2026-09-04), e coincidono col materiale esistente: cucciolo · il riferimento · adulta. Nessuno stadio da inventare.
+    - [ ] ❓ **Decidere quanti umori** — è l'**unica** cosa che manca prima di poter generare le immagini: il conto è `3 × umori`.
+    - [ ] ❓ **Da dove viene il senso di crescita fra una transizione e l'altra** (D-96): con tre stadi la creatura cambia due volte in tutta la sua vita, mentre P-03 lega la crescita a ogni partita completata. Da decidere quando si implementa.
     - [ ] 🔴 **Decidere come si anima.** Nano Banana produce **raster**; D-09 prevedeva `react-native-svg` e una sostituzione con **Lottie**, che è vettoriale. Tre strade con costi diversi in `docs/mascotte.md` §9, nessuna scelta. Va deciso **prima** di generare in massa, perché cambia quante immagini servono.
     - [ ] ⚠️ **Vincolo di P-01 da applicare al disegno** (D-95 §5): nessuno stadio può rappresentare **deperimento** e nessun umore può leggersi come **rimprovero** per l'assenza. *La creatura cresce e basta.*
-    - [ ] **Salvare l'immagine di riferimento** in `assets/mascotte/riferimento.png`: senza, i prompt "con immagine allegata" non sono utilizzabili.
+    - ✅ **Immagine di riferimento in repo** dal 2026-09-04: [`assets/mascotte/riferimento.jpg`](assets/mascotte/riferimento.jpg), 2048×2048. È anche lo **stadio 2**. ⚠️ È un JPEG: per l'asset dell'app servirà un PNG rigenerato dalla fonte, non ricompresso da questo.
     - [ ] ⚠️ **Verificare le condizioni d'uso commerciale** del servizio di generazione, se la mascotte finisce nell'icona o negli screenshot dello store. Non verificato.
 
 > **Le partite completate alimentano la creatura** (P-03): la ricompensa è la crescita condivisa, **non** un punteggio di compatibilità che resta.
@@ -2820,7 +2837,9 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
-> **Nota del 2026-09-04 — l'ordine qui sotto NON è cambiato.** La sessione del 4 settembre ha prodotto solo documentazione ([`docs/mascotte.md`](docs/mascotte.md) e `assets/mascotte/`): **nessuna riga di codice, nessun comportamento dell'app toccato**, quindi tutto ciò che segue resta valido parola per parola e i controlli sul telefono restano la prima cosa da fare. Il lavoro sulla mascotte non ha una posizione in questa lista perché non è codice da verificare: sono **tre decisioni da prendere** (mascotte di marca o creatura · quanti stadi e umori · come si anima un raster), registrate nel backlog alla voce 12 e in §0/§10 di quel documento.
+> **Nota del 2026-09-04 — l'ordine qui sotto NON è cambiato.** La sessione del 4 settembre ha prodotto solo documentazione e un'immagine ([`docs/mascotte.md`](docs/mascotte.md), `assets/mascotte/`): **nessuna riga di codice, nessun comportamento dell'app toccato**, quindi tutto ciò che segue resta valido parola per parola e i controlli sul telefono restano la prima cosa da fare.
+>
+> Sul fronte creatura, delle tre domande aperte quel giorno **due hanno avuto risposta**: è la creatura (**D-95**) e ha **tre stadi** (**D-96**), che coincidono col materiale già prodotto. Restano **quanti umori** — l'unica cosa che manca prima di poter generare le immagini — e **come si anima un raster** (`docs/mascotte.md` §9). Nessuna delle due è codice da verificare su un telefono: non hanno una posizione in questa lista, stanno nel backlog alla voce 12.
 
 **Aggiornato al 2026-09-03 (terza parte)** — le conferme di eliminazione (**D-94**) e l'importazione dal calendario riparata (**B-49**). Supera il punto della seconda parte su una riga: **il primo difetto vero dell'aggiornamento a SDK 57 è stato trovato**, e non era in nessuna delle voci della lista dei controlli mirati.
 

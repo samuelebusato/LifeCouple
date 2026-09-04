@@ -18,14 +18,15 @@ Va scritto in cima perché il resto del file è pieno di dettagli, e i dettagli 
 - Va **animata**.
 - Ne servono almeno **due età**: cucciolo e adulta.
 
+- 🔑 **Gli stadi sono TRE** — deciso dall'utente il 2026-09-04, **D-96**. Non i ~5-6 di D-09, che era un tetto di costo: tre ci sta sotto. E i tre coincidono col materiale già esistente — cucciolo, il riferimento, adulta (§2).
+
 **Cosa comporta D-95, e va tenuto presente leggendo tutto il resto del file**:
-- Il numero degli stadi **non è libero**: D-09 fissa ~5-6 stadi discreti (§2).
-- Il conto delle immagini è **`stadi × umori`**, perché il componente del disegno riceve `stadio` **e** `umore`.
+- Il conto delle immagini è **`3 × umori`**, perché il componente del disegno riceve `stadio` **e** `umore`.
 - 🔑 **Vincolo che viene da P-01 e non dal disegno**: *«la creatura cresce e basta: non muore, non deperisce, non rimprovera»* — una creatura che deperisce applica una punizione a una relazione, e se la coppia sta attraversando un periodo difficile l'app aggiunge senso di colpa nel momento peggiore. **Quindi nessuno stadio può rappresentare deperimento, e nessun umore può leggersi come rimprovero per l'assenza.** Un umore «triste» che significhi *«non vi occupate di me»* violerebbe P-01 pur essendo solo un disegno. L'assenza rallenta la crescita, non imbruttisce la creatura.
 
 **Non deciso — e sono le domande che restano**:
-- ❓ **Quanti stadi e quanti umori.** D-09 fissa ~5-6 stadi discreti, non due (§2); gli umori non sono mai stati contati.
-- 🔴 **Come si anima un PNG generato** (§9): è il nodo tecnico vero, e la risposta cambia il costo di tutto il resto.
+- ❓ **Quanti umori.** È l'ultima cosa che separa questo documento dalla produzione delle immagini: il conto è `3 × umori`.
+- 🔴 **Come si anima un raster** (§9): è il nodo tecnico vero, e la risposta cambia il costo di tutto il resto.
 
 ⚠️ **Questo file non è in anticipo sui tempi: è esattamente D-11.** «Si progetta subito, si implementa per ultima» — progettare il disegno mentre il resto dell'app si costruisce è ciò che quella decisione chiede. Non implica alcun anticipo dell'implementazione, che resta ultima.
 
@@ -33,9 +34,18 @@ Va scritto in cima perché il resto del file è pieno di dettagli, e i dettagli 
 
 ## 1. Il soggetto — ciò che non deve cambiare mai
 
-Il riferimento è uno **sticker fustellato in vettoriale piatto**: contorno navy uniforme e spesso su ogni forma, cel-shading pulito senza sfumature, bordo bianco attorno alla sagoma, fondo lavanda piatto. Una lontra dorata seduta che tiene un sasso di fiume fra le zampe anteriori, con un fiore rosa dietro l'orecchio sinistro (destra di chi guarda).
+**Il file di riferimento è [`../assets/mascotte/riferimento.jpg`](../assets/mascotte/riferimento.jpg)** (2048×2048, fornito dall'utente il 2026-09-04). È la sorgente di verità visiva — allegalo a ogni prompt — **ed è anche lo stadio 2** dei tre previsti (§2).
+
+È uno **sticker fustellato in vettoriale piatto**: contorno navy uniforme e spesso su ogni forma, cel-shading pulito senza sfumature, bordo bianco attorno alla sagoma, fondo lavanda piatto. Una lontra dorata seduta che tiene un sasso di fiume fra le zampe anteriori, con un fiore rosa dietro l'orecchio sinistro (destra di chi guarda).
 
 Questi sono i **tratti d'identità**: cambiarne uno cambia personaggio.
+
+- **Le lentiggini**: un piccolo gruppo di puntini bruni su ciascuna guancia, ai lati del muso. Sono piccole e si perdono facilmente in una rigenerazione, quindi vanno **nominate esplicitamente** in ogni prompt (i blocchi KEEP IDENTICAL del §4 e del §5 le contengono).
+- **Il ciuffo sulla fronte**, appuntito e diviso in tre punte.
+- **La macchia dorata più scura** sopra ciascun occhio.
+- **Il sasso di fiume** fra le zampe: non è una posa, è un attributo del personaggio.
+
+⚠️ **Il file è un JPEG.** Per un asset dell'app serve un **PNG senza perdita**, e va rigenerato dalla fonte: ricomprimere questo file non recupera qualità, e sui contorni navy il JPEG lascia sporco. Per generare con Nano Banana va benissimo così.
 
 | Elemento | Hex (approssimato) |
 |---|---|
@@ -55,21 +65,25 @@ Questi sono i **tratti d'identità**: cambiarne uno cambia personaggio.
 
 ---
 
-## 2. Gli stadi — e perché due non bastano
+## 2. Gli stadi — sono tre, e li abbiamo già tutti
 
-La mascotte **è** la creatura (D-95), quindi **D-09 ha già deciso il numero**: *«~5-6 stadi discreti, non una scala continua»*, e la ragione è di costo — il costo dell'upgrade grafico cresce **linearmente col numero di stati visivi**, perché ognuno va disegnato e animato.
+**Deciso dall'utente il 2026-09-04 (D-96): la creatura ha *tre* stadi.** Non i ~5-6 di D-09: quel numero era un **tetto dettato dal costo** (il costo grafico cresce linearmente col numero di stati visivi), e tre sta sotto il tetto — la ragione di D-09 non è contraddetta, è servita meglio.
 
-Oggi il materiale copre **due stadi e mezzo**:
+🔑 **E la conseguenza è che il disegno degli stadi è già finito**, perché i tre coincidono col materiale che esiste:
 
-| Stadio | Stato | Rapporto testa/corpo |
-|---|---|---|
-| Cucciolo | prompt pronto (§4) | 1 : 1,5 |
-| *(il riferimento)* | immagine esistente | ~1 : 1,8 |
-| Adulta | prompt pronto (§5) | 1 : 2,4 |
+| # | Stadio | Stato | Rapporto testa/corpo |
+|---|---|---|---|
+| 1 | **Cucciolo** (col ciuccio) | prompt pronto (§4) | 1 : 1,5 |
+| 2 | **Intermedio** | ✅ **è `riferimento.jpg`**, già esistente | ~1 : 1,8 |
+| 3 | **Adulta** | prompt pronto (§5) | 1 : 2,4 |
 
-🔑 **La cosa importante da capire prima di generare**: il prompt dell'adulta parametrizza l'età su **una sola manopola numerica** — il rapporto testa/corpo — e le altre variazioni le tiene fisse. Questo vuol dire che gli stadi intermedi **non vanno inventati da capo**: si ottengono muovendo quel numero (§6), il che è esattamente ciò che rende raggiungibili 5-6 stadi invece di 2. Se ogni stadio richiedesse un prompt scritto a mano, il vincolo di costo di D-09 tornerebbe a mordere.
+Non serve inventare stadi intermedi: la scala di età è parametrizzata su **una sola manopola numerica**, il rapporto testa/corpo (§6), e i tre valori sono già fissati. Se un giorno si volessero cinque stadi, si otterrebbero muovendo quel numero — ma oggi non servono.
 
-⚠️ **Vincolo che D-09 impone al disegno, non alla logica**: il componente riceve **solo `stadio` e `umore`** e non sa altro. Quindi ogni stadio va prodotto anche in più **umori**, e il conto delle immagini è `stadi × umori`, non `stadi`. Prima di generare in massa conviene sapere quanti umori esistono — e oggi **non è deciso**.
+⚠️ **Il prezzo dei tre stadi, e va saputo adesso**: con tre stadi ci sono **due sole transizioni** in tutta la vita della creatura. Per quasi tutto il tempo la coppia vede un'immagine che non cambia. Due conseguenze:
+- **Ogni transizione deve essere inequivocabile.** Se lo stadio 2 non si distingue a colpo d'occhio dall'1 e dal 3, la coppia percepisce **due** stati, non tre, e uno dei tre è stato disegnato per niente. È il motivo per cui il salto di proporzioni fra 1,5 · 1,8 · 2,4 non va ammorbidito.
+- ❓ **Il senso di crescita quotidiano non può venire dagli stadi**, perché scattano due volte. Se serve, deve venire da qualcos'altro — micro-variazioni, posa, accessori — che **non conta come stadio** e quindi non moltiplica il costo. Non è deciso, e non va deciso qui: è una domanda per quando la creatura si implementa.
+
+⚠️ **Vincolo che D-09 impone al disegno, non alla logica**: il componente riceve **solo `stadio` e `umore`** e non sa altro. Quindi ogni stadio va prodotto anche in più **umori**, e il conto delle immagini è `3 × umori`. Quanti umori **non è ancora deciso**, ed è l'unica cosa che separa questo documento dalla produzione.
 
 ---
 
@@ -99,6 +113,9 @@ KEEP IDENTICAL (non-negotiable):
   (viewer's right).
 - The flat lavender background (#A98CF0), edge to edge.
 - The small grey river pebble held in both front paws against the chest.
+- The small scatter of brown freckle dots on each cheek, beside the muzzle.
+- The three-pointed cowlick on the forehead and the darker golden patch above
+  each eye.
 
 CHANGE INTO BABY PROPORTIONS:
 - Head-to-body ratio pushed to about 1:1.5 — the head is nearly half the total
@@ -155,6 +172,9 @@ KEEP IDENTICAL (non-negotiable):
   (viewer's right).
 - The flat lavender background (#A98CF0), edge to edge.
 - The small grey river pebble held in both front paws against the chest.
+- The small scatter of brown freckle dots on each cheek, beside the muzzle.
+- The three-pointed cowlick on the forehead and the darker golden patch above
+  each eye.
 
 CHANGE INTO ADULT PROPORTIONS:
 - Head-to-body ratio about 1:2.4 — the head is still generous, but the body is
@@ -339,8 +359,11 @@ Le tre strade, col loro costo, **nessuna ancora scelta**:
 ## 10. Aperto
 
 - ✅ ~~Mascotte di marca o creatura di P-01?~~ — **risolto il 2026-09-04: è la creatura** (D-95, §0).
-- ❓ **Quanti stadi e quanti umori** (§2): D-09 dice ~5-6 stadi e oggi ce ne sono due; gli umori non sono mai stati contati. È la prossima decisione, e va presa prima di generare: cambia il conto delle immagini da ~6 a ~30.
+- ✅ ~~Quanti stadi?~~ — **risolto il 2026-09-04: tre** (D-96, §2), e coincidono col materiale già esistente.
+- ❓ **Quanti umori** (§2): non sono mai stati contati, e il conto delle immagini è `3 × umori`. **È l'ultima decisione prima di poter generare.**
+- ❓ **Da dove viene il senso di crescita fra una transizione e l'altra** (§2): con tre stadi la creatura cambia due volte in tutta la sua vita. Domanda per quando si implementa, non per ora.
 - ⚠️ **Nessuno stadio può deperire e nessun umore può rimproverare** (vincolo di P-01, §0). Da verificare su ogni immagine generata, non solo da tenere a mente.
+- ⚠️ **Il riferimento in repo è un JPEG** (§1): per l'asset dell'app serve un PNG rigenerato dalla fonte.
 - 🔴 **Come si anima** (§9): tre strade, nessuna scelta.
 - ⚠️ **La palette è una lettura a occhio**, non i colori del file sorgente (§1).
 - **Nessuna immagine è stata ancora generata**: questo file è lo script, non il risultato. L'immagine di riferimento va messa in `assets/mascotte/`.

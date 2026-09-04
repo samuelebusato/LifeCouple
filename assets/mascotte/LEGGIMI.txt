@@ -1,25 +1,33 @@
-assets/mascotte/ — immagini della mascotte (la lontra)
+assets/mascotte/ — immagini della mascotte (la lontra, creatura di P-01)
 
-Qui vanno le immagini della mascotte: il riferimento di partenza e gli stadi
+Qui vanno le immagini della creatura: il riferimento di partenza e gli stadi
 generati con i prompt di docs/mascotte.md.
 
-Nomi da usare:
+CONTENUTO ATTUALE (2026-09-04)
 
-  riferimento.png     lo sticker originale fornito dall'utente il 2026-09-04.
-                      E' la sorgente di verita' visiva: ogni prompt di
-                      docs/mascotte.md lo allega come immagine di riferimento.
+  riferimento.jpg   lo sticker fornito dall'utente il 2026-09-04, 2048x2048.
+                    E' la SORGENTE DI VERITA' VISIVA: ogni prompt di
+                    docs/mascotte.md lo allega come immagine di riferimento,
+                    ed e' anche lo STADIO 2 (intermedio) dei tre previsti.
+                    ⚠️ E' un JPEG: per un asset dell'app serve un export
+                    PNG senza perdita, che va rigenerato dalla fonte, non
+                    ricavato da questo file (ricomprimere non recupera
+                    qualita', e sui contorni navy il JPEG sporca).
 
-  stadio-cucciolo.png   generato con docs/mascotte.md §4 (col ciuccio)
-  stadio-adulta.png     generato con docs/mascotte.md §5
+DA PRODURRE — tre stadi in tutto (D-96), non cinque o sei:
 
-  Per gli stadi intermedi previsti da D-09 (~5-6 in tutto), usare lo stesso
-  schema: stadio-<nome>.png. Per gli umori: stadio-<nome>-<umore>.png.
+  stadio-1-cucciolo.jpg    docs/mascotte.md §4 (col ciuccio)
+  stadio-2-*.jpg           E' riferimento.jpg: gia' esistente
+  stadio-3-adulta.jpg      docs/mascotte.md §5
 
-Al 2026-09-04 la cartella e' VUOTA a parte questo file: nessuna immagine e'
-stata ancora generata, e il riferimento originale non e' nel repo perche' era
-stato incollato in chat e non esisteva come file su disco. Va salvato qui a
-mano.
+  Per gli umori: stadio-<n>-<nome>-<umore>.<ext>. Quanti umori NON e'
+  ancora deciso, e il conto delle immagini e' stadi x umori: va deciso
+  prima di generare, non dopo.
 
-Nessun codice dell'app legge ancora questa cartella. Il nodo "come si anima un
-PNG" e' aperto ed e' descritto in docs/mascotte.md §9: prima di generare in
-massa, leggerlo.
+VINCOLO CHE VALE PER OGNI IMMAGINE (da P-01, vedi D-95):
+la creatura cresce e basta — non muore, non deperisce, non rimprovera.
+Nessuno stadio puo' rappresentare deperimento e nessun umore puo'
+leggersi come rimprovero per l'assenza.
+
+Nessun codice dell'app legge ancora questa cartella. Il nodo "come si
+anima un raster" e' aperto: docs/mascotte.md §9.
