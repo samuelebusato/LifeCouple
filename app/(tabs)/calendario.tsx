@@ -45,7 +45,8 @@ import { molla } from '@/lib/movimento';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
-import { CuoreGiorno } from '@/components/insieme';
+import { CuoreGiorno, TortaGiorno } from '@/components/insieme';
+import { compleanniDelGiorno, meseConCompleanno, useCompleanni } from '@/lib/compleanni';
 import { usePreferiti } from '@/lib/preferiti';
 import { anteprimePerEvento, caricaFoto, scegliFoto } from '@/lib/foto';
 import {
@@ -120,6 +121,8 @@ function CellaStriscia({
   onPress: () => void;
   /** Il giorno cade fra l'inizio della vostra storia e oggi. */
   nellaStoria?: boolean;
+  /** Uno dei due compie gli anni in questo giorno. */
+  compleanno?: boolean;
 }) {
   /**
    * Il tondo bianco della selezione **si posa** invece di accendersi.
@@ -324,6 +327,7 @@ export default function Calendario() {
   const router = useRouter();
   const { session } = useAuth();
   const { coppiaId, insiemeDal, ricarica: ricaricaCoppia } = useCoppia();
+  const { compleanni } = useCompleanni();
   const { eventi, loading, errore, ricarica, aggiungi, aggiorna, elimina } = useEventi(coppiaId);
   // I posti servono qui per legare un evento a un luogo: e' cio' che lo fa
   // comparire anche sulla mappa (D-33). `aggiungi` serve alla ricerca: un posto
@@ -760,6 +764,7 @@ export default function Calendario() {
                   oggi={stessoGiorno(d, oggi)}
                   eventi={eventiDelGiorno(eventi, d)}
                   nellaStoria={dentroLaStoria(d, insiemeDal, oggi)}
+                  compleanno={compleanniDelGiorno(d, compleanni).length > 0}
                   /* Nella striscia si **naviga fra i giorni**: toccarne uno lo
                      sceglie e la sua agenda compare qui sotto. Un foglio che si
                      apre sarebbe un passaggio di troppo per un gesto che si
@@ -806,6 +811,7 @@ export default function Calendario() {
               oggi={oggi}
               eventiDi={(d) => eventiDelGiorno(eventi, d)}
               insiemeDal={insiemeDal}
+              compleanni={compleanni}
               onTocca={tocca}
               onEvento={(e) => router.push({ pathname: '/evento/[id]', params: { id: e.id } })}
             />
@@ -853,6 +859,7 @@ export default function Calendario() {
                           <Text className="font-serif text-base capitalize text-foreground">
                             {m.toLocaleDateString(lingua, { month: 'long' })}
                           </Text>
+                          {meseConCompleanno(m, compleanni) && <TortaGiorno size={13} />}
                           {meseDentroLaStoria(m, insiemeDal, oggi) && <CuoreGiorno size={12} />}
                         </View>
                         <Text className="text-[10px] text-muted-foreground">

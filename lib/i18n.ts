@@ -101,6 +101,12 @@ const it = {
     // ⚠️ Il requisito si dice PRIMA, non dopo il rifiuto: una password
     // respinta dopo averla scritta due volte è la forma più fastidiosa di
     // errore evitabile.
+    nascita: 'La tua data di nascita',
+    nascitaNota:
+      'Serve per il tuo compleanno sul calendario, e perché LifeCouple è riservato a chi ha compiuto 14 anni.',
+    nascitaMancante: 'Manca la data di nascita.',
+    nascitaNonValida: 'Data di nascita non valida.',
+    troppoGiovane: (minimo: number) => `LifeCouple è riservato a chi ha compiuto ${minimo} anni.`,
     requisito: 'Almeno 8 caratteri.',
     nonCoincidono: 'Le due password non coincidono.',
     troppoCorta: 'La password deve avere almeno 8 caratteri.',
@@ -205,6 +211,12 @@ const it = {
       'Prima di confermare, assicurati che sia davvero il tuo partner: dopo la conferma vedrà tutto ciò che è vostro.',
     invitaConferma: 'Sì, è il mio partner',
 
+    nascitaTitolo: 'La tua data di nascita',
+    nascitaNota: 'Il tuo compleanno compare sul calendario, con una torta.',
+    nascitaMai: 'Non l’hai ancora inserita: il tuo compleanno non compare sul calendario.',
+    nascitaAggiungi: 'Aggiungi la data',
+    nascitaCambia: 'Cambia la data',
+    nascitaSalva: 'Salva',
     insiemeTitolo: 'Da quando state insieme',
     // ⚠️ Si dice che il cambio si vede anche sul calendario dell'altro, PRIMA
     // di premere: la stessa azione tocca due cose (il contatore e un evento
@@ -893,6 +905,12 @@ const en: Dizionario = {
     crea: 'Create account',
     creo: 'Creating…',
     haiGiaAccount: 'Already have an account? Sign in',
+    nascita: 'Your date of birth',
+    nascitaNota:
+      'It’s used for your birthday on the calendar, and because LifeCouple is for people aged 14 and over.',
+    nascitaMancante: 'Your date of birth is missing.',
+    nascitaNonValida: 'That date of birth isn’t valid.',
+    troppoGiovane: (minimo: number) => `LifeCouple is for people aged ${minimo} and over.`,
     requisito: 'At least 8 characters.',
     nonCoincidono: 'The two passwords do not match.',
     troppoCorta: 'The password must be at least 8 characters.',
@@ -989,6 +1007,12 @@ const en: Dizionario = {
       'Before confirming, make sure it really is your partner: after this they will see everything that is yours.',
     invitaConferma: 'Yes, that’s my partner',
 
+    nascitaTitolo: 'Your date of birth',
+    nascitaNota: 'Your birthday shows up on the calendar, with a cake.',
+    nascitaMai: 'You haven’t added it yet: your birthday doesn’t show on the calendar.',
+    nascitaAggiungi: 'Add your date of birth',
+    nascitaCambia: 'Change the date',
+    nascitaSalva: 'Save',
     insiemeTitolo: 'Together since',
     insiemeNota: 'Changing it also moves “Our beginning” on your calendar.',
     insiemeNonImpostata: 'You haven’t picked it yet.',

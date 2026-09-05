@@ -1010,6 +1010,26 @@ export type Database = {
         }
         Relationships: []
       }
+      // ⚠️ SCRITTO A MANO — migrazione 0032 (la data di nascita).
+      // Da rigenerare con gli altri alla prima `supabase gen types typescript`.
+      profilo_utente: {
+        Row: {
+          utente_id: string
+          data_nascita: string | null
+          aggiornato_il: string
+        }
+        Insert: {
+          utente_id: string
+          data_nascita?: string | null
+          aggiornato_il?: string
+        }
+        Update: {
+          utente_id?: string
+          data_nascita?: string | null
+          aggiornato_il?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

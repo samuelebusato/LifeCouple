@@ -4,7 +4,8 @@ import { Text } from '@/components/ui/text';
 import { PillolaEvento } from '@/components/pillola-evento';
 import { useTema } from '@/lib/tema';
 import { dentroLaStoria, stessoGiorno, stessoMese } from '@/lib/date';
-import { CuoreGiorno } from '@/components/insieme';
+import { CuoreGiorno, TortaGiorno } from '@/components/insieme';
+import { compleanniDelGiorno, type Compleanno } from '@/lib/compleanni';
 import type { Evento } from '@/lib/eventi';
 import { t } from '@/lib/i18n';
 
@@ -44,6 +45,7 @@ export function GrigliaMese({
   onTocca,
   onEvento,
   insiemeDal,
+  compleanni = [],
 }: {
   /** Le 42 date da disegnare (6 righe da 7). */
   griglia: Date[];
@@ -56,6 +58,8 @@ export function GrigliaMese({
   onEvento?: (e: Evento) => void;
   /** Da quando state insieme: i giorni da lì a oggi portano un cuoricino. */
   insiemeDal?: string | null;
+  /** Le date di nascita della coppia: nel giorno giusto compare una torta. */
+  compleanni?: Compleanno[];
 }) {
   const { c } = useTema();
   const [altezza, setAltezza] = React.useState(0);
@@ -97,12 +101,27 @@ export function GrigliaMese({
                     porterebbe via una pillola per far posto a sé. Il numero è
                     centrato, quindi l'angolo destro è spazio che nessuno usa.
                     `pointerEvents` spento: il tocco deve restare della cella. */}
-                {dentroLaStoria(d, insiemeDal ?? null, oggi) && (
+                {/* Cuore e torta stanno **nello stesso angolo, in fila**: la
+                    torta prima perché è quella che si cerca, il cuore dopo
+                    perché è lo sfondo. Su un giorno di compleanno dentro la
+                    storia ci sono entrambi, ed è giusto — dicono due cose
+                    diverse dello stesso giorno. */}
+                {(dentroLaStoria(d, insiemeDal ?? null, oggi) ||
+                  compleanniDelGiorno(d, compleanni).length > 0) && (
                   <View
                     pointerEvents="none"
-                    style={{ position: 'absolute', top: 4, right: 4, opacity: fuori ? 0.4 : 1 }}
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 2,
+                      opacity: fuori ? 0.4 : 1,
+                    }}
                   >
-                    <CuoreGiorno />
+                    {compleanniDelGiorno(d, compleanni).length > 0 && <TortaGiorno />}
+                    {dentroLaStoria(d, insiemeDal ?? null, oggi) && <CuoreGiorno />}
                   </View>
                 )}
                 <View style={{ height: TESTA - 6, alignItems: 'center', justifyContent: 'center' }}>
