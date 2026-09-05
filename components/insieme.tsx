@@ -24,7 +24,7 @@ import { C } from '@/lib/tema';
  * leggere davvero.
  *
  * Quindi: contenuto, in un angolo che le pillole non usano, e a opacità ridotta.
- * ⚠️ **Ritarato il 2026-09-04**: la prima misura (9 punti, opacità 0,4) è stata
+ * ⚠️ **Ritarato il 2026-09-05**: la prima misura (9 punti, opacità 0,4) è stata
  * giudicata troppo timida sul telefono — la prudenza contro il rumore visivo
  * era andata oltre, e il segno spariva anche quando lo si cercava. Va
  * notato **scorrendo indietro** — dove i cuori finiscono, comincia la vostra
@@ -54,6 +54,38 @@ export function CuoreGiorno({
 }
 
 /**
+ * **La torta del compleanno**, che il calendario disegna accanto al cuore nel
+ * giorno in cui uno dei due compie gli anni (0032).
+ *
+ * ⚠️ **Più marcata del cuore, ed è deliberato.** Il cuore sta su *ogni* giorno
+ * della vostra storia e deve sparire nella texture; la torta sta su **due giorni
+ * l'anno** e deve saltare all'occhio — sono due segni con lo stesso posto e il
+ * compito opposto. Stessa dimensione e opacità li renderebbe indistinguibili,
+ * che è il peggio dei due mondi: un compleanno che si perde fra i cuori.
+ *
+ * 🔑 **Non distingue chi compie gli anni.** Sarebbe stato facile (due colori) e
+ * sarebbe stato sbagliato: su un calendario di coppia il compleanno è una data
+ * che si guarda **insieme**, e chi dei due sia lo si sa. Un codice colore
+ * chiederebbe di impararlo per un'informazione che nessuno deve dedurre.
+ */
+export function TortaGiorno({ size = 14 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      {/* La candelina: la fiamma e' un punto ambrato, il piu' piccolo segno che
+          si legge ancora a questa dimensione. */}
+      <Path d="M12 2.6c.7.8 1 1.4 1 1.9a1 1 0 11-2 0c0-.5.3-1.1 1-1.9z" fill={C.ambra} />
+      <Path d="M11.4 5.6h1.2v2.2h-1.2z" fill={C.tenue} />
+      {/* Il corpo, con la cima ondulata della glassa. */}
+      <Path
+        d="M5 12.4c0-1.3 1-2.2 2.3-2.2h9.4c1.3 0 2.3.9 2.3 2.2v1.1c-1 0-1.3.8-2.3.8s-1.3-.8-2.3-.8-1.3.8-2.4.8-1.3-.8-2.3-.8-1.3.8-2.3.8-1.4-.8-2.4-.8z"
+        fill={C.accento}
+      />
+      <Path d="M4.6 15.2h14.8v4.2a1 1 0 01-1 1H5.6a1 1 0 01-1-1z" fill={C.accento} opacity={0.75} />
+    </Svg>
+  );
+}
+
+/**
  * La data scritta per esteso nella lingua dell'app («14 giugno 2020»).
  *
  * Esportata perche' la leggono in due — il riquadro in home e le impostazioni —
@@ -78,7 +110,7 @@ export function giorniInsieme(insiemeDal: string, oggi = new Date()) {
 }
 
 /**
- * **Il selettore della data, da solo.** Estratto dal riquadro il 2026-09-04
+ * **Il selettore della data, da solo.** Estratto dal riquadro il 2026-09-05
  * perche' ora ha due chiamanti: la home quando la data non c'e' ancora, e le
  * impostazioni quando c'e' e va corretta.
  *

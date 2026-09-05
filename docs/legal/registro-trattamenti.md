@@ -87,7 +87,7 @@ Contatto per gli interessati: **[DA DECIDERE: email dedicata all'app]**
 
 ---
 
-### A7 — Questionario di profilo della coppia ⏸️ **SOSPESO dal 2026-09-04**
+### A7 — Questionario di profilo della coppia ⏸️ **SOSPESO dal 2026-09-05**
 
 ⚠️ **La funzione è stata rimossa dall'applicazione** lo stesso giorno in cui era stata introdotta: nessuna risposta viene più raccolta e la tabella `profilo_coppia` resta vuota. La voce **resta scritta** perché la migrazione è applicata e la funzione tornerà in una versione rifatta; finché non torna, **questo trattamento non avviene**.
 
@@ -115,15 +115,30 @@ Contatto per gli interessati: **[DA DECIDERE: email dedicata all'app]**
 | **Conservazione** | 🔑 **Solo il dato corrente.** Una riga per persona, sovrascritta a ogni aggiornamento: **nessuno storico degli spostamenti esiste o può essere ricostruito**. Cancellata allo spegnimento della condivisione e allo scioglimento della coppia (trigger dedicato) |
 | **Destinatari** | Supabase (responsabile) e **l'altro membro della coppia** |
 | **Trasferimenti extra-UE** | Nessuno — Francoforte (DE) |
-| 🔴 **Nota di rischio** | **È il trattamento a rischio più alto dell'intero sistema.** La geolocalizzazione di una persona nota, condivisa con il partner, è il dato tipico dello *stalkerware*. Il rischio non è ipotetico: `threat-model.md` lo nominava già come **intimate partner surveillance** — e fino al 2026-09-04 la mitigazione era **non avere la funzione** (D-05) |
+| 🔴 **Nota di rischio** | **È il trattamento a rischio più alto dell'intero sistema.** La geolocalizzazione di una persona nota, condivisa con il partner, è il dato tipico dello *stalkerware*. Il rischio non è ipotetico: `threat-model.md` lo nominava già come **intimate partner surveillance** — e fino al 2026-09-05 la mitigazione era **non avere la funzione** (D-05) |
 | **Misure specifiche** | Spenta di default · accensione esplicita · spegnimento dalle impostazioni, e **il proprio punto sulla mappa compare solo mentre si condivide** (indicatore di stato che non richiede di aprire nessuna schermata) · 🔑 **lo spegnimento non è notificato e non è distinguibile** da GPS spento, app chiusa o batteria scarica · nessuno storico · scadenza a 15 minuti · scrittura consentita solo sulla propria riga (RLS) · cancellazione allo scioglimento |
 | **Riferimenti** | Migrazione `0031_posizione_condivisa.sql` · `lib/posizione.ts` · **D-100** (che ribalta **D-05**) |
+
+### A9 — Data di nascita
+
+| | |
+|---|---|
+| **Finalità** | Due, distinte: (1) mostrare il **compleanno** sul calendario condiviso della coppia; (2) **verificare l'età minima** di 14 anni prevista dall'art. 8 GDPR |
+| **Categorie di interessati** | Tutti gli utenti registrati: il dato è richiesto alla registrazione |
+| **Categorie di dati** | Data di nascita (giorno, mese, anno) |
+| **Base giuridica** | Esecuzione del contratto (art. 6.1.b) per il compleanno; **obbligo legale** (art. 6.1.c, in relazione all'art. 8) per la verifica dell'età |
+| **Conservazione** | Durata del rapporto; cancellata con l'account (`on delete cascade`) |
+| **Destinatari** | Supabase (responsabile) e **l'altro membro della coppia**, che vede il compleanno sul calendario condiviso |
+| **Trasferimenti extra-UE** | Nessuno — Francoforte (DE) |
+| 🔑 **Nota** | **Chiude un buco che era aperto**: l'età minima era dichiarata nell'informativa da sempre e **non esisteva nessun meccanismo** per applicarla. Ora la registrazione rifiuta chi dichiara meno di 14 anni. ⚠️ Resta una dichiarazione, non una verifica documentale |
+| **Misure specifiche** | Scrivibile **solo dall'interessato** (RLS `utente_id = auth.uid()`); leggibile dal partner solo finché **entrambi** sono membri attivi — allo scioglimento la lettura cessa da sé, senza bisogno di cancellare niente. Il dato **non muore con la coppia**: appartiene alla persona (D-04) |
+| **Riferimenti** | Migrazione `0032_data_di_nascita.sql` · `lib/compleanni.ts` |
 
 ## Trattamenti che NON vengono svolti — e vale la pena scriverlo
 
 | Trattamento | Stato |
 |---|---|
-| **Tracciamento della posizione in background e cronologia degli spostamenti** | ❌ Nessuno, e resta il confine che non si supera: l'app non legge la posizione quando non è in primo piano e **non conserva nessuno storico**. ⚠️ **La riga precedente diceva «mai trasmessa, mai condivisa» e dal 2026-09-04 non è più vera**: esiste la condivisione della posizione **corrente** col partner (**A8**, D-100), su consenso e spenta di default. È stata corretta invece di essere lasciata a smentire A8 |
+| **Tracciamento della posizione in background e cronologia degli spostamenti** | ❌ Nessuno, e resta il confine che non si supera: l'app non legge la posizione quando non è in primo piano e **non conserva nessuno storico**. ⚠️ **La riga precedente diceva «mai trasmessa, mai condivisa» e dal 2026-09-05 non è più vera**: esiste la condivisione della posizione **corrente** col partner (**A8**, D-100), su consenso e spenta di default. È stata corretta invece di essere lasciata a smentire A8 |
 | **Dati sanitari / ciclo mestruale** | ❌ Funzione **rimandata** dopo la prima pubblicazione (D-07). Nessun dato art. 9 richiesto |
 | **Analytics automatici, pubblicità, profilazione individuale** | ❌ Nessuno strumento, né proprio né di terze parti. Nessun comportamento nell'app viene osservato o misurato. ⚠️ **Dal 2026-09-04 esiste però una raccolta dichiarata**: il questionario di **A7**, che è su base consenso, a risposte chiuse e **fornito dall'utente**, non osservato. La riga precedente diceva «nessuno strumento» senza distinguere, e sarebbe diventata falsa: è stata corretta invece che lasciata a smentire A7 |
 | **Comunicazioni promozionali** | ❌ Non previste in questa versione |

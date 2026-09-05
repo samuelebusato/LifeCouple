@@ -38,6 +38,7 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 | **Risposte ai giochi di affinità** | Meccanica dei giochi e punteggio della coppia | Esecuzione del contratto (art. 6.1.b) | Durata del rapporto |
 | **Dati relativi all'abbonamento** (stato, scadenza) | Erogazione delle funzioni a pagamento | Esecuzione del contratto (art. 6.1.b) | Durata del rapporto |
 | **Dati contabili e fiscali** relativi agli acquisti | Adempimenti di legge | Obbligo legale (art. 6.1.c) | 10 anni |
+| **Data di nascita** | Due cose insieme: mostrare il tuo compleanno sul calendario che condividi col partner, e verificare che tu abbia l'età minima per usare il servizio | Esecuzione del contratto (art. 6.1.b) per il compleanno; **obbligo di legge** (art. 6.1.c, in relazione all'art. 8 GDPR) per la verifica dell'età | Durata del rapporto |
 | **Posizione attuale**, se scegli di condividerla col tuo partner | Farvi vedere a vicenda dove siete e la distanza fra voi | **Consenso (art. 6.1.a)** | Solo il dato **corrente**: ogni aggiornamento sostituisce il precedente e **non viene conservato nessuno storico**. Sparisce quando spegni la condivisione o quando la coppia si scioglie |
 
 Il conferimento dell'indirizzo email è **necessario**: senza di esso l'account non può essere creato.
@@ -53,7 +54,7 @@ Questa sezione esiste perché la differenza è sostanziale e va dichiarata, non 
 | **Calendario del dispositivo** | Letto **solo quando scegli di importare**, e vengono importate unicamente le voci che spunti tu. |
 | **Fotografie del dispositivo** | Accessibili **solo** per le immagini che scegli tu di aggiungere. |
 
-🔴 **Questo è cambiato il 2026-09-04, e la versione precedente di questa informativa diceva il contrario.** Fino a quella data l'applicazione non permetteva in nessun modo di sapere dove si trovasse l'altro. Ora esiste una funzione che lo permette, ed è **spenta** finché non la accendi tu.
+🔴 **Questo è cambiato il 2026-09-05, e la versione precedente di questa informativa diceva il contrario.** Fino a quella data l'applicazione non permetteva in nessun modo di sapere dove si trovasse l'altro. Ora esiste una funzione che lo permette, ed è **spenta** finché non la accendi tu.
 
 **Come funziona, esattamente:**
 
@@ -152,7 +153,11 @@ Gli abbonamenti in corso sono gestiti da Apple e Google: il rinnovo automatico v
 
 ## 11. Età minima
 
-Il servizio è riservato a chi ha compiuto **14 anni**, età fissata dall'ordinamento italiano ai sensi dell'art. 8 GDPR. ⚠️ L'età dichiarata deve essere coerente con la classificazione per età dichiarata sugli store.
+Il servizio è riservato a chi ha compiuto **14 anni**, età fissata dall'ordinamento italiano ai sensi dell'art. 8 GDPR.
+
+🔑 **Dal 2026-09-05 questa non è più solo una dichiarazione**: la data di nascita viene chiesta al momento della registrazione, e chi risulta avere meno di 14 anni **non può creare l'account**. ⚠️ Resta una dichiarazione dell'interessato e non una verifica documentale — chiunque può scrivere una data falsa, e nessuna applicazione di questo tipo fa di più — ma è la differenza fra una regola scritta e una regola applicata.
+
+⚠️ L'età dichiarata deve essere coerente con la classificazione per età dichiarata sugli store.
 
 ## 12. Modifiche
 

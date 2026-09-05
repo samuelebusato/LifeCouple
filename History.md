@@ -28,7 +28,24 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
-### 2026-09-04 (4) — Il cuore sul calendario, e la posizione di tutti e due
+### 2026-09-05 (4) — La data di nascita, e una correzione di date che riguarda tutta la giornata
+
+**Chiesto dall'utente**: la data di nascita alla registrazione, il compleanno sul calendario con una torta accanto al cuore, e le date di due account esistenti.
+
+**Fatto**: migrazione `0032`, `lib/compleanni.ts`, `components/scelta-data.tsx` (un selettore di data riusabile, estratto perché ora le date da scegliere sono due), il campo in registrazione con il **rifiuto sotto i 14 anni**, la voce nelle impostazioni per chi si è iscritto prima, e la torta nelle tre viste del calendario. **D-101**.
+
+🔴 **E una correzione che riguarda tutta la giornata: le date erano sbagliate di un giorno.** All'apertura della sessione ho letto `workspace/sessione-2026-09-04.md` — già chiusa — e ho concluso che fosse di *oggi*, quindi che questa fosse «la seconda sessione della giornata». Era di **ieri**: la data vera era il **2026-09-05**. L'errore si è propagato in tutto ciò che è stato scritto: due file di sessione (nome compreso), i titoli di log, D-97, D-98, D-99, D-100, da B-50 a B-53, e le date nei tre documenti di conformità.
+
+**Corretto uno per uno, non con un replace globale**: le decisioni **D-95** e **D-96** e tutto il materiale della mascotte sono **davvero** del 2026-09-04 e non andavano toccate — su trenta occorrenze in `History.md`, dodici erano corrette. I due file di sessione sono stati rinominati con `git mv`, così la storia di git li segue.
+
+🔑 **La lezione**: *un file datato non dice che giorno è oggi.* La data va presa da chi la sa — l'orologio — non dedotta da cosa c'è in cartella. E il costo di sbagliarla non è cosmetico: il diario del brain è la memoria del progetto, e una cronologia sfalsata rende inservibile proprio ciò per cui esiste.
+
+⚠️ **Trovata anche una data relativa** («ieri») scivolata in un file di sessione, contro la regola di `CLAUDE.md` che impone date assolute. Corretta.
+
+**Verificato**: `tsc` pulito, `eslint` senza errori nuovi, e la logica di età e compleanno provata su sette casi — compresi «compie 14 anni domani» (13) e «li ha compiuti oggi» (14), che è dove il conteggio degli anni sbaglia se lo si scrive di getto.
+
+
+### 2026-09-05 (3) — Il cuore sul calendario, e la posizione di tutti e due
 
 **Chiesto dall'utente**: la posizione di entrambi sulla mappa con una linea tratteggiata e la distanza, e un cuoricino sul calendario per tutti i giorni da quando state insieme.
 
@@ -43,7 +60,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 **Verificato**: `tsc` pulito, `eslint` senza errori nuovi, e la logica delle date del cuore provata su sette casi (compreso il primo giorno con l'ora dentro, che era la trappola). 🔴 **Niente altro**: la `0031` è da applicare, la funzione non è mai girata, e per provarla davvero servono **due dispositivi**.
 
 
-### 2026-09-04 (3) — Le locandine cambiano casa, e tornano indietro in giornata
+### 2026-09-05 (2) — Le locandine cambiano casa, e tornano indietro in giornata
 
 **Deciso dall'utente**: *«passa a thetvdb»*, dopo la seconda ricerca sulle alternative.
 
@@ -58,7 +75,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 ⚠️ **Il blocco TMDB torna quindi aperto**, ed è la cosa da non perdere di vista: non è stato risolto, è stato rimandato.
 
 
-### 2026-09-04 (2) — L'ingresso: un saluto che si apre, quattro pagine che spiegano, e il primo dato chiesto per noi
+### 2026-09-05 — L'ingresso: un saluto che si apre, quattro pagine che spiegano, e il primo dato chiesto per noi
 
 **Chiesto dall'utente**, in due riprese: un **questionario di onboarding** alla creazione dell'account, la **data di inizio relazione modificabile dalle impostazioni**, e poi — con due schermate di riferimento — *«pagine dedicate alla spiegazione del funzionamento»* con animazioni, una **welcome page** come quella allegata ma con la palette dell'app, e che *«passando dalla welcome page alla prima dell'onboarding lo sfondo diventi uniforme tramite un'animazione di riempimento partendo dalla parte già colorata»*.
 
@@ -331,7 +348,29 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
-### D-100 — La posizione dei due sulla mappa: si ribalta D-05, e si paga il conto (2026-09-04, migrazione 0031)
+### D-101 — La data di nascita: il compleanno sul calendario, e l'età minima che finalmente si applica (2026-09-05, migrazione 0032)
+**Chiesta dall'utente**: *«al momento della registrazione venisse chiesta la data di nascita in modo da poterla segnare in automatico sul calendario»*, con una torta accanto al cuore.
+
+🔑 **La richiesta era una, le cose che chiude sono due.** Il compleanno è quella chiesta; l'altra è che l'informativa dichiarava da sempre *«il servizio è riservato a chi ha compiuto 14 anni»* (art. 8 GDPR, soglia italiana) e **non esisteva nessun meccanismo per applicarlo** — era una promessa senza controllo. Ora la registrazione rifiuta chi dichiara meno di 14 anni. ⚠️ Resta una **dichiarazione**, non una verifica documentale: chiunque può scrivere una data falsa, e nessuna app di questa categoria fa di più. Ma la differenza fra «non chiediamo» e «chiediamo e rifiutiamo» è quella fra una regola scritta e una applicata, e va detta per quello che è.
+
+**L'età si controlla PRIMA di creare l'account.** Rifiutare dopo lascerebbe una riga in `auth.users` che nessuno cancella, e la persona con un account che esiste e non funziona.
+
+🔴 **Il compleanno non è un evento salvato, ed è la decisione tecnica che conta.** La strada ovvia era creare un evento come «Il nostro inizio» (0005). Non regge: quello è **un giorno solo**, un compleanno **torna ogni anno**. Servirebbe un evento per anno — creati quando? fino a quando? e chi li ripulisce se la data viene corretta? — cioè una collezione che cresce per sempre e va tenuta in sincronia con un dato che sta altrove. La data si salva **una volta** e il calendario confronta giorno e mese **al volo**: funziona su ogni anno passato e futuro senza che nessuno crei niente, e correggere la data corregge tutti gli anni insieme. È lo stesso principio del cuoricino — un segno che si **calcola**, non che si conserva.
+
+**`profilo_utente` sta fuori dalla coppia**, e non è una scelta di comodo: la data di nascita **appartiene alla persona e le sopravvive** (D-04), quindi non poteva stare su una tabella che muore con la relazione. 🔑 La conseguenza elegante è che allo scioglimento **non serve nessun trigger** — a differenza della posizione (0031): la policy di lettura richiede che *entrambi* siano membri attivi, quindi appena uno esce l'altro smette di leggere, e il dato resta di chi è.
+
+**Scrivibile solo dall'interessato.** La data di nascita di una persona non la decide l'altra, e la policy lo impone invece di affidarlo all'interfaccia.
+
+**La torta è più marcata del cuore**, deliberatamente: il cuore sta su *ogni* giorno della storia e deve sparire nella texture, la torta sta su **due giorni l'anno** e deve saltare all'occhio. Sono due segni nello stesso angolo con il compito opposto — stessa resa li renderebbe indistinguibili, cioè un compleanno perso fra i cuori. ⚠️ E **non distingue chi dei due** compie gli anni: sarebbe stato facile con due colori, ma su un calendario di coppia il compleanno si guarda insieme e chi sia lo si sa; un codice colore chiederebbe di impararlo per un'informazione che nessuno deve dedurre.
+
+⚠️ **Nella vista anno la torta non si ferma a oggi**, mentre il cuore sì: un compleanno cade in quel mese *ogni* anno, anche nei prossimi. Il cuore racconta giorni **vissuti** e si ferma; il compleanno arriverà comunque.
+
+**Informativa (nuova riga in §3 e §11 riscritta), registro (nuova A9) e `Architecture.md` aggiornati nello stesso giro.**
+
+⚠️ **Le date dei due account esistenti non sono state scritte dal codice**: la policy consente di scrivere solo la propria, ed è la stessa regola che impedisce a uno dei due di decidere la data dell'altro. Sono state inserite dall'utente dal dashboard. 🔑 **E lo SQL non è entrato nel repo**: sono date di nascita di persone reali, e un file versionato su GitHub non è il posto per dei dati personali.
+
+
+### D-100 — La posizione dei due sulla mappa: si ribalta D-05, e si paga il conto (2026-09-05, migrazione 0031)
 **Chiesto dall'utente**: *«rendi visibile sulla mappa la posizione di entrambi collegati da una linea tratteggiata con scritto sopra la distanza»*. Messo davanti al conflitto con **D-05** e alle tre alternative — condivisione su richiesta, condivisione continua, oppure distanza fra due luoghi salvati — ha scelto **la condivisione continua**, sapendo cosa comportava.
 
 🔴 **Questa è la funzione che D-05 aveva scartato**, con queste parole: *«trasforma un'app di ricordi in un tracker di persona, con tutto ciò che ne consegue in caso di relazione non sana»*. E il threat model la nominava come **intimate partner surveillance**, indicando come mitigazione **il non averla**.
@@ -349,7 +388,7 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 - **Linea tratteggiata e non piena**: una linea continua fra due punti su una mappa si legge come un **percorso** — la strada da fare — mentre qui è un legame fra due posti. Il tratteggio dice *relazione*, non *itinerario*.
 - **Il mio tondo pieno, quello dell'altro contornato**: con due puntini identici la prima domanda che uno si fa è *«quale sono io?»*.
 - **Si disegna solo se ci sono entrambe le posizioni.** Una sola non serve (dove sono io lo so già), e soprattutto una linea che parte e non arriva chiederebbe di spiegare perché — cioè di dire qualcosa sull'altro che la regola 2 vieta di dire.
-- **Il comando sta nelle impostazioni** — *spostato lì dall'utente il 2026-09-04*, dopo due versioni sulla mappa (un tondo muto, poi un pannello esplicito: vedi **B-53**).
+- **Il comando sta nelle impostazioni** — *spostato lì dall'utente il 2026-09-05*, dopo due versioni sulla mappa (un tondo muto, poi un pannello esplicito: vedi **B-53**).
   ⚠️ **Questo allunga il percorso per spegnere**, che era una delle tutele dichiarate, e va detto invece di lasciarlo passare. 🔑 **Ciò che la tiene in piedi è che il proprio tondo compare sulla mappa solo se si sta condividendo**: la riga nel database esiste solo allora, quindi chi apre la mappa **vede** se è visibile, senza doverlo chiedere a nessuna schermata. Il punto vero della regola era la consapevolezza, e quella la dà il disegno; il percorso per spegnere è più lungo di un gesto, ed è il prezzo accettato.
 
 ⚠️ **Il limite che nessuna misura tecnica supera, e che va scritto**: in una relazione coercitiva chi ha accesso al telefono dell'altro può riaccendere la condivisione. Nessun disegno può impedirlo. Ciò che il disegno può fare è **non aiutare il controllo** — niente storico, niente notifiche di spegnimento, niente segnali su cosa fa l'altro — ed è tutto quello che è stato fatto qui.
@@ -359,7 +398,7 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 **Non verificato**: la migrazione `0031` **non è stata applicata** e la funzione non è mai girata. Servono **due dispositivi** per vedere l'unica cosa che conta davvero — che spegnendo da una parte, dall'altra non succeda niente di visibile.
 
 
-### D-99 — Le locandine dovevano passare a TheTVDB: scritta, e ritirata lo stesso giorno (2026-09-04)
+### D-99 — Le locandine dovevano passare a TheTVDB: scritta, e ritirata lo stesso giorno (2026-09-05)
 🔴 **DECISIONE RIBALTATA, e resta scritta.** L'utente aveva deciso *«passa a thetvdb»* dopo aver visto i numeri; poche ore dopo ha riferito che **TheTVDB ha problemi con la creazione di nuovi account**, quindi la chiave non si poteva ottenere e si è tornati a TMDB. Il codice, la migrazione `0030` e la rinomina sono stati **ritirati**; questa voce **no**.
 
 **Perché non si cancella**: la ricerca che l'ha prodotta vale ancora tutta, il ragionamento è corretto, e l'unica cosa che l'ha fermata è un impedimento **temporaneo e altrui**. Cancellarla significherebbe rifare fra un mese lo stesso lavoro per arrivare alla stessa conclusione. È la stessa regola già applicata in `Marketing/LifeCouple/monetizzazione.md` §0-bis: *non si cancella una decisione superata, si dice cosa la sostituisce e perché.*
@@ -389,7 +428,7 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ⚠️ **Mai verificato contro l'API vera**: nessuna chiamata è stata fatta, quindi resta ignoto sia se `image_url` sia assoluto o relativo, sia — la cosa che più contava — **quanto bene TheTVDB copra i film**, visto che nasce come database televisivo.
 
-### D-98 — Il questionario di profilo: il primo dato che chiediamo e che non serve a chi lo dà (2026-09-04, migrazione 0029) ⏸️ **FUNZIONE RIMOSSA lo stesso giorno**
+### D-98 — Il questionario di profilo: il primo dato che chiediamo e che non serve a chi lo dà (2026-09-05, migrazione 0029) ⏸️ **FUNZIONE RIMOSSA lo stesso giorno**
 > ⚠️ **L'utente l'ha fatta togliere dall'app poche ore dopo** — *«rimuovi il questionario fatto così mi fa schifo lo miglioreremo poi»* — quindi il codice (`app/questionario.tsx`, `lib/profilo.ts`, l'invito in home, la voce nelle impostazioni, il blocco nell'export) **non c'è più**. Restano la migrazione `0029` **già applicata** e la tabella `profilo_coppia`, vuota e non più scritta da nessuno.
 >
 > **Il ragionamento qui sotto resta valido e serve alla prossima versione**: è tutto sul *come si chiede* un dato che non torna a chi lo dà, e quella parte non è ciò che l'utente ha bocciato. ⚠️ **Nei documenti legali A7 è stata marcata come sospesa**: un registro che dichiara un trattamento che non avviene è falso quanto uno che ne nasconde uno che avviene.
@@ -413,7 +452,7 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 **Il questionario è anche entrato nell'export** di `lib/esporta.ts`: sono dati personali di chi esporta, e l'art. 20 non guarda a chi ha premuto il bottone.
 
-### D-97 — L'ingresso è una schermata sola con due fasi, perché lo chiede il movimento (2026-09-04)
+### D-97 — L'ingresso è una schermata sola con due fasi, perché lo chiede il movimento (2026-09-05)
 **Chiesto dall'utente**: che passando dal benvenuto alla spiegazione *«lo sfondo diventi uniforme tramite un'animazione di riempimento partendo dalla parte già colorata»*.
 
 🔑 **Quella richiesta esclude due route, e non è un dettaglio implementativo.** `expo-router` smonta la schermata che si lascia e monta quella che arriva: il colore della seconda **non è** il colore della prima che cresce, è un colore nuovo che compare. Il riempimento non partirebbe da niente, e si vedrebbe un lampeggio. Perché il movimento parta davvero da ciò che si sta guardando, il fondo dev'essere **un solo elemento che vive attraverso i due momenti** — quindi due fasi dentro una schermata, non due schermate.
@@ -1211,7 +1250,7 @@ Correzione: altezza esplicita della pista (`ALTEZZA + 48`) e `flexGrow: 0`. I 48
 **Alternative scartate**: (a) *tutto in comune, alla rottura si cancella tutto* — semplice ma distruttivo e irreversibile per entrambi; (b) *tutto in comune, alla rottura entrambi tengono copia di tutto* — è la scelta peggiore per la privacy, perché consegna a un ex-partner una copia permanente di materiale intimo dell'altro.
 **Dettaglio**: `threat-model.md` §3 e `Architecture.md` §4.
 
-### D-05 — Nessuna posizione in tempo reale, mai 🔴 **RIBALTATA dalla D-100 il 2026-09-04**
+### D-05 — Nessuna posizione in tempo reale, mai 🔴 **RIBALTATA dalla D-100 il 2026-09-05**
 > ⚠️ **Questa decisione non vale più**, ed è la più importante che il progetto abbia rovesciato. Resta scritta perché il ragionamento che segue è ancora corretto e descrive esattamente il rischio che la funzione nuova si porta dentro: **D-100 non ha smentito D-05, ha deciso di pagarne il prezzo.** Le tutele di `0031` esistono tutte per rispondere a ciò che qui sotto è scritto.
 **Perché**: è la mitigazione che rende questa app **non utilizzabile come strumento di sorveglianza del partner**. La mappa registra luoghi **inseriti a posteriori dall'utente**, non tracciati. La differenza in prodotto è quasi nulla (la mappa dei ricordi non ha bisogno del tempo reale); la differenza in rischio è totale.
 **Alternativa scartata**: geolocalizzazione automatica con check-in — più comoda, ma trasforma un'app di ricordi in un tracker di persona, con tutto ciò che ne consegue in caso di relazione non sana. Costo della rinuncia: **zero funzionalità perse** rispetto allo scopo dichiarato.
@@ -1938,7 +1977,7 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
-### B-53 — La posizione non compariva perché il comando per accenderla non si trovava (2026-09-04, CORRETTO)
+### B-53 — La posizione non compariva perché il comando per accenderla non si trovava (2026-09-05, CORRETTO)
 
 **Riferito dall'utente tre volte**, l'ultima con *«te l'ho già detta 3 volte mi sto stancando»*. E aveva ragione: le prime due correzioni sono state fatte **senza verificare niente**, cambiando codice sulla base di ipotesi.
 
@@ -1953,7 +1992,7 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 ⚠️ **E il difetto di metodo, che è la parte che conta**: due correzioni su tre sono state consegnate all'utente da provare **senza nessuna verifica**, su un difetto che era diagnosticabile in cinque minuti con lo strumento che il progetto **aveva già** (`tests/rls.avversariali.mjs` e la sua impalcatura). *Far riprovare una persona è un modo di verificare che costa il suo tempo: si usa quando gli strumenti sono finiti, non prima.*
 
 
-### B-51 — Sulla mappa non compariva nessuna posizione, nemmeno la propria (2026-09-04, CORRETTO)
+### B-51 — Sulla mappa non compariva nessuna posizione, nemmeno la propria (2026-09-05, CORRETTO)
 
 **Riferito dall'utente** alla prima prova su iPhone: *«sulla mappa non si vedono le posizioni dei due partner»*.
 
@@ -1963,7 +2002,7 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 **La correzione**: i due tondi ora si disegnano ognuno per conto suo — il proprio se c'è la propria posizione, quello dell'altro se c'è la sua — e **solo la linea e la distanza** restano condizionate a entrambe. I tondi sono anche passati da 16 a 20 punti: su una mappa già piena di pin si perdevano.
 
-### B-52 — L'interruttore della condivisione restava acceso anche quando la condivisione non era partita (2026-09-04, CORRETTO)
+### B-52 — L'interruttore della condivisione restava acceso anche quando la condivisione non era partita (2026-09-05, CORRETTO)
 
 **Trovato verificando la catena** dopo B-51, non riferito da nessuno.
 
@@ -1974,7 +2013,7 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 **La correzione**: se la prima pubblicazione fallisce si **torna indietro** — l'interruttore si rispegne — e compare un avviso che distingue il permesso negato dall'errore di rete. Lo spegnimento invece non può essere impedito da un errore: si spegne subito lo stato locale e poi si cancella la riga, e se la rete manca la posizione scade da sé entro un quarto d'ora.
 
 
-### B-50 — L'illustrazione non compariva e i pallini restavano indietro: lo stato non seguiva lo scorrimento (2026-09-04, CORRETTO)
+### B-50 — L'illustrazione non compariva e i pallini restavano indietro: lo stato non seguiva lo scorrimento (2026-09-05, CORRETTO)
 
 **Il sintomo**: nella spiegazione d'ingresso, premendo «Avanti» i **pallini avanzano** ma il contenuto si sposta solo di poco e si ferma **fra due pagine**, con l'illustrazione fuori campo. Riproducibile con tocchi distanziati di 1,5 secondi, quindi **non** è una questione di tocchi ravvicinati.
 
@@ -2768,9 +2807,9 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
-### Widget per la home screen — rimandati dall'utente il 2026-09-04
+### Widget per la home screen — rimandati dall'utente il 2026-09-05
 
-**Chiesti dall'utente** il 2026-09-04, su iPhone **e** Android, e **rimandati** lo stesso giorno dopo aver visto i vincoli. Cinque, tutti «dinamici» nel senso di *a rotazione fra gli elementi disponibili*:
+**Chiesti dall'utente** il 2026-09-05, su iPhone **e** Android, e **rimandati** lo stesso giorno dopo aver visto i vincoli. Cinque, tutti «dinamici» nel senso di *a rotazione fra gli elementi disponibili*:
 
 1. **Prossimo evento** — con la foto, se c'è
 2. **Ultimo evento** — con la foto, se c'è
@@ -2784,7 +2823,7 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 Un widget **non è React Native**: lo disegna il sistema operativo per conto suo, quando l'app non è in esecuzione. Serve codice nativo e un **development build** — in Expo Go i widget non esistono e non si possono provare. Oggi `Projects/LifeCouple` non ha né `ios/` né `android/`, e il prebuild è il passo che *«cambierebbe la natura del progetto»* (già scritto a proposito di **B-20**).
 
-**Rilevato il 2026-09-04, con le fonti** — le due piattaforme non sono affatto nella stessa situazione:
+**Rilevato il 2026-09-05, con le fonti** — le due piattaforme non sono affatto nella stessa situazione:
 
 | | Android | iOS |
 |---|---|---|
@@ -3045,7 +3084,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 **I due muri — non ritardi, esiti:**
 - [ ] 🔴 **Cancellazione dell'account dall'app.** Obbligatoria su Apple (un'app che crea account deve poterli cancellare **in-app**), dichiarata e servita anche via web su Google. **Non esiste**: `app/` ha 17 schermate e nessuna di impostazioni. E **non è una schermata**: eliminare da `auth.users` richiede `service_role`, quindi è la **prima Edge Function** del progetto — il repo non ne ha nessuna. ⚠️ Da progettare insieme allo **scioglimento** (D-04/D-21), che è un atto diverso e reversibile: chi preme «cancella account» credendo di sciogliere fa la cosa irreversibile al posto di quella che non lo è.
-- [ ] 🔴 **Licenza TMDB — ancora aperta.** Gratuita per uso **non commerciale**; con gli abbonamenti l'uso è commerciale dal primo giorno, quindi resta un **blocco alla pubblicazione**. Il 2026-09-04 si era deciso di passare a **TheTVDB** (**D-99**) — gratuito sotto i 50.000 $/anno di ricavi — e il codice era stato scritto; ⚠️ **ritirato in giornata perché TheTVDB ha problemi con la creazione di nuovi account** e la chiave non era ottenibile. La ricerca completa e le alternative scartate restano in **D-99**: se un domani gli account si sbloccano, il lavoro è descritto e non va rifatto. **Le mosse rimaste, in ordine:**
+- [ ] 🔴 **Licenza TMDB — ancora aperta.** Gratuita per uso **non commerciale**; con gli abbonamenti l'uso è commerciale dal primo giorno, quindi resta un **blocco alla pubblicazione**. Il 2026-09-05 si era deciso di passare a **TheTVDB** (**D-99**) — gratuito sotto i 50.000 $/anno di ricavi — e il codice era stato scritto; ⚠️ **ritirato in giornata perché TheTVDB ha problemi con la creazione di nuovi account** e la chiave non era ottenibile. La ricerca completa e le alternative scartate restano in **D-99**: se un domani gli account si sbloccano, il lavoro è descritto e non va rifatto. **Le mosse rimaste, in ordine:**
   1. 🔑 **Scrivere a TMDB** — è ora la mossa principale e costa una mail. Lo staff ha dichiarato nei forum di star preparando *«una nuova offerta pensata per le app piccole»*, e il caso di LifeCouple è esattamente quello dei tanti indie che se ne lamentano: ricavi di pochi euro al mese contro 149 $.
   2. **Riprovare TheTVDB** quando la registrazione funziona.
   3. **Togliere le locandine da fonte esterna** — costo zero e nessun rischio: la lista dei film resta identica, perde solo la copertina automatica. È il ripiego che rende la pubblicazione possibile comunque.
@@ -3089,7 +3128,7 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
-> **Nota del 2026-09-04 (seconda sessione) — l'ordine qui sotto NON cambia, ma ora c'è del codice nuovo da provare.** A differenza della prima sessione del giorno, questa **ha toccato l'app**: il nuovo ingresso (D-97), il questionario (D-98) e la data d'inizio correggibile dalle impostazioni. Tutto verificato **a compilazione e nella preview web**, niente su un telefono — quindi le voci qui sotto restano prime, e le nuove si aggiungono in coda come 000000-c/d/e.
+> **Nota del 2026-09-05 — l'ordine qui sotto NON cambia, ma ora c'è del codice nuovo da provare.** A differenza della prima sessione del giorno, questa **ha toccato l'app**: il nuovo ingresso (D-97), il questionario (D-98) e la data d'inizio correggibile dalle impostazioni. Tutto verificato **a compilazione e nella preview web**, niente su un telefono — quindi le voci qui sotto restano prime, e le nuove si aggiungono in coda come 000000-c/d/e.
 >
 > 🔴 **Prima di provare il questionario serve applicare la migrazione `0029`**: finché non è applicata, `salva_profilo_coppia` e `cancella_profilo_coppia` non esistono e l'invio fallisce. Il resto dell'ingresso non la usa.
 
@@ -3120,6 +3159,8 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 000000-g. 🔴 **La posizione condivisa** (D-100), **dopo aver applicato la `0031`**, e con **due telefoni**: senza il secondo non si vede niente di ciò che conta. In ordine: (1) accendendo dalla mappa arriva la richiesta del permesso e compare il proprio tondo; (2) con entrambi accesi si vedono i due tondi, la linea tratteggiata e la distanza, e la distanza è **plausibile**; (3) 🔑 **la prova che vale più di tutte: spegnendo da un telefono, sull'altro non deve comparire nessun avviso** — solo il tondo che sparisce, esattamente come se l'app fosse stata chiusa. (4) Lasciando fermo un telefono oltre quindici minuti, il suo punto deve **sparire** dall'altro invece di restare lì a mentire.
 
 000000-h. ⚠️ **Il cuoricino sul calendario**: c'è su tutti i giorni dal fidanzamento a oggi, in **entrambe** le viste (griglia del mese e striscia dei giorni), e **non** su domani. La cosa da giudicare a occhio è se sia troppo o troppo poco visibile: è tarato per essere una texture di fondo, e il giudizio è dell'utente.
+
+000000-i. ⚠️ **La data di nascita e la torta** (D-101), con la `0032` applicata: alla **registrazione** di un utente nuovo il campo c'è e chi dichiara meno di 14 anni viene rifiutato; nelle **impostazioni** si può mettere o correggere; sul **calendario** la torta compare il 28 ottobre e il 19 febbraio, accanto al cuore, in tutte e tre le viste. 🔑 La prova che vale: la torta deve comparire anche negli **anni futuri**, perché un compleanno torna — a differenza del cuore, che si ferma a oggi.
 
 Poi la lista della seconda parte (00000-a → 00000-e: vetro, foto, selettore data, mappe, edge-to-edge, NativeWind) e quella della prima (l'insegna del quiz, i cinque difetti del 2026-09-02, Android), tutte ancora valide.
 

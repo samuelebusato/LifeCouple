@@ -64,7 +64,7 @@ export default function Benvenuto() {
    * L'ordine **è** una gerarchia: la prima pagina è quella che si vede per
    * certo, l'ultima quella che molti non raggiungono. Il diario sta per primo
    * perché è la promessa del prodotto — *tutto quello che vivete insieme resta
-   * qui* — e ci è arrivato su richiesta dell'utente il 2026-09-04, prendendo il
+   * qui* — e ci è arrivato su richiesta dell'utente il 2026-09-05, prendendo il
    * posto della griglia del calendario, che disegnava un contenitore vuoto
    * invece di cose vissute.
    */
@@ -193,7 +193,7 @@ export default function Benvenuto() {
               // si sta guardando. Qui si aggiorna solo quando la pagina
               // **cambia davvero**, così non si rende a ogni pixel.
               // ⚠️ `onScroll` **oltre** a `onMomentumScrollEnd`, non al posto suo.
-              // Diagnosi del 2026-09-04 (B-50): il secondo scatta solo quando lo
+              // Diagnosi del 2026-09-05 (B-50): il secondo scatta solo quando lo
               // scorrimento ha **inerzia**, e uno che non ne ha — trascinare e
               // lasciare fermi, o uno spostamento programmatico — non lo fa
               // scattare mai. Lo stato `pagina` restava indietro, e siccome è lui

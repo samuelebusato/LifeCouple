@@ -14,6 +14,8 @@ import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
 import { SceltaInsiemeDal, dataLunga } from '@/components/insieme';
 import { useCondivisionePosizione, usePosizioni } from '@/lib/posizione';
+import { SceltaData } from '@/components/scelta-data';
+import { anniCompiuti, ETA_MINIMA, salvaDataNascita, useCompleanni } from '@/lib/compleanni';
 import { esportaMieiDati } from '@/lib/esporta';
 import { useTema } from '@/lib/tema';
 import { t } from '@/lib/i18n';
@@ -57,6 +59,25 @@ export default function Impostazioni() {
   const [esporto, setEsporto] = React.useState(false);
   const [esitoExport, setEsitoExport] = React.useState<string | null>(null);
   const [cambiaData, setCambiaData] = React.useState(false);
+
+  // --- La data di nascita (0032) -------------------------------------------
+  const { compleanni, ricarica: ricaricaCompleanni } = useCompleanni();
+  const miaNascita = compleanni.find((c) => c.mia)?.data ?? null;
+  const [nuovaNascita, setNuovaNascita] = React.useState<string | null>(null);
+  const [cambiaNascita, setCambiaNascita] = React.useState(false);
+
+  async function salvaNascita() {
+    if (!session || !nuovaNascita) return;
+    const anni = anniCompiuti(nuovaNascita);
+    if (anni === null) return setErrore(t.registrati.nascitaNonValida);
+    if (anni < ETA_MINIMA) return setErrore(t.registrati.troppoGiovane(ETA_MINIMA));
+    const err = await salvaDataNascita(session.user.id, nuovaNascita);
+    if (err) return setErrore(err);
+    // Si rilegge invece di fidarsi (B-23): la torta sul calendario dipende da
+    // questo dato, e una data non salvata lascerebbe il compleanno invisibile.
+    await ricaricaCompleanni();
+    setCambiaNascita(false);
+  }
 
   // --- La posizione condivisa (D-100) --------------------------------------
   const { condivido, imposta: impostaCondivisione } = useCondivisionePosizione(session?.user.id);
@@ -251,7 +272,7 @@ export default function Impostazioni() {
             )}
 
             {/* --- La data da cui state insieme (D-29) -------------------- */}
-            {/* Fino al 2026-09-04 si poteva scegliere **una volta sola**, dal
+            {/* Fino al 2026-09-05 si poteva scegliere **una volta sola**, dal
                 riquadro in home, e chi sbagliava non aveva nessuna via per
                 correggersi: l'unico modo era l'SQL a mano con la chiave
                 `service_role` — che è come la data della coppia di prova era
@@ -293,8 +314,45 @@ export default function Impostazioni() {
               </View>
             )}
 
+            {/* --- La data di nascita (0032) ------------------------------ */}
+            {/* ⚠️ Sta nelle impostazioni e non solo alla registrazione perché
+                chi si è iscritto **prima** che questa esistesse non l'ha mai
+                data, e senza una via per metterla il suo compleanno non
+                comparirebbe mai. È lo stesso motivo per cui la data d'inizio è
+                correggibile: un dato chiesto una volta sola è un dato che chi
+                sbaglia non può più aggiustare. */}
+            <View className="gap-2">
+              <Text className="font-serif text-lg text-foreground">
+                {t.impostazioni.nascitaTitolo}
+              </Text>
+              <Text className="text-sm text-muted-foreground">
+                {miaNascita ? dataLunga(miaNascita) : t.impostazioni.nascitaMai}
+              </Text>
+              {cambiaNascita ? (
+                <View className="gap-3">
+                  <SceltaData
+                    valore={nuovaNascita ?? miaNascita}
+                    onCambia={setNuovaNascita}
+                    massimo={new Date()}
+                  />
+                  <Button disabled={!nuovaNascita} onPress={salvaNascita}>
+                    <Text>{t.impostazioni.nascitaSalva}</Text>
+                  </Button>
+                  <Button variant="ghost" onPress={() => setCambiaNascita(false)}>
+                    <Text>{t.impostazioni.insiemeAnnulla}</Text>
+                  </Button>
+                </View>
+              ) : (
+                <Button variant="outline" onPress={() => setCambiaNascita(true)}>
+                  <Text>
+                    {miaNascita ? t.impostazioni.nascitaCambia : t.impostazioni.nascitaAggiungi}
+                  </Text>
+                </Button>
+              )}
+            </View>
+
             {/* --- Far vedere dove sei (D-100) ---------------------------- */}
-            {/* Spostata qui dalla mappa il 2026-09-04, su richiesta dell'utente.
+            {/* Spostata qui dalla mappa il 2026-09-05, su richiesta dell'utente.
                 ⚠️ D-100 chiedeva che spegnere fosse raggiungibile **in un gesto
                 dalla mappa**, e questo spostamento allunga quel percorso: la
                 tutela si degrada e va detto invece di far finta di niente.

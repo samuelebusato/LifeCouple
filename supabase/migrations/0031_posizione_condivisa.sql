@@ -9,7 +9,7 @@
 -- utilizzabile come strumento di sorveglianza del partner**. L'alternativa che
 -- scartava (*«geolocalizzazione automatica con check-in»*) è precisamente ciò
 -- che questa migrazione introduce, su decisione esplicita dell'utente del
--- 2026-09-04, presa dopo che il conflitto gli è stato messo davanti.
+-- 2026-09-05, presa dopo che il conflitto gli è stato messo davanti.
 --
 -- La decisione è sua e legittima: le app di coppia che condividono la posizione
 -- esistono e sono diffuse. Ma il threat model nominava questo caso come

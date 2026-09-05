@@ -260,7 +260,7 @@ export function MappaVera({
           mappa con due puntini uguali la prima domanda che uno si fa e' quale
           sia il proprio.
 
-          ⚠️ **Correzione del 2026-09-04**: prima erano dentro la stessa
+          ⚠️ **Correzione del 2026-09-05**: prima erano dentro la stessa
           condizione della linea (`mia && altro`), e la conseguenza era che con
           un solo dispositivo attivo **non compariva niente**, nemmeno il
           proprio tondo. Il motivo per cui la linea vuole entrambe le posizioni
