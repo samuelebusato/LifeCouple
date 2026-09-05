@@ -981,6 +981,35 @@ export type Database = {
           },
         ]
       }
+      // ⚠️ SCRITTO A MANO — migrazione 0031 (la posizione condivisa, D-100).
+      // Da rigenerare con gli altri alla prima `supabase gen types typescript`.
+      posizione_membro: {
+        Row: {
+          utente_id: string
+          coppia_id: string
+          lat: number
+          lon: number
+          precisione: number | null
+          aggiornata_il: string
+        }
+        Insert: {
+          utente_id: string
+          coppia_id: string
+          lat: number
+          lon: number
+          precisione?: number | null
+          aggiornata_il?: string
+        }
+        Update: {
+          utente_id?: string
+          coppia_id?: string
+          lat?: number
+          lon?: number
+          precisione?: number | null
+          aggiornata_il?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

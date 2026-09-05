@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {
+import { Alert,
   View,
   ScrollView,
   Modal,
@@ -11,9 +11,10 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import Riani, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
-import { MapPin, Trash2, UtensilsCrossed } from 'lucide-react-native';
+import { MapPin, Trash2, UtensilsCrossed, LocateFixed, LocateOff } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
-import { BottoneVetro, CartaVetro, Vetro } from '@/components/ui/vetro';
+import { Button } from '@/components/ui/button';
+import { BottoneVetro, CartaVetro, TondoVetro, Vetro } from '@/components/ui/vetro';
 import { Premibile } from '@/components/ui/premibile';
 import { Comparsa } from '@/components/ui/comparsa';
 import { Fondo } from '@/components/schermata';
@@ -23,6 +24,13 @@ import { ElencoElementi } from '@/components/elenco-elementi';
 import { MappaVera, MAPPA_DISPONIBILE, type RistoranteSuMappa } from '@/components/mappa-vera';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
+import {
+  distanzaLeggibile,
+  distanzaMetri,
+  eRecente,
+  useCondivisionePosizione,
+  usePosizioni,
+} from '@/lib/posizione';
 import { useLuoghi, type Luogo } from '@/lib/luoghi';
 import { supabase } from '@/lib/supabase';
 import { anteprimePerEvento } from '@/lib/foto';
@@ -31,7 +39,7 @@ import { useTastiera } from '@/lib/tastiera';
 import { useTema } from '@/lib/tema';
 import { molla, durata } from '@/lib/movimento';
 import { chiediConferma } from '@/lib/conferma';
-import { t } from '@/lib/i18n';
+import { lingua, t } from '@/lib/i18n';
 
 /**
  * La mappa: gli stessi eventi del calendario, guardati **nello spazio** (D-33).
@@ -132,6 +140,7 @@ type Toccato =
 export default function Mappa() {
   const router = useRouter();
   const { coppiaId } = useCoppia();
+
   const {
     luoghi,
     loading,
@@ -140,6 +149,38 @@ export default function Mappa() {
     ricarica: ricaricaLuoghi,
   } = useLuoghi(coppiaId);
   const { session } = useAuth();
+
+  // --- Noi due sulla mappa (D-100) -----------------------------------------
+  // ⚠️ La mappa **legge e pubblica**, ma non comanda più l'accensione: quella
+  // sta nelle impostazioni, per scelta dell'utente del 2026-09-04. Qui resta
+  // `condivido` perché è ciò che dice al ciclo se deve pubblicare.
+  //
+  // 🔑 E la consapevolezza non si perde spostando il comando: **il proprio
+  // tondo compare sulla mappa solo se si sta condividendo** — la riga esiste
+  // solo allora. Il disegno stesso dice se sei visibile, senza bisogno di un
+  // pannello che lo ripeta.
+  const { condivido } = useCondivisionePosizione(session?.user.id);
+  const { mia, altro } = usePosizioni(coppiaId, condivido);
+
+  /**
+   * Le due posizioni da disegnare, o `null`.
+   *
+   * ⚠️ `eRecente` filtra qui e non nel modulo dati per una ragione precisa: una
+   * posizione scaduta **esiste ancora** nel database (nessuno la cancella allo
+   * scadere), ma non è più «dove sei». Mostrarla come attuale sarebbe la bugia
+   * peggiore che questa funzione possa dire, perché è quella su cui due persone
+   * possono litigare.
+   */
+  const noi = React.useMemo(() => {
+    const m = mia && eRecente(mia) ? { lat: mia.lat, lon: mia.lon } : null;
+    const a = altro && eRecente(altro) ? { lat: altro.lat, lon: altro.lon } : null;
+    return {
+      mia: m,
+      altro: a,
+      distanza: m && a ? distanzaLeggibile(distanzaMetri(m, a), lingua) : null,
+    };
+  }, [mia, altro]);
+
   const { c } = useTema();
   const { aperta: tastieraAperta } = useTastiera();
 
@@ -629,6 +670,7 @@ export default function Mappa() {
       ) : (
         <Riani.View style={[{ flex: 1 }, stileVista]}>
           <MappaVera
+            noi={noi}
             centro={centroMappa}
             luoghi={luoghiSoli}
             ristoranti={ristoranti}

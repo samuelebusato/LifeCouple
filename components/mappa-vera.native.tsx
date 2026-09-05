@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { Bookmark, CalendarHeart } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { C } from '@/lib/tema';
@@ -140,11 +140,24 @@ export function MappaVera({
   programmatiRistorante = {},
   eventiPerRistorante = {},
   spazioSotto = 0,
+  noi,
   onLuogo,
   onRistorante,
 }: {
   centro: { latitude: number; longitude: number };
   luoghi: Luogo[];
+  /**
+   * Le due posizioni di adesso, quando ci sono entrambe (D-100). `null` sta per
+   * «non disponibile», e comprende deliberatamente casi diversi fra loro:
+   * condivisione spenta, GPS spento, app chiusa, posizione scaduta. La mappa
+   * **non deve saperlo**, perche' se lo sapesse potrebbe dirlo — e la 0031
+   * chiede che spegnere sia indistinguibile dal resto.
+   */
+  noi?: {
+    mia: { lat: number; lon: number } | null;
+    altro: { lat: number; lon: number } | null;
+    distanza: string | null;
+  } | null;
   ristoranti?: RistoranteSuMappa[];
   /** Quanti eventi ha ogni posto: decide pin pieno/vuoto e il numerino. */
   eventiPerLuogo?: Record<string, number>;
@@ -237,6 +250,91 @@ export function MappaVera({
       // centro; per "vai al risultato cercato" basta la key sul centro (sotto).
       key={`${centro.latitude.toFixed(4)},${centro.longitude.toFixed(4)}`}
     >
+      {/* --- Noi due, e la distanza fra noi (D-100) ---------------------- */}
+      {/* ⚠️ Si disegna **solo se ci sono entrambe** le posizioni. Una sola non
+          serve a niente qui — dove sono io lo so — e soprattutto una linea che
+          parte e non arriva chiederebbe di spiegare perche', cioe' di dire
+          qualcosa sull'altro che la 0031 vieta di dire. */}
+      {/* I due tondi si disegnano **ognuno per conto suo**: pieno il mio,
+          contornato quello dell'altro. La differenza non e' decorativa — su una
+          mappa con due puntini uguali la prima domanda che uno si fa e' quale
+          sia il proprio.
+
+          ⚠️ **Correzione del 2026-09-04**: prima erano dentro la stessa
+          condizione della linea (`mia && altro`), e la conseguenza era che con
+          un solo dispositivo attivo **non compariva niente**, nemmeno il
+          proprio tondo. Il motivo per cui la linea vuole entrambe le posizioni
+          — una linea che parte e non arriva chiede di spiegare perche', cioe'
+          di dire qualcosa sull'altro — **non vale per il proprio puntino**, che
+          non rivela niente di nessuno. */}
+      {noi?.mia && (
+        <Marker
+          coordinate={{ latitude: noi.mia.lat, longitude: noi.mia.lon }}
+          anchor={{ x: 0.5, y: 0.5 }}
+          tracksViewChanges={false}
+        >
+          <View style={stiliNoi.tondoMio} />
+        </Marker>
+      )}
+      {noi?.altro && (
+        <Marker
+          coordinate={{ latitude: noi.altro.lat, longitude: noi.altro.lon }}
+          anchor={{ x: 0.5, y: 0.5 }}
+          tracksViewChanges={false}
+        >
+          <View style={stiliNoi.tondoAltro} />
+        </Marker>
+      )}
+
+      {/* La linea e la distanza invece **vogliono entrambe** le posizioni. */}
+      {noi?.mia && noi?.altro && (
+        <>
+          <Polyline
+            coordinates={[
+              { latitude: noi.mia.lat, longitude: noi.mia.lon },
+              { latitude: noi.altro.lat, longitude: noi.altro.lon },
+            ]}
+            strokeColor={C.accento}
+            strokeWidth={2.5}
+            // Tratteggiata e non piena: una linea continua fra due punti su una
+            // mappa si legge come un **percorso** — la strada da fare — mentre
+            // qui e' solo un legame fra due posti. Il tratteggio dice "relazione",
+            // non "itinerario".
+            lineDashPattern={[6, 6]}
+          />
+
+          {/* L'etichetta della distanza sta a meta' strada, ed e' un Marker
+              senza pin: `anchor` centrato e nessuna immagine, cosi' la scritta
+              galleggia sulla linea invece di penzolare da una goccia. */}
+          {!!noi.distanza && (
+            <Marker
+              coordinate={{
+                latitude: (noi.mia.lat + noi.altro.lat) / 2,
+                longitude: (noi.mia.lon + noi.altro.lon) / 2,
+              }}
+              anchor={{ x: 0.5, y: 0.5 }}
+              tracksViewChanges={false}
+              pointerEvents="none"
+            >
+              <View
+                style={{
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 999,
+                  backgroundColor: '#ffffff',
+                  borderWidth: 1,
+                  borderColor: C.accento,
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: C.accento }}>
+                  {noi.distanza}
+                </Text>
+              </View>
+            </Marker>
+          )}
+        </>
+      )}
+
       {luoghi.map((l) => {
         const n = eventiPerLuogo[l.id] ?? 0;
         const programmato = programmatiLuogo[l.id] === true;
@@ -347,3 +445,22 @@ export function MappaVera({
 
 /** Sul nativo il componente c'e': la schermata puo' disegnare la mappa. */
 export const MAPPA_DISPONIBILE = true;
+
+const stiliNoi = StyleSheet.create({
+  tondoMio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: C.accento,
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  tondoAltro: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    borderWidth: 3,
+    borderColor: C.accento,
+  },
+});

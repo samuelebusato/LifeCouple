@@ -38,18 +38,10 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 | **Risposte ai giochi di affinità** | Meccanica dei giochi e punteggio della coppia | Esecuzione del contratto (art. 6.1.b) | Durata del rapporto |
 | **Dati relativi all'abbonamento** (stato, scadenza) | Erogazione delle funzioni a pagamento | Esecuzione del contratto (art. 6.1.b) | Durata del rapporto |
 | **Dati contabili e fiscali** relativi agli acquisti | Adempimenti di legge | Obbligo legale (art. 6.1.c) | 10 anni |
-| **Risposte al questionario** (come ci hai conosciuti, fascia d'età, situazione abitativa, interesse prevalente) — **facoltative** | Capire chi usa l'applicazione, per migliorarla | **Consenso (art. 6.1.a)** | Fino alla revoca del consenso o allo scioglimento della coppia |
+| **Posizione attuale**, se scegli di condividerla col tuo partner | Farvi vedere a vicenda dove siete e la distanza fra voi | **Consenso (art. 6.1.a)** | Solo il dato **corrente**: ogni aggiornamento sostituisce il precedente e **non viene conservato nessuno storico**. Sparisce quando spegni la condivisione o quando la coppia si scioglie |
 
 Il conferimento dell'indirizzo email è **necessario**: senza di esso l'account non può essere creato.
 
-🔑 **Il questionario è l'unica cosa che ti chiediamo e che non serve a te.** Tutto il resto di questa tabella esiste perché l'applicazione funzioni; quelle quattro risposte servono a noi, per sapere chi sta usando LifeCouple. Per questo:
-
-- **non è obbligatorio**, e saltarlo non toglie né rimanda nessuna funzione;
-- **nessuna singola domanda è obbligatoria**: puoi rispondere a una sola;
-- **puoi cancellare le risposte quando vuoi** dalle impostazioni, senza dare spiegazioni e senza conseguenze (art. 7.3). Cancellarle significa cancellarle davvero, non disattivarle;
-- le risposte **non vengono mostrate al tuo partner** da nessuna parte dell'applicazione, e non cambiano niente in ciò che l'app fa.
-
-⚠️ **Non ti chiediamo l'età esatta ma una fascia**, e la più bassa parte da 14 anni, che è l'età minima del servizio (§11).
 
 ### 3.1 Dati che l'applicazione legge dal dispositivo ma **non** raccoglie
 
@@ -57,11 +49,19 @@ Questa sezione esiste perché la differenza è sostanziale e va dichiarata, non 
 
 | | Cosa succede davvero |
 |---|---|
-| **Posizione** | Viene letta **una sola volta**, all'apertura della mappa, e **solo se hai già concesso il permesso** per un'altra funzione, con l'unico scopo di centrare la mappa dove ti trovi. **Non viene registrata, non viene trasmessa a noi, non esce dal tuo telefono e non è visibile al tuo partner.** Nessun tracciamento in background, nessuna cronologia automatica: ogni luogo entra nella mappa solo con un tuo gesto esplicito. |
+| **Posizione** *(quando la condivisione è **spenta**)* | Viene letta **una sola volta**, all'apertura della mappa, e **solo se hai già concesso il permesso**, con l'unico scopo di centrare la mappa dove ti trovi. **Non viene registrata, non viene trasmessa a noi, non esce dal tuo telefono e non è visibile al tuo partner.** ⚠️ Se **accendi** la condivisione della posizione, questo non vale più: in quel caso la posizione viene trasmessa e mostrata al tuo partner — vedi §6. In nessuno dei due casi c'è tracciamento in background o cronologia automatica. |
 | **Calendario del dispositivo** | Letto **solo quando scegli di importare**, e vengono importate unicamente le voci che spunti tu. |
 | **Fotografie del dispositivo** | Accessibili **solo** per le immagini che scegli tu di aggiungere. |
 
-🔑 **Nessuno dei due membri della coppia può sapere dove si trova l'altro in questo momento.** È una scelta di progetto, non una impostazione modificabile.
+🔴 **Questo è cambiato il 2026-09-04, e la versione precedente di questa informativa diceva il contrario.** Fino a quella data l'applicazione non permetteva in nessun modo di sapere dove si trovasse l'altro. Ora esiste una funzione che lo permette, ed è **spenta** finché non la accendi tu.
+
+**Come funziona, esattamente:**
+
+- **La condivisione è tua e si accende solo da te**, dalla mappa. Non è reciproca: puoi vedere il tuo partner senza farti vedere, e viceversa.
+- **Puoi spegnerla quando vuoi, in un tocco, dalla stessa schermata.** 🔑 **Quando la spegni il tuo partner non riceve nessun avviso**: per lui il risultato è identico a quello di un telefono scarico, dell'app chiusa o del GPS spento. Non c'è, in nessun punto del sistema, un'informazione che dica che hai smesso di condividere — e non è una dimenticanza, è una scelta di progetto.
+- **Non conserviamo nessuno storico dei tuoi spostamenti.** Esiste una sola posizione per persona, quella attuale, e ogni aggiornamento sostituisce il precedente. Non è possibile — né a noi né al tuo partner — ricostruire dove sei stato.
+- **Una posizione più vecchia di quindici minuti non viene mostrata**, perché non direbbe più dove sei.
+- **Se sciogliete la coppia, le posizioni vengono cancellate**, non nascoste.
 
 ### 3.2 Contenuti scritti liberamente dagli utenti
 

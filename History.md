@@ -28,6 +28,21 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-04 (4) — Il cuore sul calendario, e la posizione di tutti e due
+
+**Chiesto dall'utente**: la posizione di entrambi sulla mappa con una linea tratteggiata e la distanza, e un cuoricino sul calendario per tutti i giorni da quando state insieme.
+
+**Il cuore** — `dentroLaStoria` in `lib/date.ts`, `CuoreGiorno` in `components/insieme.tsx`, disegnato dalla griglia del mese e dalla striscia dei giorni. È **tenue** apposta: su ogni giorno dal fidanzamento in poi sono centinaia di segni, e un segno che sta su tutto smette di informare — va notato scorrendo indietro, dove i cuori finiscono. Il futuro resta fuori, per non contraddire il contatore della home che conta i giorni **vissuti**.
+
+**La posizione** — **D-100**, che ribalta **D-05**. Il conflitto è stato messo davanti all'utente **prima** di scrivere una riga, con tre alternative; ha scelto la condivisione continua. Migrazione `0031`, `lib/posizione.ts`, il disegno in `components/mappa-vera.native.tsx`, l'interruttore sulla mappa, e i **tre documenti di conformità** riscritti nello stesso giro perché dichiaravano il contrario.
+
+🔑 **La cosa che questa giornata insegna, e che vale oltre la funzione**: quando si toglie una mitigazione che consisteva nel *non avere* qualcosa, il lavoro non è aggiungere la funzione — è **trovare cosa mette al suo posto**. Qui la sostituzione non è una nota nell'informativa ma quattro vincoli nello schema e nel codice: nessuno storico possibile, spegnimento non notificabile, stato sul dispositivo, scadenza. Una tutela che dipende da chi scriverà la prossima schermata non è una tutela.
+
+⚠️ **Alla prima prova sul telefono sono usciti due difetti**, **B-51** e **B-52**, entrambi corretti. Il primo l'ha visto l'utente (nessuna posizione a schermo), il secondo è emerso verificando la catena dopo il primo — e il secondo era il più grave: l'interruttore restava acceso su una condivisione mai partita. **Il cuoricino è stato ritarato**, da 9 a 13 punti: la prima misura era troppo timida e spariva anche quando la si cercava.
+
+**Verificato**: `tsc` pulito, `eslint` senza errori nuovi, e la logica delle date del cuore provata su sette casi (compreso il primo giorno con l'ora dentro, che era la trappola). 🔴 **Niente altro**: la `0031` è da applicare, la funzione non è mai girata, e per provarla davvero servono **due dispositivi**.
+
+
 ### 2026-09-04 (3) — Le locandine cambiano casa, e tornano indietro in giornata
 
 **Deciso dall'utente**: *«passa a thetvdb»*, dopo la seconda ricerca sulle alternative.
@@ -316,6 +331,34 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-100 — La posizione dei due sulla mappa: si ribalta D-05, e si paga il conto (2026-09-04, migrazione 0031)
+**Chiesto dall'utente**: *«rendi visibile sulla mappa la posizione di entrambi collegati da una linea tratteggiata con scritto sopra la distanza»*. Messo davanti al conflitto con **D-05** e alle tre alternative — condivisione su richiesta, condivisione continua, oppure distanza fra due luoghi salvati — ha scelto **la condivisione continua**, sapendo cosa comportava.
+
+🔴 **Questa è la funzione che D-05 aveva scartato**, con queste parole: *«trasforma un'app di ricordi in un tracker di persona, con tutto ciò che ne consegue in caso di relazione non sana»*. E il threat model la nominava come **intimate partner surveillance**, indicando come mitigazione **il non averla**.
+
+**Quindi la decisione vera non è stata "si fa": è stata come farla.** Tolta la mitigazione «non esiste», ne serviva un'altra, e non poteva essere una nota nell'informativa. Le quattro regole che seguono stanno nello **schema** e nel **codice**, non nelle buone intenzioni:
+
+1. 🔑 **Nessuno storico, mai.** `posizione_membro` ha `utente_id` come chiave primaria: ogni aggiornamento sovrascrive. Non c'è una tabella da cui ricostruire i movimenti di qualcuno, e non c'è una politica di cancellazione da ricordarsi di far girare — **la cronologia non è rappresentabile**. È la differenza fra *«dove sei adesso»* e *«dove sei stato»*, che è la differenza fra una comodità e uno strumento di controllo.
+2. 🔴 **Spegnere non avvisa nessuno, e l'assenza è ambigua per costruzione.** Quando la riga sparisce, il partner vede *«non disponibile»* — indistinguibile da GPS spento, app chiusa, batteria scarica o permesso negato. Il database **non registra** né lo spegnimento né che la condivisione sia mai stata attiva. ⚠️ **È la tutela centrale, non un dettaglio**: una funzione che annuncia all'altro che l'hai spenta non è spegnibile davvero — in una relazione che si sta guastando, disattivarla diventa un atto ostile da giustificare, e chi ne avrebbe più bisogno è chi meno può permetterselo.
+3. **Lo stato «voglio condividere» vive sul dispositivo, non sul server.** Se stesse nel database esisterebbe un campo che dice *«ha smesso»*, e con esso la possibilità che qualcuno lo legga. Il modo più solido di non lasciare traccia è **non avere niente da lasciare**: sul server c'è solo la posizione, e se non c'è non si sa perché.
+4. **Una posizione vecchia non si mostra.** Oltre quindici minuti il punto è *non disponibile*: un puntino di ieri disegnato come «è qui adesso» non è un dato vecchio, è un dato **falso** — ed è quello su cui due persone possono litigare.
+
+**Non reciproca, deliberatamente**: si può vedere senza farsi vedere. Obbligare alla reciprocità significherebbe che per guardare devi esporti, cioè trasformare il consenso in uno scambio.
+
+**Le scelte di disegno, e perché:**
+- **Linea tratteggiata e non piena**: una linea continua fra due punti su una mappa si legge come un **percorso** — la strada da fare — mentre qui è un legame fra due posti. Il tratteggio dice *relazione*, non *itinerario*.
+- **Il mio tondo pieno, quello dell'altro contornato**: con due puntini identici la prima domanda che uno si fa è *«quale sono io?»*.
+- **Si disegna solo se ci sono entrambe le posizioni.** Una sola non serve (dove sono io lo so già), e soprattutto una linea che parte e non arriva chiederebbe di spiegare perché — cioè di dire qualcosa sull'altro che la regola 2 vieta di dire.
+- **Il comando sta nelle impostazioni** — *spostato lì dall'utente il 2026-09-04*, dopo due versioni sulla mappa (un tondo muto, poi un pannello esplicito: vedi **B-53**).
+  ⚠️ **Questo allunga il percorso per spegnere**, che era una delle tutele dichiarate, e va detto invece di lasciarlo passare. 🔑 **Ciò che la tiene in piedi è che il proprio tondo compare sulla mappa solo se si sta condividendo**: la riga nel database esiste solo allora, quindi chi apre la mappa **vede** se è visibile, senza doverlo chiedere a nessuna schermata. Il punto vero della regola era la consapevolezza, e quella la dà il disegno; il percorso per spegnere è più lungo di un gesto, ed è il prezzo accettato.
+
+⚠️ **Il limite che nessuna misura tecnica supera, e che va scritto**: in una relazione coercitiva chi ha accesso al telefono dell'altro può riaccendere la condivisione. Nessun disegno può impedirlo. Ciò che il disegno può fare è **non aiutare il controllo** — niente storico, niente notifiche di spegnimento, niente segnali su cosa fa l'altro — ed è tutto quello che è stato fatto qui.
+
+**I tre documenti che dicevano il contrario sono stati aggiornati nello stesso giro**, non dopo: informativa (§3, §3.1 e §6, dove la frase *«nessuno dei due può sapere dove si trova l'altro»* è stata sostituita dichiarando che la versione precedente diceva altro), registro (nuova **A8**, e la riga «mai trasmessa, mai condivisa» corretta), threat model (due righe nuove, e la premessa su D-05). È la regola di **D-80**: *i documenti legali dichiarano ciò che il sistema fa.*
+
+**Non verificato**: la migrazione `0031` **non è stata applicata** e la funzione non è mai girata. Servono **due dispositivi** per vedere l'unica cosa che conta davvero — che spegnendo da una parte, dall'altra non succeda niente di visibile.
+
+
 ### D-99 — Le locandine dovevano passare a TheTVDB: scritta, e ritirata lo stesso giorno (2026-09-04)
 🔴 **DECISIONE RIBALTATA, e resta scritta.** L'utente aveva deciso *«passa a thetvdb»* dopo aver visto i numeri; poche ore dopo ha riferito che **TheTVDB ha problemi con la creazione di nuovi account**, quindi la chiave non si poteva ottenere e si è tornati a TMDB. Il codice, la migrazione `0030` e la rinomina sono stati **ritirati**; questa voce **no**.
 
@@ -346,7 +389,10 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ⚠️ **Mai verificato contro l'API vera**: nessuna chiamata è stata fatta, quindi resta ignoto sia se `image_url` sia assoluto o relativo, sia — la cosa che più contava — **quanto bene TheTVDB copra i film**, visto che nasce come database televisivo.
 
-### D-98 — Il questionario di profilo: il primo dato che chiediamo e che non serve a chi lo dà (2026-09-04, migrazione 0029)
+### D-98 — Il questionario di profilo: il primo dato che chiediamo e che non serve a chi lo dà (2026-09-04, migrazione 0029) ⏸️ **FUNZIONE RIMOSSA lo stesso giorno**
+> ⚠️ **L'utente l'ha fatta togliere dall'app poche ore dopo** — *«rimuovi il questionario fatto così mi fa schifo lo miglioreremo poi»* — quindi il codice (`app/questionario.tsx`, `lib/profilo.ts`, l'invito in home, la voce nelle impostazioni, il blocco nell'export) **non c'è più**. Restano la migrazione `0029` **già applicata** e la tabella `profilo_coppia`, vuota e non più scritta da nessuno.
+>
+> **Il ragionamento qui sotto resta valido e serve alla prossima versione**: è tutto sul *come si chiede* un dato che non torna a chi lo dà, e quella parte non è ciò che l'utente ha bocciato. ⚠️ **Nei documenti legali A7 è stata marcata come sospesa**: un registro che dichiara un trattamento che non avviene è falso quanto uno che ne nasconde uno che avviene.
 **Chiesto dall'utente**: un questionario di onboarding. Alla domanda su cosa dovessero servire le risposte ha scelto **«capire chi sono gli utenti»** — cioè analisi di prodotto — e come momento **la formazione della coppia**.
 
 **Perché è una decisione e non una schermata in più**: ogni altro dato del sistema sta nel database perché **il servizio non funzionerebbe senza**, e ha base giuridica «esecuzione del contratto» (art. 6.1.b). Queste quattro risposte no: **non tornano all'utente in nessuna forma**, non cambiano niente nell'app, e servono a noi. Cambia la base giuridica, e con essa tre cose che non sono negoziabili:
@@ -1165,7 +1211,8 @@ Correzione: altezza esplicita della pista (`ALTEZZA + 48`) e `flexGrow: 0`. I 48
 **Alternative scartate**: (a) *tutto in comune, alla rottura si cancella tutto* — semplice ma distruttivo e irreversibile per entrambi; (b) *tutto in comune, alla rottura entrambi tengono copia di tutto* — è la scelta peggiore per la privacy, perché consegna a un ex-partner una copia permanente di materiale intimo dell'altro.
 **Dettaglio**: `threat-model.md` §3 e `Architecture.md` §4.
 
-### D-05 — Nessuna posizione in tempo reale, mai
+### D-05 — Nessuna posizione in tempo reale, mai 🔴 **RIBALTATA dalla D-100 il 2026-09-04**
+> ⚠️ **Questa decisione non vale più**, ed è la più importante che il progetto abbia rovesciato. Resta scritta perché il ragionamento che segue è ancora corretto e descrive esattamente il rischio che la funzione nuova si porta dentro: **D-100 non ha smentito D-05, ha deciso di pagarne il prezzo.** Le tutele di `0031` esistono tutte per rispondere a ciò che qui sotto è scritto.
 **Perché**: è la mitigazione che rende questa app **non utilizzabile come strumento di sorveglianza del partner**. La mappa registra luoghi **inseriti a posteriori dall'utente**, non tracciati. La differenza in prodotto è quasi nulla (la mappa dei ricordi non ha bisogno del tempo reale); la differenza in rischio è totale.
 **Alternativa scartata**: geolocalizzazione automatica con check-in — più comoda, ma trasforma un'app di ricordi in un tracker di persona, con tutto ciò che ne consegue in caso di relazione non sana. Costo della rinuncia: **zero funzionalità perse** rispetto allo scopo dichiarato.
 
@@ -1890,6 +1937,42 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 ---
 
 ## 4. Bug trovati e come sono stati verificati
+
+### B-53 — La posizione non compariva perché il comando per accenderla non si trovava (2026-09-04, CORRETTO)
+
+**Riferito dall'utente tre volte**, l'ultima con *«te l'ho già detta 3 volte mi sto stancando»*. E aveva ragione: le prime due correzioni sono state fatte **senza verificare niente**, cambiando codice sulla base di ipotesi.
+
+**Come è stata trovata davvero, al terzo giro**: uno script di diagnosi contro il **database vero**, con un utente vero, che esegue la stessa `upsert` dell'app. Esito: scrittura ok, aggiornamento ok, rilettura ok, scrittura per conto di un altro utente **respinta** (`42501`), cancellazione ok. 🔑 **Il database era a posto dall'inizio**, e questo ha spostato il sospetto dove doveva stare: sul client. Il cuoricino, ritarato nello stesso giro, era invece arrivato sul telefono — prova che il fast refresh consegnava le modifiche. Quindi il codice nuovo c'era e la posizione non veniva pubblicata: **nessuno aveva mai acceso la condivisione**.
+
+**La causa**: il comando era un **tondo con un'icona**, in alto a destra sulla mappa. Non diceva cosa facesse, e non c'era modo di indovinarlo.
+
+🔑 **La lezione, che vale oltre questo caso**: per una funzione **nuova** un'icona da sola non è un'affordance. Un'icona funziona quando **ricorda** un gesto già noto — qui non c'era niente da ricordare, quindi il comando esisteva per chi sapeva già che esisteva. *Una funzione che si accende solo indovinando cosa faccia un'icona è una funzione che non esiste.*
+
+**La correzione**: un pannello esplicito sopra la barra, con l'icona **più** il testo di cosa succede accendendo e un bottone «Accendi». ⚠️ **Non sparisce a condivisione accesa**: cambia testo e resta, perché il vincolo che aveva portato il tondo in alto — *spegnere dev'essere raggiungibile in un gesto dalla mappa* — resta valido e va soddisfatto lo stesso.
+
+⚠️ **E il difetto di metodo, che è la parte che conta**: due correzioni su tre sono state consegnate all'utente da provare **senza nessuna verifica**, su un difetto che era diagnosticabile in cinque minuti con lo strumento che il progetto **aveva già** (`tests/rls.avversariali.mjs` e la sua impalcatura). *Far riprovare una persona è un modo di verificare che costa il suo tempo: si usa quando gli strumenti sono finiti, non prima.*
+
+
+### B-51 — Sulla mappa non compariva nessuna posizione, nemmeno la propria (2026-09-04, CORRETTO)
+
+**Riferito dall'utente** alla prima prova su iPhone: *«sulla mappa non si vedono le posizioni dei due partner»*.
+
+**La causa**: i due marker erano dentro la stessa condizione della linea — `noi?.mia && noi?.altro` — quindi con **un solo dispositivo attivo non compariva niente**, nemmeno il proprio tondo. Con la funzione appena nata e un solo telefono in mano, cioè nella situazione in cui la si prova per la prima volta, sembrava semplicemente rotta.
+
+🔑 **L'errore non è di distrazione: è un ragionamento giusto applicato a una cosa in più.** La linea vuole entrambe le posizioni per una ragione precisa e voluta — una linea che parte e non arriva chiederebbe di spiegare perché, cioè di dire qualcosa sull'altro che **D-100** vieta di dire. Quel vincolo era stato scritto pensando alla linea, e poi la condizione si è portata dietro anche i tondi, che non rivelano niente di nessuno. *Una regola di riservatezza si applica al pezzo che rivela, non a tutto ciò che gli sta accanto.*
+
+**La correzione**: i due tondi ora si disegnano ognuno per conto suo — il proprio se c'è la propria posizione, quello dell'altro se c'è la sua — e **solo la linea e la distanza** restano condizionate a entrambe. I tondi sono anche passati da 16 a 20 punti: su una mappa già piena di pin si perdevano.
+
+### B-52 — L'interruttore della condivisione restava acceso anche quando la condivisione non era partita (2026-09-04, CORRETTO)
+
+**Trovato verificando la catena** dopo B-51, non riferito da nessuno.
+
+`cambiaCondivisione` accendeva lo stato locale e poi chiamava `pubblica()` **ignorandone il valore di ritorno**. Se il permesso di posizione veniva negato — o se la scrittura falliva — l'interruttore restava **acceso** su una condivisione mai avvenuta, senza dire niente.
+
+🔴 **Su una funzione di privacy un comando che mente sul proprio stato è il difetto peggiore possibile**, e non per il fastidio: chi lo vede acceso crede di essere visibile e non lo è, e il giorno in cui il verso si invertisse crederebbe di non esserlo mentre lo è. È una classe di errore diversa da «la funzione non va»: è **la funzione che dichiara il falso su sé stessa**, ed è esattamente ciò che le tutele di D-100 dipendono dal non fare.
+
+**La correzione**: se la prima pubblicazione fallisce si **torna indietro** — l'interruttore si rispegne — e compare un avviso che distingue il permesso negato dall'errore di rete. Lo spegnimento invece non può essere impedito da un errore: si spegne subito lo stato locale e poi si cancella la riga, e se la rete manca la posizione scade da sé entro un quarto d'ora.
+
 
 ### B-50 — L'illustrazione non compariva e i pallini restavano indietro: lo stato non seguiva lo scorrimento (2026-09-04, CORRETTO)
 
@@ -3032,9 +3115,11 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 000000-c-bis. 🔴 **B-50, prima di tutto il resto dell'ingresso**: nella spiegazione, «Avanti» porta davvero alla pagina successiva? In preview web **no** — i pallini avanzano e il contenuto resta fra due pagine. Su iOS il paging è nativo e con ogni probabilità funziona: se è così, B-50 si chiude come difetto della sola preview. Provare **entrambi** i modi, perché dicono cose diverse: il **dito** (che è il gesto principale) e il **bottone**.
 
-000000-d. 🔴 **Il questionario** (D-98), **dopo aver applicato la 0029**: l'invito compare in home quando la coppia è completa; risponde, invia, e le risposte si rileggono riaprendolo dalle impostazioni. Poi le due cose che contano più delle risposte: **«Non adesso» deve far sparire l'invito per sempre** (è memoria locale, per utente), e **«Cancella le risposte» deve cancellare davvero** — è una revoca di consenso, e una revoca che non revoca è il difetto peggiore di tutta questa funzione. ⚠️ Verificarla **rileggendo**, non fidandosi dell'assenza di errore: è la lezione di B-23.
-
 000000-e. ⚠️ **La data d'inizio dalle impostazioni**: cambiarla e controllare che sul calendario **«Il nostro inizio» si sposti invece di sdoppiarsi** — l'indice unico lo impedisce, ma è proprio la cosa che nessuno ha mai visto succedere. E che il contatore in home segua. Serve il secondo account per vedere che si sposti anche **dall'altra parte**.
+
+000000-g. 🔴 **La posizione condivisa** (D-100), **dopo aver applicato la `0031`**, e con **due telefoni**: senza il secondo non si vede niente di ciò che conta. In ordine: (1) accendendo dalla mappa arriva la richiesta del permesso e compare il proprio tondo; (2) con entrambi accesi si vedono i due tondi, la linea tratteggiata e la distanza, e la distanza è **plausibile**; (3) 🔑 **la prova che vale più di tutte: spegnendo da un telefono, sull'altro non deve comparire nessun avviso** — solo il tondo che sparisce, esattamente come se l'app fosse stata chiusa. (4) Lasciando fermo un telefono oltre quindici minuti, il suo punto deve **sparire** dall'altro invece di restare lì a mentire.
+
+000000-h. ⚠️ **Il cuoricino sul calendario**: c'è su tutti i giorni dal fidanzamento a oggi, in **entrambe** le viste (griglia del mese e striscia dei giorni), e **non** su domani. La cosa da giudicare a occhio è se sia troppo o troppo poco visibile: è tarato per essere una texture di fondo, e il giudizio è dell'utente.
 
 Poi la lista della seconda parte (00000-a → 00000-e: vetro, foto, selettore data, mappe, edge-to-edge, NativeWind) e quella della prima (l'insegna del quiz, i cinque difetti del 2026-09-02, Android), tutte ancora valide.
 

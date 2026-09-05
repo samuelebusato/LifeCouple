@@ -88,23 +88,11 @@ export async function esportaMieiDati(): Promise<EsitoEsportazione> {
     .select('coppia_id, entrato_il, uscito_il')
     .eq('utente_id', io.id);
 
-  // Le risposte del questionario (migrazione 0029).
-  // ⚠️ Vanno nell'export anche se sono **della coppia** e non dell'autore: sono
-  // dati personali di chi esporta, e l'art. 20 non guarda a chi ha premuto il
-  // bottone. Sono anche l'unico dato del progetto raccolto su base **consenso**,
-  // e proprio per questo devono essere riottenibili — un consenso su dati che
-  // non si possono rivedere è un consenso al buio.
-  const { data: profilo } = await supabase
-    .from('profilo_coppia')
-    .select('conosciuto_da, fascia_eta, convivenza, interesse, consenso_il')
-    .maybeSingle();
-
   const documento = {
     formato: 'lifecouple-export-1',
     generato_il: new Date().toISOString(),
     utente: { id: io.id, email: io.email, registrato_il: io.created_at },
     appartenenza_coppia: appartenenza ?? [],
-    questionario: profilo ?? null,
     // 🔑 I due limiti dichiarati dentro il file stesso, non solo
     // nell'interfaccia: il file sopravvive alla schermata che l'ha prodotto, e
     // fra sei mesi sarà l'unica cosa che chi lo apre avrà sotto gli occhi.

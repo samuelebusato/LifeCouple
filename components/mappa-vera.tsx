@@ -43,6 +43,12 @@ export function MappaVera(_: {
   programmatiLuogo?: Record<string, boolean>;
   programmatiRistorante?: Record<string, boolean>;
   spazioSotto?: number;
+  /** Le due posizioni di adesso (D-100). Qui non si disegnano: non c'è mappa. */
+  noi?: {
+    mia: { lat: number; lon: number } | null;
+    altro: { lat: number; lon: number } | null;
+    distanza: string | null;
+  } | null;
   onLuogo: (l: Luogo) => void;
   onRistorante?: (r: RistoranteSuMappa) => void;
 }) {

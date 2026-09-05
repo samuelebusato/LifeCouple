@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { Alert, View, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
 import { SceltaInsiemeDal, dataLunga } from '@/components/insieme';
-import { cancellaProfilo, useProfilo } from '@/lib/profilo';
+import { useCondivisionePosizione, usePosizioni } from '@/lib/posizione';
 import { esportaMieiDati } from '@/lib/esporta';
 import { useTema } from '@/lib/tema';
 import { t } from '@/lib/i18n';
@@ -57,8 +57,41 @@ export default function Impostazioni() {
   const [esporto, setEsporto] = React.useState(false);
   const [esitoExport, setEsitoExport] = React.useState<string | null>(null);
   const [cambiaData, setCambiaData] = React.useState(false);
-  const { profilo, ricarica: ricaricaProfilo } = useProfilo();
-  const [profiloCancellato, setProfiloCancellato] = React.useState(false);
+
+  // --- La posizione condivisa (D-100) --------------------------------------
+  const { condivido, imposta: impostaCondivisione } = useCondivisionePosizione(session?.user.id);
+  const { pubblica, smettiDiCondividere } = usePosizioni(coppiaId, false);
+
+  /**
+   * Accende o spegne la condivisione.
+   *
+   * 🔴 Spegnendo si **cancella** la riga, non si alza un flag, e non parte
+   * nessuna notifica: per il partner il risultato dev'essere indistinguibile da
+   * un telefono scarico (migrazione 0031).
+   *
+   * ⚠️ Se l'accensione fallisce si **torna indietro**: un interruttore acceso su
+   * una condivisione mai partita direbbe il falso su chi ti vede, ed è il
+   * difetto peggiore che questa funzione possa avere (B-52).
+   */
+  const cambiaCondivisione = React.useCallback(
+    async (valore: boolean) => {
+      if (!valore) {
+        await impostaCondivisione(false);
+        await smettiDiCondividere();
+        return;
+      }
+      await impostaCondivisione(true);
+      const err = await pubblica();
+      if (err) {
+        await impostaCondivisione(false);
+        Alert.alert(
+          t.mappa.condivisioneNonRiuscitaTitolo,
+          err === 'permesso-negato' ? t.mappa.condivisionePermesso : t.mappa.condivisioneErrore
+        );
+      }
+    },
+    [impostaCondivisione, pubblica, smettiDiCondividere]
+  );
 
   async function esporta() {
     setEsitoExport(null);
@@ -260,47 +293,30 @@ export default function Impostazioni() {
               </View>
             )}
 
-            {/* --- Le risposte del questionario -------------------------- */}
-            {/* 🔴 Questa voce **non è una comodità**: è l'art. 7.3 GDPR, che
-                pretende che revocare un consenso sia facile quanto prestarlo.
-                Il questionario è l'unica funzione del progetto che si regge sul
-                consenso invece che sul contratto (migrazione 0029), ed è quindi
-                l'unica per cui questo comando deve esistere.
-                ⚠️ Sta qui e **non** fra le «cose senza ritorno»: cancellare le
-                risposte non distrugge niente della coppia, e metterlo accanto
-                allo scioglimento gli darebbe una gravità che non ha —
-                scoraggiando una revoca che dev'essere invece senza attrito. */}
+            {/* --- Far vedere dove sei (D-100) ---------------------------- */}
+            {/* Spostata qui dalla mappa il 2026-09-04, su richiesta dell'utente.
+                ⚠️ D-100 chiedeva che spegnere fosse raggiungibile **in un gesto
+                dalla mappa**, e questo spostamento allunga quel percorso: la
+                tutela si degrada e va detto invece di far finta di niente.
+                🔑 Ciò che la tiene in piedi è che **il proprio tondo compare
+                sulla mappa solo se si sta condividendo** — la riga nel database
+                esiste solo allora. Chi guarda la mappa sa di essere visibile
+                senza doverlo chiedere a nessuna schermata: il disegno stesso è
+                l'indicatore, e questo era il punto vero della regola. */}
             {!!coppiaId && (
               <View className="gap-2">
                 <Text className="font-serif text-lg text-foreground">
-                  {t.impostazioni.profiloTitolo}
+                  {condivido ? t.mappa.condivisioneAttiva : t.mappa.condividiPosizione}
                 </Text>
                 <Text className="text-sm text-muted-foreground">
-                  {profiloCancellato
-                    ? t.impostazioni.profiloCancellata
-                    : profilo
-                      ? t.impostazioni.profiloNota
-                      : t.impostazioni.profiloMai}
+                  {condivido ? t.mappa.condivisioneNota : t.mappa.condivisioneInvito}
                 </Text>
-                <Button variant="outline" onPress={() => router.push('/questionario')}>
-                  <Text>{t.impostazioni.profiloApri}</Text>
+                <Button
+                  variant={condivido ? 'outline' : 'default'}
+                  onPress={() => cambiaCondivisione(!condivido)}
+                >
+                  <Text>{condivido ? t.mappa.spegni : t.mappa.accendi}</Text>
                 </Button>
-                {!!profilo && !profiloCancellato && (
-                  <Button
-                    variant="ghost"
-                    onPress={async () => {
-                      const e = await cancellaProfilo();
-                      if (e) return setErrore(e);
-                      // Si rilegge invece di fidarsi (B-23): una revoca non
-                      // avvenuta lascerebbe a schermo «cancellate» con i dati
-                      // ancora lì, che su un consenso è la bugia peggiore.
-                      await ricaricaProfilo();
-                      setProfiloCancellato(true);
-                    }}
-                  >
-                    <Text style={{ color: c.pericolo }}>{t.impostazioni.profiloCancella}</Text>
-                  </Button>
-                )}
               </View>
             )}
           </View>

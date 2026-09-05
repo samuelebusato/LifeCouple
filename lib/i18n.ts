@@ -216,13 +216,6 @@ const it = {
     insiemeSalva: 'Salva la nuova data',
     insiemeAnnulla: 'Lascia com’è',
 
-    profiloTitolo: 'Le vostre risposte',
-    profiloNota:
-      'Le quattro domande su di voi. Servono a noi per capire chi usa LifeCouple: potete cambiarle o cancellarle quando volete.',
-    profiloApri: 'Rivedi le risposte',
-    profiloCancella: 'Cancella le risposte',
-    profiloCancellata: 'Cancellate.',
-    profiloMai: 'Non avete risposto: potete farlo quando volete.',
 
     sciogliTitolo: 'Sciogli la coppia',
     sciogliNota:
@@ -544,6 +537,19 @@ const it = {
     chiudi: 'Chiudi',
   },
   mappa: {
+    condividiPosizione: 'Fai vedere dove sei',
+    condivisioneInvito: 'Il tuo partner vedrà dove sei, e la distanza fra voi.',
+    condivisioneAttiva: 'Stai facendo vedere dove sei',
+    accendi: 'Accendi',
+    spegni: 'Spegni',
+    condivisioneNonRiuscitaTitolo: 'Non è partita',
+    condivisionePermesso:
+      'Per far vedere dove sei serve il permesso di accedere alla posizione. Puoi darlo dalle impostazioni del telefono e riprovare.',
+    condivisioneErrore:
+      'Non siamo riusciti a mandare la tua posizione. Riprova fra poco: finché non riesce, il tuo partner non vede niente.',
+    smettiCondividere: 'Smetti di farti vedere',
+    condivisioneNota:
+      'Il tuo partner vede dove sei adesso, finché lo lasci acceso. Puoi spegnerlo quando vuoi, e lui non riceve nessun avviso.',
     /** L'interruttore fra la mappa e l'elenco dei luoghi. */
     viste: { mappa: 'Mappa', elenco: 'Elenco' },
     visitato: 'ci siete stati',
@@ -758,65 +764,6 @@ const it = {
     eventoTitolo: 'Il nostro inizio',
     futuro: 'La data non può essere nel futuro.',
     dataNonValida: 'Data non valida: usa il formato 2020-06-14.',
-  },
-  questionario: {
-    titolo: 'Due parole su di voi',
-    // 🔑 Dice a chi servono le risposte, e che l'app non cambia. La formula
-    // consueta («per personalizzare la tua esperienza») qui sarebbe falsa:
-    // nessuna risposta modifica niente, e un consenso prestato su una promessa
-    // che non esiste non è informato.
-    spiegazione:
-      'Queste risposte servono a noi che sviluppiamo LifeCouple, per capire chi la usa. Non cambiano niente nell’app, e il tuo partner non le vede comparire da nessuna parte.',
-    facoltativo:
-      'Nessuna domanda è obbligatoria: potete saltarle tutte, o rispondere solo a quelle che volete.',
-    servePartner: 'Potete rispondere anche prima che il vostro partner entri.',
-    consenso:
-      'Inviando, acconsentite al trattamento di queste risposte per finalità di analisi statistica sul prodotto. Potete cancellarle quando volete dalle impostazioni, senza dare spiegazioni.',
-    invitoNota: 'Quattro domande veloci, e potete saltarle.',
-    invia: 'Invia le risposte',
-    invio: 'Invio…',
-    nonAdesso: 'Non adesso',
-    domande: {
-      conosciutoDa: {
-        titolo: 'Come avete conosciuto LifeCouple?',
-        opzioni: {
-          store: 'Sullo store',
-          amici: 'Da amici',
-          social: 'Sui social',
-          ricerca: 'Cercando su internet',
-          altro: 'In altro modo',
-        },
-      },
-      fasciaEta: {
-        // ⚠️ Parte da 14 perché 14 è l'età minima dichiarata nell'informativa
-        // (§11, art. 8 GDPR). Una soglia diversa qui farebbe divergere due
-        // documenti che devono dire la stessa cosa.
-        titolo: 'Che età avete?',
-        opzioni: {
-          '14-17': '14-17',
-          '18-24': '18-24',
-          '25-34': '25-34',
-          '35-44': '35-44',
-          '45+': '45 o più',
-        },
-      },
-      convivenza: {
-        titolo: 'Come state, in questo periodo?',
-        opzioni: {
-          insieme: 'Viviamo insieme',
-          separati: 'Ognuno a casa sua',
-          distanza: 'A distanza',
-        },
-      },
-      interesse: {
-        titolo: 'Cosa vi interessa di più?',
-        opzioni: {
-          ricordi: 'Tenere i ricordi',
-          organizzarsi: 'Organizzarci',
-          giocare: 'Giocare insieme',
-        },
-      },
-    },
   },
   calendario: {
     titolo: 'Calendario',
@@ -1049,13 +996,6 @@ const en: Dizionario = {
     insiemeSalva: 'Save the new date',
     insiemeAnnulla: 'Leave it as is',
 
-    profiloTitolo: 'Your answers',
-    profiloNota:
-      'The four questions about you. They help us understand who uses LifeCouple: you can change or delete them whenever you like.',
-    profiloApri: 'Review the answers',
-    profiloCancella: 'Delete the answers',
-    profiloCancellata: 'Deleted.',
-    profiloMai: 'You haven’t answered: you can do it whenever you like.',
 
     sciogliTitolo: 'Break up the couple',
     sciogliNota:
@@ -1270,6 +1210,19 @@ const en: Dizionario = {
     chiudi: 'Close',
   },
   mappa: {
+    condividiPosizione: 'Show where you are',
+    condivisioneInvito: 'Your partner will see where you are, and how far apart you are.',
+    condivisioneAttiva: 'You’re showing where you are',
+    accendi: 'Turn on',
+    spegni: 'Turn off',
+    condivisioneNonRiuscitaTitolo: 'It didn’t start',
+    condivisionePermesso:
+      'To show where you are we need permission to access your location. You can grant it in your phone settings and try again.',
+    condivisioneErrore:
+      'We couldn’t send your location. Try again shortly: until it works, your partner sees nothing.',
+    smettiCondividere: 'Stop showing your location',
+    condivisioneNota:
+      'Your partner sees where you are while this stays on. You can switch it off whenever you like, and they get no notification.',
     viste: { mappa: 'Map', elenco: 'List' },
     visitato: 'you’ve been here',
     daVisitare: 'still to visit',
@@ -1450,58 +1403,6 @@ const en: Dizionario = {
     eventoTitolo: 'Where we began',
     futuro: 'The date can’t be in the future.',
     dataNonValida: 'Invalid date: use the format 2020-06-14.',
-  },
-  questionario: {
-    titolo: 'A word about you',
-    spiegazione:
-      'These answers are for us, the people building LifeCouple, to understand who uses it. They change nothing in the app, and your partner won’t see them anywhere.',
-    facoltativo:
-      'No question is required: you can skip them all, or answer only the ones you want.',
-    servePartner: 'You can answer even before your partner joins.',
-    consenso:
-      'By sending, you consent to these answers being used for statistical analysis of the product. You can delete them whenever you like from settings, with no explanation needed.',
-    invitoNota: 'Four quick questions, and you can skip them.',
-    invia: 'Send the answers',
-    invio: 'Sending…',
-    nonAdesso: 'Not now',
-    domande: {
-      conosciutoDa: {
-        titolo: 'How did you hear about LifeCouple?',
-        opzioni: {
-          store: 'On the store',
-          amici: 'From friends',
-          social: 'On social media',
-          ricerca: 'Searching online',
-          altro: 'Some other way',
-        },
-      },
-      fasciaEta: {
-        titolo: 'How old are you?',
-        opzioni: {
-          '14-17': '14-17',
-          '18-24': '18-24',
-          '25-34': '25-34',
-          '35-44': '35-44',
-          '45+': '45 or over',
-        },
-      },
-      convivenza: {
-        titolo: 'How are things right now?',
-        opzioni: {
-          insieme: 'We live together',
-          separati: 'Each at our own place',
-          distanza: 'Long distance',
-        },
-      },
-      interesse: {
-        titolo: 'What interests you most?',
-        opzioni: {
-          ricordi: 'Keeping memories',
-          organizzarsi: 'Getting organised',
-          giocare: 'Playing together',
-        },
-      },
-    },
   },
   calendario: {
     titolo: 'Calendar',
