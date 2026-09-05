@@ -3456,6 +3456,23 @@ Tutto ciò che era stato scritto il 2026-08-27 e nella prima sessione del 2026-0
 
 ### ⚠️ Cose vere che restano da sapere
 
+🔴 **Creare o sciogliere una coppia da SQL: due trappole, incontrate entrambe il 2026-09-05.** L'utente ha chiesto di formare la coppia fra `samuelebusato96@` e `samuelebusato159@`, che erano **entrambi già impegnati** — e le due cose che sono andate storte valgono per la prossima volta:
+
+1. 🔑 **`sciogli_coppia()` non si riscrive a mano.** Sono 108 righe che **duplicano** eventi, luoghi e voci di lista (una copia a testa, D-04/D-21) e ricuciono i riferimenti di foto e recensioni alle copie nuove. Un `update coppia set stato = 'sciolta'` sembrerebbe funzionare e distruggerebbe l'accesso ai ricordi invece di dividerli. Si chiama **la funzione vera**, impersonando l'utente nella transazione:
+   ```sql
+   begin;
+     select set_config('request.jwt.claims',
+       json_build_object('sub', (select id from auth.users where email = '…'))::text, true);
+     select auth.uid();          -- se e' NULL, fermarsi: l'impersonazione non ha funzionato
+     select public.sciogli_coppia();
+   commit;
+   ```
+
+2. ⚠️ **Un `insert into coppia` senza claim JWT nasce senza liste.** I trigger `coppia_crea_liste_default` (0024) e `coppia_crea_lista_film` (0023) hanno la guardia *«se `auth.uid()` è null non si inserisce niente invece di fallire»* — scritta nella 0023 per un caso definito allora *«oggi impossibile ma domani chissà»*. **Domani è arrivato**: creare una coppia dal SQL Editor è esattamente quel contesto. La creatura invece nasce, perché il suo trigger (0001) quella guardia non ce l'ha, e il risultato è una coppia **a metà** che nessuna schermata segnala come tale.
+   **La soluzione pulita è impostare il claim anche nel blocco di creazione**, così i trigger fanno il loro lavoro da soli invece di doverli rifare a mano dopo.
+
+🔑 **E la cosa che ha impedito il danno peggiore**: lo script di creazione controllava *«è già in una coppia attiva?»* prima di inserire, e si è fermato **due volte**. Con un `insert` secco ci sarebbero ora persone in due coppie contemporaneamente — uno stato che l'app non sa gestire e che nessuna schermata mostrerebbe come sbagliato. Le guardie dentro `crea_coppia` esistono per questo, e con `service_role` non ci sono: **vanno rifatte a mano ogni volta**.
+
 ⚠️ **Il secondo membro della coppia di prova è cambiato il 2026-08-28** (terza sessione): sostituito con un altro utente, e `insieme_dal` portata al **2026-04-12**. Fatto in **SQL a mano con la chiave `service_role`**, perché l'app non ha nessuna via per farlo — vedi il backlog *«Cambiare partner senza distruggere la coppia»*. **Verificato rileggendo** dopo la scrittura, non fidandosi dell'assenza di errore (è la lezione di **B-23**).
 🔑 **Conseguenza da ricordare prima di leggere qualunque cosa come un difetto**: i contenuti del membro uscente sono **rimasti** nella coppia, quindi il membro nuovo **vede foto e recensioni** che non ha scritto, e **creatura e punti sono stati ereditati** — sono per `coppia_id`, non per membro. Non è un difetto: è la conseguenza accettata di una sostituzione secca. *Chi troverà questi dati fra un mese, senza questa riga, li leggerebbe come una falla nella RLS.*
 
