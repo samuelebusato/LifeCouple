@@ -3,7 +3,8 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { PillolaEvento } from '@/components/pillola-evento';
 import { useTema } from '@/lib/tema';
-import { stessoGiorno, stessoMese } from '@/lib/date';
+import { dentroLaStoria, stessoGiorno, stessoMese } from '@/lib/date';
+import { CuoreGiorno } from '@/components/insieme';
 import type { Evento } from '@/lib/eventi';
 import { t } from '@/lib/i18n';
 
@@ -42,6 +43,7 @@ export function GrigliaMese({
   eventiDi,
   onTocca,
   onEvento,
+  insiemeDal,
 }: {
   /** Le 42 date da disegnare (6 righe da 7). */
   griglia: Date[];
@@ -52,6 +54,8 @@ export function GrigliaMese({
   eventiDi: (d: Date) => Evento[];
   onTocca: (d: Date) => void;
   onEvento?: (e: Evento) => void;
+  /** Da quando state insieme: i giorni da lì a oggi portano un cuoricino. */
+  insiemeDal?: string | null;
 }) {
   const { c } = useTema();
   const [altezza, setAltezza] = React.useState(0);
@@ -87,6 +91,20 @@ export function GrigliaMese({
                 onPress={() => onTocca(d)}
                 style={{ flex: 1, minWidth: 0, paddingHorizontal: 2, paddingTop: 3 }}
               >
+                {/* ⚠️ In assoluto e in alto a destra, **fuori dal flusso**: la
+                    cella distribuisce la sua altezza fra il numero e le
+                    pillole, e un cuore che partecipa a quel calcolo si
+                    porterebbe via una pillola per far posto a sé. Il numero è
+                    centrato, quindi l'angolo destro è spazio che nessuno usa.
+                    `pointerEvents` spento: il tocco deve restare della cella. */}
+                {dentroLaStoria(d, insiemeDal ?? null, oggi) && (
+                  <View
+                    pointerEvents="none"
+                    style={{ position: 'absolute', top: 4, right: 4, opacity: fuori ? 0.4 : 1 }}
+                  >
+                    <CuoreGiorno />
+                  </View>
+                )}
                 <View style={{ height: TESTA - 6, alignItems: 'center', justifyContent: 'center' }}>
                   <View
                     style={{

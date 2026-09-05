@@ -97,3 +97,52 @@ export function iniziali(lingua: string) {
     aggiungiGiorni(base, i).toLocaleDateString(lingua, { weekday: 'short' })
   );
 }
+
+/**
+ * Il giorno **cade dentro la vostra storia**: da `insiemeDal` compreso fino a
+ * oggi. Serve al cuoricino che il calendario disegna sui giorni passati insieme.
+ *
+ * ⚠️ **Il futuro resta fuori, ed è una scelta.** La relazione continua, quindi
+ * segnare anche domani sarebbe difendibile; ma il contatore della home conta i
+ * giorni **vissuti**, e due segni che raccontano periodi diversi nella stessa
+ * app si contraddicono a vista. Il cuore dice *«questo giorno l'avete passato
+ * insieme»*, non *«state insieme»* — che è già scritto ovunque.
+ *
+ * Il confronto è sui **giorni civili**, non sulle ore: `insiemeDal` è una data
+ * senza orario, e paragonarla a un `Date` con l'ora dentro farebbe sparire il
+ * cuore dal primo giorno per le prime ore della giornata.
+ */
+export function dentroLaStoria(d: Date, insiemeDal: string | null, oggi: Date): boolean {
+  if (!insiemeDal) return false;
+  const [a, m, g] = insiemeDal.split('-').map(Number);
+  if (!a || !m || !g) return false;
+  const inizio = new Date(a, m - 1, g).getTime();
+  const questo = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const ultimo = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate()).getTime();
+  return questo >= inizio && questo <= ultimo;
+}
+
+/**
+ * Il **mese** tocca la vostra storia: ne contiene almeno un giorno.
+ *
+ * ⚠️ «Almeno un giorno» e non «tutto il mese», ed e' la scelta che rende utile
+ * il segno nella vista anno: il mese in cui siete cominciati **ha** il cuore
+ * anche se la relazione e' iniziata il 28, perche' quel mese fa parte della
+ * vostra storia. Chiedere il mese intero lo lascerebbe fuori proprio dove la
+ * storia comincia — cioe' nell'unico punto che si va a cercare.
+ *
+ * Il mese corrente lo prende sempre, anche se oggi e' il 3: la storia arriva
+ * fino a oggi, e oggi e' dentro questo mese.
+ */
+export function meseDentroLaStoria(mese: Date, insiemeDal: string | null, oggi: Date): boolean {
+  if (!insiemeDal) return false;
+  const [a, m, g] = insiemeDal.split('-').map(Number);
+  if (!a || !m || !g) return false;
+  const inizio = new Date(a, m - 1, g).getTime();
+  // Il mese va dal suo primo giorno all'ultimo: si confrontano gli estremi.
+  const primo = new Date(mese.getFullYear(), mese.getMonth(), 1).getTime();
+  const ultimo = new Date(mese.getFullYear(), mese.getMonth() + 1, 0).getTime();
+  const oggiCivile = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate()).getTime();
+  // Si sovrappone all'intervallo [inizio, oggi]?
+  return ultimo >= inizio && primo <= oggiCivile;
+}

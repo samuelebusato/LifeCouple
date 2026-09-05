@@ -45,6 +45,7 @@ import { molla } from '@/lib/movimento';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
+import { CuoreGiorno } from '@/components/insieme';
 import { usePreferiti } from '@/lib/preferiti';
 import { anteprimePerEvento, caricaFoto, scegliFoto } from '@/lib/foto';
 import {
@@ -61,6 +62,8 @@ import {
   inizioGiorno,
   inizioSettimana,
   aggiungiGiorni,
+  dentroLaStoria,
+  meseDentroLaStoria,
   giorniDaOggi,
   mesiDellAnno,
   scorri,
@@ -108,12 +111,15 @@ function CellaStriscia({
   oggi,
   eventi,
   onPress,
+  nellaStoria,
 }: {
   giorno: Date;
   selezionato: boolean;
   oggi: boolean;
   eventi: Evento[];
   onPress: () => void;
+  /** Il giorno cade fra l'inizio della vostra storia e oggi. */
+  nellaStoria?: boolean;
 }) {
   /**
    * Il tondo bianco della selezione **si posa** invece di accendersi.
@@ -189,6 +195,19 @@ function CellaStriscia({
         >
           {giorno.getDate()}
         </Text>
+        {/* Qui il cuore va **sotto** il numero e non in un angolo: il tondo è
+            di 34 punti e un angolo lo taglierebbe fuori dal disco della
+            selezione. Sul fondo colorato serve anche più opacità che nella
+            griglia, dove sotto c'è il bianco. */}
+        {nellaStoria && (
+          <View pointerEvents="none" style={{ position: 'absolute', bottom: 1 }}>
+            <CuoreGiorno
+              size={10}
+              colore={selezionato ? '#c2157f' : SU_TESTATA}
+              opacita={selezionato ? 0.8 : 0.55}
+            />
+          </View>
+        )}
       </View>
       {/* Sotto la striscia restano i pallini: qui non c'e' spazio per le
           pillole, e comunque il programma completo sta subito sotto. */}
@@ -304,7 +323,7 @@ function SelettoreVista({
 export default function Calendario() {
   const router = useRouter();
   const { session } = useAuth();
-  const { coppiaId, ricarica: ricaricaCoppia } = useCoppia();
+  const { coppiaId, insiemeDal, ricarica: ricaricaCoppia } = useCoppia();
   const { eventi, loading, errore, ricarica, aggiungi, aggiorna, elimina } = useEventi(coppiaId);
   // I posti servono qui per legare un evento a un luogo: e' cio' che lo fa
   // comparire anche sulla mappa (D-33). `aggiungi` serve alla ricerca: un posto
@@ -740,6 +759,7 @@ export default function Calendario() {
                   selezionato={stessoGiorno(d, giorno)}
                   oggi={stessoGiorno(d, oggi)}
                   eventi={eventiDelGiorno(eventi, d)}
+                  nellaStoria={dentroLaStoria(d, insiemeDal, oggi)}
                   /* Nella striscia si **naviga fra i giorni**: toccarne uno lo
                      sceglie e la sua agenda compare qui sotto. Un foglio che si
                      apre sarebbe un passaggio di troppo per un gesto che si
@@ -785,6 +805,7 @@ export default function Calendario() {
               giorno={giorno}
               oggi={oggi}
               eventiDi={(d) => eventiDelGiorno(eventi, d)}
+              insiemeDal={insiemeDal}
               onTocca={tocca}
               onEvento={(e) => router.push({ pathname: '/evento/[id]', params: { id: e.id } })}
             />
@@ -823,9 +844,17 @@ export default function Calendario() {
                           stessoMese(m, oggi) && 'border border-primary'
                         )}
                       >
-                        <Text className="font-serif text-base capitalize text-foreground">
-                          {m.toLocaleDateString(lingua, { month: 'long' })}
-                        </Text>
+                        {/* Il nome del mese e il cuore stanno **sulla stessa
+                            riga**, non uno sopra l'altro: la scheda del mese ha
+                            gia' tre righe (nome, conteggio, pallini) e una
+                            quarta la farebbe crescere in altezza — dodici volte,
+                            su una griglia che deve stare in una schermata. */}
+                        <View className="flex-row items-center gap-1">
+                          <Text className="font-serif text-base capitalize text-foreground">
+                            {m.toLocaleDateString(lingua, { month: 'long' })}
+                          </Text>
+                          {meseDentroLaStoria(m, insiemeDal, oggi) && <CuoreGiorno size={12} />}
+                        </View>
                         <Text className="text-[10px] text-muted-foreground">
                           {suoi.length === 0
                             ? t.calendario.nessunImpegno

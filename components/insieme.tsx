@@ -1,12 +1,57 @@
 import * as React from 'react';
 import { View, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Svg, { Path } from 'react-native-svg';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import type { StatoCoppia } from '@/lib/coppia';
 import { lingua, t } from '@/lib/i18n';
+import { C } from '@/lib/tema';
+
+/**
+ * **Il cuoricino dei giorni passati insieme**, disegnato dal calendario su ogni
+ * giorno dentro la vostra storia (vedi `dentroLaStoria` in `lib/date.ts`).
+ *
+ * ## ⚠️ Perché è tenue, e perché deve restarlo
+ *
+ * Questo segno compare su **ogni singolo giorno** dal fidanzamento in poi:
+ * dopo un anno sono trecentosessantacinque cuori, dopo cinque anni quasi
+ * duemila. Un segno ripetuto su *tutto* smette di essere un'informazione e
+ * diventa la carta da parati — e se è marcato, diventa carta da parati che
+ * copre le pillole degli eventi, cioè l'unica cosa che in quella cella si deve
+ * leggere davvero.
+ *
+ * Quindi: contenuto, in un angolo che le pillole non usano, e a opacità ridotta.
+ * ⚠️ **Ritarato il 2026-09-04**: la prima misura (9 punti, opacità 0,4) è stata
+ * giudicata troppo timida sul telefono — la prudenza contro il rumore visivo
+ * era andata oltre, e il segno spariva anche quando lo si cercava. Va
+ * notato **scorrendo indietro** — dove i cuori finiscono, comincia la vostra
+ * storia — non guardando il mese corrente.
+ *
+ * 🔑 È la stessa regola che il progetto applica ai colori delle pillole: si
+ * distingue *a colpo d'occhio*, non *leggendo*. Qui il colpo d'occhio è il
+ * confine, non il singolo giorno.
+ */
+export function CuoreGiorno({
+  size = 13,
+  colore,
+  opacita = 0.55,
+}: {
+  size?: number;
+  colore?: string;
+  opacita?: number;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" opacity={opacita}>
+      <Path
+        d="M12 20s-7-4.6-7-9.4A4.1 4.1 0 0112 8.6 4.1 4.1 0 0119 10.6C19 15.4 12 20 12 20z"
+        fill={colore ?? C.accento}
+      />
+    </Svg>
+  );
+}
 
 /**
  * La data scritta per esteso nella lingua dell'app («14 giugno 2020»).
