@@ -12,6 +12,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
+import { SceltaInsiemeDal, dataLunga } from '@/components/insieme';
+import { cancellaProfilo, useProfilo } from '@/lib/profilo';
 import { esportaMieiDati } from '@/lib/esporta';
 import { useTema } from '@/lib/tema';
 import { t } from '@/lib/i18n';
@@ -44,7 +46,7 @@ export default function Impostazioni() {
   const router = useRouter();
   const { c } = useTema();
   const { session } = useAuth();
-  const { coppiaId, completa, ricarica } = useCoppia();
+  const { coppiaId, completa, insiemeDal, ricarica } = useCoppia();
 
   const invito = useInvito(!!coppiaId && !completa, ricarica);
 
@@ -54,6 +56,9 @@ export default function Impostazioni() {
   const [errore, setErrore] = React.useState<string | null>(null);
   const [esporto, setEsporto] = React.useState(false);
   const [esitoExport, setEsitoExport] = React.useState<string | null>(null);
+  const [cambiaData, setCambiaData] = React.useState(false);
+  const { profilo, ricarica: ricaricaProfilo } = useProfilo();
+  const [profiloCancellato, setProfiloCancellato] = React.useState(false);
 
   async function esporta() {
     setEsitoExport(null);
@@ -208,6 +213,93 @@ export default function Impostazioni() {
 
                 {!!invito.errore && (
                   <Text className="text-sm text-destructive">{invito.errore}</Text>
+                )}
+              </View>
+            )}
+
+            {/* --- La data da cui state insieme (D-29) -------------------- */}
+            {/* Fino al 2026-09-04 si poteva scegliere **una volta sola**, dal
+                riquadro in home, e chi sbagliava non aveva nessuna via per
+                correggersi: l'unico modo era l'SQL a mano con la chiave
+                `service_role` — che è come la data della coppia di prova era
+                stata spostata il 2026-08-28.
+                ⚠️ Sta qui e non fra le «cose senza ritorno» perché **non è
+                irreversibile**: si può ricambiare quante volte si vuole, e la
+                funzione sposta il segno sul calendario invece di duplicarlo.
+                Compare solo con una coppia: `imposta_insieme_dal` rifiuta chi
+                non ne ha, e un comando che fallisce con «non sei in una
+                coppia» è peggio di un comando assente. */}
+            {!!coppiaId && (
+              <View className="gap-2">
+                <Text className="font-serif text-lg text-foreground">
+                  {t.impostazioni.insiemeTitolo}
+                </Text>
+                <Text className="text-sm text-muted-foreground">
+                  {insiemeDal
+                    ? `${t.insieme.dal(dataLunga(insiemeDal))} — ${t.impostazioni.insiemeNota}`
+                    : t.impostazioni.insiemeNonImpostata}
+                </Text>
+
+                {cambiaData ? (
+                  <View className="gap-3">
+                    <SceltaInsiemeDal
+                      iniziale={insiemeDal}
+                      ricarica={ricarica}
+                      etichettaSalva={t.impostazioni.insiemeSalva}
+                      suFatto={() => setCambiaData(false)}
+                    />
+                    <Button variant="ghost" onPress={() => setCambiaData(false)}>
+                      <Text>{t.impostazioni.insiemeAnnulla}</Text>
+                    </Button>
+                  </View>
+                ) : (
+                  <Button variant="outline" onPress={() => setCambiaData(true)}>
+                    <Text>{t.impostazioni.insiemeCambia}</Text>
+                  </Button>
+                )}
+              </View>
+            )}
+
+            {/* --- Le risposte del questionario -------------------------- */}
+            {/* 🔴 Questa voce **non è una comodità**: è l'art. 7.3 GDPR, che
+                pretende che revocare un consenso sia facile quanto prestarlo.
+                Il questionario è l'unica funzione del progetto che si regge sul
+                consenso invece che sul contratto (migrazione 0029), ed è quindi
+                l'unica per cui questo comando deve esistere.
+                ⚠️ Sta qui e **non** fra le «cose senza ritorno»: cancellare le
+                risposte non distrugge niente della coppia, e metterlo accanto
+                allo scioglimento gli darebbe una gravità che non ha —
+                scoraggiando una revoca che dev'essere invece senza attrito. */}
+            {!!coppiaId && (
+              <View className="gap-2">
+                <Text className="font-serif text-lg text-foreground">
+                  {t.impostazioni.profiloTitolo}
+                </Text>
+                <Text className="text-sm text-muted-foreground">
+                  {profiloCancellato
+                    ? t.impostazioni.profiloCancellata
+                    : profilo
+                      ? t.impostazioni.profiloNota
+                      : t.impostazioni.profiloMai}
+                </Text>
+                <Button variant="outline" onPress={() => router.push('/questionario')}>
+                  <Text>{t.impostazioni.profiloApri}</Text>
+                </Button>
+                {!!profilo && !profiloCancellato && (
+                  <Button
+                    variant="ghost"
+                    onPress={async () => {
+                      const e = await cancellaProfilo();
+                      if (e) return setErrore(e);
+                      // Si rilegge invece di fidarsi (B-23): una revoca non
+                      // avvenuta lascerebbe a schermo «cancellate» con i dati
+                      // ancora lì, che su un consenso è la bugia peggiore.
+                      await ricaricaProfilo();
+                      setProfiloCancellato(true);
+                    }}
+                  >
+                    <Text style={{ color: c.pericolo }}>{t.impostazioni.profiloCancella}</Text>
+                  </Button>
                 )}
               </View>
             )}

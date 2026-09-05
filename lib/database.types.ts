@@ -940,6 +940,47 @@ export type Database = {
         }
         Relationships: []
       }
+      // ⚠️ SCRITTO A MANO — migrazione 0029 (il questionario di profilo).
+      // Da rigenerare con gli altri: finché è scritto a mano dice ciò che
+      // crediamo ci sia nello schema, non ciò che c'è.
+      profilo_coppia: {
+        Row: {
+          coppia_id: string
+          conosciuto_da: string | null
+          fascia_eta: string | null
+          convivenza: string | null
+          interesse: string | null
+          consenso_il: string
+          aggiornato_il: string
+        }
+        Insert: {
+          coppia_id: string
+          conosciuto_da?: string | null
+          fascia_eta?: string | null
+          convivenza?: string | null
+          interesse?: string | null
+          consenso_il?: string
+          aggiornato_il?: string
+        }
+        Update: {
+          coppia_id?: string
+          conosciuto_da?: string | null
+          fascia_eta?: string | null
+          convivenza?: string | null
+          interesse?: string | null
+          consenso_il?: string
+          aggiornato_il?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profilo_coppia_coppia_id_fkey"
+            columns: ["coppia_id"]
+            isOneToOne: true
+            referencedRelation: "coppia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -985,6 +1026,19 @@ export type Database = {
       aggiorna_ristoranti_visitati: { Args: never; Returns: number }
       revoca_invito: { Args: { p_invito_id: string }; Returns: undefined }
       sciogli_coppia: { Args: never; Returns: undefined }
+      // ⚠️ SCRITTE A MANO — migrazione 0029 (il questionario di profilo).
+      // Stessa avvertenza dei blocchi qui sopra: vanno via tutte insieme alla
+      // prima rigenerazione con `supabase gen types typescript`.
+      salva_profilo_coppia: {
+        Args: {
+          p_conosciuto_da?: string | null
+          p_fascia_eta?: string | null
+          p_convivenza?: string | null
+          p_interesse?: string | null
+        }
+        Returns: undefined
+      }
+      cancella_profilo_coppia: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

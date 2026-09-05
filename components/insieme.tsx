@@ -8,12 +8,103 @@ import { supabase } from '@/lib/supabase';
 import type { StatoCoppia } from '@/lib/coppia';
 import { lingua, t } from '@/lib/i18n';
 
+/**
+ * La data scritta per esteso nella lingua dell'app («14 giugno 2020»).
+ *
+ * Esportata perche' la leggono in due — il riquadro in home e le impostazioni —
+ * e due `toLocaleDateString` scritte a mano diventano due formati leggermente
+ * diversi per la stessa data.
+ */
+export function dataLunga(giorno: string): string {
+  const [a, m, g] = giorno.split('-').map(Number);
+  return new Date(a, m - 1, g).toLocaleDateString(lingua, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 /** Giorni pieni fra due date, contati sui giorni civili e non sulle ore. */
 export function giorniInsieme(insiemeDal: string, oggi = new Date()) {
   const [a, m, g] = insiemeDal.split('-').map(Number);
   const da = new Date(a, m - 1, g);
   const a_oggi = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate());
   return Math.max(0, Math.round((a_oggi.getTime() - da.getTime()) / 86_400_000));
+}
+
+/**
+ * **Il selettore della data, da solo.** Estratto dal riquadro il 2026-09-04
+ * perche' ora ha due chiamanti: la home quando la data non c'e' ancora, e le
+ * impostazioni quando c'e' e va corretta.
+ *
+ * 🔑 **La correzione non ha richiesto niente di nuovo lato database**, ed e' il
+ * motivo per cui questo pezzo costa poco: `imposta_insieme_dal` (migrazione
+ * 0005) fa gia' `on conflict … do update` sull'evento del calendario, e il suo
+ * commento lo dice a lettere — *«permette di ritrovarlo e spostarlo se la data
+ * viene corretta»*. Era stata scritta prevedendo questo caso. Chiamarla una
+ * seconda volta **sposta** il segno sul calendario invece di aggiungerne uno.
+ *
+ * ⚠️ `iniziale` esiste per la sola ragione che conta: chi apre per **correggere**
+ * deve trovare la data che ha oggi, non la data di oggi. Un selettore che si
+ * apre su "adesso" invita a salvare per inerzia un valore che nessuno ha
+ * scelto — e qui il valore salvato finisce anche sul calendario dell'altro.
+ */
+export function SceltaInsiemeDal({
+  iniziale,
+  ricarica,
+  etichettaSalva,
+  suFatto,
+}: {
+  iniziale: string | null;
+  ricarica: () => Promise<StatoCoppia>;
+  etichettaSalva?: string;
+  /** Chiamata dopo un salvataggio riuscito: serve a chi mostra un pannello che va richiuso. */
+  suFatto?: () => void;
+}) {
+  const partenza = React.useMemo(() => (iniziale ? daCampo(iniziale) : null) ?? new Date(), [iniziale]);
+  const [scelta, setScelta] = React.useState(partenza);
+  const [testo, setTesto] = React.useState(() => perCampo(partenza));
+  const [attesa, setAttesa] = React.useState(false);
+  const [errore, setErrore] = React.useState<string | null>(null);
+
+  async function salva() {
+    setErrore(null);
+    const d = Platform.OS === 'web' ? daCampo(testo) : scelta;
+    if (!d) return setErrore(t.insieme.dataNonValida);
+    if (d > new Date()) return setErrore(t.insieme.futuro);
+    setAttesa(true);
+    const { error } = await supabase.rpc('imposta_insieme_dal', {
+      p_data: perCampo(d),
+      p_titolo: t.insieme.eventoTitolo,
+    });
+    setAttesa(false);
+    if (error) return setErrore(error.message);
+    // ⚠️ Si rilegge invece di fidarsi dell'assenza di errore: e' la lezione di
+    // B-23, e qui varrebbe doppio — una data non salvata lascerebbe a schermo
+    // il conteggio vecchio, che e' esattamente cio' che si stava correggendo.
+    await ricarica();
+    suFatto?.();
+  }
+
+  return (
+    <>
+      {Platform.OS === 'web' ? (
+        <Input value={testo} onChangeText={setTesto} placeholder="2020-06-14" autoCapitalize="none" />
+      ) : (
+        <DateTimePicker
+          value={scelta}
+          mode="date"
+          display="compact"
+          maximumDate={new Date()}
+          onChange={(_, d) => d && setScelta(d)}
+        />
+      )}
+      {errore && <Text className="text-sm text-destructive">{errore}</Text>}
+      <Button disabled={attesa} onPress={salva}>
+        <Text>{attesa ? t.onboarding.attesa : (etichettaSalva ?? t.insieme.salva)}</Text>
+      </Button>
+    </>
+  );
 }
 
 /**
@@ -31,57 +122,18 @@ export function Insieme({
   insiemeDal: string | null;
   ricarica: () => Promise<StatoCoppia>;
 }) {
-  const [scelta, setScelta] = React.useState(() => new Date());
-  const [testo, setTesto] = React.useState(() => perCampo(new Date()));
-  const [attesa, setAttesa] = React.useState(false);
-  const [errore, setErrore] = React.useState<string | null>(null);
-
-  async function salva() {
-    setErrore(null);
-    const d = Platform.OS === 'web' ? daCampo(testo) : scelta;
-    if (!d) return setErrore(t.insieme.dataNonValida);
-    if (d > new Date()) return setErrore(t.insieme.futuro);
-    setAttesa(true);
-    const { error } = await supabase.rpc('imposta_insieme_dal', {
-      p_data: perCampo(d),
-      p_titolo: t.insieme.eventoTitolo,
-    });
-    setAttesa(false);
-    if (error) return setErrore(error.message);
-    await ricarica();
-  }
-
   if (!insiemeDal) {
     return (
       <View className="w-full gap-3 rounded-3xl bg-card p-6">
         <Text className="font-serif-bold text-2xl text-foreground">{t.insieme.chiediTitolo}</Text>
         <Text className="text-base text-muted-foreground">{t.insieme.chiediTesto}</Text>
-        {Platform.OS === 'web' ? (
-          <Input value={testo} onChangeText={setTesto} placeholder="2020-06-14" autoCapitalize="none" />
-        ) : (
-          <DateTimePicker
-            value={scelta}
-            mode="date"
-            display="compact"
-            maximumDate={new Date()}
-            onChange={(_, d) => d && setScelta(d)}
-          />
-        )}
-        {errore && <Text className="text-sm text-destructive">{errore}</Text>}
-        <Button disabled={attesa} onPress={salva}>
-          <Text>{attesa ? t.onboarding.attesa : t.insieme.salva}</Text>
-        </Button>
+        <SceltaInsiemeDal iniziale={null} ricarica={ricarica} />
       </View>
     );
   }
 
   const n = giorniInsieme(insiemeDal);
-  const [a, m, g] = insiemeDal.split('-').map(Number);
-  const data = new Date(a, m - 1, g).toLocaleDateString(lingua, {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const data = dataLunga(insiemeDal);
 
   return (
     <View className="w-full items-center gap-1 rounded-3xl bg-card px-6 py-8">

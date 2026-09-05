@@ -28,6 +28,37 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-04 (3) — Le locandine cambiano casa, e tornano indietro in giornata
+
+**Deciso dall'utente**: *«passa a thetvdb»*, dopo la seconda ricerca sulle alternative.
+
+**Fatto**: migrazione `0030` (rinomina `tmdb_id` → `id_esterno`, nuova colonna `fonte`), riscritto [`lib/ricerca-film.ts`](lib/ricerca-film.ts) sull'API v4 di TheTVDB, estesa la riparazione automatica in `lib/preferiti.ts` perché rigeneri anche le locandine ancora TMDB, aggiornati `components/cerca-film.tsx` (attribuzione **premibile**, com'è richiesto), `lib/database.types.ts`, `.env.example` e le due stringhe che nominavano la chiave. **D-99**.
+
+🔑 **La cosa che il prezzo non lasciava prevedere**: TMDB accettava la chiave nell'URL, TheTVDB pretende un `POST /login` e un **bearer token che dura un mese**. Il cambio di fornitore ha quindi portato dentro uno **stato** che prima non c'era — token da conservare, rinnovare e invalidare — e non una semplice sostituzione di URL. È il tipo di costo che si scopre leggendo l'API, non il listino.
+
+🔴 **E poi tutto ritirato, poche ore dopo**: l'utente ha riferito che **TheTVDB ha problemi con la creazione di nuovi account**, quindi la chiave non era ottenibile. Ripristinati i cinque file toccati solo dal cambio (`git checkout`), rimossa la `0030`, e riportati a mano i tre file che contenevano **anche** lavoro della sessione — `lib/database.types.ts`, `lib/i18n.ts`, `docs/Architecture.md` — che un ripristino secco avrebbe azzerato insieme al questionario e all'ingresso. `tsc` pulito dopo il ritiro.
+
+🔑 **La lezione di giornata, che vale più del cambio mancato**: la fattibilità di una migrazione di fornitore non si esaurisce nel confronto fra licenze e prezzi. Qui la licenza era migliore, l'API documentata, il codice scritto e compilante — e si è fermata su **una registrazione che non funziona**. Un fornitore alternativo non è *disponibile* finché non si è ottenuta la chiave: è il primo passo da fare, non l'ultimo.
+
+⚠️ **Il blocco TMDB torna quindi aperto**, ed è la cosa da non perdere di vista: non è stato risolto, è stato rimandato.
+
+
+### 2026-09-04 (2) — L'ingresso: un saluto che si apre, quattro pagine che spiegano, e il primo dato chiesto per noi
+
+**Chiesto dall'utente**, in due riprese: un **questionario di onboarding** alla creazione dell'account, la **data di inizio relazione modificabile dalle impostazioni**, e poi — con due schermate di riferimento — *«pagine dedicate alla spiegazione del funzionamento»* con animazioni, una **welcome page** come quella allegata ma con la palette dell'app, e che *«passando dalla welcome page alla prima dell'onboarding lo sfondo diventi uniforme tramite un'animazione di riempimento partendo dalla parte già colorata»*.
+
+**Fatto**: nuovo ingresso a due fasi in `app/(pubbliche)/benvenuto.tsx` con `components/ingresso-fondo.tsx` e `components/ingresso-illustrazioni.tsx` (**D-97**); questionario facoltativo — migrazione `0029`, `lib/profilo.ts`, `app/questionario.tsx` — con l'aggiornamento dei due documenti legali che dichiaravano il contrario (**D-98**); e la correzione della data d'inizio dalle impostazioni.
+
+🔑 **La data non è costata niente, e il motivo merita di essere scritto**: `imposta_insieme_dal` (migrazione `0005`, D-29) faceva **già** `on conflict … do update` sull'evento del calendario, e il suo commento diceva a lettere *«permette di ritrovarlo e spostarlo se la data viene corretta»*. Il lavoro è stato solo estrarre il selettore da `components/insieme.tsx` e chiamarlo da un secondo posto: **nessuna migrazione**. È il dividendo di una funzione scritta il 2026-08-13 prevedendo un caso che allora non serviva.
+
+⚠️ La voce sta nelle impostazioni **fuori** dalle «cose senza ritorno», ed è deliberato: cambiare la data non distrugge niente e si può rifare, mentre metterla accanto allo scioglimento le darebbe una gravità che non ha. Ma il testo avverte **prima** di premere che il cambio sposta anche «Il nostro inizio» sul calendario **dell'altro**: la stessa azione tocca due cose, e chi crede di correggere un numero non si aspetta di veder cambiare una data nel diario condiviso.
+
+**Verificato nel browser** (Expo web, viewport 375×812), fase per fase: il saluto con la curva al posto giusto, il riempimento che arriva a sfondo uniforme, le quattro pagine con le loro illustrazioni, e l'ultima che porta a «Crea il tuo account». `tsc` pulito; `eslint` non aggiunge errori (i tre avvisi nuovi sono `set-state-in-effect`, lo stesso modello già presente in `lib/coppia.ts` e `lib/riepilogo.ts`).
+
+🔴 **Non ancora verificato contro il database vero**: la migrazione `0029` **non è stata applicata**. Finché non lo è, `salva_profilo_coppia` e `cancella_profilo_coppia` non esistono su Supabase e il questionario fallisce all'invio. Il resto dell'ingresso non la usa e funziona comunque.
+
+⚠️ **E resta aperto un fronte che questa sessione non ha toccato**: i controlli mirati su SDK 57 sul telefono — B-49 e le sei conferme — che aspettano dalla nona sessione.
+
 ### 2026-09-04 — La lontra: una mascotte prima che ci sia una creatura da vestire
 
 **Chiesto dall'utente**: partendo da uno sticker kawaii di una **lontra** fornito in chat, prima *«rappresentare questo soggetto da cucciolo»*, poi *«anche come più adulta, è importante che rimanga ugualmente tenera»*, e infine — la frase che ha cambiato la natura del lavoro — *«tutte queste immagini e prompt servono per creare una mascotte e animarla per lifecouple»*.
@@ -284,6 +315,78 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-99 — Le locandine dovevano passare a TheTVDB: scritta, e ritirata lo stesso giorno (2026-09-04)
+🔴 **DECISIONE RIBALTATA, e resta scritta.** L'utente aveva deciso *«passa a thetvdb»* dopo aver visto i numeri; poche ore dopo ha riferito che **TheTVDB ha problemi con la creazione di nuovi account**, quindi la chiave non si poteva ottenere e si è tornati a TMDB. Il codice, la migrazione `0030` e la rinomina sono stati **ritirati**; questa voce **no**.
+
+**Perché non si cancella**: la ricerca che l'ha prodotta vale ancora tutta, il ragionamento è corretto, e l'unica cosa che l'ha fermata è un impedimento **temporaneo e altrui**. Cancellarla significherebbe rifare fra un mese lo stesso lavoro per arrivare alla stessa conclusione. È la stessa regola già applicata in `Marketing/LifeCouple/monetizzazione.md` §0-bis: *non si cancella una decisione superata, si dice cosa la sostituisce e perché.*
+
+⚠️ **E il problema che questa decisione risolveva torna aperto**: TMDB resta gratuito solo per uso non commerciale, e con gli abbonamenti attivi l'uso è commerciale dal primo giorno. Il blocco alla pubblicazione **non è stato rimosso, è stato rimandato**. Vedi il backlog per le mosse rimaste.
+
+**Cosa era stato deciso, e resta valido se TheTVDB si sblocca:**
+
+**Il perché in una riga**: TMDB è gratuito solo per uso **non commerciale**, e dal 2026-08-29 LifeCouple nasce con gli abbonamenti attivi — quindi commerciale dal primo giorno. Il listino TMDB è **149 $/mese**; col prezzo di 34,99 €/anno a coppia e al netto della commissione dello store, sono **fra le 50 e le 70 coppie abbonate per l'anno intero solo per pagare l'API**. TheTVDB concede licenza **gratuita sotto i 50.000 $/anno di ricavi**, in cambio di un'attribuzione con link.
+
+**Le alternative valutate e scartate**, perché la scelta non fosse per esclusione mancata: **TVmaze** è gratis davvero (CC BY-SA) ma indicizza **solo serie TV**; **Wikidata** è CC0 e copre i film ma **non ha le locandine** (su Wikipedia stanno in fair use, non ridistribuibile); **OMDb** è CC BY-NC e vieta il commerciale a prescindere dal piano; **Simkl** e **Watchmode** sono gratuiti solo per uso non commerciale, cioè hanno lo stesso problema di TMDB. TheTVDB è l'unica insieme gratuita, con i film, e con le copertine.
+
+🔑 **La differenza architetturale che il cambio porta con sé, e che non era prevedibile dal prezzo**: TMDB accettava la chiave **nell'URL** di ogni GET; TheTVDB no — si fa `POST /login` con la chiave e si riceve un **bearer token valido un mese**. Quindi ora c'è uno stato che prima non esisteva: un token da conservare, rinnovare, e da buttare quando viene rifiutato. Sta in `AsyncStorage` e non solo in memoria, perché un login a ogni avvio sarebbe una richiesta di rete prima della prima ricerca — e una richiesta che può fallire trasforma un'app aperta offline in un'app che sembra rotta. Si rinnova dopo **tre settimane** invece che a un mese: senza margine, la scadenza cadrebbe addosso a una ricerca qualunque.
+
+**`tmdb_id` è stata rinominata in `id_esterno`, e non era evitabile.** La scorciatoia era lasciare il nome e metterci l'id di TheTVDB: tipo compatibile, una riga di codice. È **esattamente** la scorciatoia che la 0023 aveva rifiutato quando si trattava di infilare l'identità TMDB dentro `google_place_id`, e la ragione è la stessa parola per parola — *chi legge `tmdb_id` fra sei mesi si aspetta un id TMDB e trova altro*. Una colonna che mente costa più di una migrazione.
+
+**E c'è una colonna nuova, `fonte`**, perché le due sorgenti **non hanno lo stesso formato di locandina**: TMDB salva un percorso (`/abc.jpg`) da comporre con la sua CDN, TheTVDB restituisce un URL. Senza `fonte`, l'unico modo di distinguerle sarebbe **dedurlo dalla stringa** — *«se comincia per http allora è TheTVDB»* — cioè indovinare un dato da un indizio. È il caso di `lista.tipo` nella 0023: *se il dato serve, lo si dichiara.* ⚠️ `urlLocandina` riconosce comunque **entrambe le forme**, perché chi disegna un elenco non sempre ha la fonte sotto mano e una copertina che sparisce è peggio di un controllo in più.
+
+🔴 **Il debito che resta aperto, e va chiuso prima della pubblicazione**: le locandine già salvate **non sono state cancellate**. Sparirebbero tutte insieme, e per l'utente sarebbe una perdita senza spiegazione. Ma una copertina TMDB continuata a mostrare dentro un'app che incassa **è uso commerciale** — cioè esattamente ciò da cui si sta uscendo. La riparazione automatica di `lib/preferiti.ts` è stata quindi estesa: prima raccoglieva i film **senza** locandina, ora prende anche quelli con `fonte = 'tmdb'` e li rigenera su TheTVDB. Finché non ha girato su tutte le righe, il problema è **ridotto, non risolto**.
+
+⚠️ **Due cose che il cambio NON risolve e che vanno tenute a mente:**
+
+- **La locandina è un'opera dello studio**, non di TheTVDB né di TMDB. Quello che si ottiene è il diritto di usare la loro piattaforma, non l'opera: si è cambiato quale licenza si sta rispettando, non il rischio a monte.
+- **TheTVDB nasce come database televisivo**, e sui film la copertura è inferiore a TMDB — che resta la fonte di fatto del settore. 🔴 **Va misurata su titoli veri**, e finché non lo è, questa decisione è presa su un vantaggio economico certo e una qualità ignota.
+
+🔑 **Quello che questo tentativo ha comunque prodotto, e che non va perso**: il costo del cambio **non era il prezzo, era il login**. TMDB accetta la chiave nell'URL; TheTVDB pretende un `POST /login` e un token da conservare, rinnovare e invalidare. Scoprirlo è costato una riscrittura del modulo, ed è la ragione per cui una migrazione di fornitore non si stima dal listino. Se un domani si riprova, quel lavoro è descritto qui e non va reinventato.
+
+⚠️ **Mai verificato contro l'API vera**: nessuna chiamata è stata fatta, quindi resta ignoto sia se `image_url` sia assoluto o relativo, sia — la cosa che più contava — **quanto bene TheTVDB copra i film**, visto che nasce come database televisivo.
+
+### D-98 — Il questionario di profilo: il primo dato che chiediamo e che non serve a chi lo dà (2026-09-04, migrazione 0029)
+**Chiesto dall'utente**: un questionario di onboarding. Alla domanda su cosa dovessero servire le risposte ha scelto **«capire chi sono gli utenti»** — cioè analisi di prodotto — e come momento **la formazione della coppia**.
+
+**Perché è una decisione e non una schermata in più**: ogni altro dato del sistema sta nel database perché **il servizio non funzionerebbe senza**, e ha base giuridica «esecuzione del contratto» (art. 6.1.b). Queste quattro risposte no: **non tornano all'utente in nessuna forma**, non cambiano niente nell'app, e servono a noi. Cambia la base giuridica, e con essa tre cose che non sono negoziabili:
+
+- **Consenso (art. 6.1.a)**, quindi libero, specifico, informato e **revocabile con la stessa facilità con cui è stato prestato** (art. 7.3). Da qui `cancella_profilo_coppia()` e la voce nelle impostazioni: non sono cortesie.
+- **Il consenso è la riga stessa.** Nessuna colonna `ha_acconsentito`: la riga esiste solo se hanno acconsentito, e revocare significa cancellarla. Un booleano avrebbe reso rappresentabile lo stato «risposte presenti, consenso falso», che è esattamente il dato che non deve poter esistere.
+- **Saltare non deve costare niente.** Nessuna domanda obbligatoria, un invito in home che si chiude per sempre al primo «non adesso», e il questionario che non blocca nulla. Un consenso necessario per proseguire non è libero (art. 4.11), e quindi non è un consenso.
+
+🔴 **E ha reso false due righe che erano scritte nei documenti legali.** Il registro dei trattamenti dichiarava *«Profilazione, analytics, pubblicità — nessuno strumento, né proprio né di terze parti»*, e l'informativa elencava trattamenti tutti su base contrattuale. **Sono stati aggiornati nello stesso giro** (A7 nel registro, riga nuova e nota in §3 dell'informativa), non dopo: una tabella che raccoglie dati che l'informativa nega è peggio di nessuna tabella, ed è precisamente il caso che **D-80** esiste per impedire — *i documenti legali dichiarano ciò che il sistema fa*.
+
+⚠️ **La distinzione tenuta nel registro**, perché la riga vecchia non era del tutto sbagliata: continua a non esistere **nessun analytics osservativo** — nessun comportamento nell'app viene misurato. Ciò che è cambiato è che esiste una raccolta **dichiarata e fornita dall'utente**. Le due cose non sono la stessa, e cancellare la riga invece di correggerla avrebbe perso l'informazione più importante.
+
+**Le risposte stanno sulla coppia e non sull'utente**: l'unità del prodotto è la coppia (l'abbonamento lo è, il punteggio lo è), «convivete?» ha una risposta sola per due persone, e così la riga muore con la coppia per `on delete cascade` — senza nessuna regola speciale allo scioglimento, che è il tipo di caso particolare che D-04 costringe altrimenti a inventare.
+
+⚠️ **La fascia d'età parte da 14** perché 14 è l'età minima dichiarata nell'informativa (§11, art. 8 GDPR in Italia). Una soglia diversa nel questionario avrebbe fatto divergere due documenti che devono dire la stessa cosa.
+
+⚠️ **D-08 resta intatta e va riletta prima di aggiungere una quinta domanda**: esclude i dati di categoria particolare *da ogni funzione*, e nomina il questionario come il modo in cui quella decisione verrebbe annullata senza che nessuno se ne accorga. Le quattro domande scelte stanno tutte dentro «vita di coppia». Una su orientamento, salute o fede sarebbe art. 9 e **non si può aggiungere**, per quanto innocua sembri in un elenco di opzioni.
+
+**Il questionario è anche entrato nell'export** di `lib/esporta.ts`: sono dati personali di chi esporta, e l'art. 20 non guarda a chi ha premuto il bottone.
+
+### D-97 — L'ingresso è una schermata sola con due fasi, perché lo chiede il movimento (2026-09-04)
+**Chiesto dall'utente**: che passando dal benvenuto alla spiegazione *«lo sfondo diventi uniforme tramite un'animazione di riempimento partendo dalla parte già colorata»*.
+
+🔑 **Quella richiesta esclude due route, e non è un dettaglio implementativo.** `expo-router` smonta la schermata che si lascia e monta quella che arriva: il colore della seconda **non è** il colore della prima che cresce, è un colore nuovo che compare. Il riempimento non partirebbe da niente, e si vedrebbe un lampeggio. Perché il movimento parta davvero da ciò che si sta guardando, il fondo dev'essere **un solo elemento che vive attraverso i due momenti** — quindi due fasi dentro una schermata, non due schermate.
+
+**Alternativa scartata**: le transizioni condivise di `expo-router`. Avrebbero potuto reggere il caso, ma richiedono che l'elemento condiviso esista identico nelle due route e non danno controllo sull'*altezza* che cresce mentre una curva sfuma — che è tutto ciò che questa animazione fa. Il costo del controllo perso era più alto del beneficio di avere due file.
+
+**Tre cose imparate facendola:**
+
+- ⚠️ **La collina bianca doveva sfumare, non solo scendere.** Sta a cavallo del bordo inferiore del blocco, quindi scende con lui; ma a riempimento finito si sarebbe trovata **in fondo allo schermo, ancora visibile** — una gobba bianca sul colore pieno, cioè l'opposto dello sfondo uniforme richiesto. Sparisce entro il 60% del percorso, quando sotto c'è già colore.
+- ⚠️ **`flex` non sa dov'è il colore.** Il primo tentativo posizionava il testo con `flex-[0.56]`, gemello del `height * 0.56` del fondo: il testo è finito **sopra** il colore, perché `flex` divide lo spazio interno all'area sicura mentre il fondo misura lo schermo. La frazione è ora **una costante esportata** (`FRAZIONE_SALUTO`) e il layout misura in punti col margine di sistema recuperato dentro. Due righelli diversi per lo stesso bordo è un difetto che ricompare a ogni telefono con un notch diverso.
+- ⚠️ **`withTiming` e non una molla**, contro la regola generale di `lib/movimento.ts`: una molla rimbalza, e un fondo che rimbalza dopo aver riempito lo schermo si legge come un errore — non c'è nessun oggetto fisico a cui attribuire quel peso.
+
+🔑 **Il testo sopra il colore è prugna, non bianco**, e qui il riferimento non si è copiato: nel riferimento è chiaro perché il suo arancione è scuro, mentre su questi pastelli il bianco dà **circa 2:1** di contrasto — sotto il minimo perfino per il testo grande. È la stessa lezione già pagata in `lib/tema.ts` per la testata del calendario. Si è tenuta la **struttura** del riferimento e si è cambiato ciò che su questa palette non avrebbe funzionato.
+
+**Le quattro pagine di spiegazione mostrano il meccanismo, non l'interfaccia**: nessuno screenshot in miniatura, che invecchierebbe al primo ritocco della schermata vera e comincerebbe a mentire. E quella dei giochi non vende un gioco: **disegna il sigillo di D-12** — *prima in segreto, poi insieme* — che è la cosa dell'app più facile da fraintendere come «l'altro legge mentre scrivo». Meglio dirlo all'ingresso che lasciarlo scoprire.
+
+⚠️ **La mascotte in cima al saluto è ancora l'emblema.** Il riferimento ha lì la sua, e LifeCouple ne ha una decisa lo stesso giorno (D-95, la lontra), ma `assets/mascotte/` contiene solo un **JPEG su fondo chiaro**, che sopra il gradiente si vedrebbe come un rettangolo bianco. Serve il PNG ritagliato di `docs/mascotte.md`: il posto è già suo, si sostituisce un componente.
+
+⚠️ **Chi rientra salta la spiegazione**: «Ho già un account» va diritto ad `accedi`. Rivedere quattro pagine a ogni reinstallazione sarebbe un pedaggio, ed è la stessa ragione per cui D-26 aveva tolto il cancello dall'onboarding.
 
 ### D-96 — La creatura ha **tre** stadi, e i tre esistono già (2026-09-04)
 
@@ -1788,6 +1891,30 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-50 — L'illustrazione non compariva e i pallini restavano indietro: lo stato non seguiva lo scorrimento (2026-09-04, CORRETTO)
+
+**Il sintomo**: nella spiegazione d'ingresso, premendo «Avanti» i **pallini avanzano** ma il contenuto si sposta solo di poco e si ferma **fra due pagine**, con l'illustrazione fuori campo. Riproducibile con tocchi distanziati di 1,5 secondi, quindi **non** è una questione di tocchi ravvicinati.
+
+**Cosa è stato misurato** (e non dedotto): il contenitore scorrevole ha `clientWidth 375`, `scrollWidth 1500` — coerente con quattro pagine da uno schermo — `scroll-snap-type: x mandatory`, e dopo `scrollTo({x: 375})` si ferma a **113**. Lo `scroll-snap` non recupera, perché si applica dopo un gesto e non dopo uno scorrimento programmatico.
+
+🔑 **La lezione, che vale più della correzione**: le prime due ipotesi erano sbagliate ed **entrambe erano state scritte nel codice come se fossero la causa**. La prima (`setPagina` non sincrono, quindi il secondo tocco legge una pagina vecchia) descriveva un problema **reale ma non questo**; la seconda (due `scrollTo` animati che si annullano) è stata smentita dal fatto che il difetto compare anche con un solo tocco per volta. ⚠️ Entrambe erano state «verificate» leggendo `scrollLeft` di un elemento trovato per euristica — che riportava `0` mentre il contenuto era **visibilmente** spostato. *Una misura che non concorda con ciò che si vede non è un dato: è un secondo difetto da diagnosticare, e finché non lo si fa ogni correzione che ne discende è cieca.*
+
+**Stato**: il codice è tornato alla forma **vista funzionare** (le quattro pagine si rendono correttamente e lo scorrimento col dito le raggiunge); resta il solo `paginaRef`, che corregge una race vera e non tocca il layout. Le correzioni tentate — misure fisse al posto di `flex`, salto senza animazione — **sono state ritirate**: non risolvevano, e lasciarle avrebbe significato tenere in repo del codice con la motivazione sbagliata scritta accanto.
+
+🔴 **Da guardare per primo sul telefono**, perché è lì che si decide se sia un difetto o un artefatto: su iOS il paging di `ScrollView` è **nativo**, non è `scroll-snap` del CSS, e `scrollTo` passa da UIScrollView. Molto probabilmente lì funziona, e in quel caso è un difetto della sola preview web — da dichiarare, non da correggere. **Lo scorrimento col dito è comunque il gesto principale** e funziona.
+
+**✅ CORRETTO in giornata.** La causa vera era una sola, e nessuna delle due ipotesi precedenti: **`onMomentumScrollEnd` scatta solo quando lo scorrimento ha inerzia.** Uno scorrimento che non ne ha — trascinare e lasciare fermi, o uno spostamento programmatico — non lo fa scattare mai, quindi lo stato `pagina` restava indietro rispetto a ciò che si stava guardando.
+
+🔑 **E il sintomo era doppio, il che ha reso la diagnosi più difficile di quanto fosse**: `pagina` non serve solo ai pallini, è anche ciò che dice a ogni illustrazione **se è quella guardata**. Con lo stato fermo, l'illustrazione della pagina raggiunta non riceveva mai `attiva`, non partiva, e restava a opacità zero — cioè **invisibile**. Si vedeva una pagina "vuota" col solo testo, e sembrava un problema di scorrimento quando era un problema di stato.
+
+**La correzione**: `onScroll` con `scrollEventThrottle`, **in aggiunta** a `onMomentumScrollEnd` e senza toccare il layout, aggiornando solo quando la pagina cambia davvero.
+
+**Verificato in preview** dopo la correzione: scorrendo di una pagina, `scrollLeft` arriva esattamente a 375 su pagine da 375, **i tre pin della mappa compaiono** e il pallino attivo è il secondo. Prima della correzione, stessa azione: pin assenti e pallino fermo sul primo.
+
+⚠️ **Resta da provare sul telefono** il bottone «Avanti» (voce 000000-c-bis): là il paging è nativo e `scrollTo` passa da UIScrollView, quindi il comportamento può essere diverso da quello della preview in entrambe le direzioni.
+
+
+
 ### B-49 — L'importazione dal calendario era rotta da SDK 57, e sarebbe rimasta a caricare per sempre (2026-09-03, CORRETTO — da provare sul telefono)
 
 **Il sintomo che non si è visto**, perché nessuno ha aperto quella schermata dopo l'aggiornamento: «Importa dal calendario» sarebbe rimasta a caricare **all'infinito**, senza errore.
@@ -2558,6 +2685,47 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
+### Widget per la home screen — rimandati dall'utente il 2026-09-04
+
+**Chiesti dall'utente** il 2026-09-04, su iPhone **e** Android, e **rimandati** lo stesso giorno dopo aver visto i vincoli. Cinque, tutti «dinamici» nel senso di *a rotazione fra gli elementi disponibili*:
+
+1. **Prossimo evento** — con la foto, se c'è
+2. **Ultimo evento** — con la foto, se c'è
+3. **Punteggi dei giochi** — a rotazione fra Intesa, Sintonia, Conoscenza e Coraggio
+4. **Film e luoghi preferiti** — con la copertina
+5. **Foto**
+
+✅ **I dati ci sono già tutti**: `evento` (con `anteprimePerEvento` per le foto), i punteggi di **D-83**, `elemento_lista` con `locandina` (0023) e i luoghi con `foto_google`. Non serve nessuna migrazione: serve un modo di **portarli fuori dall'app**, che è tutto il problema.
+
+#### 🔴 Perché non è «aggiungere cinque schermate»
+
+Un widget **non è React Native**: lo disegna il sistema operativo per conto suo, quando l'app non è in esecuzione. Serve codice nativo e un **development build** — in Expo Go i widget non esistono e non si possono provare. Oggi `Projects/LifeCouple` non ha né `ios/` né `android/`, e il prebuild è il passo che *«cambierebbe la natura del progetto»* (già scritto a proposito di **B-20**).
+
+**Rilevato il 2026-09-04, con le fonti** — le due piattaforme non sono affatto nella stessa situazione:
+
+| | Android | iOS |
+|---|---|---|
+| Libreria | [`react-native-android-widget`](https://saleksovski.github.io/react-native-android-widget/) — config plugin, matura | [`expo-widgets`](https://docs.expo.dev/versions/latest/sdk/widgets/) — ufficiale Expo, **alpha** |
+| Immagini nei widget | ✅ | 🔴 **non ancora supportate** in `@expo/ui` |
+| Build provabile | ✅ EAS Build → APK, **senza costi** | 🔴 serve un **Mac** (compilazione locale) o l'**Apple Developer Program**, $99/anno |
+
+🔴 **Due blocchi indipendenti su iOS**, e vale la pena tenerli distinti perché si sciolgono in momenti diversi: (1) `expo-widgets` **non supporta ancora le immagini**, e quattro widget su cinque vivono di foto e copertine — oggi su iOS sarebbero testo soltanto; (2) si sviluppa da **Windows**, e senza Mac né account Apple una development build **non si installa** sull'iPhone. Il primo si scioglie da sé quando la libreria matura, il secondo solo comprando qualcosa.
+
+**Android invece è fattibile appena si accetta il prebuild**, ed è la strada da cui partire quando si riprende.
+
+#### ⚠️ E la decisione che non è tecnica
+
+🔑 **Un widget mette foto ed eventi della coppia sulla home screen, dove non c'è nessuna autenticazione**: chiunque prenda in mano il telefono li vede **senza sbloccarlo**. Il registro dei trattamenti classifica le fotografie a sensibilità **massima**, quindi questa è la stessa classe di scelta di **D-04** e **D-05** — non un dettaglio di presentazione, e **va nel threat model prima del codice**, non dopo. Il widget «foto» quasi certamente vuole un interruttore per spegnerlo; gli altri quattro vanno pesati uno a uno, perché «prossimo evento» può rivelare a un terzo dove sarete stasera.
+
+⚠️ **I primi tre widget sono testo e date**: quelli sono gli unici che non toccano il nodo delle immagini, e sono anche quelli che si potrebbero fare per primi su entrambe le piattaforme.
+
+#### Precondizioni, in ordine
+
+1. **Decisione dell'utente sul prebuild** — cambia il modo di provare l'app tutti i giorni (via Expo Go, dentro una development build installata). In cambio sblocca anche i permessi mai visti di **B-20** e la nuova API di `expo-calendar`, che aspettano lì.
+2. **Threat model dei widget** prima del codice, secondo `Rule/regole-sviluppo-sicuro.md`.
+3. **Android per primo**, con `react-native-android-widget` e un APK da EAS Build.
+4. **iOS quando** `expo-widgets` supporta le immagini **o** arriva l'account Apple — i due eventi sono indipendenti e serve il primo comunque.
+
 ### La piattaforma — aggiornato il 2026-09-03
 
 - ⬜ **Migrare `lib/importa.ts` alla nuova API di `expo-calendar`** (`getCalendars()`, `listEvents()`, `requestCalendarPermissions()`), oggi impossibile: la nuova API **non esiste in Expo Go**. Si fa alla prima development build, insieme ai permessi di **B-20** che pure lì aspettano. Fino ad allora `expo-calendar/legacy` è la scelta giusta, non un ripiego provvisorio da correggere.
@@ -2794,9 +2962,10 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 **I due muri — non ritardi, esiti:**
 - [ ] 🔴 **Cancellazione dell'account dall'app.** Obbligatoria su Apple (un'app che crea account deve poterli cancellare **in-app**), dichiarata e servita anche via web su Google. **Non esiste**: `app/` ha 17 schermate e nessuna di impostazioni. E **non è una schermata**: eliminare da `auth.users` richiede `service_role`, quindi è la **prima Edge Function** del progetto — il repo non ne ha nessuna. ⚠️ Da progettare insieme allo **scioglimento** (D-04/D-21), che è un atto diverso e reversibile: chi preme «cancella account» credendo di sciogliere fa la cosa irreversibile al posto di quella che non lo è.
-- [ ] 🔴 **Licenza TMDB.** Gratuita per uso **non commerciale**; con gli abbonamenti l'uso è commerciale dal primo giorno. O licenza commerciale, o le locandine (D-69) escono dal prodotto. ⚠️ Era un debito da verificare: **con questa decisione è un blocco alla pubblicazione**.
-
-**Il pezzo che nessun documento aveva costato:**
+- [ ] 🔴 **Licenza TMDB — ancora aperta.** Gratuita per uso **non commerciale**; con gli abbonamenti l'uso è commerciale dal primo giorno, quindi resta un **blocco alla pubblicazione**. Il 2026-09-04 si era deciso di passare a **TheTVDB** (**D-99**) — gratuito sotto i 50.000 $/anno di ricavi — e il codice era stato scritto; ⚠️ **ritirato in giornata perché TheTVDB ha problemi con la creazione di nuovi account** e la chiave non era ottenibile. La ricerca completa e le alternative scartate restano in **D-99**: se un domani gli account si sbloccano, il lavoro è descritto e non va rifatto. **Le mosse rimaste, in ordine:**
+  1. 🔑 **Scrivere a TMDB** — è ora la mossa principale e costa una mail. Lo staff ha dichiarato nei forum di star preparando *«una nuova offerta pensata per le app piccole»*, e il caso di LifeCouple è esattamente quello dei tanti indie che se ne lamentano: ricavi di pochi euro al mese contro 149 $.
+  2. **Riprovare TheTVDB** quando la registrazione funziona.
+  3. **Togliere le locandine da fonte esterna** — costo zero e nessun rischio: la lista dei film resta identica, perde solo la copertina automatica. È il ripiego che rende la pubblicazione possibile comunque.
 - [ ] 🔴 **L'abbonamento è della coppia, lo store vende a una persona.** Non esiste un abbonamento intestato a due: uno paga e il diritto va esteso all'altro, cosa che il telefono di chi non ha pagato non può fare (non ha ricevute). Servono webhook → Edge Function → colonna su `coppia` → policy RLS. ✅ Non è una migrazione di dati contesi: si aggiunge una colonna. ⚠️ **Da decidere prima del codice**: che fine fa il diritto **allo scioglimento**? Se la colonna sta su `coppia`, sparisce per entrambi — è la stessa domanda che D-16 ha già dovuto sciogliere per la creatura.
 
 **Il resto, in ordine di dipendenza:**
@@ -2837,6 +3006,10 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
+> **Nota del 2026-09-04 (seconda sessione) — l'ordine qui sotto NON cambia, ma ora c'è del codice nuovo da provare.** A differenza della prima sessione del giorno, questa **ha toccato l'app**: il nuovo ingresso (D-97), il questionario (D-98) e la data d'inizio correggibile dalle impostazioni. Tutto verificato **a compilazione e nella preview web**, niente su un telefono — quindi le voci qui sotto restano prime, e le nuove si aggiungono in coda come 000000-c/d/e.
+>
+> 🔴 **Prima di provare il questionario serve applicare la migrazione `0029`**: finché non è applicata, `salva_profilo_coppia` e `cancella_profilo_coppia` non esistono e l'invio fallisce. Il resto dell'ingresso non la usa.
+
 > **Nota del 2026-09-04 — l'ordine qui sotto NON è cambiato.** La sessione del 4 settembre ha prodotto solo documentazione e un'immagine ([`docs/mascotte.md`](docs/mascotte.md), `assets/mascotte/`): **nessuna riga di codice, nessun comportamento dell'app toccato**, quindi tutto ciò che segue resta valido parola per parola e i controlli sul telefono restano la prima cosa da fare.
 >
 > Sul fronte creatura, delle tre domande aperte quel giorno **due hanno avuto risposta**: è la creatura (**D-95**) e ha **tre stadi** (**D-96**), che coincidono col materiale già prodotto. Restano **quanti umori** — l'unica cosa che manca prima di poter generare le immagini — e **come si anima un raster** (`docs/mascotte.md` §9). Nessuna delle due è codice da verificare su un telefono: non hanno una posizione in questa lista, stanno nel backlog alla voce 12.
@@ -2854,6 +3027,14 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 000000-a. 🔴 **Le sei conferme nuove** (D-94), una per una: evento dal calendario · cartella nella galleria · commento in un evento · posto dalla mappa · posto o voce dalle liste · carta in preparazione di una partita personalizzata. Cosa deve succedere: compare la domanda, **«Annulla» è il primo bottone**, e la nota dice cosa si porta via. Poi la parte che conta: **premendo «Annulla» non deve cancellare niente**, e premendo «Elimina» deve cancellare *davvero* — una conferma che non cancella è peggio di nessuna conferma.
 
 000000-b. ⚠️ **Le due conferme che c'erano già** (le foto in galleria e nell'evento) non sono state toccate, ma il ripiego web di `chiediConferma` non le riguarda: se un giorno le si vorrà uniformare, passano anche loro da `chiediConferma`.
+
+000000-c. 🔴 **Il nuovo ingresso, su un telefono vero** (D-97): il saluto con la mascotte nella metà colorata e la curva che monta sul bianco; premendo «Crea il tuo account» il colore **riempie** lo schermo e la collina sparisce senza lasciare una gobba; le quattro pagine scorrono col dito e i pallini seguono. ⚠️ **La cosa che il browser non può dire**: il blocco colorato è alto una frazione dello **schermo**, e il contenuto si allinea recuperando il margine di sistema — su un telefono col notch, o con la barra gesti, è lì che si vede se i due righelli coincidono davvero. Guardare anche che «Salta» non finisca sotto la tacca.
+
+000000-c-bis. 🔴 **B-50, prima di tutto il resto dell'ingresso**: nella spiegazione, «Avanti» porta davvero alla pagina successiva? In preview web **no** — i pallini avanzano e il contenuto resta fra due pagine. Su iOS il paging è nativo e con ogni probabilità funziona: se è così, B-50 si chiude come difetto della sola preview. Provare **entrambi** i modi, perché dicono cose diverse: il **dito** (che è il gesto principale) e il **bottone**.
+
+000000-d. 🔴 **Il questionario** (D-98), **dopo aver applicato la 0029**: l'invito compare in home quando la coppia è completa; risponde, invia, e le risposte si rileggono riaprendolo dalle impostazioni. Poi le due cose che contano più delle risposte: **«Non adesso» deve far sparire l'invito per sempre** (è memoria locale, per utente), e **«Cancella le risposte» deve cancellare davvero** — è una revoca di consenso, e una revoca che non revoca è il difetto peggiore di tutta questa funzione. ⚠️ Verificarla **rileggendo**, non fidandosi dell'assenza di errore: è la lezione di B-23.
+
+000000-e. ⚠️ **La data d'inizio dalle impostazioni**: cambiarla e controllare che sul calendario **«Il nostro inizio» si sposti invece di sdoppiarsi** — l'indice unico lo impedisce, ma è proprio la cosa che nessuno ha mai visto succedere. E che il contatore in home segua. Serve il secondo account per vedere che si sposti anche **dall'altra parte**.
 
 Poi la lista della seconda parte (00000-a → 00000-e: vetro, foto, selettore data, mappe, edge-to-edge, NativeWind) e quella della prima (l'insegna del quiz, i cinque difetti del 2026-09-02, Android), tutte ancora valide.
 

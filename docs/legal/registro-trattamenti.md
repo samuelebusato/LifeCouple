@@ -87,13 +87,28 @@ Contatto per gli interessati: **[DA DECIDERE: email dedicata all'app]**
 
 ---
 
+### A7 — Questionario di profilo della coppia
+
+| | |
+|---|---|
+| **Finalità** | Analisi statistica sul prodotto: capire **chi usa** l'applicazione (canale di scoperta, fascia d'età, situazione abitativa, interesse prevalente) |
+| **Categorie di interessati** | Coppie che scelgono di rispondere |
+| **Categorie di dati** | Quattro risposte a scelta chiusa, nessun testo libero. Nessun dato di categoria particolare (art. 9): vedi **D-08** |
+| 🔴 **Base giuridica** | **Consenso (art. 6.1.a)** — ed è **l'unico trattamento del sistema che non si regge sull'esecuzione del contratto**. Queste risposte non servono a erogare il servizio: servono al titolare |
+| **Conservazione** | Fino alla revoca del consenso o allo scioglimento della coppia (`on delete cascade`) |
+| **Destinatari** | Supabase (responsabile). Nessuna comunicazione a terzi |
+| **Trasferimenti extra-UE** | Nessuno — Francoforte (DE) |
+| **Modalità del consenso** | Prestato con l'invio esplicito delle risposte; **la riga esiste solo se il consenso è stato prestato**, e non esiste un campo che possa dire il contrario. Nessuna risposta è obbligatoria e saltare non ha conseguenze: un consenso necessario a proseguire non sarebbe libero (art. 4.11) |
+| **Revoca** | Dalle impostazioni, in due tocchi, senza motivazione (art. 7.3). La revoca **cancella** le risposte, non le disattiva |
+| **Riferimenti** | Migrazione `0029_questionario_profilo.sql` · `app/questionario.tsx` · `lib/profilo.ts` |
+
 ## Trattamenti che NON vengono svolti — e vale la pena scriverlo
 
 | Trattamento | Stato |
 |---|---|
 | **Posizione geografica** | ❌ Letta una volta all'apertura della mappa per centrarla, **mai registrata, mai trasmessa, mai condivisa** (D-05). Non costituisce trattamento da parte del titolare: il dato non lascia il dispositivo |
 | **Dati sanitari / ciclo mestruale** | ❌ Funzione **rimandata** dopo la prima pubblicazione (D-07). Nessun dato art. 9 richiesto |
-| **Profilazione, analytics, pubblicità** | ❌ Nessuno strumento, né proprio né di terze parti |
+| **Analytics automatici, pubblicità, profilazione individuale** | ❌ Nessuno strumento, né proprio né di terze parti. Nessun comportamento nell'app viene osservato o misurato. ⚠️ **Dal 2026-09-04 esiste però una raccolta dichiarata**: il questionario di **A7**, che è su base consenso, a risposte chiuse e **fornito dall'utente**, non osservato. La riga precedente diceva «nessuno strumento» senza distinguere, e sarebbe diventata falsa: è stata corretta invece che lasciata a smentire A7 |
 | **Comunicazioni promozionali** | ❌ Non previste in questa versione |
 
 ---

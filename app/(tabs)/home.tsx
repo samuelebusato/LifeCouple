@@ -2,7 +2,14 @@ import * as React from 'react';
 import { View, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CalendarDays, Film, Image as ImageIcon, MapPin, Sparkles } from 'lucide-react-native';
+import {
+  CalendarDays,
+  ChevronRight,
+  Film,
+  Image as ImageIcon,
+  MapPin,
+  Sparkles,
+} from 'lucide-react-native';
 import { Emblema } from '@/components/emblema';
 import { Insieme } from '@/components/insieme';
 import { ServePartner } from '@/components/serve-partner';
@@ -13,7 +20,9 @@ import { Comparsa } from '@/components/ui/comparsa';
 import { Fondo } from '@/components/schermata';
 import { SPAZIO_BARRA } from '@/components/barra-volante';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
+import { useProfilo, useQuestionarioRimandato } from '@/lib/profilo';
 import { useInvito } from '@/lib/invito';
 import { useRiepilogo } from '@/lib/riepilogo';
 import { useTema } from '@/lib/tema';
@@ -120,6 +129,22 @@ export default function Home() {
   const { coppiaId, completa, insiemeDal, errore, loading, ricarica } = useCoppia();
   const { c } = useTema();
   const r = useRiepilogo(coppiaId);
+  const { session } = useAuth();
+  const { profilo, errore: erroreProfilo, loading: profiloLoading } = useProfilo();
+  const { rimandato: questionarioRimandato, loading: rimandoLoading } = useQuestionarioRimandato(
+    session?.user.id
+  );
+
+  /**
+   * L'invito al questionario compare **solo** se si è sicuri che serva.
+   *
+   * ⚠️ `erroreProfilo` è nell'elenco per la ragione di B-03: una lettura fallita
+   * non è «non ha risposto». Senza quel controllo, un problema di rete
+   * riproporrebbe il questionario a chi l'ha già compilato — che è l'app che dà
+   * dell'immemore all'utente, e per giunta chiedendo un consenso già dato.
+   */
+  const mostraInvitoQuestionario =
+    !profiloLoading && !rimandoLoading && !erroreProfilo && !profilo && !questionarioRimandato;
 
   // Finche' si e' da soli si resta in ascolto: se il partner apre l'invito,
   // la conferma (D-14) dev'essere possibile anche da qui, non solo in onboarding.
@@ -192,6 +217,34 @@ export default function Home() {
             <Comparsa visibile scarto={20} scala={0.95} style={{ width: '100%' }}>
               <Insieme insiemeDal={insiemeDal} ricarica={ricarica} />
             </Comparsa>
+
+            {/* --- L'invito al questionario ------------------------------ */}
+            {/* Compare **alla formazione della coppia** — cioè qui, dove
+                `completa` è vero — e sparisce per sempre appena si risponde o
+                si dice «non adesso».
+                ⚠️ È un invito, non il questionario: quattro domande aperte in
+                home sarebbero un modulo piantato davanti ai ricordi, e
+                soprattutto renderebbero difficile ignorarle. Un consenso che si
+                fa fatica a non dare non è libero (art. 4.11 GDPR), e questa è
+                l'unica funzione del progetto che si regge sul consenso.
+                Chi lo salta lo ritrova nelle impostazioni. */}
+            {mostraInvitoQuestionario && (
+              <Comparsa visibile scarto={16} style={{ width: '100%' }}>
+                <Premibile onPress={() => router.push('/questionario')} scala={0.98}>
+                  <View className="w-full flex-row items-center gap-3 rounded-3xl bg-card p-5">
+                    <View className="flex-1 gap-1">
+                      <Text className="font-serif text-lg text-foreground">
+                        {t.questionario.titolo}
+                      </Text>
+                      <Text className="text-sm text-muted-foreground">
+                        {t.questionario.invitoNota}
+                      </Text>
+                    </View>
+                    <ChevronRight color={c.tenue} size={20} />
+                  </View>
+                </Premibile>
+              </Comparsa>
+            )}
 
             <View className="w-full flex-row flex-wrap">
               <Riquadro

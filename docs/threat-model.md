@@ -105,6 +105,18 @@ I giochi introducono una cosa che il resto dell'app non aveva: **un'informazione
 
 ⚠️ **Cosa NON è verificato**: nessuna delle due partite è mai stata giocata da due persone vere su due telefoni. Ciò che è provato è il **confine** (le righe qui sopra) e la macchina a stati; ciò che non lo è è l'esperienza — che i tratti arrivino fluidi, che il tempo scorra uguale sui due telefoni, che il round passi quando deve.
 
+## 3-bis. Il questionario di profilo (migrazione 0029, D-98)
+
+⚠️ **Va guardato a parte anche se è quattro campi**, perché è l'unico dato del sistema raccolto su base **consenso** invece che contratto: alle minacce tecniche se ne aggiunge una che le altre tabelle non hanno — che il consenso sia **apparente**.
+
+| Componente | STRIDE | Minaccia concreta | Conseguenza | Mitigazione, e come è verificata |
+|---|---|---|---|---|
+| `profilo_coppia` | **I** (Information disclosure) | Un utente legge il profilo di un'altra coppia interrogando l'API col proprio token | Divulgazione di dati personali fra coppie estranee — lo stesso confine TB-3 di tutto il resto | Policy `select` vincolata a `e_membro_attivo(coppia_id)`, la stessa funzione che regge le altre tabelle. ⚠️ **Non ancora verificata**: la migrazione non è applicata, e va aggiunta un'asserzione a `tests/rls.avversariali.mjs` quando lo sarà |
+| `profilo_coppia` | **T** (Tampering) | Un client scrive direttamente sulla tabella, aggirando il gesto di consenso | Esisterebbero risposte **senza** che nessuno abbia acconsentito: il dato peggiore che questa tabella possa contenere | **Nessuna policy di INSERT/UPDATE/DELETE**: la scrittura passa solo da `salva_profilo_coppia()` (SECURITY DEFINER, verifica l'appartenenza). È la stessa regola che tiene `coppia` e `membro_coppia` |
+| `cancella_profilo_coppia` | **R** (Repudiation) | La revoca fallisce in silenzio e l'interfaccia dice «cancellate» | 🔴 **Il difetto più grave possibile qui**: si dichiara revocato un consenso che è ancora in piedi, con i dati ancora nel database. Peggio che non avere la revoca, perché nessuno la ricontrollerà | L'interfaccia **rilegge** dopo la chiamata invece di fidarsi dell'assenza di errore (lezione di B-23), e solo allora scrive «cancellate». ⚠️ **Da provare sul telefono**: è la voce 000000-d del PUNTO DI RIPRESA |
+| Il consenso stesso | — (non STRIDE) | Il questionario diventa di fatto obbligatorio: blocca l'ingresso, o saltarlo costa qualcosa | Il consenso non sarebbe **libero** (art. 4.11) e quindi non sarebbe valido: tutti i dati raccolti sarebbero trattati senza base giuridica | Nessuna domanda obbligatoria, invito che si chiude per sempre al primo «non adesso», nessuna funzione dietro. 🔑 **È una minaccia di progetto, non di codice**: nessun test la può rilevare, e ricompare ogni volta che si è tentati di mettere il questionario sulla strada di qualcos'altro |
+
+
 ## 4. TB-3 — Coppia ↔ coppia
 
 | Componente | STRIDE | Minaccia concreta | Conseguenza | Mitigazione |

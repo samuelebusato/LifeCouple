@@ -38,8 +38,18 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 | **Risposte ai giochi di affinità** | Meccanica dei giochi e punteggio della coppia | Esecuzione del contratto (art. 6.1.b) | Durata del rapporto |
 | **Dati relativi all'abbonamento** (stato, scadenza) | Erogazione delle funzioni a pagamento | Esecuzione del contratto (art. 6.1.b) | Durata del rapporto |
 | **Dati contabili e fiscali** relativi agli acquisti | Adempimenti di legge | Obbligo legale (art. 6.1.c) | 10 anni |
+| **Risposte al questionario** (come ci hai conosciuti, fascia d'età, situazione abitativa, interesse prevalente) — **facoltative** | Capire chi usa l'applicazione, per migliorarla | **Consenso (art. 6.1.a)** | Fino alla revoca del consenso o allo scioglimento della coppia |
 
 Il conferimento dell'indirizzo email è **necessario**: senza di esso l'account non può essere creato.
+
+🔑 **Il questionario è l'unica cosa che ti chiediamo e che non serve a te.** Tutto il resto di questa tabella esiste perché l'applicazione funzioni; quelle quattro risposte servono a noi, per sapere chi sta usando LifeCouple. Per questo:
+
+- **non è obbligatorio**, e saltarlo non toglie né rimanda nessuna funzione;
+- **nessuna singola domanda è obbligatoria**: puoi rispondere a una sola;
+- **puoi cancellare le risposte quando vuoi** dalle impostazioni, senza dare spiegazioni e senza conseguenze (art. 7.3). Cancellarle significa cancellarle davvero, non disattivarle;
+- le risposte **non vengono mostrate al tuo partner** da nessuna parte dell'applicazione, e non cambiano niente in ciò che l'app fa.
+
+⚠️ **Non ti chiediamo l'età esatta ma una fascia**, e la più bassa parte da 14 anni, che è l'età minima del servizio (§11).
 
 ### 3.1 Dati che l'applicazione legge dal dispositivo ma **non** raccoglie
 
