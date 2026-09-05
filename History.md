@@ -1977,6 +1977,17 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-54 — La torta compariva anche negli anni prima della nascita (2026-09-05, CORRETTO)
+
+**Trovato da una frase dell'utente** che non era una segnalazione: *«la torta si vede su tutti gli anni»*. Era la conferma che cercavo — volevo sapere se comparisse anche negli anni **futuri**, e comparivа — ma «tutti» comprendeva anche il **1975**, e lì nessuno dei due era nato.
+
+**La causa**: `compleanniDelGiorno` e `meseConCompleanno` confrontavano **solo giorno e mese**. La scelta era voluta per il futuro — un compleanno torna ogni anno, quindi la torta non deve fermarsi a oggi come fa il cuore — ma la stessa regola, applicata all'indietro, segnava compleanni mai avvenuti. Il calendario si scorre indietro quanto si vuole, quindi il caso non era teorico: bastava arrivarci.
+
+🔑 **La lezione: "non si ferma a oggi" non vuol dire "non si ferma mai".** La differenza col cuoricino era stata pensata in una direzione sola — in avanti — e la regola è stata scritta senza l'altro estremo. Un intervallo aperto da un lato è una decisione; aperto da tutti e due, di solito, è una decisione a metà.
+
+**La correzione**: il confronto include l'anno, con l'anno di nascita **compreso** — il giorno in cui si è nati è il primo della serie, e lasciarlo fuori sarebbe una precisione che non serve a nessuno.
+
+
 ### B-53 — La posizione non compariva perché il comando per accenderla non si trovava (2026-09-05, CORRETTO)
 
 **Riferito dall'utente tre volte**, l'ultima con *«te l'ho già detta 3 volte mi sto stancando»*. E aveva ragione: le prime due correzioni sono state fatte **senza verificare niente**, cambiando codice sulla base di ipotesi.

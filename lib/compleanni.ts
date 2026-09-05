@@ -46,27 +46,47 @@ export function anniCompiuti(dataNascita: string, oggi = new Date()): number | n
   return anni;
 }
 
-/** Chi compie gli anni in questo giorno, fra i due della coppia. */
+/**
+ * Chi compie gli anni in questo giorno, fra i due della coppia.
+ *
+ * ⚠️ **Il confronto include l'anno, e non è pignoleria** (B-54): guardando solo
+ * giorno e mese la torta compariva anche nel **1975**, cioè su compleanni che
+ * non sono mai esistiti perché nessuno dei due era nato. Il calendario si scorre
+ * indietro quanto si vuole, quindi quel caso non è teorico: basta arrivarci.
+ *
+ * 🔑 **L'anno di nascita è compreso**: il giorno in cui si è nati è un giorno da
+ * segnare — tecnicamente non è un *compleanno*, ma è il primo di quella serie e
+ * lasciarlo fuori sarebbe una precisione che non serve a nessuno.
+ */
 export function compleanniDelGiorno(d: Date, compleanni: Compleanno[]): Compleanno[] {
+  const anno = d.getFullYear();
   const mese = d.getMonth() + 1;
   const giorno = d.getDate();
   return compleanni.filter((c) => {
-    const [, m, g] = c.data.split('-').map(Number);
-    return m === mese && g === giorno;
+    const [a, m, g] = c.data.split('-').map(Number);
+    return m === mese && g === giorno && anno >= a;
   });
 }
 
 /**
  * Il mese contiene un compleanno: serve alla vista anno.
  *
- * ⚠️ Non guarda l'anno, solo il mese — un compleanno cade in quel mese **ogni**
- * anno, quindi la torta nella vista anno va su tutti gli anni, non solo su
- * quelli passati. È la differenza col cuoricino, che invece si ferma a oggi
- * perché racconta giorni **vissuti**: un compleanno futuro arriverà comunque.
+ * 🔑 **Non si ferma a oggi**, e qui sta la differenza col cuoricino: un
+ * compleanno cade in quel mese **ogni** anno, anche nei prossimi, mentre il
+ * cuore racconta giorni **vissuti** e si arresta. Un compleanno futuro arriverà
+ * comunque.
+ *
+ * ⚠️ **Ma non va nemmeno all'indietro senza limite** (B-54): prima dell'anno di
+ * nascita non c'è nessun compleanno da segnare, e la prima versione lo faceva —
+ * la torta compariva anche nel 1975.
  */
 export function meseConCompleanno(mese: Date, compleanni: Compleanno[]): boolean {
+  const anno = mese.getFullYear();
   const m = mese.getMonth() + 1;
-  return compleanni.some((c) => Number(c.data.split('-')[1]) === m);
+  return compleanni.some((c) => {
+    const [a, mm] = c.data.split('-').map(Number);
+    return mm === m && anno >= a;
+  });
 }
 
 /** Le date di nascita leggibili: la propria e — se c'è — quella del partner. */
