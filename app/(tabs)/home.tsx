@@ -10,6 +10,7 @@ import {
   MapPin,
   Sparkles,
 } from 'lucide-react-native';
+import { CreaturaCasa } from '@/components/creatura-casa';
 import { Emblema } from '@/components/emblema';
 import { Insieme } from '@/components/insieme';
 import { ServePartner } from '@/components/serve-partner';
@@ -201,6 +202,24 @@ export default function Home() {
             <Comparsa visibile scarto={20} scala={0.95} style={{ width: '100%' }}>
               <Insieme insiemeDal={insiemeDal} ricarica={ricarica} />
             </Comparsa>
+
+            {/* ⚠️ **Sotto il contatore, sopra i riquadri** (scelta dell'utente
+                il 2026-09-06). Resta fuori dalla griglia: la creatura è
+                l'unica funzione non-commodity del prodotto (P-01), e metterla
+                fra le piastrelle la renderebbe una piastrella proprio mentre è
+                la cosa che distingue l'app.
+
+                🔑 E la posizione dice una cosa vera: prima **da quanto** state
+                insieme, poi **cosa ne è venuto fuori**. Sopra il contatore la
+                creatura sarebbe arrivata prima della coppia che la fa
+                crescere.
+
+                ⚠️ **Fuori dalla `Comparsa`, ed è deliberato.** L'onda dei
+                riquadri esiste per dire *in che ordine leggerli*; la creatura
+                non è una cosa da leggere, è una cosa che sta lì — e ha già un
+                movimento suo, il respiro, che una comparsa a molla
+                disturberebbe entrando. */}
+            <CreaturaCasa coppiaId={coppiaId} />
 
 
             <View className="w-full flex-row flex-wrap">

@@ -1,4 +1,5 @@
-import { Platform } from 'react-native';
+import * as React from 'react';
+import { AccessibilityInfo, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 /**
@@ -53,6 +54,37 @@ export const durata = {
 } as const;
 
 /**
+ * I **cicli**: il movimento che si ripete invece di accadere una volta.
+ *
+ * ## Perche' e' una categoria a se' e non una `durata`
+ *
+ * Tutte le voci qui sopra descrivono un **evento** — un dito che preme, una
+ * cosa che entra, una velatura che sfuma — e finiscono. Un ciclo non finisce
+ * (il respiro) o si ripete un numero di volte (lo scodinzolio), e la sua
+ * taratura risponde a una domanda diversa: non «quanto ci mette», ma «ogni
+ * quanto torna». Un respiro tarato come una durata d'entrata sembra un
+ * singhiozzo.
+ *
+ * ⚠️ **Un ciclo perpetuo va spento quando nessuno guarda.** Le schede restano
+ * montate passando da un tab all'altro (lo dice il commento in
+ * `app/(tabs)/home.tsx`), quindi un'animazione infinita continua a girare sul
+ * thread UI mentre si guarda la mappa. Chi usa `ciclo.respiro` lo ferma con
+ * `useFocusEffect` **e** con `AppState`: non e' una raccomandazione, e' l'unico
+ * motivo per cui il costo di un respiro perpetuo e' accettabile.
+ *
+ * ⚠️ **E rispetta il movimento ridotto.** Nel resto dell'app non e' mai stato
+ * un problema perche' nessuna animazione dura piu' di un secondo; un ciclo che
+ * non finisce e' precisamente cio' per cui quell'impostazione di sistema
+ * esiste.
+ */
+export const ciclo = {
+  /** Il respiro della creatura: un'andata e ritorno completa. Perpetuo. */
+  respiro: 2600,
+  /** Lo scodinzolio della festa, tutte le oscillazioni insieme. */
+  scodinzolio: 620,
+} as const;
+
+/**
  * Il ritardo fra un elemento e il successivo in una **cascata**.
  *
  * ⚠️ E c'e' un **tetto**, che e' la parte che si sbaglia. Con un ritardo di 45ms
@@ -67,6 +99,52 @@ export const CASCATA_MAX = 6;
 /** Il ritardo dell'elemento `i` in una cascata, col tetto gia' applicato. */
 export function cascata(i: number) {
   return Math.min(i, CASCATA_MAX) * CASCATA;
+}
+
+/**
+ * **«Riduci movimento» del sistema**, letto e tenuto aggiornato.
+ *
+ * ## Perche' compare solo adesso (2026-09-06)
+ *
+ * Fino a oggi nessuna animazione dell'app durava piu' di un secondo: il
+ * movimento ridotto restava un'impostazione che non trovava niente da ridurre.
+ * Il **respiro della creatura** e' il primo movimento **perpetuo**, ed e'
+ * precisamente il caso per cui quell'impostazione esiste — chi la accende
+ * spesso lo fa per vertigini o nausea da movimento, e una cosa che oscilla
+ * senza fermarsi in cima alla schermata di casa e' esattamente cio' che gli fa
+ * male.
+ *
+ * ⚠️ **Non spegne tutto.** Le entrate e le uscite restano: sono brevi,
+ * orientano, e toglierle renderebbe l'app piu' difficile da capire senza
+ * renderla piu' sopportabile. Si spengono i **cicli** e si accorciano i
+ * momenti — cioe' cio' che si muove a lungo o si ripete.
+ *
+ * ⚠️ **E l'informazione non si perde mai insieme al movimento.** Un'evoluzione
+ * senza animazione deve comunque **cambiare l'immagine**: chi ha il movimento
+ * ridotto ha diritto a sapere che la creatura e' cresciuta, non solo a non
+ * vedere il rimbalzo.
+ */
+export function useMovimentoRidotto() {
+  const [ridotto, setRidotto] = React.useState(false);
+
+  React.useEffect(() => {
+    let vivo = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((v) => vivo && setRidotto(v))
+      // Se il sistema non risponde si assume di no: e' lo stato in cui l'app
+      // e' sempre stata, e assumere di si' toglierebbe movimento a chi non
+      // l'ha chiesto.
+      .catch(() => {});
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => {
+      if (vivo) setRidotto(v);
+    });
+    return () => {
+      vivo = false;
+      sub.remove();
+    };
+  }, []);
+
+  return ridotto;
 }
 
 /**
