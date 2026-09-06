@@ -78,6 +78,26 @@ const it = {
         testo:
           'Le liste: film da vedere e visti, ristoranti, viaggi. Con le vostre stelle e le vostre recensioni, che restano vostre.',
       },
+      philippe: {
+        /**
+         * **La pagina di Philippe** (D-116).
+         *
+         * 🔑 Il testo dice **come** si cresce, non **quanto** si è cresciuti, ed
+         * è la stessa regola già scritta per la pagina dei giochi: P-01 e P-03
+         * vietano che il punteggio diventi un verdetto sulla relazione. Qui il
+         * rischio è più alto che altrove — una creatura che «misura» la coppia
+         * sarebbe esattamente la cosa che D-15 e P-01 escludono — quindi non
+         * compare nessun numero, nessun livello, nessuna percentuale.
+         *
+         * ⚠️ E non promette niente sul **non** fare: P-01 dice che Philippe
+         * cresce e basta, non deperisce e non rimprovera. Una frase come «tienilo
+         * felice» o «non lasciarlo solo» trasformerebbe un compagno in un dovere,
+         * ed è precisamente ciò che quella decisione vieta.
+         */
+        titolo: 'Lui è Philippe',
+        testo:
+          'Una lontra che vive con voi e cresce insieme a voi. Ogni gioco che fate, ogni posto in cui andate davvero, ogni cosa che spuntate dalle vostre liste lo fa diventare un po’ più grande. Non c’è niente da ricordarsi di fare: cresce da solo, mentre vi conoscete meglio.',
+      },
     },
   },
   accedi: {
@@ -296,6 +316,36 @@ const it = {
     galleria: 'Un ricordo',
     unRicordo: 'Guarda',
     nessunaFoto: 'Nessuna foto',
+  },
+
+  /**
+   * **La creatura** in casa (D-114).
+   *
+   * ⚠️ La riga sotto la barra dice **quanto manca**, non quanti punti avete.
+   * Il totale e' un numero che non si puo' fare niente per cambiare oggi;
+   * quanto manca e' una distanza, e una distanza si accorcia. E' anche il
+   * motivo per cui non c'e' nessun «livello 2 di 3»: la creatura cresce, non
+   * completa una barra di gioco.
+   */
+  creatura: {
+    /**
+     * ⚠️ **Da quando ha un nome, il testo parla di lui** (D-116). Chiamarlo
+     * Philippe nell'ingresso e poi «la creatura» in casa lo trasformerebbe in
+     * due cose diverse, ed è il genere di scollatura che si legge come
+     * trascuratezza anche da chi non saprebbe dire cosa non va.
+     */
+    nome: 'Philippe',
+    mancano: (n: number): string =>
+      n === 1 ? 'Manca un punto e Philippe cresce' : `Mancano ${n} punti e Philippe cresce`,
+    cresciutaDelTutto: 'Philippe è cresciuto del tutto. Continuate a riempirgli le giornate.',
+    /** Le tre età, per chi ascolta invece di guardare. */
+    eta: { 1: 'cucciolo', 2: 'giovane', 3: 'adulto' } as Record<number, string>,
+    stato: {
+      quiete: 'sta tranquillo',
+      festa: 'sta festeggiando',
+      sonno: 'sta dormendo',
+    } as Record<string, string>,
+    descrizione: (eta: string, stato: string): string => `Philippe ${eta}: ${stato}`,
   },
   giochi: {
     quiz_preferenze: 'Quiz sulle preferenze',
@@ -885,6 +935,11 @@ const en: Dizionario = {
         testo:
           'The lists: films to watch and watched, restaurants, trips. With your stars and your reviews, which stay yours.',
       },
+      philippe: {
+        titolo: 'This is Philippe',
+        testo:
+          'An otter who lives with you and grows up alongside you. Every game you play, every place you actually go, everything you tick off your lists makes him a little bigger. There is nothing to remember to do: he grows on his own, while you get to know each other better.',
+      },
     },
   },
   accedi: {
@@ -1074,6 +1129,20 @@ const en: Dizionario = {
     galleria: 'A memory',
     unRicordo: 'Take a look',
     nessunaFoto: 'No photos',
+  },
+
+  creatura: {
+    nome: 'Philippe',
+    mancano: (n: number): string =>
+      n === 1 ? 'One point and Philippe grows' : `${n} points and Philippe grows`,
+    cresciutaDelTutto: 'Philippe is fully grown. Keep filling his days.',
+    eta: { 1: 'as a cub', 2: 'as a young one', 3: 'grown up' } as Record<number, string>,
+    stato: {
+      quiete: 'is resting',
+      festa: 'is celebrating',
+      sonno: 'is asleep',
+    } as Record<string, string>,
+    descrizione: (eta: string, stato: string): string => `Philippe ${eta}: he ${stato}`,
   },
   giochi: {
     quiz_preferenze: 'Preferences quiz',

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import Riani, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,6 +8,7 @@ import Riani, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import { RITRATTI } from '@/components/creatura';
 import { C, pastelli } from '@/lib/tema';
 import { molla, durata, cascata } from '@/lib/movimento';
 
@@ -361,6 +362,54 @@ export function IllustrazioneRicordi({ attiva }: { attiva: boolean }) {
           </Riani.View>
         </View>
       </Entra>
+    </Scena>
+  );
+}
+
+/**
+ * **Philippe che cresce** — la pagina che lo presenta (D-116).
+ *
+ * 🔑 **È l'unica delle cinque illustrazioni fatta con l'asset vero**, e la
+ * regola 3 in testa a questo file spiega perché proprio qui sia giusto: le
+ * altre quattro disegnano un *meccanismo* perché uno screenshot invecchia al
+ * primo ritocco della schermata. Philippe **è** l'asset — mostrarlo per finta
+ * con delle forme sarebbe mostrare qualcosa che non esiste, cioè esattamente
+ * il problema che quella regola serve a evitare.
+ *
+ * ⚠️ E i tre stadi in fila **sono** il meccanismo: la pagina dice «cresce con
+ * voi», e tre figure che si ingrandiscono lo dicono prima del testo. Un
+ * Philippe solo e fermo avrebbe raccontato una mascotte invece di una crescita.
+ *
+ * ⚠️ Entrano **in ordine** con la cascata — cucciolo, giovane, adulto: è
+ * l'unica cosa che dice che sono lo stesso individuo in tre momenti e non tre
+ * personaggi diversi.
+ */
+export function IllustrazionePhilippe({ attiva }: { attiva: boolean }) {
+  /**
+   * I tre a riposo. ⚠️ La mappa dei file resta in `components/creatura.tsx`,
+   * che e' l'unico posto del progetto a sapere che la creatura e' fatta di PNG
+   * (D-09): qui si importa un ritratto, non un percorso.
+   */
+  const stadi = [
+    { s: 1 as const, lato: 74 },
+    { s: 2 as const, lato: 98 },
+    { s: 3 as const, lato: 126 },
+  ];
+
+  return (
+    <Scena>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4 }}>
+        {stadi.map((v, i) => (
+          <Entra key={v.s} attiva={attiva} indice={i} da={16}>
+            <Image
+              source={RITRATTI[v.s]}
+              style={{ width: v.lato, height: v.lato }}
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
+            />
+          </Entra>
+        ))}
+      </View>
     </Scena>
   );
 }

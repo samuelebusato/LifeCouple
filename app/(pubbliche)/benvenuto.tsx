@@ -12,6 +12,7 @@ import {
   IllustrazioneDiario,
   IllustrazioneGiochi,
   IllustrazioneMappa,
+  IllustrazionePhilippe,
   IllustrazioneRicordi,
 } from '@/components/ingresso-illustrazioni';
 import { durata } from '@/lib/movimento';
@@ -74,6 +75,19 @@ export default function Benvenuto() {
       { chiave: 'mappa', Illustrazione: IllustrazioneMappa },
       { chiave: 'giochi', Illustrazione: IllustrazioneGiochi },
       { chiave: 'ricordi', Illustrazione: IllustrazioneRicordi },
+      // 🔑 **Philippe chiude, e la posizione è un argomento** (D-116). La sua
+      // pagina dice «cresce con voi giocando e facendo cose insieme»: è una
+      // frase che si capisce **solo dopo** aver visto che ci sono i giochi e le
+      // liste dei viaggi. Messo prima sarebbe una promessa senza referenti.
+      //
+      // ⚠️ E si paga un prezzo, che va detto invece che nascosto: la nota qui
+      // sopra dice che l'ultima pagina è quella che molti non raggiungono, e
+      // Philippe è l'**unica funzione non-commodity** del prodotto (P-01).
+      // Metterlo dove meno lo si vede è un rischio accettato — attenuato dal
+      // fatto che il salto grosso è fra la prima e la seconda pagina, non fra
+      // la quarta e la quinta, e dal fatto che l'ultima è anche quella che
+      // resta in mente.
+      { chiave: 'philippe', Illustrazione: IllustrazionePhilippe },
     ] as const,
     []
   );
