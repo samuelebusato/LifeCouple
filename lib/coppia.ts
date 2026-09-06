@@ -26,7 +26,24 @@ export type StatoCoppia = {
 };
 
 export function useCoppia() {
-  const { session } = useAuth();
+  /**
+   * 🔴 **`loading` dell'auth serve, e non guardarlo era un difetto** (2026-09-06).
+   *
+   * Fra l'avvio dell'app e il `getSession()` che si risolve, `session` e'
+   * `null` — ma «non c'e' una sessione» e «non la sappiamo ancora» sono due
+   * cose diverse, ed e' precisamente la distinzione che il commento in cima a
+   * questo file dichiara di aver fatto. Era stata applicata all'**errore** e
+   * dimenticata sull'**attesa**: senza questa riga la lettura concludeva
+   * «nessuna coppia» *e si dichiarava pronta*, e la home offriva di creare uno
+   * spazio a chi ne aveva gia' uno.
+   *
+   * ⚠️ Il difetto e' sempre esistito ed era intermittente: dipende da quanto
+   * dura quella finestra. Si e' visto quando la creatura ha aggiunto due query
+   * e un canale al primo render, allargandola quanto bastava — *un difetto di
+   * tempistica non si presenta quando lo si introduce, si presenta quando
+   * qualcos'altro rallenta abbastanza.*
+   */
+  const { session, loading: autenticazioneInCorso } = useAuth();
   const [stato, setStato] = React.useState<StatoCoppia>({
     coppiaId: null,
     completa: false,
@@ -81,8 +98,14 @@ export function useCoppia() {
   }, [session]);
 
   React.useEffect(() => {
+    // Non si conclude niente finche' l'auth non ha finito: una lettura fatta
+    // con `session` ancora nulla direbbe «nessuna coppia» a chi ce l'ha.
+    if (autenticazioneInCorso) return;
     ricarica();
-  }, [ricarica]);
+  }, [ricarica, autenticazioneInCorso]);
 
-  return { ...stato, loading, ricarica };
+  // ⚠️ E l'attesa dell'auth **e'** attesa anche per chi legge questo hook: chi
+  // mostra una schermata deve vedere `loading: true` finche' non lo sappiamo,
+  // o disegnera' lo stato sbagliato nel frattempo.
+  return { ...stato, loading: loading || autenticazioneInCorso, ricarica };
 }

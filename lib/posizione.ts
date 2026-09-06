@@ -172,29 +172,50 @@ export function usePosizioni(coppiaId: string | null, attivo: boolean) {
    * Pubblica la propria posizione. Chiamata solo quando la condivisione è
    * accesa — e chiede il permesso **qui**, non all'apertura della mappa.
    */
-  const pubblica = React.useCallback(async (): Promise<string | null> => {
-    if (!coppiaId || !session) return null;
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return 'permesso-negato';
+  const pubblica = React.useCallback(
+    async (chiediPermesso = true): Promise<string | null> => {
+      if (!coppiaId || !session) return null;
 
-    const p = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    const { error } = await supabase.from('posizione_membro').upsert(
-      {
-        utente_id: session.user.id,
-        coppia_id: coppiaId,
-        lat: p.coords.latitude,
-        lon: p.coords.longitude,
-        precisione: p.coords.accuracy,
-        aggiornata_il: new Date().toISOString(),
-      },
-      { onConflict: 'utente_id' }
-    );
-    if (error) return error.message;
-    await rileggi();
-    return null;
-  }, [coppiaId, session, rileggi]);
+      /**
+       * 🔴 **Il permesso si CHIEDE solo quando lo si accende.**
+       *
+       * D-100 lo dice a lettere: *«non si chiede all'apertura della mappa: si
+       * chiede quando si accende la condivisione, che è l'unico momento in cui
+       * la richiesta ha un senso comprensibile per chi la riceve»*.
+       *
+       * ⚠️ Da quando si pubblica anche all'apertura e a ogni ciclo, quella
+       * regola avrebbe potuto rompersi da sola: se il permesso fosse stato
+       * revocato dalle impostazioni di sistema, aprire la mappa avrebbe fatto
+       * comparire una richiesta **che nessuno ha chiesto**, in un momento in
+       * cui non si capisce perché. Da qui il parametro: la pubblicazione
+       * automatica **legge** il permesso senza chiederlo, e se non c'è si
+       * ferma in silenzio. Chiedere resta un gesto che parte da un bottone.
+       */
+      const { status } = chiediPermesso
+        ? await Location.requestForegroundPermissionsAsync()
+        : await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') return 'permesso-negato';
+
+      const p = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { error } = await supabase.from('posizione_membro').upsert(
+        {
+          utente_id: session.user.id,
+          coppia_id: coppiaId,
+          lat: p.coords.latitude,
+          lon: p.coords.longitude,
+          precisione: p.coords.accuracy,
+          aggiornata_il: new Date().toISOString(),
+        },
+        { onConflict: 'utente_id' }
+      );
+      if (error) return error.message;
+      await rileggi();
+      return null;
+    },
+    [coppiaId, session, rileggi]
+  );
 
   /**
    * 🔴 **Spegne la condivisione cancellando la riga.**
@@ -219,13 +240,34 @@ export function usePosizioni(coppiaId: string | null, attivo: boolean) {
     rileggi();
   }, [rileggi]);
 
+  /**
+   * 🔴 **Si pubblica SUBITO, non al primo scatto del ciclo** (B-56).
+   *
+   * Prima questa riga non c'era, e la conseguenza era precisa: aprendo la
+   * mappa con la condivisione accesa, il proprio punto compariva **fino a
+   * sessanta secondi dopo** — il tempo del primo `setInterval`. E se la riga
+   * precedente aveva più di quindici minuti, `eRecente` la scartava e nel
+   * frattempo non si vedeva **niente**.
+   *
+   * 🔑 *Un ciclo dice ogni quanto una cosa si ripete, non quando comincia.* Il
+   * primo giro va fatto a parte, sempre — ed è l'errore più facile da non
+   * vedere, perché il codice sembra completo: c'è una funzione che pubblica e
+   * c'è un ciclo che la chiama.
+   *
+   * ⚠️ Senza chiedere il permesso: vedi la nota dentro `pubblica`.
+   */
+  React.useEffect(() => {
+    if (!coppiaId || !attivo) return;
+    pubblica(false);
+  }, [coppiaId, attivo, pubblica]);
+
   React.useEffect(() => {
     if (!coppiaId) return;
     // ⚠️ Un minuto, non pochi secondi: questo è un ciclo che consuma batteria e
     // rete, e la posizione di una persona non cambia utilmente più in fretta.
     const id = setInterval(() => {
       rileggi();
-      if (attivo) pubblica();
+      if (attivo) pubblica(false);
     }, 60_000);
     return () => clearInterval(id);
   }, [coppiaId, attivo, rileggi, pubblica]);
