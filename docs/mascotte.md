@@ -869,14 +869,23 @@ Quattro, più il tocco. Ognuno risponde a una cosa diversa, e vanno tenuti separ
 | Strato | Cosa fa | Con cosa | Quanto spesso |
 |---|---|---|---|
 | **respiro** | scala 1 → 1,018 avanti e indietro, ancorata **in basso** | `withRepeat` + `withTiming`, ~2600 ms, `Easing.inOut` | continuo |
-| **umore** | **schiacciata, scambio dell'immagine al culmine, rilascio** | `withSequence` su `scaleY`, scambio a metà, `molla.tocco` | qualche volta al giorno |
+| **umore** | **dissolvenza incrociata** fra due PNG sovrapposti (D-113) | opacità, `durata.media` | qualche volta al giorno |
+| *carezza* | tre tocchi ravvicinati → `festa`, **senza punti** (D-113) | come la festa, ma nessun evento-punto | a piacere |
 | **festa** | **scodinzolio** + rimbalzo + passaggio a `festa`, pausa, ritorno a `quiete` | rotazione oscillante ancorata **in alto**, `withSequence` su `molla.entrata` → `molla.scivolo`, e `tatto('fatto')` | a ogni evento-punto |
 | **stadio** | il momento della transizione | sequenza dedicata, **non** una dissolvenza | due volte in tutta la vita |
 | *tocco* | schiacciata e ritorno | `molla.tocco` + `tatto('tocco')` | a piacere |
 
 ⚠️ **Il respiro va ancorato in basso** (`transformOrigin: 'bottom center'`). Scalare dal centro fa *fluttuare* la creatura invece di farla respirare: è la stessa quantità di movimento e legge tutt'altro.
 
-### ⟳ Il cambio d'umore non è una dissolvenza: è uno stacco mascherato (D-112)
+### ⟳ Forma finale (D-113): la dissolvenza cambia l'immagine, il movimento porta il significato
+
+**Scelto dall'utente il 2026-09-06** guardando il prototipo con le immagini vere: *«mi piace l'effetto con dissolvenza»*.
+
+🔑 **E le due non erano alternative.** La schiacciata di D-112 serviva a **mascherare** uno stacco fra immagini che non si sovrapponevano; con tutte e nove sopra il 99% non c'è niente da mascherare. Quindi si tengono **entrambe**: la **dissolvenza** cambia l'immagine (`durata.media`, 220 ms), il **rimbalzo con lo scodinzolio** porta il significato della reazione. *Le avevo messe in concorrenza solo perché la prima era rotta.*
+
+⚠️ **La schiacciata resta scritta qui sotto e non va cancellata**: è la strada da riprendere se un domani un'immagine venisse rigenerata fuori taglia e la sovrapposizione scendesse. Il numero che lo dice lo stampa `tools/confronta-stadi.py`.
+
+### La schiacciata — come funzionava, e quando servirebbe di nuovo (D-112)
 
 🔴 **D-103 era costruita su una premessa che si è rivelata falsa.** Il suo argomento era: *«il difetto della strada raster — non cambia espressione dentro l'animazione — lo paga D-102, perché le tre immagini di uno stadio sono sovrapponibili e quindi si incrociano in dissolvenza»*. **Le immagini non sono sovrapponibili** (79%, §5bis), e non c'è prompt che le renda tali.
 
@@ -916,7 +925,9 @@ Quattro, più il tocco. Ognuno risponde a una cosa diversa, e vanno tenuti separ
 
 🔑 **E ne discende una proprietà che vale più dell'animazione**: se è il partner a segnare un luogo come visitato, **la festa la si vede aprendo l'app**. È l'unico punto del prodotto in cui l'azione dell'altro arriva come un fatto emotivo invece che come una riga in un elenco — cioè è dove P-01 mantiene davvero la promessa *«l'unica funzione che richiede entrambi»*.
 
-⚠️ **Il cambio di stadio non può essere una dissolvenza.** §2 chiede che ogni transizione sia **inequivocabile**, e succede due volte in tutta la vita della creatura: un incrocio di 220 ms su una tab che magari non si sta guardando lo farebbe perdere per sempre. Va trattato come un **momento**, con la stessa logica del «già visto» della festa, e mostrato a ciascuno dei due sul proprio dispositivo alla prima apertura utile.
+⚠️ **Il cambio di stadio non può essere una dissolvenza.** §2 chiede che ogni transizione sia **inequivocabile**, e succede due volte in tutta la vita della creatura: un incrocio di 220 ms su una tab che magari non si sta guardando lo farebbe perdere per sempre. Va trattato come un **momento**, con la stessa logica del «già visto» della festa, e mostrato a ciascuno dei due sul proprio dispositivo.
+
+🔑 **E riporta a casa** (**D-115**): se si è altrove si naviga, se si è già in casa parte subito. ⚠️ **Tranne che giocando**: si aspetta che la partita sia conclusa **e** che si sia usciti dal gioco. Due ragioni diverse per la stessa attesa — interrompere una partita ricade su **una seconda persona**, e interrompere l'anello del punteggio finale distruggerebbe un momento la cui lentezza è deliberata. *Due momenti non si sovrappongono: si mettono in fila.*
 
 ⚠️ **Il movimento ridotto non è gestito in nessun punto del progetto** — nessun `ReduceMotion`, nessun `AccessibilityInfo`. Finora non è stato un problema perché ogni animazione durava meno di un secondo; un respiro perpetuo è precisamente ciò per cui quell'impostazione di sistema esiste. È qui che il progetto deve cominciare a rispettarla.
 

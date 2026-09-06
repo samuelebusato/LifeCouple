@@ -28,6 +28,32 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-06 (2) — La creatura entra nell'app
+
+**Chiesto dall'utente**: scrivere il componente, dopo aver visto e approvato il movimento sul prototipo.
+
+**Fatto** — sei file, e il confine fra loro è la cosa che conta:
+
+- **[`lib/creatura.ts`](lib/creatura.ts)** — lo stato: punti, stadio **derivato**, quota verso il prossimo, e i due momenti in sospeso. Non sa niente del disegno.
+- **[`components/creatura.tsx`](components/creatura.tsx)** — il disegno: riceve `stadio` e `umore`, la mappa statica dei nove `require`, i quattro strati di movimento. Non sa niente dei punti.
+- **[`components/creatura-casa.tsx`](components/creatura-casa.tsx)** — chi decide **quando**: notte, festa, carezza, evoluzione col ritorno a casa.
+- **`lib/movimento.ts`** — il token `ciclo` e `useMovimentoRidotto`.
+- **`0034`** — `creatura` in tempo reale.
+- **[`tests/creatura.mjs`](tests/creatura.mjs)** — 20 asserzioni su `derivaStadio`.
+
+🔑 **Il dividendo di D-09, riscosso oggi per la seconda volta.** Il 2026-08-12 quella decisione aveva separato **stato** e **disegno** per una ragione dichiarata: *«"lo sostituiremo dopo" è vero solo se sono separati dal primo giorno»*. Stamattina ha permesso di sostituire le forme geometriche con una lontra generata senza toccare la logica; stasera ha permesso di scrivere quella logica senza che sappia che esistono dei PNG. **Quattro settimane fra la decisione e il primo incasso, e il costo di prenderla era una riga di progettazione.**
+
+**Quattro cose che il codice ha dovuto risolvere e che il progetto non aveva ancora affrontato:**
+
+1. 🔴 **L'evoluzione si sarebbe consumata davanti a nessuno.** Le schede restano montate, quindi `CreaturaCasa` è viva anche mentre si gioca: appena i dati fossero arrivati, il disegno sarebbe cambiato e il momento — quello che si vede **due volte in tutta la vita** — sarebbe finito a schermo non guardato. 🔑 *La correzione non è un flag: è che il disegno riceve `stadioVisto`, non `stadio`.* Quello che si mostra resta indietro finché non c'è qualcuno a guardarlo, e **il cambio del valore è l'animazione**. Un disegno che mostra sempre l'ultimo dato non può avere momenti.
+2. ⚠️ **Due condizioni per il respiro, non una.** `useFocusEffect` dice se la scheda è quella scelta, `AppState` se l'app è davanti: un'app in secondo piano con la home selezionata soddisfa la prima e non la seconda, e il respiro girerebbe a schermo spento.
+3. ⚠️ **Il primo giro non festeggia mai.** Su un dispositivo nuovo non c'è un «già visto» da confrontare, e prendere per novità il punteggio accumulato in mesi farebbe partire una festa per qualcosa successo a marzo. Si prende nota e basta.
+4. ⚠️ **Niente si disegna durante il caricamento.** Uno stadio 1 mostrato in attesa dei dati verrebbe sostituito un istante dopo da quello vero, e la sostituzione **partirebbe come un'evoluzione**: la creatura sembrerebbe crescere a ogni apertura dell'app.
+
+🔑 **E `derivaStadio` è stata estratta dall'hook per essere provabile — ma il disegno migliore è venuto dietro alla prova, non prima.** Scrivendo i casi limite è emerso che `stadio_soglia` è **fatta per essere ritarata a mano senza migrazione** (0001, e ritarata davvero dalla 0033): può quindi tornare disordinata, con uno stadio 4 rimasto da una taratura vecchia, o con due righe alla stessa soglia. *Una funzione che assume tre righe ordinate è una funzione che si rompe la prima volta che qualcuno tara le soglie da un pannello* — e la tabella esiste apposta perché quel giorno arrivi.
+
+⚠️ **Il movimento ridotto è gestito per la prima volta in tutto il progetto**, e la regola scritta nel token è che **l'informazione non si perde insieme al movimento**: un'evoluzione senza animazione **cambia comunque l'immagine**. Chi ha il movimento ridotto ha diritto a sapere che la creatura è cresciuta, non solo a non vedere il rimbalzo.
+
 ### 2026-09-06 — La creatura si progetta: l'umore diventa una reazione, e il carburante trova il serbatoio
 
 **Chiesto dall'utente**: *«proviamo a progettare la creatura»*, e poi *«tre umori e strada (a)»*.
@@ -415,6 +441,71 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-116 — La creatura si chiama **Philippe**, ed è un lui (2026-09-06)
+
+**Deciso dall'utente il 2026-09-06**, chiedendo una pagina d'ingresso dedicata: *«la mascotte che chiameremo Philippe»*.
+
+**La pagina**: quinta e ultima dell'ingresso, con i **tre stadi in fila** come illustrazione. Dice **come** si cresce — giocando e facendo cose insieme davvero — e non dice mai **quanto** si è cresciuti.
+
+🔑 **Ed è la stessa regola già scritta per la pagina dei giochi, che qui vale di più.** P-01 e P-03 vietano che il punteggio diventi un verdetto sulla relazione; una creatura che «misura» la coppia sarebbe precisamente la cosa che quelle decisioni escludono. Quindi nella pagina non c'è **nessun numero**, nessun livello, nessuna percentuale. ⚠️ E non c'è nemmeno una promessa sul **non** fare: niente «tienilo felice» o «non lasciarlo solo», perché trasformerebbe un compagno in un dovere — che è l'esatto contrario di *«cresce e basta, non deperisce, non rimprovera»*.
+
+🔴 **Il nome ha una conseguenza che non si vede finché non si scrive: il genere.** Tutta la copy esistente diceva «**la** creatura», «cucciol**a**», «adult**a**». *Philippe* è un lui. Chiamarlo per nome nell'ingresso e «la creatura» in casa lo avrebbe reso **due cose diverse** — il tipo di scollatura che si legge come trascuratezza anche da chi non saprebbe dire cosa non va. Sono passati al maschile e al nome: la riga sotto la barra in casa, il testo di creatura cresciuta, e le tre età.
+
+⚠️ **E l'etichetta di accessibilità è passata da stringhe scritte nel componente a `lib/i18n.ts`.** Non era un problema di stile: era **l'unico testo dell'app scritto solo in italiano**, e sarebbe arrivato in italiano a un utente inglese. 🔑 *È anche l'unico testo che nessuno si sarebbe mai accorto di aver dimenticato di tradurre, perché non si vede* — e ce ne siamo accorti solo perché il nome obbligava a riscriverlo.
+
+**Sull'illustrazione, una deroga motivata alla regola 3 di `ingresso-illustrazioni.tsx`.** Quella regola dice che le illustrazioni mostrano *il meccanismo, non l'interfaccia*, perché uno screenshot invecchia al primo ritocco. Questa è l'unica delle cinque fatta con l'**asset vero**, e proprio per la stessa ragione: 🔑 *Philippe **è** l'asset — disegnarlo per finta con delle forme mostrerebbe qualcosa che non esiste, cioè esattamente il problema che quella regola serve a evitare.* E i tre stadi in fila **sono** il meccanismo: la pagina dice «cresce con voi», e tre figure che si ingrandiscono lo dicono prima del testo.
+
+⚠️ **Sulla posizione, un rischio accettato e dichiarato — e confermato dall'utente.** `benvenuto.tsx` annota che *«l'ordine è una gerarchia: la prima pagina è quella che si vede per certo, l'ultima quella che molti non raggiungono»* — e Philippe è l'**unica funzione non-commodity** del prodotto (P-01), quindi metterlo ultimo lo espone meno. L'alternativa (secondo, subito dopo il diario) è stata messa davanti all'utente con il suo costo, e la risposta è stata **ultimo**.
+
+Le due ragioni per cui regge: la sua frase — *«cresce giocando e facendo cose insieme»* — **si capisce solo dopo** aver visto che ci sono i giochi e le liste dei viaggi; e il salto di abbandono grosso è fra la prima e la seconda pagina, non fra la quarta e la quinta. 🔑 *L'ultima pagina è anche quella che resta in mente, e su cinque schermate la differenza fra «meno vista» e «non vista» è tutta lì.*
+
+### D-115 — L'evoluzione riporta a casa, tranne durante una partita (2026-09-06)
+
+**Chiesto dall'utente il 2026-09-06**: *«quando la creatura si evolve l'utente deve essere riportato alla homepage e vedere l'animazione di evoluzione»*.
+
+**La ragione è giusta e già a verbale**: il cambio di stadio scatta **due volte in tutta la vita** della creatura (D-96), e `docs/mascotte.md` §2 chiede che ogni transizione sia inequivocabile. Un momento del genere che passasse su una scheda non guardata sarebbe perso per sempre.
+
+🔴 **Ma «riportare a casa» ha un caso in cui rompe qualcosa che non è dell'utente: la partita in corso.** I punti si assegnano anche a fine partita (D-104), quindi **la soglia può essere superata proprio mentre si gioca** — e i giochi sono a due telefoni sincronizzati. Strappare via chi ha appena concluso il round significa interrompere la partita **anche all'altro**, che non ha fatto niente e non capisce cosa sia successo.
+
+**La regola, precisata dall'utente**: *«il ritorno nella home avviene una volta chiusa la partita e il gioco»*.
+- Se si è **già in casa**: parte subito, senza navigare.
+- Se si è **altrove**: si naviga e parte.
+- ⚠️ **Se si sta giocando**: si aspetta che la partita sia **conclusa** *e* che si sia **usciti dalla schermata di gioco**. Non basta la fine della partita.
+
+🔑 **E il «e il gioco» non è pignoleria: c'è un secondo momento da proteggere che avevo mancato.** Fra la fine della partita e l'uscita dal gioco c'è [`components/punteggio-finale.tsx`](components/punteggio-finale.tsx), l'anello che si riempie — e la sua documentazione dice a lettere che la lentezza **è il punto**: *«qui non si sta dando riscontro a un dito, si sta consegnando un risultato, e un risultato che compare istantaneamente non si guarda»*. Strapparlo via a metà riempimento distruggerebbe un momento deliberato per mostrarne un altro.
+
+⚠️ **Cioè: due momenti non si sovrappongono, si mettono in fila.** Il primo caso (la partita) protegge una seconda persona; il secondo (il punteggio) protegge una scelta di disegno già presa e motivata. Sono due ragioni diverse per la stessa regola, e vale la pena averle scritte entrambe — se un domani il punteggio finale cambiasse forma, la prima ragione resterebbe comunque.
+
+🔑 **E lo stato «non ancora vista» sta sul dispositivo, non sulla coppia** — stesso meccanismo della festa (D-102). Ne discende la proprietà che serve davvero: **ciascuno dei due la vede sul proprio telefono**, alla sua prima apertura utile. Un flag di coppia farebbe sì che chi apre per primo la consumi per entrambi, e l'altro non vedrebbe mai il momento che gli spetta.
+
+**Alternativa scartata**: *mostrarla sempre e comunque dove ci si trova*, senza navigare. Eviterebbe ogni interruzione, ma la creatura vive in casa (D-114): mostrarla su una schermata che non la contiene vorrebbe dire disegnarla due volte, e mostrare il momento più importante della sua vita fuori dal posto in cui abita.
+
+### D-114 — La creatura vive in casa, in testa (2026-09-06)
+
+**Deciso dall'utente il 2026-09-06**: *«il componente creatura deve essere nella homepage»*.
+
+**Non un settimo tab**: le schede sono già sei, e casa è dove sta il riepilogo di coppia — il contatore dei giorni, il prossimo evento. La creatura è l'oggetto di coppia per eccellenza e ci sta accanto per diritto.
+
+⚠️ **In testa, sopra i riquadri, non come una piastrella fra le altre.** È l'**unica funzione non-commodity** del prodotto (P-01): metterla in griglia con le altre la renderebbe decorativa proprio mentre è la cosa che distingue l'app.
+
+⚠️ **Conseguenza operativa già registrata**: le schede restano montate passando da un tab all'altro, quindi il respiro va messo in pausa con `useFocusEffect` e `AppState` o la creatura respira sul thread UI mentre si guarda la mappa (D-103).
+
+### D-113 — La dissolvenza vince, e le carezze fanno festa (2026-09-06)
+
+Due decisioni dell'utente sullo stesso prototipo, e insieme chiudono il movimento.
+
+**1. Il cambio d'umore è una dissolvenza** — *«mi piace l'effetto con dissolvenza»*, dopo averle confrontate sulle immagini vere.
+
+🔑 **E la cosa importante è che non è un ritorno indietro rispetto alla schiacciata: le due non erano alternative.** La schiacciata serviva a **mascherare** uno stacco fra immagini che non si sovrapponevano. Con tutte e nove sopra il 99% non c'è niente da mascherare, quindi si tengono **entrambe le cose**: la **dissolvenza** cambia l'immagine, il **rimbalzo con lo scodinzolio** porta il significato. *Erano due risposte a due domande diverse, e le avevo messe in concorrenza solo perché la prima era rotta.*
+
+**2. Premere ripetutamente sulla creatura la fa diventare felice.** Tre tocchi ravvicinati → umore `festa`.
+
+🔴 **E il vincolo che la rende ammissibile: NESSUN punto.** D-15 vuole che la crescita si nutra della **chiusura del cerchio fra intenzione e realtà** — un luogo desiderato e poi visitato. Se accarezzarla desse punti, la creatura si potrebbe far crescere a colpi di dito, e il punteggio smetterebbe di dire quello che dice. 🔑 *Ma l'umore non è il punteggio*: D-102 dice che l'umore è una **reazione**, e reagire a una carezza è la reazione più naturale che un animale abbia. Umore sì, crescita no — e il confine fra i due è esattamente ciò che permette di dire di sì.
+
+🔑 **È anche la prima volta che la creatura risponde all'essere toccata** invece che a qualcosa fatto altrove nell'app. Su un'app di coppia una creatura che si può **accarezzare** è più calda di una che reagisce solo a eventi registrati.
+
+⚠️ **Tre tocchi, non uno**: un tocco singolo ha già il suo riscontro (la schiacciata corta), e farlo festeggiare a ogni sfioramento renderebbe la festa carta da parati — la stessa lezione del cuoricino sul calendario. E serve una **pausa** dopo, o si concatenerebbe all'infinito.
 
 ### D-112 — La dissolvenza incrociata si abbandona: il cambio d'umore è uno stacco mascherato dal movimento (2026-09-06)
 
@@ -2319,6 +2410,50 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 ---
 
 ## 4. Bug trovati e come sono stati verificati
+
+### B-56 — Sulla mappa la propria posizione compariva fino a un minuto dopo (2026-09-06, CORRETTO)
+
+**Riferito dall'utente** provando sul telefono: *«sulla mappa la posizione dei due soggetti non viene mostrata subito ma ci mette parecchio a caricarsi»*.
+
+**La causa, e «parecchio» ha un numero preciso: sessanta secondi.** In `usePosizioni` la pubblicazione della propria posizione avveniva **solo** dentro il `setInterval`:
+
+```ts
+const id = setInterval(() => {
+  rileggi();
+  if (attivo) pubblica();   // ← la PRIMA volta, 60 secondi dopo l'apertura
+}, 60_000);
+```
+
+`rileggi()` partiva subito — quindi il partner compariva, se aveva una riga recente — ma **il proprio punto aspettava il primo scatto del ciclo**. E se la riga precedente aveva più di quindici minuti, `eRecente` la scartava (D-100: *«un punto vecchio non è un dato vecchio, è un dato falso»*) e nel frattempo non si vedeva niente affatto.
+
+🔑 **La lezione, e vale ben oltre questo file**: *un ciclo dice ogni quanto una cosa si ripete, non quando comincia.* Il primo giro va fatto a parte, sempre. Ed è l'errore più facile da non vedere rileggendo, perché **il codice sembra completo**: c'è una funzione che pubblica e c'è un ciclo che la chiama. Manca solo che qualcuno la chiami *adesso*.
+
+⚠️ **E la correzione avrebbe potuto romperne una tutela di D-100 da sola.** Quella decisione dice: *«il permesso non si chiede all'apertura della mappa: si chiede quando si accende la condivisione, che è l'unico momento in cui la richiesta ha un senso comprensibile per chi la riceve»*. Pubblicando all'apertura, se il permesso fosse stato revocato dalle impostazioni di sistema sarebbe comparsa una richiesta **che nessuno ha chiesto**. Da qui il parametro `chiediPermesso`: la pubblicazione **automatica** legge il permesso con `getForegroundPermissionsAsync` e se non c'è si ferma in silenzio; `requestForegroundPermissionsAsync` resta solo dietro il bottone delle impostazioni.
+
+🔑 *Correggere un difetto di prestazione stava per costare una tutela di riservatezza, e le due cose non si somigliano abbastanza perché il collegamento salti all'occhio.* È il motivo per cui D-100 elenca le sue tutele **nel codice** e non solo nella migrazione.
+
+⚠️ **Verificato a compilazione** (`tsc` pulito, `eslint` senza errori nuovi) **e non ancora sul telefono**: la prova è aprire la mappa con la condivisione accesa e vedere il proprio punto **subito**.
+
+### B-55 — All'avvio l'app offriva di creare uno spazio a chi ne aveva già uno (2026-09-06, CORRETTO)
+
+**Riferito dall'utente** provando la creatura sul telefono: *«appena avvio l'applicazione mi chiede se voglio creare un nuovo spazio anche se sono già in una coppia»*.
+
+**La causa**, in tre righe. `AuthProvider` espone un `loading`; `useCoppia` prendeva dal contesto **solo** `session`:
+
+```ts
+const { session } = useAuth();       // ← loading ignorato
+if (!session) { setStato(vuoto); setLoading(false); }
+```
+
+Fra l'avvio dell'app e il `getSession()` che si risolve, `session` è `null`. La lettura concludeva **«nessuna coppia»** *e si dichiarava pronta*, la home leggeva `completa: false` e mostrava la creazione dello spazio.
+
+🔑 **Ed è la distinzione che questo stesso file dichiara in cima di aver fatto**: *«`errore` dice che **non lo sappiamo**, che non è la stessa cosa di "non c'è"»*. Era stata applicata all'**errore** e dimenticata sull'**attesa** — che è lo stesso identico caso, con un nome diverso. *Una distinzione la si fa dove ci si è accorti che serviva, e resta da fare in tutti i posti in cui serviva ugualmente.*
+
+⚠️ **Il difetto è sempre esistito, e non l'ha introdotto la creatura.** Ma era intermittente — dipende da quanto dura quella finestra — e si è visto quando `CreaturaCasa` ha aggiunto due query e un canale realtime al primo render, allargandola quanto bastava. 🔑 *Un difetto di tempistica non si presenta quando lo si introduce: si presenta quando qualcos'altro rallenta abbastanza.* Ed è il secondo caso in due giorni in cui una funzione nuova non ha rotto niente ma ha reso visibile qualcosa di già rotto.
+
+**La correzione**: l'effetto non conclude niente finché `autenticazioneInCorso` è vero, e `loading` resta vero per chi legge l'hook — perché l'attesa dell'auth **è** attesa anche per chi disegna la schermata.
+
+⚠️ **Verificato a compilazione** (`tsc` pulito, `eslint` senza errori nuovi) **e non ancora sul telefono**: la prova che conta è riaprire l'app e non vedere più la schermata di creazione. È la prima cosa da guardare al prossimo avvio.
 
 ### B-54 — La torta compariva anche negli anni prima della nascita (2026-09-05, CORRETTO)
 
