@@ -1,0 +1,67 @@
+assets/creatura/ — i NOVE PNG che l'app importa davvero
+
+Questa cartella e' l'asset di prodotto. Contiene solo le nove immagini
+finite della creatura, gia' ritagliate e pronte da importare.
+
+⚠️ NON e' assets/mascotte/. Quella resta il materiale SORGENTE: il
+riferimento fornito dall'utente, gli scarti, i JPEG, le prove. Qui non
+entra niente che non sia una delle nove.
+
+CONTENUTO PREVISTO — 3 stadi x 3 umori (D-96, D-102)
+
+  creatura-1-quiete.png   creatura-1-festa.png   creatura-1-sonno.png
+  creatura-2-quiete.png   creatura-2-festa.png   creatura-2-sonno.png
+  creatura-3-quiete.png   creatura-3-festa.png   creatura-3-sonno.png
+
+  stadio 1 = cucciolo (col ciuccio)   docs/mascotte.md §4
+  stadio 2 = intermedio               docs/mascotte.md §4bis
+  stadio 3 = adulta                   docs/mascotte.md §5
+
+  ⚠️ Lo stadio 2 NON e' piu' riferimento.jpg riesportato, ed e' cambiato il
+  2026-09-06 con D-105: tolto il fiore, il riferimento non puo' piu' essere
+  un'uscita perche' il fiore ce l'ha. Si genera per PRIMO, e diventa
+  l'ancora senza fiore da cui nascono lo stadio 1 e il 3.
+
+  umori: quiete (default) · festa (un evento-punto e' appena arrivato) ·
+  sonno (di notte). I sei prompt d'umore sono in docs/mascotte.md §5bis.
+
+FORMATO (D-103)
+
+  PNG con alpha, 768 x 768.
+  Il fondo lavanda #A98CF0 VA TOLTO.
+  Il bordo bianco fustellato RESTA (deciso dall'utente il 2026-09-06):
+  chi ritaglia deve togliere solo il lavanda, o si porta via il bordo
+  insieme al fondo.
+
+  ⚠️ 768 perche' la creatura sta a ~180 pt a schermo, che a @3x fanno
+  540 px: copre con margine senza obbligare a tre risoluzioni. Le nove
+  pesano indicativamente 1,5-2 MB nel bundle.
+
+COME SI GENERANO — l'ordine conta (docs/mascotte.md §5bis)
+
+  Un umore NON si genera da zero: si genera dall'immagine "quiete" gia'
+  approvata di quello stesso stadio. La dissolvenza incrociata di D-103
+  funziona solo se le due immagini sono sovrapponibili, e "quasi
+  sovrapponibili" in dissolvenza si vede come un fantasma che si sposta.
+
+  Ogni immagine va passata al controllo d'identita' di docs/mascotte.md
+  §8 prima di entrare qui: lentiggini, ciuffo a tre punte, macchie sopra
+  gli occhi, sasso — e le ORECCHIE NUDE.
+
+  ⚠️ Il fiore e' stato tolto il 2026-09-06 (D-105). Il riferimento ce l'ha
+  ancora, quindi puo' ricomparire da solo in una generazione: e' il
+  difetto piu' probabile, ed e' l'unico che si giudica in mezzo secondo.
+
+VINCOLO CHE VALE PER OGNI IMMAGINE (da P-01, vedi D-95 e D-102)
+
+  La creatura cresce e basta: non muore, non deperisce, non rimprovera.
+  Nessuno stadio puo' rappresentare deperimento e nessun umore puo'
+  leggersi come rimprovero per l'assenza. Si noti cosa NON c'e' fra i
+  tre umori: niente triste, niente annoiato, niente che aspetta
+  guardando in camera. L'assenza non produce un umore — produce quiete.
+
+STATO AL 2026-09-06
+
+  Vuota. Nessuna delle nove immagini e' stata ancora generata, e nessuna
+  riga di codice dell'app legge questa cartella. Il componente del
+  disegno non esiste: backlog 12 di History.md.

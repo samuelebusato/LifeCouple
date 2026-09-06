@@ -28,6 +28,74 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-06 — La creatura si progetta: l'umore diventa una reazione, e il carburante trova il serbatoio
+
+**Chiesto dall'utente**: *«proviamo a progettare la creatura»*, e poi *«tre umori e strada (a)»*.
+
+**Nessuna riga di codice, nessuna immagine.** È D-11 che si esegue — *«si progetta subito, si implementa per ultima»* — e la parte «si progetta» era ferma da due giorni su due domande che `docs/mascotte.md` teneva aperte.
+
+🔑 **La domanda che ha sbloccato tutto non era una delle due.** `mascotte.md` chiedeva *«quanti umori»* e la trattava come l'ultima cosa prima di generare. Ma non si può contare quanti prima di sapere **cosa li fa cambiare** — e lì c'era il vincolo di P-01, non un problema di conteggio. Posta quella domanda, si è visto che un umore-**condizione** viola P-01 quasi da solo (qualunque stato che dipenda dall'attività recente mette *«siete stati via»* sulla faccia della creatura), mentre un umore-**reazione** non ha nemmeno il modo di rimproverare. **D-102.**
+
+**E da lì sono cadute tre cose in fila, senza doverle decidere separatamente**:
+1. **Quanti umori**: tre — `quiete`, `festa`, `sonno`. Nove immagini.
+2. **Il senso di crescita fra una transizione e l'altra**, aperto da D-96 perché con tre stadi la creatura cambia due volte in tutta la vita: viene dalla **reazione**, non dalla crescita. `mascotte.md` §2 ipotizzava micro-variazioni o accessori — non servono, ed erano costo grafico.
+3. **Come si anima**: la strada (a) di §9, che sembrava un ripiego. **D-103.**
+
+🔑 **Il punto della giornata, e vale oltre la creatura**: la strada (a) portava scritto un difetto — *«il personaggio non si deforma, non cambia espressione dentro l'animazione»*. Il vincolo di D-102 (*l'umore cambia **solo la riga dell'espressione***) fa sì che le tre immagini di uno stadio condividano posa e inquadratura, e due immagini così **si incrociano in dissolvenza**: il cambio d'espressione torna, gratis. Le due decisioni non sono indipendenti — **la prima paga il difetto della seconda**, e prese separatamente sarebbero state una scelta di costo e un compromesso.
+
+**Due cose trovate verificando lo schema, non dedotte, ed entrambe erano invisibili dal backlog**:
+
+- 🔴 **I giochi non alimentano la creatura, e non l'hanno mai fatto.** `assegna_punti` è chiamata da **due soli trigger** — luogo visitato (20) ed elemento fatto (10). `chiudi_round` accumula in `partita.punti`, una colonna di `partita`, e non tocca mai `creatura`. Ma D-15 dice *«i giochi danno punti in base al risultato»* e P-03 è a verbale come **«il carburante di P-01»**. Il carburante finisce in un serbatoio scollegato. 🔑 *Una composizione fra due funzioni non esiste finché non esiste il pezzo che le unisce — e quel pezzo non compare in nessuna delle due se lo si cerca guardandole una per volta.*
+- ⚠️ **`stadio_soglia` contraddice D-96**: sei righe seminate quando gli stadi erano ~5-6, e gli stadi sono tre dal 2026-09-04. Coi due soli ingressi di oggi, 3000 punti sono **150 luoghi visitati**.
+
+**Entrambe risolte nella stessa sessione**, perché l'utente ha deciso l'economia — *«partita 5, lista 10, luogo 20»*, **D-104** — e senza quel numero non si potevano ritarare le soglie. Migrazione **`0033`**: trigger `partita_conclusa_punti` sulla transizione a `conclusa`, e le soglie a `0 / 250 / 1200`.
+
+🔑 **Il rapporto 1:2:4 non è una taratura, è una dichiarazione**: luoghi e voci di lista sono scarsi per natura, le partite no. A punti pari la creatura avrebbe smesso di dire *«abbiamo chiuso il cerchio fra intenzione e realtà»* per dire *«abbiamo giocato molto»*. Con questa scala **la realtà batte l'app**, e nessuna schermata deve spiegarlo.
+
+⚠️ **Le due soglie nuove sono una stima dichiarata, non una misura**, e la migrazione scrive l'ipotesi che le regge (~130 punti/mese) proprio perché sia **falsificabile** contro i dati d'uso. La prima è bassa apposta: è la transizione che insegna che la creatura cresce, e se arrivasse a otto mesi quasi nessuno ne vedrebbe mai una.
+
+⚠️ **Una decisione di prodotto presa di conseguenza e messa a verbale**: la festa **non si rigioca all'apertura**, scatta su un evento-punto che il dispositivo non ha ancora mostrato. Ne discende che **se è il partner a segnare un luogo, la festa la vedi tu aprendo l'app** — l'unico punto del prodotto in cui l'azione dell'altro arriva come fatto emotivo e non come riga in un elenco.
+
+**Poi l'utente ha deciso di tenere il bordo bianco fustellato**, e sono stati scritti i **nove prompt** (§5bis). Due cose sono emerse scrivendoli, ed erano entrambe invisibili finché il prompt restava un'idea:
+
+- 🔴 **Un umore non si genera da zero, si genera dal `quiete` già approvato di quel medesimo stadio.** Non è un risparmio: è un **requisito di D-103**. La dissolvenza incrociata funziona solo fra immagini **sovrapponibili**, e due generazioni indipendenti dello stesso personaggio non lo sono mai del tutto — «quasi uguali» in dissolvenza si vede come un fantasma che si sposta. 🔑 *Una decisione sull'animazione ha finito per dettare l'ordine di produzione delle immagini, che sembrava una faccenda separata.*
+- 🔴 **Lo stadio 1 non può usare nessuna delle due righe d'umore generiche, per colpa del ciuccio.** §4 dice che il ciuccio **sostituisce il sorriso**: la bocca è nascosta. Quindi lo sbadiglio del `sonno` è impossibile, e la `festa` non può chiudere gli occhi — con la bocca già coperta resterebbe una faccia **senza nessun tratto aperto**, che non legge come gioia ma come vuoto. Servono due varianti dedicate, e ci sono. ⚠️ È lo stesso vincolo che §4 aveva già scritto per il `quiete` (*«tutta la tenerezza deve venire dagli occhi»*), che nessuno aveva pensato di propagare agli umori perché gli umori non esistevano.
+
+**E infine l'utente ha chiesto di togliere il fiore** — **D-105**, prima che venisse generata una sola immagine. La decisione è a costo zero sull'identità (il fiore non era fra i quattro tratti di §1) ma 🔴 **cancella la parte di D-96 che diceva «li abbiamo già tutti»**: lo stadio 2 *era* `riferimento.jpg`, che il fiore ce l'ha, quindi ora si genera — e si genera **per primo**, perché è lì che il fiore si toglie una volta sola. 🔑 *Da quel momento il riferimento non si allega più a nessun prompt: si smette di mostrare al modello la cosa che si sta cercando di togliere.* Nuovo §4bis, e il fiore rimosso da tutti gli altri prompt, dalla tavolozza, dal foglio-personaggio e dal controllo di §8.
+
+**La prima immagine vera è arrivata a fine sessione** — il **cucciolo senza fiore**, generato col §4 — e leggerla ha trovato due difetti **nel prompt**, non nell'immagine:
+
+- 🔴 **§4 si contraddiceva.** `KEEP IDENTICAL` diceva *«the three-pointed cowlick on the forehead»*, e venti righe sotto `CHANGE INTO BABY PROPORTIONS` diceva *«baby fur tufts on the crown **instead of** the sharp cowlick»*. Tieni e togli la stessa cosa. 🔑 **Il modello ha risolto meglio di come era scritto**: ha tenuto il ciuffo, che §1 elenca fra i **quattro tratti d'identità**, mentre i ciuffetti erano una carineria in più. La riga è stata corretta col suo perché. ⚠️ *Una contraddizione fra due blocchi della stessa specifica non si vede rileggendo: si vede quando qualcuno deve eseguirla.*
+- ⚠️ **Il ciuccio è uscito invertito** rispetto alla riga — scudo rosa e tettarella crema invece di scudo crema e anello rosa. La resa è buona e si tiene, **quindi è la riga a essere stata riscritta**. 🔑 *Ciò che si accetta diventa la specifica: se non la si riscrive, descrive una cosa che non esiste più, e la prossima rigenerazione dà un'altra creatura.*
+
+⚠️ **L'ordine di D-105 non è stato seguito** — doveva venire prima lo stadio 2 — ma il fiore non è tornato lo stesso, quindi non è costato niente. Lo stadio 2 resta da generare dal riferimento col §4bis, perché è l'unica immagine che mostra quell'età, e lo stadio 3 nascerà da lui.
+
+🟢 **E il ritaglio è stato provato su un'immagine vera**, non più solo sul caso sintetico: `creatura-1-quiete.png` esiste in `assets/creatura/`, 768×768 RGBA, 61,3% di fondo tolto. Angoli completamente trasparenti; **il sasso è opaco al 100%** su un quadratino di 24×24 al suo centro — che era il caso per cui lo strumento è stato scritto così; il bordo bianco fustellato occupa il 6,4% dell'immagine; la frangia ammorbidita è lo 0,48%.
+
+🔴 **E poi l'utente ha guardato il piano invece dell'immagine, e ha trovato il difetto più grosso della giornata**: *«cosa cambia dalla prima alla seconda? l'unica differenza è il ciuccio»*. Vero — 1:1,5 e 1:1,8 sono il **20%** di scarto, invisibile a 180 punti. **D-106**: gli stadi si distinguono per **sagoma** (cerchio · pera · colonna) e non per proporzione, con un marcatore ciascuno. 🔑 *E la nota che lo prevedeva stava in **D-17** dal 2026-08-12, marcata «non deciso» — e una voce non decisa non blocca mai niente, quindi sopravvive nel documento e muore nella pratica.* Costo: lo stadio 1 va rigenerato.
+
+🔴 **E subito dopo, la seconda osservazione dell'utente sulla stessa immagine**: *«preso da davanti così è un po' inquietante»*. Il riferimento è in **tre quarti**; la generazione era uscita **frontale e simmetrica**. **D-107**. 🔑 *Il fiore era scritto e si è potuto togliere; il tre quarti non era scritto da nessuna parte e si è perso da solo* — i prompt dicevano solo «same framing energy as the reference», formula abbastanza vaga da essere rispettata da qualunque cosa. ⚠️ E la ragione per cui conta non è estetica: **uno sguardo dritto in asse non è tenero, è fisso**, e una creatura che *fissa* è il registro sbagliato per qualcosa che vive nella schermata di casa — lo stesso confine che P-01 protegge sul piano emotivo, qui sul piano del disegno.
+
+⟳ **D-107 ha anche rovesciato un pezzo di D-105 nella stessa giornata**: i tre stadi si ancorano ora **tutti al riferimento**, perché la battaglia del fiore si è rivelata vinta al primo colpo mentre a perdersi sono identità e inquadratura. *Il ragionamento di D-105 era plausibile e sbagliato, e a smentirlo non è stato un altro ragionamento: è stata un'immagine.*
+
+🔑 **Ed è servito guardare i colori invece degli aggregati.** Il primo controllo diceva *«pixel opachi a distanza 60 dal lavanda»* e sembrava un alone. Erano `(174,174,187)`, `(157,157,173)`: **grigi neutri**, cioè l'antialiasing fra il contorno navy e il bordo bianco. ⚠️ *La distanza euclidea in RGB non distingue un viola da un grigio della stessa luminosità*: separando i pixel davvero violacei (`B − G > 40`), i residui di fondo entro distanza 70 sono **zero**. Una metrica troppo grezza aveva prodotto un falso allarme, e l'unico modo di scoprirlo era stampare i colori.
+
+**Aggiornati**: [`docs/mascotte.md`](docs/mascotte.md) (§0, §1, §2, nuovo §2bis con le nove immagini, nuovo §4bis per lo stadio 2, §4 con le due correzioni dalla prima immagine, §5, nuovo §5bis coi sei prompt d'umore, §6, §7, §8, §9 con gli strati del movimento, §10); creata `assets/creatura/` col suo `LEGGIMI.txt` e riscritto quello di `assets/mascotte/`, che ora dice di essere il materiale **sorgente** e non la cartella che l'app importa; backlog 12, che ora ha cinque voci chiuse e sei voci nuove che prima non c'erano.
+
+**Poi lo strumento per il ritaglio** — [`tools/ritaglia-creatura.py`](tools/ritaglia-creatura.py), Pillow + numpy — perché era l'unico passo della produzione che non fosse «incolla un prompt», e perché una regolazione fatta a mano su nove immagini non si ripete uguale fra sei mesi.
+
+🔴 **E scrivendolo è saltata fuori una cosa che la strada ovvia avrebbe rotto in silenzio.** «Rendi trasparente tutto ciò che è lavanda» **non è impreciso: è impossibile**, e i numeri sono stati misurati, non stimati. Il **sasso di fiume** dista **77** dal lavanda in RGB — il colore più vicino al fondo di tutta la tavolozza, più del rosa (103) e del bianco (144) — mentre un pixel di frangia antialiasata al 70% fra lavanda e bordo bianco dista **101**. Per togliere la frangia servirebbe una tolleranza che **buca il sasso prima**; per la sola metà più chiara la finestra utile è larga **5 unità su 442**.
+
+🔑 **La soluzione è stata cambiare la domanda, non tarare meglio**: *uno sfondo non è definito dal suo colore, è definito dalla connessione.* Il lavanda tocca il bordo dell'immagine, il sasso è chiuso dentro il contorno navy. Un riempimento dai quattro angoli può quindi usare una tolleranza **alta** — quella che serve per la frangia — senza poter raggiungere il sasso. ⚠️ **Ed è la seconda volta nella stessa giornata che una regola scritta per lo stile ripaga altrove**: il fondo doveva essere piatto perché *«appena si accenna un gradiente lo stile sticker si sfalda»*, e si scopre che è anche ciò che rende il riempimento prevedibile.
+
+⚠️ **Una nota di portabilità, trovata provando e non pensando**: la prima versione stampava emoji, e su una console Windows a cp1252 la stampa fallisce **dopo** che i file sono stati scritti — cioè nel modo peggiore, perché sembra rotto mentre il lavoro è fatto. L'uscita è ora ASCII puro, come i commenti delle migrazioni che scrivono «perche'» e non «perché».
+
+🟢 **E poi le nove immagini sono state generate tutte, nella stessa sessione**: tre stadi × tre umori, controllate una a una e ritagliate in `assets/creatura/`. Sette hanno richiesto una sola generazione; il cucciolo `quiete` due (proporzioni e poi tre quarti), la `festa` del cucciolo due (il secondo tentativo è servito a **scoprire** che il vincolo d'inquadratura non funziona, non a rispettarlo).
+
+**Verificato**: 🟢 **lo script sì, e contro un caso costruito apposta.** Uno sticker finto con la tavolozza vera — bordo bianco, contorno navy, corpo dorato, fiore rosa e **il sasso al centro** — passa sette asserzioni: fondo completamente trasparente, sasso opaco col suo colore, bordo bianco sopravvissuto, corpo e fiore opachi, uscita 768×768 RGBA, nessun alone lavanda opaco residuo. Il caso del sasso è quello per cui la prova esiste: è l'unico che una sostituzione di colore avrebbe rotto.
+
+🔴 **Tutto il resto no**, ed è importante dirlo per quello che è. Nessun codice client è stato toccato, nessuna immagine reale è stata generata, e la **`0033` non è stata applicata**: il trigger non è mai girato, le soglie nuove non sono mai state lette. I fatti sullo schema sono stati letti nelle migrazioni `0001`, `0020` e `0021` — non ricordati — e il vincolo del ciuccio è stato letto in §4, non dedotto; ma leggere non è provare. ⚠️ La `0033` va applicata e provata contro il database vero prima di considerarla fatta, ed è la prima voce del blocco creatura nel backlog.
+
 ### 2026-09-05 (4) — La data di nascita, e una correzione di date che riguarda tutta la giornata
 
 **Chiesto dall'utente**: la data di nascita alla registrazione, il compleanno sul calendario con una torta accanto al cuore, e le date di due account esistenti.
@@ -347,6 +415,281 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-112 — La dissolvenza incrociata si abbandona: il cambio d'umore è uno stacco mascherato dal movimento (2026-09-06)
+
+🔴 **Ribalta il sostegno di D-103**, non la sua scelta. D-103 sceglieva la strada raster e la difendeva così: *«il difetto di (a) — non cambia espressione dentro l'animazione — lo paga D-102, perché le tre immagini di uno stadio sono sovrapponibili e quindi si incrociano in dissolvenza»*. **Quella premessa è falsa**, e c'è voluta un'immagine vera per scoprirlo.
+
+**Le due prove, e vale la pena averle entrambe a verbale**:
+
+1. `creatura-1-festa` sta al **79,1%** di sovrapposizione col suo `quiete`, e all'**84,0%** dopo allineamento dei riquadri. Un secondo tentativo con un vincolo d'inquadratura molto più duro — *«same size, same scale, same position; the outline must be superimposable; the tail must not move at all»* — ha prodotto **la stessa identica sagoma**: riquadro 477×633 e origine (141,67) in entrambe le versioni, **IoU fra loro 0,9996**. Le facce differivano, il contorno no.
+2. Un passaggio *«ridisegna senza cambiare niente»* ha fatto **restituire al modello l'immagine di partenza**.
+
+🔴 **⟳ CORREZIONE, stesso giorno, a nove immagini finite: questa generalizzazione era sbagliata.** Avevo concluso che *«il modello sa o tenere la composizione o cambiare l'espressione, non tutt'e due»*. I sei umori dicono altro:
+
+| | quiete → festa | quiete → sonno | festa → sonno |
+|---|---|---|---|
+| stadio 1 cucciolo | **79,1%** | **79,1%** | 99,9% |
+| stadio 2 giovane | 99,8% | 99,8% | 99,6% |
+| stadio 3 adulta | 99,8% | 99,4% | 99,3% |
+
+**La composizione la tiene benissimo — in due stadi su tre.** 🔑 **La causa vera è la taglia**: il `quiete` del cucciolo è largo **574** px, quelli degli altri due **454** e **464**, e i passaggi d'espressione del cucciolo convergono tutti a **477** — cioè esattamente la taglia degli altri. *Il modello rinormalizza verso una sua misura preferita, e solo il cucciolo era fuori.* Non è un limite dello strumento: è un'immagine disegnata troppo grande.
+
+⚠️ **La decisione regge lo stesso, e per una ragione migliore di quella originale**: la schiacciata funziona **sia al 79% sia al 99,8%**, la dissolvenza solo sopra il ~95%. Scegliere la transizione che funziona in entrambi i casi significa che **il componente non deve sapere su quale stadio si trova** — che è la stessa regola di D-94 e D-60, *una regola che dipende dal ricordarsi il caso particolare non è una regola*.
+
+💡 **E si apre una possibilità che prima non c'era**: per i cambi **calmi** (`quiete ↔ sonno`) sugli stadi 2 e 3 la dissolvenza è di nuovo praticabile, e su un addormentarsi è più adatta di uno scossone. Da decidere scrivendo il componente, con i numeri in mano. Per uniformare anche il cucciolo basterebbe rigenerarne il `quiete` alla taglia preferita — ⚠️ ma è arte **già approvata dall'utente**, e si baratterebbe un disegno scelto per una comodità tecnica.
+
+🔑 **È la seconda volta nella stessa giornata che una decisione giusta poggiava su un argomento sbagliato** (dopo D-103). E la causa è la stessa: *una generalizzazione tratta da un solo caso.* La differenza è che stavolta i dati sono arrivati prima che ci si costruisse sopra qualcos'altro.
+
+---
+
+#### ✅ E poi l'anomalia è stata **eliminata**, non solo spiegata (2026-09-06, stessa sessione)
+
+L'utente ha fornito un `quiete` del cucciolo **nuovo**, generato nel regime del passaggio d'espressione. Cade esattamente dove cadono i suoi umori — riquadro **477×633, origine (141,67)**, identici — e la sovrapposizione passa da 79,1% a **99,9%** con la `festa` e **100,0%** con il `sonno`.
+
+**Il quadro finale, tutte e nove le immagini:**
+
+| | quiete → festa | quiete → sonno | festa → sonno |
+|---|---|---|---|
+| 1 cucciolo | **99,9%** | **100,0%** | 99,9% |
+| 2 giovane | 99,8% | 99,8% | 99,6% |
+| 3 adulta | 99,8% | 99,4% | 99,3% |
+
+🔑 **La conferma definitiva dell'ipotesi della taglia**: bastava un `quiete` disegnato alla misura che il modello preferisce. Non era un limite dello strumento, non era il prompt, non era il regime di generazione: era **un'immagine larga 574 dove le altre stanno a 477**.
+
+⚠️ **Il prezzo, e va detto**: la larghezza efficace del cucciolo scende da 0,615 a **0,570**, quindi lo scarto di sagoma col giovane passa dal 23,8% al **17,8%**. Resta sopra la soglia d'attenzione e il cucciolo ha comunque il **ciuccio** e la sagoma tonda contro la pera — ma è un margine più stretto di prima, e se un domani i due stadi sembrassero vicini è **qui** che è successo.
+
+✅ **Conseguenza per D-112: la dissolvenza incrociata è di nuovo praticabile ovunque.** La schiacciata resta la scelta giusta per la **festa**, perché una reazione deve sembrare qualcosa che accade; ma per i cambi calmi (`quiete ↔ sonno`) ora si può usare la dissolvenza su **tutti e tre** gli stadi, senza casi particolari.
+
+**Cosa la sostituisce**: la creatura si **schiaccia** verticalmente in ~90 ms, **al culmine della schiacciata l'immagine viene scambiata**, poi si rilascia con `molla.tocco`. Nell'istante dello scambio la figura è compressa e in movimento — il fotogramma in cui l'occhio vede meno forma e più moto — e lo stacco non si legge.
+
+🔑 **Ed è più adatto della dissolvenza, non un ripiego.** **D-102** dice che l'umore è una **reazione**: *una reazione deve sembrare qualcosa che accade, non qualcosa che sfuma.* La dissolvenza sarebbe stata giusta per un cambio di **stato**; per un sussulto era sbagliata dall'inizio, e ce ne siamo accorti solo perché l'altra strada si è chiusa.
+
+⚠️ **Cosa NON cambia, ed è la parte che salva la giornata**: la strada raster di **D-103 resta**, perché era comunque la più economica e l'unica senza strumenti nuovi. Cade il suo *argomento*, non la sua *scelta*. E **D-102 resta intatta** per la ragione per cui era stata presa — l'umore-reazione soddisfa P-01 per costruzione. ⚠️ Ma la sua regola *«l'umore cambia solo la riga dell'espressione»* perde il suo secondo scopo: resta valida per proteggere i tratti fragili (§1), non più per la sovrapponibilità.
+
+🔑 **E si guadagna qualcosa**: i cinque umori restanti si generano **senza vincolo di contorno**. La cosa che rendeva difficile questa parte non c'è più.
+
+**La lezione di metodo, che è la più cara pagata oggi**: *D-103 era un ragionamento elegante costruito su una proprietà che nessuno aveva misurato.* Regge per tre stadi — dove la sovrapponibilità non serviva — e si rompe al primo caso in cui serviva. **Il momento per provarla era prima di costruirci sopra**, e costava due immagini qualsiasi e cinque minuti.
+
+### D-111 — Lo scodinzolio sta nell'animazione, e si ottiene spostando il perno (2026-09-06)
+
+**Chiesto dall'utente il 2026-09-06**: *«vorrei che da felice scondinzolasse»*.
+
+🔴 **Nell'immagine non si può, e la ragione è strutturale.** D-102 vincola l'umore a cambiare **solo la riga dell'espressione**, e **D-103** ci si appoggia interamente: le tre immagini di uno stadio devono essere **sovrapponibili**, o la dissolvenza incrociata mostra un fantasma. Una coda in posizione diversa fra `quiete` e `festa` è precisamente quel fantasma — e per giunta sulla parte che si sposta di più.
+
+🔑 **Ma il vincolo riguarda il disegno, non il movimento** — e questa è la seconda volta oggi che la separazione stato/disegno di **D-09** paga senza che nessuno l'avesse prevista per questo caso. La festa è già un momento **animato** (rimbalzo, riscontro tattile, durata di un paio di secondi): il posto giusto per uno scodinzolio è lì.
+
+**Come si fa, e il trucco è dove si mette il perno.** Una rotazione oscillante di pochi gradi su tutto lo sprite:
+- ancorata **in basso** → oscilla la testa, e sembra che si dondoli;
+- ancorata **in alto** (`transformOrigin: 'top center'`) → **la testa resta ferma e la parte più lontana dal perno descrive l'arco più ampio**. E la parte più lontana, in tutti e tre gli stadi, è la coda.
+
+🔑 *Non è una coda animata: è una rotazione scelta in modo che a muoversi di più sia la coda.* Con ±4-6° e tre o quattro oscillazioni rapide sovrapposte al rimbalzo, legge come scodinzolio. **Costo: zero asset nuovi, una riga di `transformOrigin`.**
+
+⚠️ **E va detto per quello che è**: la coda si muove *insieme* al corpo, non *rispetto* a esso. La versione fedele vuole la coda come **livello separato** — un PNG per stadio ruotato attorno alla sua base — e costa tre asset in più, una separazione a mano con rischio di giuntura visibile, e i nove corpi da rigenerare senza coda. 👉 Non è chiusa: il componente riceve sempre solo `stadio` e `umore` (D-09), quindi il livello si aggiunge dopo senza toccare la logica di crescita.
+
+⚠️ **Solo nella festa, mai nel respiro.** Una creatura che scodinzola sempre non sta festeggiando: sta solo scodinzolando. È la stessa lezione del cuoricino sul calendario — *un segno che sta su tutto smette di informare*.
+
+**Alternative scartate**:
+- *Mettere la coda alzata nell'immagine `festa`*, accettando una piccola differenza di posa e mascherando il taglio col rimbalzo. Funzionerebbe **all'andata**, dove il movimento copre lo stacco — ma il **ritorno** a `quiete` dopo un paio di secondi è calmo, e lì lo stacco si vedrebbe. E introdurrebbe un'eccezione alla regola della sovrapponibilità che una sessione futura dovrebbe ricordarsi.
+- *Due o tre fotogrammi generati della sola coda*: è la strada (c) di §9, scartata da D-103 perché la coerenza fra fotogrammi generati è ciò che un modello non garantisce. Qui sarebbe peggio, non meglio: differirebbero ovunque tranne dove serve.
+
+### D-110 — Gli occhi grigi dell'adulta si tengono: deviazione accettata, non difetto (2026-09-06)
+
+**Deciso dall'utente il 2026-09-06** — *«lasciamola così»* — dopo che la differenza era stata **misurata** e il costo dichiarato.
+
+**Il fatto**, colore al centro dell'occhio: riferimento `#292246`, stadio 1 `#222347`, stadio 2 `#212047`, **stadio 3 `#898798`**. I primi tre sono il navy della tavolozza; l'adulta ha occhi **grigi**, con iride e **due** riflessi invece del navy pieno con uno.
+
+**Come si è arrivati alla decisione, e conta il come**: la prima lettura dell'immagine l'aveva segnalato come difetto, con un prompt correttivo già pronto. L'utente ha risposto che erano corretti. 🔑 **A quel punto la cosa utile non era né insistere né capitolare: era guardare da vicino e misurare**, perché «gli occhi sono grigi o navy» è un fatto, mentre «va bene così» è un giudizio — e i due vanno separati prima di decidere. Misurato il fatto, il giudizio è dell'utente, ed è questo.
+
+⚠️ **Il costo, accettato**: i tre stadi si vedranno **affiancati** mentre la creatura cresce, e §8 chiede che leggano come lo stesso individuo. Un colore dell'occhio diverso in uno su tre non si nota in un'immagine e si nota subito in fila.
+
+🔴 **E la conseguenza operativa è la parte che rischia di andare persa.** Un occhio fuori tavolozza in uno stadio su tre è precisamente ciò che una rilettura futura classificherebbe come errore, e una rigenerazione lo riporterebbe navy **senza che nessuno se ne accorga**. Perciò: la tavolozza di §1 ora ha **due righe per gli occhi**, §5 ha un blocco che dice esplicitamente *«non correggerli»*, il cappello dei passaggi d'umore ordina di tenere gli occhi **come nell'immagine allegata**, e il controllo di §8 chiede gli occhi *del proprio stadio*. Se un domani la serie sembrasse incoerente, la strada è **propagare il grigio agli altri due**, non riportare indietro l'adulta.
+
+🔑 *È la terza volta oggi che vale la stessa regola — dopo il ciuccio invertito e la presa a due zampe: **ciò che si accetta diventa la specifica**. Con una differenza che questa volta pesa di più: qui la specifica scritta dice il contrario di ciò che si è accettato, quindi non basta aggiornarla — bisogna anche vietare la correzione.*
+
+### D-109 — Gli occhiali tondi all'adulta, e un dettaglio d'età rifiutato (2026-09-06)
+
+**Chiesto dall'utente il 2026-09-06**: *«rendiamola più riconoscibile come adulto. magari aggiungiamo degli occhiali e qualche altro dettaglio»*.
+
+🔑 **Gli occhiali completano una triade che non era stata progettata come tale**: **ciuccio → cappellino → occhiali**, tre marcatori d'età **tutti sulla testa**, uno per stadio, ognuno arrivato da una richiesta separata dell'utente in momenti diversi della stessa giornata. *Il posto dove si guarda per primo è la faccia, e ora è lì che sta scritta l'età.*
+
+🔴 **Ma c'è una tensione vera, ed è la ragione per cui questa decisione ha un contenuto tecnico e non solo estetico.** Il blocco `KEEP IT TENDER` di §5 — la parte che impedisce all'adulta di venire *figa* invece che tenera — **è costruito quasi tutto sugli occhi**: *«grandi, perfettamente tondi, un solo riflesso, mai a mandorla, mai socchiusi»*. Gli occhiali si mettono esattamente lì sopra. *L'accessorio che più dice «adulto» sta sull'unico tratto che deve restare da cucciolo.*
+
+**Come si risolve, e sono quattro vincoli, non una preferenza**: montatura **tonda** (tutto il personaggio è fatto di curve, e una montatura rettangolare porterebbe le prime linee rette del disegno); **lenti completamente trasparenti**, senza riempimento né riflessi disegnati; **cerchi più grandi dell'occhio**, così la montatura lo circonda invece di tagliarlo — 🔑 *se gli occhiali fanno sembrare gli occhi più piccoli, sono sbagliati*; e linea **più sottile** del contorno del corpo, così leggono come oggetto appoggiato e non come parte della sagoma.
+
+⚠️ **E non aggiungono un colore**: sono **navy**, il colore del contorno. ⟳ Questo **corregge D-108**, che aveva scritto che l'adulta *«non porta più niente addosso»*: a sparire è il **rosa**, non l'accessorio. 🔑 *La tavolozza non cresce di un colore in tutta la vita della creatura, e la fine dell'infanzia si legge lo stesso — perché a finire non è il portare qualcosa, è il portare qualcosa di colorato.*
+
+**Il secondo dettaglio accolto**: 🔑 **il sasso cambia presa, non oggetto.** Il cucciolo lo stringe con **due** zampe, l'adulta lo tiene in **una**, l'altra rilassata lungo il fianco. È maturità raccontata attraverso un attributo che c'è già in tutti e tre gli stadi (§1), invece che con un oggetto nuovo — e aggiunge asimmetria, che serve a D-107.
+
+🔴 **E un dettaglio rifiutato, che è la parte che conta.** La manopola *«adulta anziana ma sempre dolce»* di §6 offre *«qualche pelo crema chiaro attorno al muso»*, ed era il candidato ovvio per dire «adulta». **Non si usa, e non per gusto: per P-01.** *«La creatura cresce e basta: non muore, non deperisce»* — e capelli bianchi non sono maturità, sono **invecchiamento**, cioè il primo passo di una parabola che ha una discesa. ⚠️ Uno stadio finale che sembra vecchio **suggerisce cosa viene dopo**, e ciò che viene dopo la vecchiaia è precisamente quello che P-01 vieta di mettere davanti a una coppia. Il prompt ha ora un blocco `NO SIGNS OF AGEING` esplicito.
+
+*Detto altrimenti*: fra i modi di dire «adulto», si è scelto quello della **competenza** (occhiali, presa sicura, postura composta) e non quello del **tempo trascorso**. La differenza non si vede in una singola immagine — si vede nell'idea che quella immagine dà di cosa succederà poi.
+
+### D-108 — Il cappellino al contrario, e il rosa diventa il filo dell'infanzia (2026-09-06)
+
+**Proposto dall'utente il 2026-09-06**: *«in questo secondo stadio "adolescente" potremmo aggiungere un cappellino messo al contrario»*.
+
+🔴 **Ed è un ribaltamento di quello che avevo scritto poche ore prima.** Fra le alternative scartate di **D-106** c'era: *«distinguere gli stadi con accessori — aggiunge elementi e colori che gli stadi successivi devono gestire, contro la ragione economica di D-09, e non cambia la sagoma»*. Le due obiezioni erano giuste in generale e **non reggono in questo caso**, e va detto perché, o la prossima sessione le riapplicherà a caso:
+
+- *«colori che gli stadi successivi devono gestire»* — **falso per un marcatore d'età**, che sparisce crescendo. È già l'argomento con cui il ciuccio dello stadio 1 era stato accettato. E qui non c'è nemmeno un colore nuovo: il cappellino riusa il **rosa del ciuccio**.
+- *«non cambia la sagoma»* — **falso per un cappello**: cambia il profilo della testa, e la visiera all'indietro rompe il contorno da un lato, cioè **aiuta** il tre quarti di D-107.
+
+🔑 **E l'obiezione vera di D-106 era a un accessorio *al posto* del lavoro sulla sagoma, non *in aggiunta*.** Qui la sagoma a pera resta e i cinque contrasti binari col cucciolo restano; il cappellino è rinforzo. *Un'alternativa scartata non è scartata per sempre: è scartata sotto le condizioni in cui la si è valutata, e vale la pena scrivere quali erano.*
+
+**Perché risolve il buco vero.** D-106 aveva diagnosticato che lo stadio 2 era l'unico **definito in negativo** — «né cucciolo né adulta» — mentre l'1 aveva il ciuccio e il 3 i baffi. Ora ha un marcatore suo, e la progressione si legge da sola: **ciuccio → cappellino → baffi**, cioè neonato, ragazzino, adulta.
+
+🔑 **«Al contrario» non è un vezzo: è l'unico verso compatibile con un tratto d'identità.** Il **ciuffo a tre punte** è uno dei quattro tratti di §1 (*«cambiarne uno cambia personaggio»*), e un cappello in avanti gli finirebbe sopra — visiera sulla fronte, ciuffo coperto o schiacciato. **All'indietro la fronte resta scoperta** e il ciuffo esce davanti alla calotta, incorniciato invece che nascosto. L'istinto dell'utente coincideva col vincolo.
+
+🔑 **E il rosa diventa il filo dell'infanzia.** Era il rosa del fiore, ereditato dal ciuccio; tolto il fiore era rimasto orfano. Ora attraversa i due stadi da piccola — ciuccio, poi cappellino — e **scompare nell'adulta**, che non porta più niente addosso. Un accento che racconta un'età invece di decorare.
+
+⚠️ **Due punti da non sbagliare nell'esecuzione**, entrambi scritti nei prompt:
+1. Il blocco di rimozione del fiore diceva *«nothing replaces it: no accessory of any kind»* e *«pink must not appear anywhere»*: con un cappellino rosa si **contraddiceva da solo**. Riscritto in modo specifico — niente **dietro le orecchie**, e il rosa è ammesso **solo** sul cappello.
+2. I sei passaggi d'umore (§5bis) cambiano *solo l'espressione*, quindi il cappello sopravvive per costruzione — ma il cappello comune ha ora una riga esplicita che vieta di «rimetterlo a posto», perché un modello tende a ripulire ciò che non capisce.
+
+### D-107 — L'inquadratura in tre quarti è un vincolo, non uno stile (2026-09-06)
+
+🔴 **Visto dall'utente sulla prima immagine generata**: *«preso da davanti così è un po' inquietante»*. Il riferimento è in **tre quarti** — testa girata di poco, corpo angolato, coda che sventaglia da un lato — e la generazione è uscita **frontale e simmetrica**.
+
+🔑 **Il fiore era scritto e si è potuto togliere; il tre quarti non era scritto da nessuna parte e si è perso da solo.** `docs/mascotte.md` §1 descriveva i *tratti* del personaggio e mai la *vista*, e i prompt dicevano solo *«same framing energy as the reference»* — una formula abbastanza vaga da essere rispettata da qualunque cosa. ⚠️ *Le proprietà che nessuno scrive sono quelle che si perdono per prime, e sono anche quelle che nessuno pensa di controllare, perché non compaiono in nessuna lista.*
+
+**Perché il frontale non funziona, e le tre ragioni sono indipendenti**:
+
+1. **La simmetria bilaterale perfetta legge come maschera**, non come animale: in natura non esiste, e l'occhio la riconosce come artificiale prima di sapere perché.
+2. 🔑 **Uno sguardo dritto in asse non è tenero: è fisso.** È la posa di chi osserva. E questa creatura vive nella schermata di casa e viene guardata ogni giorno — *una creatura che fissa è il registro sbagliato per una compagna.* È lo stesso confine che **P-01** protegge sul piano emotivo (*non rimprovera, non incalza*), qui sul piano del disegno; e non è la prima volta che una scelta di resa tocca una regola di sentimento.
+3. **Senza il tre quarti non c'è volume**: la figura si appiattisce e diventa un pupazzo di carta.
+
+**La regola, ora scritta in §1 e ripetuta in tutti e tre i prompt**: testa girata di ~15° con un lieve inclinamento, corpo angolato (spalle mai parallele al bordo), coda visibile da un lato, mai perfettamente simmetrico. E un blocco `NEGATIVE` esplicito, perché un modello riporta al frontale da solo — è la posa più facile da disegnare.
+
+⚠️ **Si sposa con D-106 invece di contraddirlo**: una sagoma **asimmetrica si riconosce meglio** di una simmetrica, perché ha un verso. La coda che sventaglia è precisamente ciò che distingue il cerchio del cucciolo da una palla qualunque.
+
+⟳ **E ha rovesciato una scelta di D-105 nella stessa giornata.** D-105 stabiliva di generare prima lo stadio 2 e poi usarlo come ancora per gli altri due, *«per non combattere tre volte la battaglia del fiore»*. Una generazione vera ha mostrato che quella battaglia **si vince al primo colpo**, mentre a perdersi sono identità e inquadratura. Quindi: **i tre stadi si ancorano tutti al riferimento** (un salto solo, meno deriva), e l'immagine sorella resta l'ancora **solo per gli umori**, dove serve la *sovrapponibilità* e non l'identità. 🔑 *Requisiti diversi, sorgenti diverse — e il ragionamento di D-105 era plausibile e sbagliato: a smentirlo non è stato un altro ragionamento, è stata un'immagine.*
+
+### D-106 — Gli stadi si distinguono per **sagoma**, non per proporzione: cerchio, pera, colonna (2026-09-06)
+
+🔴 **Il difetto l'ha visto l'utente guardando la prima immagine vera**, prima che la seconda venisse generata: *«cosa cambia dalla prima alla seconda immagine? l'unica differenza è il ciuccio»*. Aveva ragione, e i numeri lo dicevano già: **1:1,5 e 1:1,8 sono il 20% di scarto**, che su una figura alta 180 punti non si vede.
+
+🔑 **E il progetto lo sapeva dal 2026-08-12.** **D-17** decideva *«fra gli stadi cambia la crescita della figura»* e chiudeva con una nota mai raccolta: *«se la crescita è **solo** dimensione, cinque stadi rischiano di sembrare cinque volte la stessa cosa. Chiedere che la crescita porti con sé un po' di complessità costa poco e rende visibile il progresso. **Da valutare col designer, non deciso.»*** `docs/mascotte.md` §2 aveva poi ridotto la scala a *«una sola manopola numerica, il rapporto testa/corpo»* — cioè **aveva scelto senza dirlo esattamente l'opzione contro cui D-17 metteva in guardia**, e la nota è rimasta lì per venticinque giorni senza che nessuno la applicasse.
+
+⚠️ *Come si perde una cosa del genere*: D-17 la marcava *«non deciso»*, e una voce non decisa non blocca niente — quindi non si presenta mai come un ostacolo. Sopravvive nel documento e muore nella pratica. **Il momento in cui sarebbe dovuta tornare in gioco era la scrittura dei prompt**, e non è tornata perché scrivere i prompt sembrava un lavoro di stile, non di progetto.
+
+**La decisione ha due parti, e la seconda è quella che risolve.**
+
+1. **Le proporzioni si allargano**: **1,3 · 1,9 · 2,6** invece di 1,5 · 1,8 · 2,4. Gli scarti passano dal 20% e 33% al **46% e 37%**.
+2. 🔑 **Ma quello che si legge a 180 punti non è la proporzione, è la sagoma** — e da qui l'asse nuovo: **cerchio → pera → colonna**. Cambia il **profilo esterno**, non un rapporto interno. Un cerchio e una colonna si distinguono in un decimo di secondo, in miniatura e con l'occhio distratto; due rapporti testa/corpo vicini non si distinguono nemmeno guardandoli apposta.
+
+**E ogni stadio ha ora un marcatore suo**: il **ciuccio** (1), il **sorriso che torna** con le zampe visibili (2), i **baffi** e la posa eretta (3). ⚠️ **Il buco vero era lo stadio 2**, che era definito **in negativo** — «né cucciolo né adulta». *Uno stadio definito solo dall'essere in mezzo è precisamente quello che si legge come «uguale agli altri».*
+
+🔑 **E la riga che ha causato il danno era sopravvissuta alla propria ragione.** §4bis diceva *«stessa età del riferimento, 1:1,8»* — un vincolo che esisteva solo perché lo stadio 2 **era** `riferimento.jpg`. Con **D-105** quel file ha smesso di essere un'uscita, ma la riga è rimasta. *Una regola può sopravvivere alla ragione che la reggeva, e non se ne accorge nessuno finché non produce un risultato sbagliato.*
+
+⚠️ **Le sagome diverse non violano D-103**, e va scritto perché non venga "corretto": la dissolvenza incrociata richiede che siano sovrapponibili i **tre umori di uno stesso stadio**. Fra **stadi** non serve — il cambio di stadio è un momento a sé, non un incrocio (`docs/mascotte.md` §9).
+
+🔴 **Costo: lo stadio 1 va rigenerato.** Quello approvato poche ore prima sta a ~1:1,8 invece del 1:1,5 chiesto, quindi con le proporzioni nuove è fuori di due passi. ⚠️ Non è lavoro buttato: quella generazione ha provato che la rimozione del fiore funziona (D-105) e ha trovato **due difetti nel prompt** — la contraddizione sul ciuffo e il ciuccio invertito — che senza un'immagine vera sarebbero arrivati fino in fondo.
+
+**Alternative scartate**:
+- *Tenere lo stadio 1 e spostare solo il 2 e il 3 più in là* (1,8 · 2,3 · 2,8). Risparmia una generazione, ma lascia un cucciolo **col ciuccio e proporzioni da adolescente**: due segnali d'età che si contraddicono nella stessa immagine.
+- *Distinguere gli stadi con accessori* (un fiocco, un oggetto in più per stadio). Aggiunge elementi e colori che gli stadi successivi devono gestire, contro la ragione economica di D-09, e non cambia la sagoma — cioè non risolve il problema a schermo piccolo. ⟳ **Ribaltata in giornata da D-108**: entrambe le obiezioni cadono per un accessorio che è un **marcatore d'età** (sparisce crescendo, quindi nessuno stadio successivo deve gestirlo) e che è un **cappello** (che la sagoma della testa la cambia eccome). L'obiezione valida resta contro un accessorio **al posto** del lavoro sulla sagoma, non **in aggiunta**.
+- *Cinque stadi invece di tre*, per rendere graduale la crescita. Contraddice D-96 e moltiplica le immagini per `umori`: da 9 a 15.
+
+### D-105 — Il fiore si toglie, e il riferimento smette di essere uno stadio (2026-09-06)
+
+**Deciso dall'utente il 2026-09-06**, prima che venisse generata una sola immagine: *«togli il fiore in tutte le immagini»*.
+
+**Perché si può fare senza discussione**: 🔑 **il fiore non è mai stato fra i tratti d'identità.** `docs/mascotte.md` §1 ne elenca **quattro** — lentiggini, ciuffo a tre punte, macchie sopra gli occhi, sasso di fiume — e scrive che *«cambiarne uno cambia personaggio»*. Il fiore stava nella tavolozza e nei blocchi `KEEP IDENTICAL`, non in quella lista. Toglierlo è quindi una **scelta estetica**, non un cambio di personaggio, e non tocca nessuna decisione presa.
+
+🔴 **Ma ha una conseguenza strutturale che nessuno avrebbe cercato: lo stadio 2 non esiste più.** D-96 (2026-09-04) aveva stabilito tre stadi *«e li abbiamo già tutti»*, perché lo stadio intermedio **era** `riferimento.jpg`. Quel file **ha il fiore**. Quindi non può più essere un'uscita, e lo stadio 2 va **generato** come gli altri due (nuovo §4bis).
+
+🔑 **E l'ordine di produzione si rovescia.** Lo stadio 2 diventa il **primo** lavoro, non l'unico che si saltava: è lì che si toglie il fiore, e il suo risultato diventa **l'ancora senza fiore** da allegare a §4 e §5. Altrimenti si allegherebbe tre volte un'immagine *col* fiore dicendo tre volte «toglilo» — cioè *si continuerebbe a mostrare al modello la cosa che si sta cercando di eliminare*. È lo stesso principio dei passaggi d'umore di D-102: si genera dall'immagine già approvata, non da capo.
+
+**Due conseguenze minori, entrambe scritte perché non vengano "corrette" per sbaglio**:
+
+- ⚠️ **L'anello rosa del ciuccio resta, ma la sua giustificazione è caduta.** §4 sceglieva `#F07BA8` *«per riusare il rosa del fiore invece di introdurre un colore nuovo»* — senza fiore quel rosa **è** un colore nuovo, ed è l'unico accento saturo del personaggio. Si tiene per due ragioni diverse: il ciuccio deve leggersi come un **oggetto** distinto dal muso crema, ed è un marcatore d'età che **sparisce da sé** crescendo, quindi non è un colore che gli stadi 2 e 3 debbano gestire. Chi preferisse crema o navy cambia una riga.
+- ✅ **Sparisce il difetto di generazione più frequente.** §6 diceva: *«il dettaglio che il modello sbaglia più spesso è il fiore: cambia lato o sparisce»*. Non era l'obiettivo della decisione, ma è un guadagno reale sulla riuscita. ⚠️ **E il difetto si rovescia**: il fiore non sbaglia più lato, può **ricomparire da solo** — perché sta nell'immagine di partenza e perché il modello ha visto migliaia di lontre-sticker che ne portano uno. Per questo il divieto è ripetuto anche nei passaggi d'umore, dove cambia *solo l'espressione* e nessuno penserebbe di controllarlo.
+
+⚠️ **Il punto fragile del §4bis è l'orecchio**, non il fiore: il fiore lo copriva in parte, quindi togliendolo il modello deve **ricostruire** il profilo dell'orecchio sinistro, e lì può lasciare un contorno interrotto o una rientranza a forma di petalo. È la prima cosa da guardare, prima dei quattro tratti.
+
+**Alternativa scartata**: *tenere il fiore solo sul riferimento e toglierlo dagli altri due*, per non dover rigenerare lo stadio 2. Avrebbe risparmiato una generazione e prodotto **tre stadi che non sono lo stesso individuo** — cioè esattamente ciò che il controllo di §8 esiste per impedire.
+
+### D-104 — I giochi alimentano la creatura, e la scala dice che la realtà batte l'app (2026-09-06, migrazione 0033)
+
+**Deciso dall'utente il 2026-09-06**: *«partita 5, lista 10, luogo 20»*. I due valori esistenti restano come sono; il nuovo è la partita.
+
+🔴 **Ma la decisione ne ripara una che era rimasta a metà per quattro settimane.** **D-15** dice, dal 2026-08-12, che *«i giochi danno punti in base al risultato»*, e **P-03** è a verbale come **«il carburante di P-01»**. Verificando lo schema il 2026-09-06 è risultato che i giochi **non hanno mai dato un punto**: `assegna_punti` era chiamata da **due soli trigger**, e `chiudi_round` accumulava in `partita.punti` — una colonna di `partita` che non tocca mai `creatura`.
+
+🔑 **La lezione, e vale oltre questo caso**: *il pezzo che unisce due funzioni non compare in nessuna delle due se le si guarda una per volta.* Il gioco funzionava. La creatura funzionava. Il backlog dava per fatta la composizione. E la composizione era **la sola cosa che nessun concorrente fa** — FurTwo ha la creatura senza le liste, gli altri hanno i quiz senza la creatura. Mancava il tubo, e nessuna delle due caselle era sbagliata.
+
+**Perché 5 e non 10 o 20** — 🔑 non è una taratura, è una **dichiarazione di cosa premia il prodotto**. Luoghi e voci di lista sono scarsi per natura; le partite no, si gioca quanto si vuole. A punti pari la crescita diventerebbe una macinata, e la creatura smetterebbe di dire *«abbiamo chiuso il cerchio fra intenzione e realtà»* — il cuore di D-15 — per dire *«abbiamo giocato molto»*. Col rapporto **1 : 2 : 4** è la scala stessa a dire che **la realtà batte l'app**: un posto dove siete andati davvero vale quattro partite, e nessuna schermata deve spiegarlo.
+
+**Come è implementato, e le tre scelte dentro l'implementazione**:
+
+1. **Un trigger sulla transizione**, non una riga dentro `chiudi_round`. È ciò che D-15 prescrive (*«il punto si assegna alla transizione»*) ed è come sono fatti gli altri due — il che vale più dell'eleganza: chi cercherà fra un anno guarderà dove ha già trovato gli altri. ⚠️ E un trigger copre **ogni** strada che concluda una partita: oggi `chiudi_round` è l'unica, ma *«oggi è l'unica»* è esattamente la premessa che la prossima migrazione invalida senza accorgersene — vedi la guardia delle liste della `0023`, scritta per un caso *«oggi impossibile ma domani chissà»*, e domani è arrivato il 2026-09-05.
+2. ⚠️ **`after` e non `before`**, divergendo dagli altri due di proposito. Quelli sono `before` perché **devono scrivere una data** su `new`; qui `conclusa_il` la scrive già `chiudi_round`. Un `before` che non ha bisogno di modificare `new` è un trigger che *può* modificarlo per sbaglio. La divergenza è annotata nella migrazione perché non venga "uniformata" per coerenza.
+3. **`abbandonata` non dà punti.** Il punto premia la chiusura del cerchio, non il tempo passato nell'app: una partita lasciata a metà è un cerchio non chiuso.
+
+🔑 **E la guardia anti-fabbricazione di D-15 funziona già, per la ragione giusta.** Con `riferimento_id = partita.id`, la chiave `unique (coppia_id, tipo, riferimento_id)` impedisce che una partita premi due volte — ma **rigiocare dà punti nuovi**, perché è una riga nuova con un id nuovo. La stessa chiave produce due comportamenti opposti sul gioco e sulle liste **perché i due casi sono opposti**: rigiocare è un gesto in più, ri-spuntare un elemento no.
+
+**Le soglie tornano tre** (D-96). Erano rimaste **sei** (0/100/300/700/1500/3000), tarate quando D-09 prevedeva ~5-6 stadi: tre di quelle righe non avrebbero mai potuto corrispondere a niente, e 3000 punti coi due soli ingressi di allora erano **150 luoghi visitati**. Ora `0 / 250 / 1200`.
+
+⚠️ **Sono una stima dichiarata, non una misura, e vanno lasciate falsificabili.** L'ipotesi scritta nella migrazione è **~130 punti al mese** per una coppia attiva: su quella, lo stadio 2 arriva a ~2 mesi e il 3 verso il nono. 🔑 **La prima soglia è bassa apposta, e non è generosità: è la transizione che insegna che la creatura cresce.** Se il primo cambiamento arrivasse a otto mesi quasi nessuno ne vedrebbe mai uno, la meccanica verrebbe letta come un'immagine ferma, e due dei tre stadi sarebbero stati disegnati per niente (`docs/mascotte.md` §2). La tabella esiste **apposta** per essere ritarata senza migrazione: quando ci saranno dati d'uso si confronta la produzione reale coi ~130/mese e si correggono i due numeri, non lo schema.
+
+**Alternative scartate**:
+- *Un tetto giornaliero* alle partite. Avrebbe richiesto una chiave temporale dentro `punti_evento`, cioè un secondo meccanismo accanto a quello che c'è già. Il rapporto 1:4 fa lo stesso lavoro con un numero, e se l'uso reale lo smentisse si cambia **quel** numero.
+- *Punti proporzionali al risultato della partita* (`partita.punti`). Trasformerebbe la creatura in un premio alla **bravura**, mentre D-15 dice che il gioco è cooperativo e *«non c'è nessuno da battere»*: una coppia che indovina poco starebbe meno bene con la propria creatura, che è la punizione emotiva vietata da P-01 per un'altra strada.
+- *Modificare `chiudi_round`*: vedi il punto 1.
+
+### D-103 — La creatura si anima con la strada (a), e a renderla sufficiente è il vincolo di D-102 (2026-09-06)
+
+**Deciso dall'utente il 2026-09-06**, insieme a D-102: *«tre umori e strada (a)»*. Chiude il nodo che [`docs/mascotte.md`](docs/mascotte.md) §9 teneva aperto come *«il vero nodo tecnico della creatura»*, e che D-95 §3 aveva segnalato come la cosa da decidere **prima** di generare in massa.
+
+**La scelta**: raster PNG animati con Reanimated su scala, rotazione e scostamenti, più **dissolvenza incrociata** fra due immagini per il cambio d'umore. Non Lottie, non la vettorializzazione a mano, non lo sprite generato.
+
+🔑 **La ragione non è che (a) costa meno — quello lo diceva già §9. È che D-102 le toglie il difetto.** La tabella di §9 assegnava alla strada (a) una perdita precisa: *«il personaggio non si deforma — respira e rimbalza, non cambia espressione dentro l'animazione»*. Ma con l'umore che cambia **solo la riga dell'espressione**, le tre immagini di uno stadio condividono posa, sagoma e inquadratura — e due immagini così si incrociano in dissolvenza senza che si veda un salto. **Il cambio d'espressione torna, e a costo zero.**
+
+Detto altrimenti: D-102 e D-103 non sono due decisioni indipendenti prese lo stesso giorno. Presa da sola, D-102 sarebbe una scelta di costo (nove immagini invece di dodici) e D-103 un compromesso tecnico. Prese insieme, **la prima paga il difetto della seconda**. È il motivo per cui vanno lette in coppia.
+
+**Cosa NON cambia, ed è il dividendo di D-09**: il componente del disegno riceve **solo `stadio` e `umore`**. La mappa dei nove PNG vive *dentro* quel componente; la logica di crescita non sa che esistono dei file, esattamente come oggi non sa che esistono dei cerchi. 🔑 **Il passaggio a Lottie resta quindi possibile senza toccare la crescita** — che è precisamente ciò per cui D-09 ha separato stato e disegno il 2026-08-12, quattro settimane prima che servisse.
+
+**Gli strati del movimento sono quattro, più il tocco** — respiro (continuo), umore (dissolvenza), festa (evento-punto), stadio (due volte nella vita). Tabella e taratura in [`docs/mascotte.md`](docs/mascotte.md) §9. Tre vincoli meritano di stare anche qui, perché sono il genere di cosa che una sessione futura rifarebbe male:
+
+1. 🔴 **Il respiro è la prima animazione perpetua dell'app e va messa in pausa.** Le schede restano montate passando da una tab all'altra — è voluto, ed è scritto nel commento di `app/(tabs)/home.tsx` — quindi senza guardia la creatura respirerebbe sul thread UI mentre si guarda la mappa. Si spegne con `useFocusEffect`, che è già l'idioma di cinque schermate, e con `AppState`.
+2. ⚠️ **Il respiro si ancora in basso**, non al centro. Stessa quantità di movimento, significato opposto: scalare dal centro fa *fluttuare*, e una creatura che fluttua non respira.
+3. ⚠️ **Il movimento ridotto non è gestito in nessun punto del progetto** — nessun `ReduceMotion`, nessun `AccessibilityInfo`. Finora non è stato un problema perché ogni animazione dell'app dura meno di un secondo; **un respiro perpetuo è esattamente ciò per cui quell'impostazione di sistema esiste**, ed è qui che il progetto deve cominciare a rispettarla. È un gap che la creatura non crea ma rende visibile.
+
+⚠️ **E una durata non va inventata**: `durata.media` in [`lib/movimento.ts`](lib/movimento.ts) è già documentata come *«Un incrocio in dissolvenza fra due contenuti»*. Il **respiro** invece un token non ce l'ha, perché quel file non ha una categoria per i **cicli**: tutte le sue voci sono eventi discreti. Il numero va aggiunto lì e non scritto nel componente — è il motivo dichiarato per cui `movimento.ts` esiste (*«due movimenti leggermente diversi si notano ancora di più»* del colore).
+
+**Alternative scartate** (le tre di §9, col costo che si evita):
+- *(b) Ridisegnare a mano in SVG.* Nessuna perdita tecnica, ma è un costo **ricorrente per ogni stadio e ogni umore**, ed è precisamente ciò che D-09 voleva evitare rimandando a un fornitore esterno. Con nove immagini sarebbero nove ricalchi.
+- *(c) Sprite generati.* §9 lo diceva già: *«la coerenza fra fotogrammi generati è proprio ciò che un modello non garantisce»*. Un modello che perde le lentiggini fra un'immagine e l'altra (§1) le perderebbe fra un fotogramma e l'altro, e lì si vedrebbe come sfarfallio.
+- *Lottie subito.* Richiede un illustratore e un formato che il materiale generato non produce. Resta la destinazione, non il punto di partenza.
+
+### D-102 — Gli umori sono tre, e l'umore è una **reazione**, non una condizione (2026-09-06)
+
+**Deciso dall'utente il 2026-09-06**: tre umori. Chiude la domanda che [`docs/mascotte.md`](docs/mascotte.md) §0 chiamava *«l'ultima decisione prima di poter generare»*, e che D-95 §2 aveva messo a verbale come la differenza fra ~6 immagini e ~30.
+
+🔑 **Ma il numero è la parte piccola. La decisione vera è cosa muove l'umore**, e non era mai stata posta: `mascotte.md` chiedeva *quanti*, e non si può contare prima di sapere *cosa li fa cambiare*.
+
+**Le due famiglie possibili, e perché una sola regge**:
+
+- **L'umore come condizione** — come *sta* la creatura. È la strada ovvia, ed è quella che viola P-01 quasi da sola: qualunque condizione che dipenda dall'attività recente mette *«siete stati via»* sulla faccia della creatura. E una condizione tenuta solo positiva diventa ridondante con lo stadio, cioè tre immagini in più che non dicono niente.
+- **L'umore come reazione** — cosa è *appena successo*. Transitorio, torna al riposo da sé. **L'assenza non produce alcun umore: produce `quiete`, che è un neutro, non una punizione.**
+
+🔴 **Si sceglie la reazione, e la ragione è di metodo prima che di disegno: soddisfa P-01 per costruzione invece che per attenzione.** Il vincolo di D-95 §5 — *«nessun umore può leggersi come rimprovero per l'assenza»* — con un umore-condizione dipenderebbe dal fatto che ogni schermata futura si ricordi di non rimproverare. Con un umore-reazione **non esiste il modo di rimproverare**: non c'è nessuno stato che l'assenza possa accendere.
+
+È lo stesso schema che il progetto ha già premiato due volte, ed è il motivo per cui va scritto: **D-100** ha sostituito una mitigazione con quattro vincoli nello schema invece di una nota nell'informativa; **D-94** ha messo una funzione al posto di sei `Alert` copiati, perché *«una regola che dipende dalla memoria di chi scrive la prossima schermata non è una regola, è una speranza»*.
+
+**I tre umori**: `quiete` (default) · `festa` (un evento-punto è appena arrivato) · `sonno` (di notte). Nove immagini. Si noti cosa **non** c'è: nessun umore triste, nessuno annoiato, nessuno che aspetta guardando in camera.
+
+🔑 **E la decisione risolve gratis una seconda domanda, aperta da D-96**: *«da dove viene il senso di crescita fra una transizione e l'altra»*, dato che con tre stadi la creatura cambia **due volte in tutta la vita**. La risposta è che **non viene dalla crescita: viene dalla reazione.** Ogni evento-punto produce una risposta visibile lo stesso giorno, mentre la crescita si legge nella barra verso lo stadio successivo — e i punti ci sono già, contati dal 2026-08-12. `mascotte.md` §2 ipotizzava micro-variazioni, pose o accessori per colmare il vuoto: **non servono, e sarebbero stati costo grafico in più.**
+
+⚠️ **La regola che ne discende, e che vale come vincolo sul disegno**: *l'umore cambia **solo la riga dell'espressione** — mai la posa, mai le proporzioni, mai il sasso.* Era già in `mascotte.md` §6 come una manopola fra le altre; qui diventa vincolo, e paga due volte: (1) i tratti fragili di §1 — lentiggini, ciuffo, macchie sopra gli occhi — non sono mai in gioco, perché non si rigenera la sagoma; (2) rende sufficiente la strada (a) dell'animazione, che è **D-103**.
+
+⚠️ **La festa non si rigioca all'apertura dell'app**: scatta su un evento-punto che quel dispositivo non ha ancora mostrato. Rigiocarla a ogni avvio la ridurrebbe a carta da parati — la stessa lezione già imparata col cuoricino sul calendario (*un segno che sta su tutto smette di informare*).
+
+🔑 **E da qui esce una proprietà del prodotto che vale più dell'animazione**: se è il **partner** a segnare un luogo come visitato, la festa la si vede aprendo l'app. È l'unico punto in cui l'azione dell'altro arriva come un fatto emotivo invece che come una riga in un elenco — cioè è dove P-01 mantiene per davvero la promessa di essere *«l'unica funzione che richiede entrambi»*.
+
+**Alternative scartate**:
+- *Due umori* (`quiete` + `festa`, sei immagini). È il minimo che consegna il meccanismo, e sarebbe stato difendibile. `sonno` è il più debole dei tre — non dice niente sulla coppia — ma è lo stato che si vede aprendo l'app la sera, ed è ciò che fa leggere la creatura come viva invece che come un distintivo.
+- *Quattro umori*, col quarto `curiosità` («l'altro ha aggiunto qualcosa»). Buon candidato e non escluso per sempre: costa tre immagini e **tre verifiche di identità** in più (§8), e non serve per partire. Nulla nel disegno lo impedisce dopo.
+- *Un umore per stadio di punteggio* (più contento man mano che cresce): è l'umore-condizione mascherato, e riporta dentro esattamente il rimprovero che P-01 vieta — perché se «più punti = più contento» allora «niente punti = meno contento».
 
 ### D-101 — La data di nascita: il compleanno sul calendario, e l'età minima che finalmente si applica (2026-09-05, migrazione 0032)
 **Chiesta dall'utente**: *«al momento della registrazione venisse chiesta la data di nascita in modo da poterla segnare in automatico sul calendario»*, con una torta accanto al cuore.
@@ -2803,6 +3146,20 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 ## 5. Rischi accettati esplicitamente
 
+### 🔴 La sovrapponibilità degli umori è una premessa non verificata, e il primo dato la smentisce (2026-09-06)
+
+**D-102** vincola l'umore a cambiare *«solo la riga dell'espressione»*, e **D-103** ci si appoggia interamente: è la sovrapponibilità fra le tre immagini di uno stadio che rende sufficiente la strada raster, perché permette la **dissolvenza incrociata**. Tutto il ragionamento di D-103 — *«il difetto di (a) lo paga D-102»* — dipende da lì.
+
+🔴 **La prima immagine d'umore generata sta al 79,1% di sovrapposizione col suo `quiete`, e all'84,0% dopo aver allineato i riquadri.** La soglia sotto cui la dissolvenza mostra un fantasma è il 95%. Il modello ha ridisegnato a scala diversa e con la parte bassa più piccola; il 53% della differenza è nel terzo sinistro, dove c'è la coda.
+
+⚠️ **E il cappello glielo chiedeva già**: *«same size and placement in the frame, the outline must be superimposable»*. Non è bastato.
+
+🔑 **La lezione, che riguarda il metodo prima del disegno**: *una premessa che nessuno ha verificato può reggere a lungo e rompersi tardi.* Ha retto per tre stadi — dove la sovrapponibilità non serviva — e si è rotta al primo caso in cui serviva davvero. Il momento in cui andava provata era **prima** di costruirci sopra D-103, con due immagini qualsiasi.
+
+**Il rischio si accetta così**: un secondo tentativo con un vincolo d'inquadratura molto più duro (`docs/mascotte.md` §5bis), e **se non basta si cambia la transizione, non l'immagine** — stacco netto mascherato dal movimento, che per la `festa` c'è già (rimbalzo e scodinzolio di D-111) e per il `sonno` non serve, perché scatta su un orario e nessuno guarda l'istante del cambio. ⚠️ **Ciò che non si fa è inseguire il 95% a colpi di rigenerazioni**: la via alternativa costa una riga di codice, le rigenerazioni costano immagini a fondo perduto.
+
+⚠️ **Nota su cosa NON è in discussione**: D-102 resta valida per la ragione per cui è stata presa — l'umore-reazione soddisfa P-01 per costruzione. A vacillare è solo la conseguenza tecnica che D-103 ne aveva tratto.
+
 | # | Rischio | Perché accettato | Condizione di riesame |
 |---|---|---|---|
 | R-01 | **Mercato sfavorevole** — tre funzioni su quattro sono commodity presidiate (analisi 2026-08-06) | L'obiettivo è V3 (imparare il processo), non il ricavo | Se compaiono utenti paganti non previsti |
@@ -2963,13 +3320,37 @@ L'utente cercherà **un designer che realizzi l'avatar in 5-6 stadi**. Non cambi
     - ⚠️ **Non è verificabile prima di un build** (vedi **B-20**): in Expo Go i dialoghi usano l'`Info.plist` di Expo Go. Va fatto insieme al primo build, non prima e non dopo.
 12. [ ] **Creatura** (P-01): stato, stadi, disegno in `react-native-svg` (D-09)
     - ✅ **Il disegno è deciso dal 2026-09-04** (**D-95**): è la **lontra** di [`docs/mascotte.md`](docs/mascotte.md) — tavolozza, tratti invariabili e prompt di generazione per stadio. Sostituisce le forme geometriche previste da D-09, senza toccare la logica di crescita.
-    - ✅ **Gli stadi sono tre** (**D-96**, 2026-09-04), e coincidono col materiale esistente: cucciolo · il riferimento · adulta. Nessuno stadio da inventare.
-    - [ ] ❓ **Decidere quanti umori** — è l'**unica** cosa che manca prima di poter generare le immagini: il conto è `3 × umori`.
-    - [ ] ❓ **Da dove viene il senso di crescita fra una transizione e l'altra** (D-96): con tre stadi la creatura cambia due volte in tutta la sua vita, mentre P-03 lega la crescita a ogni partita completata. Da decidere quando si implementa.
-    - [ ] 🔴 **Decidere come si anima.** Nano Banana produce **raster**; D-09 prevedeva `react-native-svg` e una sostituzione con **Lottie**, che è vettoriale. Tre strade con costi diversi in `docs/mascotte.md` §9, nessuna scelta. Va deciso **prima** di generare in massa, perché cambia quante immagini servono.
+    - ✅ **Gli stadi sono tre** (**D-96**, 2026-09-04): cucciolo · giovane · adulta. ⟳ **Non coincidono più col materiale esistente**: con **D-105** (fiore tolto) lo stadio 2 non è più `riferimento.jpg` e si **genera**, col nuovo `docs/mascotte.md` §4bis.
+    - ✅ **Si distinguono per sagoma, non per proporzione** (**D-106**, 2026-09-06): **cerchio · pera · colonna**, rapporti 1,3 · 1,9 · 2,6, e un marcatore per stadio (ciuccio · sorriso e zampe visibili · baffi). Recupera la nota di **D-17** rimasta inapplicata dal 2026-08-12.
+    - ✅ **Un marcatore d'età per stadio, tutti sulla testa**: **ciuccio → cappellino al contrario → occhiali tondi** (**D-108** e **D-109**, 2026-09-06). «Al contrario» è l'unico verso che non copre il ciuffo; gli occhiali sono **tondi, a lenti trasparenti e più grandi dell'occhio**, perché il blocco che tiene tenera l'adulta è costruito sugli occhi. ⚠️ **Rifiutati i peli bianchi**: sono invecchiamento, non maturità, e uno stadio finale che sembra vecchio suggerisce cosa viene dopo — contro **P-01**.
+    - ✅ **L'inquadratura è in tre quarti, ed è un vincolo** (**D-107**, 2026-09-06): mai frontale, mai simmetrica. Non era scritta da nessuna parte e si è persa alla prima generazione. ⟳ E ha rovesciato l'ancoraggio di D-105: **i tre stadi si ancorano tutti al riferimento**, l'immagine sorella resta l'ancora solo per gli **umori**.
+    - [ ] 🔴 **Lo stadio 1 va rigenerato** con le proporzioni nuove: quello approvato il 2026-09-06 sta a ~1:1,8 e col nuovo schema è fuori di due passi. `assets/creatura/creatura-1-quiete.png` esiste ma è **superato** — va sovrascritto, non riusato.
+    - ✅ **Il fiore è tolto** (**D-105**, 2026-09-06). Non era fra i quattro tratti d'identità di §1, quindi è una scelta estetica e non un cambio di personaggio. ⚠️ Ma il riferimento ce l'ha: ogni prompt deve dirlo esplicitamente, e da dopo lo stadio 2 **non si allega più `riferimento.jpg`** a niente.
+    - ✅ **Gli umori sono tre** (**D-102**, 2026-09-06): `quiete` · `festa` · `sonno`, cioè **9 immagini**. E l'umore è una **reazione**, non una condizione — che è la parte che conta, perché rende il vincolo di P-01 impossibile da violare invece che da ricordare.
+    - ✅ **Da dove viene il senso di crescita fra una transizione e l'altra** — risolto dalla stessa **D-102**: dalla **reazione**, non dalla crescita. Nessuna micro-variazione da disegnare.
+    - ✅ **Come si anima: strada (a)** (**D-103**, 2026-09-06), raster + trasformazioni + dissolvenza incrociata. Il difetto di (a) lo paga D-102.
     - [ ] ⚠️ **Vincolo di P-01 da applicare al disegno** (D-95 §5): nessuno stadio può rappresentare **deperimento** e nessun umore può leggersi come **rimprovero** per l'assenza. *La creatura cresce e basta.*
+    - ✅ **Il bordo bianco fustellato resta** nell'asset dell'app (deciso dall'utente il 2026-09-06). Era già in `KEEP IDENTICAL`, quindi non cambia i prompt: cambia il **ritaglio** — si toglie **solo** il lavanda `#A98CF0`, o si porta via il bordo insieme al fondo.
+    - ✅ **I nove prompt sono scritti** (2026-09-06): §4 e §5 per gli stadi, **§5bis** per i sei umori, col cappello comune e l'ordine di produzione. Creata `assets/creatura/` col suo `LEGGIMI.txt`, distinta da `assets/mascotte/` che resta il materiale sorgente.
+    - ✅ **I tre `quiete` sono fatti** (2026-09-06): `creatura-1/2/3-quiete.png` in `assets/creatura/`. Larghezze efficaci **0,615 · 0,469 · 0,376**, scarti **23,8%** e **19,8%** — i tre stadi sono misurabilmente distinti, che era il requisito di D-106.
+    - ⚠️ **L'adulta ha gli occhi grigi** (`#898798`) invece del navy degli altri due: **deviazione accettata dall'utente**, D-110, **da non correggere**.
+    - ✅ **LE NOVE IMMAGINI SONO FATTE** (2026-09-06): tre stadi × tre umori, generate, controllate, ritagliate e in `assets/creatura/`. I grezzi in `assets/mascotte/grezze/`, fuori da git.
+    - [ ] 🔴 **Scrivere il componente del disegno**: riceve `stadio` e `umore` (D-09), mappa statica di nove `require`, quattro strati di movimento (D-103, D-111, D-112).
+    - ✅ **Strumento nuovo: [`tools/confronta-stadi.py`](tools/confronta-stadi.py)** — misura la sagoma di ogni stadio e dice se sono distinguibili, trasformando il requisito di D-106 in un numero. ⚠️ **Segnala e non boccia**, e dichiara cosa non vede (marcatore d'età e posa).
+    - 🔴 **E la sua prima metrica era sbagliata, in modo pericoloso.** Misurava il **riquadro** (larghezza/altezza), e sullo stadio 3 dava uno scarto del **1,9%** rispetto al 2 — «identici» — su due immagini lontanissime: **il riquadro misurava la coda**, che sull'adulta sventaglia lontano dal corpo. Sostituita con la **larghezza efficace** (`area/altezza`), insensibile a un'appendice sottile: gli stessi confronti danno **23,8%** e **19,8%**, che concordano con l'occhio. 🔑 *Non sarebbe stato un errore innocuo: avrebbe fatto rifare un'immagine giusta.* È **B-53** un'altra volta — *una misura che non concorda con ciò che si vede non è un dato, è un secondo difetto da diagnosticare.*
+    - ✅ **Lo strumento per il ritaglio esiste e è provato** (2026-09-06): [`tools/ritaglia-creatura.py`](tools/ritaglia-creatura.py). Riempimento dai quattro angoli — **non** una sostituzione di colore, che è **impossibile** e non solo imprecisa: il sasso dista 77 dal lavanda e la frangia da togliere sta a 101. Sette asserzioni verdi su uno sticker costruito apposta.
+    - [ ] 🔴 **Generare le nove immagini** e passarle una a una al controllo d'identità di `docs/mascotte.md` §8 — che **lo fa una persona**, e nessuno strumento lo sostituisce. ⚠️ **L'ordine non è indifferente**: prima i tre `quiete`, poi i sei umori generati **ognuno dal `quiete` già approvato del suo stadio** — mai da zero, o la dissolvenza incrociata di D-103 mostra un fantasma che si sposta.
+    - ✅ **Lo scodinzolio della festa è risolto** (**D-111**, 2026-09-06): rotazione oscillante ±4-6° ancorata **in alto**, così la testa resta ferma e la coda descrive l'arco più ampio. Zero asset nuovi. ⚠️ Solo nella festa, mai nel respiro.
+    - [ ] 🔴 **Aggiungere un token per il ciclo in [`lib/movimento.ts`](lib/movimento.ts)**: il respiro non ha durata perché quel file non ha una categoria per le animazioni **perpetue** — sono tutti eventi discreti. Va lì e non nel componente, per la ragione dichiarata in testa a quel file.
+    - [ ] 🔴 **Mettere in pausa il respiro fuori fuoco** (`useFocusEffect` + `AppState`): le tab restano montate, quindi senza guardia la creatura respira sul thread UI mentre si guarda la mappa.
+    - [ ] ⚠️ **Rispettare il movimento ridotto** — oggi **nessun** punto del progetto lo gestisce. Il respiro perpetuo è dove comincia a contare (D-103).
     - ✅ **Immagine di riferimento in repo** dal 2026-09-04: [`assets/mascotte/riferimento.jpg`](assets/mascotte/riferimento.jpg), 2048×2048. È anche lo **stadio 2**. ⚠️ È un JPEG: per l'asset dell'app servirà un PNG rigenerato dalla fonte, non ricompresso da questo.
     - [ ] ⚠️ **Verificare le condizioni d'uso commerciale** del servizio di generazione, se la mascotte finisce nell'icona o negli screenshot dello store. Non verificato.
+    - ✅ **I giochi alimentano la creatura** (**D-104**, 2026-09-06, migrazione `0033`): trigger `partita_conclusa_punti` sulla transizione a `conclusa`, `tipo='partita_conclusa'`, `riferimento_id = partita.id`. Era il tubo mancante fra P-03 e P-01, aperto dal 2026-08-12 senza che nessuna delle due caselle risultasse sbagliata.
+    - ✅ **Quanto vale una partita: 5** (D-104), contro 10 della voce di lista e 20 del luogo. Il rapporto 1:2:4 dice che la realtà batte l'app, senza che nessuna schermata lo spieghi.
+    - ✅ **`stadio_soglia` ritarata a tre righe** — `0 / 250 / 1200` (D-104, `0033`). ⚠️ Sono una **stima dichiarata** su un'ipotesi di ~130 punti/mese, da confrontare coi dati d'uso reali: si correggono i due numeri **senza migrazione**, come la tabella prevede dal 2026-08-12.
+    - [ ] 🔴 **La `0033` non è stata applicata**, e finché non lo è i giochi continuano a non dare punti e le soglie restano sei. È la prima cosa da fare del blocco creatura.
+    - [ ] ⚠️ **Nessuna asserzione sui punti in `tests/rls.avversariali.mjs`**: né che una partita conclusa incrementi `creatura.punti` di 5, né che concluderla due volte **non** lo faccia. La seconda è quella che conta, perché è la guardia anti-fabbricazione di D-15 su una strada nuova.
 
 > **Le partite completate alimentano la creatura** (P-03): la ricompensa è la crescita condivisa, **non** un punteggio di compatibilità che resta.
 > **Dettaglio emerso il 2026-08-12 sulla mappa**: ogni luogo può avere **foto associate**. Lo schema lo prevede dal primo giorno — una foto può appartenere a un luogo — anche se l'interfaccia arriva dopo.
@@ -3139,13 +3520,19 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
+> **Nota del 2026-09-06 — l'ordine qui sotto NON cambia, ma c'è una migrazione nuova da applicare.** La sessione del 6 settembre ha prodotto **progetto e documentazione** (D-102, D-103: umori e animazione della creatura, i nove prompt in `docs/mascotte.md` §5bis) e **una migrazione**, la **`0033`** (D-104). **Nessuna riga di codice client è stata toccata**, quindi tutto ciò che segue resta valido parola per parola.
+>
+> 🔴 **La `0033` non è stata applicata**, e finché non lo è due cose restano false: i giochi **continuano a non dare punti** alla creatura (il tubo fra P-03 e P-01 esiste solo nel file), e `stadio_soglia` ha ancora **sei** righe invece di tre. Quando la si applica, la prova che vale è: concludere una partita e vedere `creatura.punti` salire di **5**, poi verificare che concluderla di nuovo **non** aggiunga altro — è la guardia anti-fabbricazione di D-15 su una strada nuova, e non ha ancora un'asserzione in `tests/rls.avversariali.mjs`.
+>
+> ✅ **Le nove immagini della creatura esistono** (`assets/creatura/`), controllate e ritagliate. ⚠️ **Ma non c'è ancora niente da provare su un telefono**: il componente del disegno non esiste, quindi nessuna riga dell'app le legge. Il prossimo passo del blocco creatura è **scrivere il componente** — `stadio` + `umore` in ingresso, mappa statica di nove `require`, i quattro strati di movimento — e il token del ciclo in `lib/movimento.ts`.
+
 > **Nota del 2026-09-05 — l'ordine qui sotto NON cambia, ma ora c'è del codice nuovo da provare.** A differenza della prima sessione del giorno, questa **ha toccato l'app**: il nuovo ingresso (D-97), il questionario (D-98) e la data d'inizio correggibile dalle impostazioni. Tutto verificato **a compilazione e nella preview web**, niente su un telefono — quindi le voci qui sotto restano prime, e le nuove si aggiungono in coda come 000000-c/d/e.
 >
 > 🔴 **Prima di provare il questionario serve applicare la migrazione `0029`**: finché non è applicata, `salva_profilo_coppia` e `cancella_profilo_coppia` non esistono e l'invio fallisce. Il resto dell'ingresso non la usa.
 
 > **Nota del 2026-09-04 — l'ordine qui sotto NON è cambiato.** La sessione del 4 settembre ha prodotto solo documentazione e un'immagine ([`docs/mascotte.md`](docs/mascotte.md), `assets/mascotte/`): **nessuna riga di codice, nessun comportamento dell'app toccato**, quindi tutto ciò che segue resta valido parola per parola e i controlli sul telefono restano la prima cosa da fare.
 >
-> Sul fronte creatura, delle tre domande aperte quel giorno **due hanno avuto risposta**: è la creatura (**D-95**) e ha **tre stadi** (**D-96**), che coincidono col materiale già prodotto. Restano **quanti umori** — l'unica cosa che manca prima di poter generare le immagini — e **come si anima un raster** (`docs/mascotte.md` §9). Nessuna delle due è codice da verificare su un telefono: non hanno una posizione in questa lista, stanno nel backlog alla voce 12.
+> Sul fronte creatura, delle tre domande aperte quel giorno **due hanno avuto risposta**: è la creatura (**D-95**) e ha **tre stadi** (**D-96**), che coincidono col materiale già prodotto. ⟳ **E le altre due sono state chiuse il 2026-09-06**: tre umori (**D-102**) e strada (a) (**D-103**). Nessuna delle quattro è codice da verificare su un telefono: stanno nel backlog alla voce 12.
 
 **Aggiornato al 2026-09-03 (terza parte)** — le conferme di eliminazione (**D-94**) e l'importazione dal calendario riparata (**B-49**). Supera il punto della seconda parte su una riga: **il primo difetto vero dell'aggiornamento a SDK 57 è stato trovato**, e non era in nessuna delle voci della lista dei controlli mirati.
 

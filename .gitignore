@@ -57,3 +57,13 @@ app-example
 # `npx supabase login`.
 supabase/.temp/*
 !supabase/.temp/linked-project.json
+
+# Le generazioni GREZZE della creatura: quelle che escono dal modello, prima
+# del controllo d'identita' e del ritaglio. Sono grandi (2-4 MB l'una), sono
+# tante (ogni immagine buona ne costa qualcuna scartata), e sono **superate**
+# dal loro risultato — i nove PNG di assets/creatura/, che invece SONO
+# tracciati perche' l'app li importa.
+#
+# ⚠️ Il riferimento resta tracciato: non e' una generazione, e' la sorgente di
+# verita' visiva (docs/mascotte.md §1), e senza di lui nessun prompt funziona.
+assets/mascotte/grezze/
