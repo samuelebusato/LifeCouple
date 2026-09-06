@@ -65,7 +65,7 @@ Scelto sotto due vincoli espliciti dell'utente: **scrivere meno codice possibile
 | Stile | **NativeWind** | Tailwind dentro React Native, compilato in anticipo (nessun costo a runtime) |
 | Componenti | **React Native Reusables** | Porting diretto di **shadcn/ui** su RN, modello copia-e-incolla: entra solo ciò che si usa, e il codice è proprio da subito |
 | Movimento | **Reanimated + Moti** | Moti è l'API dichiarativa sopra Reanimated: un'animazione è una prop |
-| Creatura | **react-native-svg** + Reanimated | Vettoriale e sostituibile con Lottie senza cambiare interfaccia (D-09) |
+| Creatura | **PNG + Reanimated**, con dissolvenza incrociata fra umori | ⟳ **Cambiato il 2026-09-06 (D-103)**: era `react-native-svg`, ma il disegno arriva da un modello generativo e produce raster (D-95). Il difetto della strada raster — *non cambia espressione dentro l'animazione* — lo paga **D-102**, che vincola l'umore a cambiare **solo la riga dell'espressione**: le tre immagini di uno stadio restano sovrapponibili, quindi si incrociano in dissolvenza. ⚠️ Il passaggio a Lottie resta possibile senza toccare la logica: il componente riceve sempre e solo `stadio` e `umore` (D-09) |
 | Tipi | **`supabase gen types typescript`** | I tipi si **generano dallo schema**: zero tipi a mano, e uno schema che cambia rompe il build invece dell'app |
 | Dati e cache | **TanStack Query** | Toglie la gran parte del codice di stato: caricamento, errore, refetch, cache |
 | Icone | **lucide-react-native** | Stesso set di shadcn: coerenza visiva senza lavoro |
@@ -172,7 +172,7 @@ erDiagram
 | Tabella | Colonne | Nota |
 |---|---|---|
 | `creatura` | `coppia_id` (chiave), `punti`, `creata_il` | ⚠️ **Nessun `autore_id`**: è l'unico oggetto senza autore, ed è il motivo per cui allo scioglimento si cancella invece di essere revocata (D-16) |
-| `stadio_soglia` | `stadio`, `punti_minimi` | Lo **stadio si deriva dai punti**, non si salva. Tabella e non costante nel codice: le soglie si tarano senza migrazione |
+| `stadio_soglia` | `stadio`, `punti_minimi` | Lo **stadio si deriva dai punti**, non si salva. Tabella e non costante nel codice: le soglie si tarano senza migrazione. **Tre righe dal 2026-09-06** — `0 / 250 / 1200` (D-104, `0033`); erano sei, tarate quando D-09 prevedeva ~5-6 stadi, e tre di quelle non potevano più corrispondere a niente dopo D-96. ⚠️ I due numeri nuovi sono una **stima dichiarata** su un'ipotesi di ~130 punti/mese, scritta nella migrazione apposta per essere confrontata coi dati d'uso |
 | `punti_evento` | `coppia_id`, `tipo`, `riferimento_id`, `punti`, `creato_il` | ⚠️ **Vincolo unico su (coppia, tipo, riferimento)**: è la guardia che impedisce di fabbricare punti togliendo e rimettendo lo stesso elemento (D-15) |
 
 **Giochi** (D-12, D-19)
@@ -252,7 +252,10 @@ Sono l'unica logica che **non** può stare nell'app, perché il client è ostile
 0-bis. **`rivela_telepatia(partita_id, round)`** (0020) — è la funzione che questo elenco prometteva. Restituisce **niente** finché manca una delle due scelte: non «la tua sì e la sua no», niente — rispondere a metà direbbe *quando* l'altro ha scelto, e in un gioco in cui si sceglie al buio anche quello è un'informazione di troppo.
 
 1. **`rivela_partita(partita_id)`** — verifica che **entrambi** abbiano inviato, poi confronta e scrive `partita_risultato`. Finché uno solo ha inviato, non restituisce nulla. È ciò che rende il sigillo reale invece che grafico (D-12).
-2. **`assegna_punti(coppia_id, tipo, riferimento_id)`** — inserisce in `punti_evento` rispettando il vincolo unico e incrementa `creatura.punti`. Chiamata da trigger sulla **transizione** `desiderato → visitato/fatto`, mai sull'inserimento (D-15).
+2. **`assegna_punti(coppia_id, tipo, riferimento_id)`** — inserisce in `punti_evento` rispettando il vincolo unico e incrementa `creatura.punti`. Chiamata da trigger sulla **transizione**, mai sull'inserimento (D-15). Le tre strade e il loro valore (**D-104**, 2026-09-06): `desiderato → visitato` per un luogo **20**, `desiderato → fatto` per una voce di lista **10**, `→ conclusa` per una partita **5** (migrazione `0033`).
+   - 🔑 **Il rapporto 1:2:4 è una dichiarazione, non una taratura**: luoghi e voci di lista sono scarsi per natura, le partite no. A punti pari la creatura direbbe *«abbiamo giocato molto»* invece di *«abbiamo chiuso il cerchio fra intenzione e realtà»*, che è il cuore di D-15. La scala dice da sé che **la realtà batte l'app**.
+   - ⚠️ **La stessa chiave unica produce due comportamenti opposti, e va capito perché**: ri-spuntare un elemento di lista **non** dà punti (stesso `riferimento_id`), rigiocare **sì** (partita nuova, id nuovo). Non è un'incoerenza — rigiocare è un gesto in più, ri-spuntare no.
+   - ⚠️ Una partita `abbandonata` non dà punti: il punto premia la chiusura del cerchio, non il tempo passato nell'app.
 
 **Rischio accettato su `assegna_punti`**: cancellare del tutto un luogo e ricrearlo genera un nuovo riferimento, quindi nuovi punti. Non lo si impedisce: è un gioco **cooperativo senza classifica**, quindi l'unico effetto è ingannare sé stessi. Se un domani nascesse un confronto fra coppie, questa riga andrebbe rivista **prima**.
 
