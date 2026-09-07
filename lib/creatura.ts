@@ -4,6 +4,15 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 /**
+ * Quante volte il canale della creatura e' stato aperto in questa esecuzione.
+ *
+ * Serve a dare a ogni montaggio un **nome di canale diverso**: e' la correzione
+ * di B-58, e la ragione per cui non basta rimuovere il canale precedente sta
+ * nel commento dell'effetto che lo usa, piu' in basso.
+ */
+let istanzaCanale = 0;
+
+/**
  * Lo **stato** della creatura: punti, stadio, e i due momenti da mostrare.
  *
  * ## Il confine che questo file difende (D-09)
@@ -239,11 +248,41 @@ export function useCreatura(coppiaId: string | null, utenteId: string | undefine
    * 🔑 Serve per l'azione **dell'altro**: la tua la scopriresti ricaricando,
    * la sua succede su un altro telefono. E' quello che rende vera la promessa
    * di D-102 — *se e' il partner a segnare un luogo, la festa la vedi tu*.
+   *
+   * ## 🔴 Perche' il nome porta un numero d'istanza (B-58, 2026-09-07)
+   *
+   * `supabase.channel(nome)` **non crea sempre un canale nuovo**: se uno con
+   * quel nome e' ancora registrato nel client, restituisce **quello**. E
+   * `removeChannel` nella pulizia e' **asincrono** — toglie il canale dopo che
+   * il server ha risposto al `phx_leave`, non subito.
+   *
+   * Ne segue il difetto, che si vedeva solo in un caso preciso: **esci e
+   * rientri con lo stesso account**. Il `coppiaId` e' identico, quindi il nome
+   * collide; il canale di prima e' ancora li'; `channel()` lo restituisce gia'
+   * sottoscritto e `.on('postgres_changes', ...)` lancia
+   * *«cannot add postgres_changes callbacks after subscribe()»*. L'eccezione
+   * parte dentro l'effetto e React smonta l'albero: **schermata bianca**.
+   *
+   * ⚠️ Con un account **diverso** non succedeva mai, perche' cambiava il nome —
+   * ed e' il motivo per cui e' sopravvissuto: *un difetto che si presenta solo
+   * ripetendo la stessa identita' assomiglia a un caso raro, e invece e' il
+   * caso piu' comune di tutti — chi esce, di solito rientra come se stesso.*
+   *
+   * 🔑 **Il numero d'istanza risolve alla radice invece che nella corsa.**
+   * Togliere prima il canale vecchio non basterebbe: `removeChannel` resta
+   * asincrono, quindi resterebbe una finestra in cui `channel()` ridarebbe
+   * ancora quello. Un nome diverso a ogni montaggio non ha finestre.
+   *
+   * ⚠️ **E vale qui perche' questo canale ascolta solo `postgres_changes`**, il
+   * cui instradamento dipende dal *filtro*, non dal nome del canale. Su un
+   * canale **broadcast** — come `disegno:<partita>` in `app/gioco/disegno.tsx` —
+   * il nome e' l'indirizzo comune fra i due telefoni: renderlo unico li
+   * scollegherebbe. *Questa correzione non si copia a occhi chiusi altrove.*
    */
   React.useEffect(() => {
     if (!coppiaId) return;
     const canale: RealtimeChannel = supabase
-      .channel(`creatura:${coppiaId}`)
+      .channel(`creatura:${coppiaId}:${++istanzaCanale}`)
       .on(
         'postgres_changes',
         {
