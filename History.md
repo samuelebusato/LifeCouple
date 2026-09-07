@@ -442,6 +442,50 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-118 — La landing vive dentro il progetto, e riusa il tema dell'app (2026-09-07)
+
+**Chiesto dall'utente il 2026-09-07**: una landing sul modello di un riferimento fornito (Scholaro), con anteprime dell'app, le funzioni principali e *«una palette di colori coerente»*.
+
+**Dove vive**: `Projects/LifeCouple/landing/`, servita da `lifecouple-landing` in `.claude/launch.json` (porta 4322). ⚠️ **Non un progetto nuovo**: `heleox-landing` e `fr-busato` sono repo separati perché sono siti *di prodotti diversi*; questa è la vetrina **di questa app**, e un submodule in più avrebbe aggiunto un puntatore da tenere allineato senza aggiungere niente.
+
+🔑 **La palette non è stata scelta: è stata letta.** Ogni colore viene da `lib/tema.ts` — magenta `#e4259e`, inchiostro `#251d22`, il neutro prugna `#816e7b`, i quattro pastelli coi loro testi, e il gradiente `FONDO`. *«Coerente» non vuol dire «che ci sta bene»: vuol dire **gli stessi valori**, e l'unico modo di garantirlo è copiarli dalla fonte invece di riprodurli a occhio.* Il file lo dichiara in testa, così chi cambia il tema sa che c'è un secondo posto da aggiornare.
+
+**Le anteprime sono ricostruzioni in HTML, non screenshot**, ed è una scelta: restano nitide a ogni risoluzione e non invecchiano come un PNG. ⚠️ Ma **Philippe è l'asset vero** (`assets/creatura/`, ridotto a 420px): disegnarlo per finta mostrerebbe qualcosa che non esiste — la stessa ragione per cui D-116 ha derogato alla regola delle illustrazioni d'ingresso.
+
+**Il logo è l'`Emblema` dell'app** — i due cuori intrecciati di `components/emblema.tsx`, con gli **stessi tracciati**, non un cuore ridisegnato a somiglianza. ⚠️ Il file lo dichiara: se cambia lì, va cambiato qui.
+
+**Sola modalità chiara**, e non è una omissione: l'app stessa ha una palette unica e **zero** regole `prefers-color-scheme` (D-39). 🔑 *Una landing che si scurisse da sola mostrerebbe colori che nel prodotto non esistono* — cioè mentirebbe sull'aspetto della cosa che sta vendendo. La pagina dichiara comunque ogni colore, sfondo del `body` compreso, così regge su qualunque fondo la ospiti.
+
+🔴 **E la creatura NON è la funzione principale** (correzione dell'utente il 2026-09-07). La prima stesura le dava una sezione intera coi tre stadi: era la scelta di chi ha in mente *cosa distingue il prodotto*, non *cosa se ne fa chi lo apre*. ⚠️ Philippe vive nella schermata di casa ed è **una** delle sei funzioni — chi cerca un diario di coppia cerca il diario, il calendario e la mappa, e trova la lontra dopo. Al suo posto c'è **«Le schermate»**, una vetrina scorrevole con sei telefoni — diario, calendario, mappa, giochi, liste, galleria — che *mostra* il prodotto invece di raccontarlo. 🔑 *Il pezzo più distintivo non è automaticamente quello da mettere davanti: davanti va quello che il visitatore stava cercando.*
+
+⚠️ **Difetto trovato guardandola**: servita come file autonomo, `è` diventava `Ã¨`. I byte erano UTF-8 corretti — mancava la **dichiarazione**: niente `<meta charset>`, e `python -m http.server` non manda il charset nell'intestazione, quindi il browser tirava a indovinare. Corretto avvolgendola in un documento HTML completo. *Un file con i byte giusti e senza dichiarazione non è un file giusto.*
+
+### D-117 — Le liste di partenza parlano la lingua del telefono (2026-09-07)
+
+**Chiesto dall'utente il 2026-09-07**, in due parti: *«le liste di default (film, ristoranti, viaggi) NON possono essere cancellate»* e *«anche il loro nome deve adattarsi alla lingua del dispositivo, viaggi deve diventare travel per esempio»*.
+
+**La prima parte era già fatta, e vale la pena scriverlo invece di passare oltre in silenzio.** Il divieto vive nel database dal 2026-08-28 — il trigger `lista_no_delete_predefinita` di `0025`, applicato — e l'interfaccia toglie «Elimina» dalle tre carte mostrando al suo posto la frase che spiega perché. ⚠️ *Una richiesta che risulta già soddisfatta non è tempo perso: è l'unica occasione in cui si verifica che una protezione scritta settimane fa sia ancora viva.* Qui lo era, in tutti e due gli strati.
+
+**La seconda no, e mancava per una ragione che si vede solo a nominarla**: «Film», «Viaggi» e «Ristoranti» sono **dati**, non testo dell'interfaccia. Nascono dal trigger di `0025` come stringhe italiane dentro la riga, e `lib/i18n.ts` non ha nessun modo di sapere che esistono. 🔑 *Una stringa che vive nel database esce dal perimetro della traduzione senza che nessuno decida che debba uscirne* — e il risultato era il caso peggiore possibile: chi ha il telefono in inglese vedeva l'app intera in inglese e **tre carte in italiano**. Niente falliva, niente compariva nei log.
+
+🔴 **E questo smentisce una frase scritta ieri.** D-116 diceva dell'etichetta di accessibilità: *«è anche l'unico testo che nessuno si sarebbe mai accorto di aver dimenticato di tradurre, perché non si vede»*. **Non era l'unico**, e il secondo caso era in piena vista da tre settimane. La lezione non è che quella frase fosse sciatta: è che *«ho trovato l'ultimo caso» è una conclusione che non si può trarre da una ricerca — si può solo trarre da un criterio*. Il criterio, ora scritto: **ogni stringa che un utente legge e che non passa da `lib/i18n.ts` è un difetto di traduzione, e il database è un posto dove le stringhe si nascondono bene.**
+
+**Come** (`0035`): una colonna `chiave` — `film` | `viaggi` | `ristoranti`, `null` per le liste della coppia — e la traduzione al momento di **mostrare**, in `nomeLista` (`lib/liste.ts`).
+
+⚠️ **Non `tipo`, che c'era già**: vale `film` | `voce` | `luogo`, e **non distingue Viaggi da Ristoranti** — sono tutte e due `luogo` dal `0024`. Tradurre a partire da `tipo` avrebbe dato lo stesso nome a due carte diverse, cioè avrebbe sostituito un difetto visibile con uno che sembra funzionare.
+
+⚠️ **Non il nome**, che è la trappola già descritta in `0025` per la protezione e vale identica qui: il nome è dell'utente. Una lista creata a mano e chiamata «Viaggi» si sarebbe tradotta da sola in «Travel». Il dato si **dichiara** (D-60).
+
+🔑 **E si traduce leggendo, mai scrivendo — è la parte che decide se la funzione regge in due.** I due partner possono avere il telefono in due lingue diverse, e la lista è **una riga sola**: scrivere il nome tradotto vorrebbe dire che chi apre l'app per ultimo riscrive il nome all'altro. *La lingua è di chi guarda, non del dato.*
+
+⚠️ **`nomeLista` confronta col nome seminato invece di fidarsi della sola `chiave`**, e non è una cautela di troppo: `0025` lascia **rinominabili** le liste di partenza — «Ristoranti» può diventare «Dove mangiare bene». Se `chiave` bastasse a tradurre, quel nome scelto dalla coppia sparirebbe dallo schermo: *una traduzione che sovrascrive una scelta dell'utente è una perdita di dato travestita da funzione*. La regola è quindi «finché il nome è quello che abbiamo messo noi, è nostro e lo traduciamo; da quando è loro, no». ⚠️ Oggi la domanda è teorica — `rinomina` esiste in `lib/liste.ts` ma **non è collegata a nessun comando dell'interfaccia** — ed è precisamente per questo che va decisa adesso: quando il comando arriverà, nessuno ripenserà a cosa fa la traduzione.
+
+**In inglese: «Films», non «Movies».** Il resto del dizionario dice già *film* («No film with that title.», «this winter's films»). Una sola carta che dicesse «Movies» farebbe parlare l'app con due voci, e la coerenza di una traduzione si sente più della scelta del singolo termine.
+
+**Aggiunto anche un indice unico parziale** su `(coppia_id, chiave)`: due righe con la stessa chiave nella stessa coppia darebbero due carte con lo stesso nome — di nuovo un difetto che non fallisce, si guarda soltanto.
+
+**Verificato**: `tsc` pulito; `eslint` senza errori e **senza avvertenze sui file toccati** (le 64 che restano sono preesistenti, in `visore-foto.tsx`). ✅ **E verificato sul telefono dall'utente il 2026-09-07**, dopo le migrazioni `0035` **e** `0036`: con il dispositivo in inglese la carta dice **Travel**. ⚠️ Fra la scrittura e questa conferma c'è stato **B-57**, ed è la parte istruttiva: la `0035` da sola non produceva nessun effetto visibile, perché il suo riempimento filtrava su `predefinita` e nessuna riga reale era marcata. Se `0035` non viene applicata l'app **non si rompe** — `chiave` arriva `undefined`, `nomeLista` restituisce il nome del database e si torna ai tre nomi italiani: il difetto di prima, non uno nuovo. *Che il degrado sia silenzioso è comodo qui e pericoloso in generale: vuol dire che «sembra a posto» non è una prova che la migrazione sia passata.* La prova è mettere il telefono in inglese e vedere **Travel** — fatta, e riuscita solo dopo la `0036`.
+
 ### D-116 — La creatura si chiama **Philippe**, ed è un lui (2026-09-06)
 
 **Deciso dall'utente il 2026-09-06**, chiedendo una pagina d'ingresso dedicata: *«la mascotte che chiameremo Philippe»*.
@@ -2411,6 +2455,74 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-59 — Il recupero password si rompeva da solo se la nuova password era uguale alla vecchia (2026-09-07, CORRETTO)
+
+**Riferito dall'utente il 2026-09-07**: *«prima ho per sbaglio inserito come password nuova la password vecchia e il meccanismo si è rotto e il token è scaduto»*.
+
+**La causa**: `verifyOtp` **consuma** il codice — è monouso. `impostaPassword` faceva ogni volta il giro intero (verifica *poi* cambio), quindi bastava che il **secondo** passo fallisse perché il **primo** non fosse più ripetibile. Riscrivere la password che si aveva già fa fallire `updateUser` (*«New password should be different from the old password»*); si corregge, si ripreme, e il codice — già bruciato — torna indietro come **«Token has expired or is invalid»**.
+
+🔑 **Il messaggio d'errore raccontava la storia sbagliata, ed è la parte che è costata di più.** Il codice non era scaduto: era **già stato usato**. Ma il server manda la stessa frase per tutte e due le cose, quindi chi la legge conclude «dura troppo poco» e va a cercare un problema di **tempo** che non esiste. ⚠️ *Quando due cause diverse condividono un messaggio, il messaggio smette di essere una diagnosi.*
+
+**La correzione**: `codiceConsumato` — una `ref` che ricorda se la verifica è già riuscita. La sessione, dopo `verifyOtp`, **resta aperta**: per cambiare la password serve solo `updateUser`, non più il codice. Quindi il codice si consuma **una volta sola** e i tentativi successivi ripartono da lì. `mandaCodice` la riazzera, altrimenti chi torna indietro e se ne fa mandare un altro salterebbe la verifica.
+
+**E il caso «hai riscritto quella di prima» ora si dice in italiano** (`t.recupera.stessaPassword`), con una frase che dice **cosa fare** invece di sembrare un guasto: *«Questa è già la tua password. Scrivine una diversa — il codice è ancora valido.»* La riga finale conta: era esattamente ciò che l'utente non poteva sapere.
+
+⚠️ **Due cose che erano già giuste e restano tali**: il codice va **alla mail digitata**, cioè quella di cui si cambia la password (`signInWithOtp({ email })`); e `shouldCreateUser: false` impedisce che chi sbaglia a digitare si crei un account nuovo credendo di recuperare il suo.
+
+⚠️ **La durata del codice non è nel codice**: è `MAILER_OTP_EXP` nel dashboard di Supabase (Authentication → Email), un'ora di default. Se la si vuole più lunga si cambia lì — ma **non era quello il problema di oggi**.
+
+### B-58 — Uscire e rientrare con lo stesso account lasciava la schermata bianca (2026-09-07, CORRETTO)
+
+**Riferito dall'utente il 2026-09-07**: *«se faccio logout poi login con lo stesso account l'applicazione crasha»*.
+
+**Riprodotto** nell'app web con una coppia di prova completa — e serviva **completa**: da soli il canale della creatura non si apre nemmeno, ed è per questo che il primo tentativo con un account singolo non mostrava niente.
+
+```
+Uncaught Error: cannot add `postgres_changes` callbacks for
+realtime:creatura:6e6956fd-… after `subscribe()`.
+```
+
+**La causa**: `supabase.channel(nome)` **non crea sempre un canale nuovo** — se uno con quel nome è ancora registrato nel client, restituisce **quello**. E `removeChannel`, nella pulizia dell'effetto, è **asincrono**: toglie il canale dopo la risposta del server al `phx_leave`, non subito. Rientrando con lo **stesso** account il `coppia_id` è identico, quindi il nome collide, `channel()` restituisce il canale di prima già sottoscritto, e `.on('postgres_changes', …)` lancia. L'eccezione parte dentro l'effetto, React smonta l'albero: **schermata bianca**.
+
+🔑 **Con un account diverso non succedeva mai**, perché cambiava il nome del canale. ⚠️ *Un difetto che si presenta solo ripetendo la stessa identità sembra un caso raro, e invece è il caso più comune di tutti: chi esce, di solito rientra come se stesso.*
+
+**La correzione**: un contatore d'istanza nel nome del canale — `creatura:<coppia>:<n>`. Risolve **alla radice invece che nella corsa**: togliere prima il canale vecchio non basterebbe, perché `removeChannel` resta asincrono e resterebbe una finestra in cui `channel()` ridarebbe ancora quello. Un nome diverso a ogni montaggio non ha finestre.
+
+⚠️ **E non si copia altrove a occhi chiusi.** Vale qui perché questo canale ascolta solo `postgres_changes`, il cui instradamento dipende dal **filtro**, non dal nome. Su un canale **broadcast** — `disegno:<partita>` in `app/gioco/disegno.tsx` — il nome è l'indirizzo comune fra i due telefoni: renderlo unico li scollegherebbe.
+
+**Verificato**: stesso ciclo esci/rientra, prima e dopo. Prima: un errore e `document.body.innerText` **vuoto**. Dopo: nessun errore e la home disegnata per intero.
+
+### B-57 — Le tre liste di partenza erano cancellabili, perché nessuna era marcata come tale (2026-09-07, CORRETTO)
+
+**Riferito dall'utente il 2026-09-07** provando sul telefono: *«non vedo modifiche. vedo ancora le scritte in italiano e c'è ancora la possibilità di cancellare»*.
+
+**La causa è una sola e produce tre sintomi in tre strati diversi**: sulla coppia reale le tre liste hanno `predefinita = false`. Da lì:
+
+1. l'interfaccia mostra «Elimina» — lo nasconde solo se `predefinita`;
+2. il trigger `lista_no_delete_predefinita` di `0025` **non blocca** — controlla `old.predefinita`, quindi le tre liste erano davvero cancellabili;
+3. il riempimento della `0035` filtra `where predefinita` e **non le ha toccate**: `chiave` è rimasta `null`, e i nomi non si traducevano.
+
+🔑 **La protezione esisteva, era applicata, ed era inerte.** Il trigger c'era; la condizione che lo attiva non è mai stata vera. *Una guardia che non ha mai avuto occasione di dire di no è indistinguibile da una guardia che funziona* — ed è il motivo per cui è sopravvissuta dal 2026-08-28 a oggi senza che niente lo segnalasse.
+
+🔴 **E c'è un errore mio da registrare, perché è quello che ha fatto perdere il giro.** All'inizio della sessione ho scritto che il divieto era *«già fatto e applicato»*, avendo verificato **il codice** (il trigger nel file, la UI che nasconde il bottone) e **la storia** (`History.md` dichiara `0022`→`0025` applicate). Non ho verificato **i dati**. ⚠️ *Le tre cose non sono la stessa cosa: una migrazione applicata dice che lo schema è cambiato, non che le righe esistenti siano state raggiunte dal suo `update`.* Il riempimento di `0025` cercava `nome in ('Film','Viaggi','Ristoranti')` e su queste righe non ha trovato nulla — o i nomi non combaciano esattamente, o quello statement non è stato eseguito quando la migrazione fu applicata a mano.
+
+**Diagnosi, e come è stata fatta.** Non per deduzione: creata una coppia di prova (`diag-liste-0035@example.com`) e guardata la stessa schermata nell'app web, in tutte e due le direzioni.
+
+| stato dei dati | «Elimina» | la nota |
+|---|---|---|
+| `predefinita = false`, `chiave = null` | **compare** | assente |
+| `predefinita = true`, `chiave` popolata | assente | **compare** |
+
+Il sintomo riferito dall'utente è stato **riprodotto e poi fatto sparire** cambiando solo quei due campi. Il codice dell'interfaccia è corretto e non è stato toccato.
+
+✅ **Verificato dall'utente il 2026-09-07**: applicata la `0036`, la carta dice **Travel**. È la prova che conta, e conta perché è **l'unica che distingue i due stati**: col telefono in italiano un `chiave` nullo e un `chiave` popolato hanno lo stesso aspetto.
+
+**La correzione**: migrazione **`0036`**, che marca le righe non marcate.
+
+⚠️ **Non riconosce le liste dal nome**, che è il segnale che ha già fallito una volta. Usa `tipo`, che è più forte: `crea` in `lib/liste.ts` inserisce **senza `tipo`**, quindi ogni lista creata dalla coppia nasce `voce` — ne segue che `tipo = 'film'` è per forza la lista Film di partenza e `tipo = 'luogo'` è per forza una delle due dei luoghi. Fra Viaggi e Ristoranti distingue il `pastello` seminato, col nome come sola conferma. Marca **una riga sola per coppia e per chiave** (la più vecchia) per non violare l'indice unico della `0035`, ed è rieseguibile senza danni.
+
+🔑 **La lezione, che vale oltre questo difetto**: *il sintomo di questo bug è identico al funzionamento corretto guardato dalla lingua sbagliata.* Con il telefono in italiano, «Viaggi» è ciò che si vede sia quando tutto funziona sia quando `chiave` è nulla. Per questo la verifica scritta nel PUNTO DI RIPRESA non è «guarda l'app» ma **`select nome, predefinita, chiave from lista`**: quando due stati diversi hanno lo stesso aspetto, l'occhio non è uno strumento di misura.
+
 ### B-56 — Sulla mappa la propria posizione compariva fino a un minuto dopo (2026-09-06, CORRETTO)
 
 **Riferito dall'utente** provando sul telefono: *«sulla mappa la posizione dei due soggetti non viene mostrata subito ma ci mette parecchio a caricarsi»*.
@@ -3654,6 +3766,20 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-07 — una migrazione nuova, e una richiesta che era gia' soddisfatta.** La sessione ha chiuso **D-117**: le tre liste di partenza mostrano il nome nella lingua del telefono. Toccati `lib/i18n.ts`, `lib/liste.ts` (nuova `nomeLista`), `components/carta-lista.tsx`, `app/lista/[id].tsx`, `app/(tabs)/preferiti.tsx`, `lib/database.types.ts`, piu' la migrazione **`0035`**.
+>
+> ✅ **La meta' della richiesta sul divieto di cancellazione era gia' fatta** e l'ho verificata invece di darla per buona: trigger `lista_no_delete_predefinita` (`0025`, applicata il 2026-08-28) piu' l'interfaccia che toglie «Elimina» e spiega perche'. Nessuna seconda strada per cancellare: `elimina` in `lib/liste.ts` e' l'unica.
+>
+> ✅ **CHIUSO il 2026-09-07**: applicate `0035` e `0036`, l'utente vede **Travel** sul telefono in inglese. Quanto segue resta come racconto di cosa era rotto.
+>
+> 🔴 **E poi e' saltato fuori B-57, che spiega perche' applicare la `0035` non e' bastato**: sulla coppia reale le tre liste hanno `predefinita = false`, quindi il riempimento della `0035` (`where predefinita`) non le ha toccate **e** il divieto di cancellazione di `0025` era inerte da tre settimane. Serve applicare anche la **`0036`**. ⚠️ La verifica **non e' guardare l'app** — con il telefono in italiano lo stato rotto e quello giusto hanno lo stesso aspetto — ma `select nome, predefinita, chiave from lista`: tre righe, `predefinita = true`, `chiave` piena.
+>
+> ✅ **La `0035` risulta applicata** (verificato interrogando l'API con un caso di controllo: una colonna inventata da 400, `chiave` da 200).
+>
+> 🔴 **La `0035` da sola non basta.** Finche' non lo e', l'app **non si rompe** ma la funzione non esiste: `chiave` arriva `undefined`, `nomeLista` restituisce il nome del database, e restano i tre nomi italiani. ⚠️ *Il degrado silenzioso qui e' comodo e in generale e' una trappola: «sembra a posto» non prova che la migrazione sia passata.* **La prova che vale**: telefono in inglese, e la carta dice **Travel**. Con la migrazione applicata ma il telefono in italiano non si distingue da prima.
+>
+> ⚠️ **E resta da guardare il caso che il codice tratta apposta**: una lista di partenza **rinominata** deve mostrare il nome della coppia, non la traduzione. Oggi non e' riproducibile dall'app — `rinomina` esiste in `lib/liste.ts` e **non e' collegata a nessun comando** — quindi si prova solo cambiando il nome a mano nel database.
 
 > **Nota del 2026-09-06 — l'ordine qui sotto NON cambia, ma c'è una migrazione nuova da applicare.** La sessione del 6 settembre ha prodotto **progetto e documentazione** (D-102, D-103: umori e animazione della creatura, i nove prompt in `docs/mascotte.md` §5bis) e **una migrazione**, la **`0033`** (D-104). **Nessuna riga di codice client è stata toccata**, quindi tutto ciò che segue resta valido parola per parola.
 >
