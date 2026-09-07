@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="LifeCouple: il diario condiviso di due persone. Calendario, mappa dei vostri posti, liste, foto e giochi da fare insieme.">
+<title>LifeCouple</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap">
+
+<style>
+/* ==========================================================================
+   LifeCouple — landing
+
+   ⚠️ SOLA MODALITA' CHIARA, per scelta esplicita dell'utente — e coerente con
+   l'app, che ha una palette unica e zero regole `prefers-color-scheme` (D-39).
+   Una landing che si scurisse da sola mostrerebbe colori che nel prodotto non
+   esistono. Quindi niente blocchi di tema, ma ogni colore e' dichiarato — lo
+   sfondo del `body` compreso — cosi' la pagina regge su qualunque fondo.
+
+   I colori NON sono inventati: vengono da Projects/LifeCouple/lib/tema.ts.
+   Se la palette dell'app cambia, si cambia li' e si riporta qui.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  --accento:      #e4259e;
+  --accento-cupo: #c11a83;
+  --inchiostro:   #251d22;
+  --tenue:        #816e7b;
+  --linea:        #ede4ea;
+  --carta:        #ffffff;
+  --fondo:        #fdfbfc;
+
+  /* il gradiente FONDO dell'app: azzurro → bianco → rosa */
+  --lavata-a: #d8eafc;
+  --lavata-b: #ffffff;
+  --lavata-c: #fcdcef;
+
+  /* i quattro pastelli, con i loro testi */
+  --impegno-f:   #dbe9fd; --impegno-t:   #2b4b7a;
+  --romantico-f: #fcdcef; --romantico-t: #9d1f6b;
+  --vacanza-f:   #d6f0e2; --vacanza-t:   #2f6b48;
+  --speciale-f:  #fdeecd; --speciale-t:  #8a5a12;
+
+  --ombra-bassa: 0 1px 2px rgba(37, 29, 34, .05), 0 6px 18px rgba(37, 29, 34, .06);
+  --ombra-alta:  0 2px 6px rgba(37, 29, 34, .07), 0 24px 60px rgba(37, 29, 34, .14);
+
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --testo:   "Karla", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--inchiostro);
+  font-family: var(--testo);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.08; }
+p { margin: 0; }
+a { color: inherit; }
+img { max-width: 100%; }
+
+.guscio { width: min(1180px, 100% - 40px); margin-inline: auto; }
+
+.etichetta {
+  font-size: 12px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--tenue);
+}
+
+/* --- bottoni -------------------------------------------------------------- */
+.bottone {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 15px 28px; border-radius: 999px;
+  font-family: var(--testo); font-size: 16px; font-weight: 600;
+  text-decoration: none; border: 1px solid transparent; cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.bottone--pieno { background: var(--accento); color: #ffffff; box-shadow: 0 6px 20px rgba(228,37,158,.32); }
+.bottone--pieno:hover { background: var(--accento-cupo); transform: translateY(-2px); }
+.bottone--vetro {
+  background: rgba(255,255,255,.72); border-color: var(--linea); color: var(--inchiostro);
+  backdrop-filter: blur(10px);
+}
+.bottone--vetro:hover { transform: translateY(-2px); box-shadow: var(--ombra-bassa); }
+.bottone:focus-visible { outline: 3px solid var(--accento); outline-offset: 3px; }
+
+/* ==========================================================================
+   Testata
+   ========================================================================== */
+.testata { position: sticky; top: 0; z-index: 40; padding: 14px 0; }
+.testata__barra {
+  display: flex; align-items: center; gap: 18px;
+  padding: 10px 12px 10px 20px; border-radius: 999px;
+  background: rgba(255,255,255,.84); border: 1px solid var(--linea);
+  backdrop-filter: blur(16px); box-shadow: var(--ombra-bassa);
+}
+.marchio { display: flex; align-items: center; gap: 9px; font-family: var(--display); font-weight: 700; font-size: 20px; }
+.marchio svg { width: 34px; height: 34px; flex: none; color: var(--accento); }
+.navigazione { display: flex; gap: 4px; margin-left: auto; }
+.navigazione a {
+  padding: 9px 15px; border-radius: 999px; text-decoration: none;
+  font-size: 15px; font-weight: 500; color: var(--tenue);
+  transition: background .16s ease, color .16s ease;
+}
+.navigazione a:hover { background: var(--romantico-f); color: var(--romantico-t); }
+.testata .bottone { padding: 11px 22px; font-size: 15px; }
+@media (max-width: 920px) { .navigazione { display: none; } }
+
+/* ==========================================================================
+   Apertura
+   ========================================================================== */
+.apertura { position: relative; padding: 60px 0 0; overflow: hidden; }
+.apertura__lavata {
+  position: absolute; inset: -180px 0 auto; height: 920px; z-index: -1;
+  background:
+    radial-gradient(60% 46% at 16% 6%,  var(--lavata-a) 0%, rgba(255,255,255,0) 62%),
+    radial-gradient(58% 50% at 86% 22%, var(--lavata-c) 0%, rgba(255,255,255,0) 64%),
+    linear-gradient(180deg, var(--lavata-b) 30%, var(--fondo) 100%);
+}
+.apertura__testo { max-width: 760px; margin-inline: auto; text-align: center; display: grid; gap: 22px; }
+.apertura h1 { font-size: clamp(40px, 6.6vw, 74px); letter-spacing: -.02em; }
+.apertura h1 em { font-style: normal; color: var(--accento); }
+.apertura__sotto { font-size: clamp(17px, 2vw, 20px); color: var(--tenue); max-width: 58ch; margin-inline: auto; }
+.apertura__azioni { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+.apertura__nota { font-size: 14px; color: var(--tenue); }
+
+.scena { position: relative; margin-top: 52px; padding-bottom: 36px; display: flex; justify-content: center; }
+.scena__telefoni { display: flex; align-items: flex-end; justify-content: center; }
+
+/* ==========================================================================
+   Telefoni — un solo oggetto, tre taglie
+   ========================================================================== */
+.telefono {
+  position: relative; flex: none; width: 244px;
+  border-radius: 44px; padding: 9px;
+  background: linear-gradient(160deg, #3a2f36, #171216);
+  box-shadow: var(--ombra-alta);
+}
+.telefono--lato   { width: 214px; margin-bottom: 32px; }
+.telefono--centro { width: 262px; z-index: 3; margin-inline: -24px; }
+.telefono__vetro {
+  position: relative; border-radius: 36px; overflow: hidden;
+  background: linear-gradient(178deg, var(--lavata-a) 0%, var(--carta) 42%, var(--lavata-c) 100%);
+  aspect-ratio: 9 / 19;
+}
+.telefono__tacca {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  width: 40%; height: 19px; border-radius: 999px; background: #171216; z-index: 5;
+}
+.schermo { position: absolute; inset: 0; padding: 32px 12px 11px; display: flex; flex-direction: column; gap: 8px; }
+
+@media (max-width: 780px) {
+  .telefono--lato { display: none; }
+  .telefono--centro { width: min(272px, 76vw); margin-inline: 0; }
+}
+
+/* --- microtipografia dentro i telefoni ------------------------------------ */
+.s-eyebrow { font-size: 7px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--tenue); }
+.s-titolo  { font-family: var(--display); font-weight: 700; font-size: 13px; line-height: 1.15; }
+.s-testo   { font-size: 9px; line-height: 1.35; color: var(--tenue); }
+.s-carta   { background: var(--carta); border-radius: 15px; padding: 9px; box-shadow: var(--ombra-bassa); }
+.s-riga    { display: flex; align-items: center; gap: 7px; }
+.s-punto   { width: 20px; height: 20px; border-radius: 7px; flex: none; display: grid; place-items: center; font-size: 10px; }
+.s-voce    { display: grid; min-width: 0; }
+.s-voce b  { font-size: 9px; font-weight: 700; }
+
+.s-barra {
+  margin-top: auto; display: flex; justify-content: space-around; align-items: center;
+  background: var(--carta); border-radius: 999px; padding: 7px 6px; box-shadow: var(--ombra-bassa);
+}
+.s-barra span { width: 13px; height: 13px; border-radius: 5px; background: var(--linea); }
+.s-barra span.attivo { background: var(--accento); }
+
+.s-philippe { display: block; width: 62%; margin: 0 auto; }
+.s-progresso { height: 5px; border-radius: 999px; background: var(--linea); overflow: hidden; }
+.s-progresso i { display: block; height: 100%; border-radius: 999px; background: var(--accento); }
+
+.s-mese { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.s-mese span { aspect-ratio: 1; display: grid; place-items: center; border-radius: 6px; font-size: 7px; color: var(--tenue); }
+.s-mese span.oggi { background: var(--accento); color: #ffffff; font-weight: 700; }
+.s-mese span.segnato { background: var(--romantico-f); color: var(--romantico-t); font-weight: 700; }
+
+.s-mappa {
+  position: relative; border-radius: 15px; overflow: hidden; flex: 1;
+  background: linear-gradient(150deg, #eaf3ea 0%, #f5f0e8 60%, #e8eef6 100%);
+}
+.s-mappa i { position: absolute; background: #ffffff; opacity: .95; border-radius: 2px; }
+.s-pin {
+  position: absolute; width: 15px; height: 15px; border-radius: 50% 50% 50% 2px;
+  transform: rotate(-45deg); box-shadow: 0 2px 5px rgba(37,29,34,.3);
+}
+
+.s-foto { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.s-foto span { aspect-ratio: 1; border-radius: 6px; display: block; }
+
+.s-giochi { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.s-gioco { border-radius: 13px; padding: 8px; display: grid; gap: 2px; aspect-ratio: 1 / .84; align-content: center; justify-items: center; }
+.s-gioco b { font-size: 8px; }
+
+/* --- carte fluttuanti ----------------------------------------------------- */
+.fluttuante {
+  position: absolute; z-index: 4; width: 212px;
+  background: var(--carta); border: 1px solid var(--linea); border-radius: 20px;
+  padding: 13px 15px; box-shadow: var(--ombra-alta); display: grid; gap: 8px;
+}
+.fluttuante__titolo { font-family: var(--display); font-weight: 700; font-size: 14px; }
+.fluttuante p { font-size: 12px; color: var(--tenue); line-height: 1.45; }
+.fluttuante--sx { left: 0; top: 12%; }
+.fluttuante--dx { right: 0; top: 46%; }
+@media (max-width: 1080px) { .fluttuante { display: none; } }
+
+/* ==========================================================================
+   Sezioni
+   ========================================================================== */
+.sezione { padding: 100px 0; }
+.sezione__intestazione { max-width: 680px; margin: 0 auto 48px; text-align: center; display: grid; gap: 15px; }
+.sezione__intestazione h2 { font-size: clamp(30px, 4.2vw, 46px); letter-spacing: -.015em; }
+.sezione__intestazione p { color: var(--tenue); font-size: 17px; }
+
+/* --- le schermate --------------------------------------------------------- */
+.schermate { background: linear-gradient(180deg, var(--fondo), var(--lavata-b) 40%, var(--fondo)); }
+.vetrina { display: flex; gap: 26px; overflow-x: auto; padding: 8px 4px 30px; scroll-snap-type: x mandatory; }
+.vetrina::-webkit-scrollbar { height: 8px; }
+.vetrina::-webkit-scrollbar-thumb { background: var(--linea); border-radius: 999px; }
+.vetrina > figure { margin: 0; display: grid; gap: 14px; justify-items: center; scroll-snap-align: center; flex: none; }
+.vetrina figcaption { display: grid; gap: 3px; text-align: center; max-width: 23ch; }
+.vetrina figcaption b { font-family: var(--display); font-size: 17px; font-weight: 700; }
+.vetrina figcaption span { font-size: 13px; color: var(--tenue); line-height: 1.45; }
+
+/* --- funzioni ------------------------------------------------------------- */
+.funzioni { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 18px; }
+.funzione {
+  background: var(--carta); border: 1px solid var(--linea); border-radius: 30px;
+  padding: 27px; display: grid; gap: 11px; align-content: start;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.funzione:hover { transform: translateY(-4px); box-shadow: var(--ombra-bassa); }
+.funzione__segno { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; overflow: hidden; }
+.funzione__segno img { width: 40px; display: block; }
+.funzione h3 { font-size: 21px; }
+.funzione p { color: var(--tenue); font-size: 15px; }
+
+/* --- principi ------------------------------------------------------------- */
+.principi { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 38px 46px; }
+.principio { display: grid; gap: 10px; align-content: start; padding-top: 21px; border-top: 2px solid var(--accento); }
+.principio h3 { font-size: 19px; }
+.principio p { color: var(--tenue); font-size: 15px; }
+
+/* --- chiusura ------------------------------------------------------------- */
+.chiusura { padding: 92px 0 100px; }
+.chiusura__riquadro {
+  border-radius: 40px; padding: clamp(40px, 6vw, 74px) 32px; text-align: center;
+  background:
+    radial-gradient(70% 120% at 20% 0%, var(--impegno-f) 0%, rgba(255,255,255,0) 60%),
+    radial-gradient(70% 120% at 85% 100%, var(--romantico-f) 0%, rgba(255,255,255,0) 62%),
+    var(--carta);
+  border: 1px solid var(--linea);
+  display: grid; gap: 19px; justify-items: center;
+}
+.chiusura h2 { font-size: clamp(30px, 4.6vw, 50px); letter-spacing: -.015em; }
+.chiusura p { color: var(--tenue); max-width: 48ch; }
+
+/* --- piede ---------------------------------------------------------------- */
+.piede { border-top: 1px solid var(--linea); padding: 32px 0 44px; }
+.piede__riga { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; }
+.piede__riga p { font-size: 14px; color: var(--tenue); }
+.piede nav { display: flex; gap: 22px; margin-left: auto; }
+.piede nav a { font-size: 14px; color: var(--tenue); text-decoration: none; }
+.piede nav a:hover { color: var(--accento); }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- L'emblema dell'app, con gli stessi tracciati di components/emblema.tsx:
+     due cuori intrecciati — «due meta' che diventano una».
+     ⚠️ Se cambia li', va cambiato qui. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="emblema" viewBox="0 0 100 100">
+    <path d="M42 78C30 68 16 58 16 42c0-9 7-16 16-16 6 0 10 3 13 8"
+          fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M45 34c3-5 7-8 13-8 9 0 16 7 16 16 0 16-14 26-26 36"
+          fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+    <path d="M44 42l6 6 6-6"
+          fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<header class="testata">
+  <div class="guscio">
+    <div class="testata__barra">
+      <span class="marchio">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><use href="#emblema"></use></svg>
+        LifeCouple
+      </span>
+      <nav class="navigazione">
+        <a href="#schermate">Schermate</a>
+        <a href="#funzioni">Funzioni</a>
+        <a href="#principi">Come è fatta</a>
+      </nav>
+      <a class="bottone bottone--pieno" href="#scarica">Scarica</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ===================================================================== -->
+  <section class="apertura">
+    <div class="apertura__lavata" aria-hidden="true"></div>
+    <div class="guscio">
+      <div class="apertura__testo">
+        <h1>Un posto solo <em>per voi due</em></h1>
+        <p class="apertura__sotto">
+          Il calendario, la mappa dei vostri posti, le liste, le foto e i giochi da fare
+          insieme. Tutto quello che vivete in due, in un diario che non si svuota mai.
+        </p>
+        <div class="apertura__azioni">
+          <a class="bottone bottone--pieno" href="#scarica">
+            <svg width="17" height="20" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true">
+              <path d="M13.9 10.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.9-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2-1.1 2.8-2.2.9-1.2 1.2-2.5 1.3-2.5-.1 0-2.5-1-2.5-3.4ZM11.6 3.3c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.7-1.3Z"/>
+            </svg>
+            Scarica l'app
+          </a>
+          <a class="bottone bottone--vetro" href="#schermate">Guarda le schermate</a>
+        </div>
+        <p class="apertura__nota">Per iOS e Android · Si entra in due, con un invito</p>
+      </div>
+
+      <div class="scena">
+        <article class="fluttuante fluttuante--sx">
+          <span class="etichetta">Prossimo in calendario</span>
+          <span class="fluttuante__titolo">Weekend a Lisbona</span>
+          <div class="s-riga">
+            <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">✈</span>
+            <p>19 settembre · tutto il giorno</p>
+          </div>
+        </article>
+
+        <article class="fluttuante fluttuante--dx">
+          <span class="etichetta">Insieme da</span>
+          <span class="fluttuante__titolo">1.178 giorni</span>
+          <p>Il conto parte dal giorno che scegliete voi, anche molto indietro nel tempo.</p>
+        </article>
+
+        <div class="scena__telefoni">
+          <!-- calendario -->
+          <div class="telefono telefono--lato" aria-hidden="true">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca"></div>
+              <div class="schermo">
+                <div class="s-titolo">Settembre 2026</div>
+                <div class="s-carta">
+                  <div class="s-mese">
+                    <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span class="oggi">7</span>
+                    <span>8</span><span>9</span><span>10</span><span class="segnato">11</span><span>12</span><span>13</span><span>14</span>
+                    <span>15</span><span>16</span><span>17</span><span>18</span><span class="segnato">19</span><span>20</span><span>21</span>
+                    <span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span class="segnato">27</span><span>28</span>
+                  </div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:7px;">
+                  <span class="s-eyebrow">Questo mese</span>
+                  <div class="s-riga">
+                    <span class="s-punto" style="background: var(--impegno-f); color: var(--impegno-t);">◆</span>
+                    <span class="s-voce"><b>Cena da Nonna Rosa</b><span class="s-testo">Ven 11 · 20:00</span></span>
+                  </div>
+                  <div class="s-riga">
+                    <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">✈</span>
+                    <span class="s-voce"><b>Weekend a Lisbona</b><span class="s-testo">Sab 19 · 07:30</span></span>
+                  </div>
+                  <div class="s-riga">
+                    <span class="s-punto" style="background: var(--romantico-f); color: var(--romantico-t);">♥</span>
+                    <span class="s-voce"><b>Anniversario</b><span class="s-testo">Dom 27 · tutto il giorno</span></span>
+                  </div>
+                </div>
+                <div class="s-barra"><span></span><span class="attivo"></span><span></span><span></span><span></span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- diario / casa -->
+          <div class="telefono telefono--centro">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca" aria-hidden="true"></div>
+              <div class="schermo">
+                <div style="text-align:center; display:grid; gap:1px;">
+                  <span class="s-eyebrow">Insieme da</span>
+                  <span class="s-titolo" style="font-size:17px;">1.178 giorni</span>
+                </div>
+                <img class="s-philippe" src="immagini/philippe-adulto.png" alt="Philippe, la lontra che vive nella schermata di casa">
+                <div class="s-carta" style="display:grid; gap:5px;">
+                  <span class="s-testo" style="text-align:center;">Mancano 250 punti e Philippe cresce</span>
+                  <div class="s-progresso"><i style="width:62%"></i></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                  <div class="s-carta" style="display:grid; gap:1px;">
+                    <span class="s-eyebrow">Posti visitati</span>
+                    <span class="s-titolo" style="font-size:15px;">12</span>
+                  </div>
+                  <div class="s-carta" style="display:grid; gap:1px;">
+                    <span class="s-eyebrow">Ultimo film</span>
+                    <span style="font-size:9px; font-weight:700;">La La Land</span>
+                  </div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:4px;">
+                  <span class="s-eyebrow">Un ricordo</span>
+                  <div class="s-foto">
+                    <span style="background: var(--vacanza-f);"></span>
+                    <span style="background: var(--speciale-f);"></span>
+                    <span style="background: var(--impegno-f);"></span>
+                  </div>
+                </div>
+                <div class="s-barra"><span class="attivo"></span><span></span><span></span><span></span><span></span><span></span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- liste -->
+          <div class="telefono telefono--lato" aria-hidden="true">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca"></div>
+              <div class="schermo">
+                <div class="s-titolo">Liste</div>
+                <span class="s-testo" style="margin-top:-5px;">Le cose che volete fare, in un posto solo.</span>
+                <div class="s-carta" style="background: var(--romantico-f); display:grid; gap:3px;">
+                  <span class="s-eyebrow" style="color: var(--romantico-t);">4 voci</span>
+                  <span class="s-titolo" style="color: var(--romantico-t);">Film</span>
+                  <span style="font-size:8px; color: var(--romantico-t); opacity:.85;">1 su 4 — ci siete quasi</span>
+                </div>
+                <div class="s-carta" style="background: var(--vacanza-f); display:grid; gap:3px;">
+                  <span class="s-eyebrow" style="color: var(--vacanza-t);">3 voci</span>
+                  <span class="s-titolo" style="color: var(--vacanza-t);">Viaggi</span>
+                </div>
+                <div class="s-carta" style="background: var(--speciale-f); display:grid; gap:3px;">
+                  <span class="s-eyebrow" style="color: var(--speciale-t);">2 voci</span>
+                  <span class="s-titolo" style="color: var(--speciale-t);">Ristoranti</span>
+                </div>
+                <div class="s-barra"><span></span><span></span><span></span><span></span><span class="attivo"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       Le schermate — mostrare il prodotto invece di raccontarlo
+       ===================================================================== -->
+  <section class="sezione schermate" id="schermate">
+    <div class="guscio">
+      <div class="sezione__intestazione">
+        <span class="etichetta">Le schermate</span>
+        <h2>Sei sezioni, e si arriva ovunque in un tocco</h2>
+        <p>La barra in basso è sempre lì. Si apre sul diario, e il resto è a una riga di distanza.</p>
+      </div>
+
+      <div class="vetrina">
+        <!-- 1. Diario -->
+        <figure>
+          <div class="telefono">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca" aria-hidden="true"></div>
+              <div class="schermo">
+                <div class="s-titolo">Diario</div>
+                <div class="s-carta" style="padding:0; overflow:hidden;">
+                  <span style="display:block; height:54px; background: linear-gradient(120deg, var(--vacanza-f), var(--impegno-f));"></span>
+                  <div style="padding:8px 9px 9px; display:grid; gap:3px;">
+                    <span class="s-eyebrow">Sab 19 settembre</span>
+                    <b style="font-size:11px;">Weekend a Lisbona</b>
+                    <span class="s-testo">Tre giorni, un tram giallo e troppa pastelería.</span>
+                  </div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:5px;">
+                  <span class="s-eyebrow">Dom 27 settembre</span>
+                  <b style="font-size:11px;">Anniversario</b>
+                  <div class="s-riga">
+                    <span class="s-punto" style="background: var(--romantico-f); color: var(--romantico-t);">♥</span>
+                    <span class="s-testo">2 commenti</span>
+                  </div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:4px;">
+                  <span class="s-eyebrow">Ven 11 settembre</span>
+                  <b style="font-size:11px;">Cena da Nonna Rosa</b>
+                </div>
+                <div class="s-barra"><span class="attivo"></span><span></span><span></span><span></span><span></span><span></span></div>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            <b>Il diario</b>
+            <span>In ordine di tempo, con le vostre foto e i vostri commenti.</span>
+          </figcaption>
+        </figure>
+
+        <!-- 2. Calendario -->
+        <figure>
+          <div class="telefono">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca" aria-hidden="true"></div>
+              <div class="schermo">
+                <div class="s-titolo">Settembre 2026</div>
+                <div class="s-carta">
+                  <div class="s-mese">
+                    <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span class="oggi">7</span>
+                    <span>8</span><span>9</span><span>10</span><span class="segnato">11</span><span>12</span><span>13</span><span>14</span>
+                    <span>15</span><span>16</span><span>17</span><span>18</span><span class="segnato">19</span><span>20</span><span>21</span>
+                    <span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span class="segnato">27</span><span>28</span>
+                    <span>29</span><span>30</span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:7px;">
+                  <div class="s-riga">
+                    <span class="s-punto" style="background: var(--impegno-f); color: var(--impegno-t);">◆</span>
+                    <span class="s-voce"><b>Cena da Nonna Rosa</b><span class="s-testo">20:00 · 2 ore</span></span>
+                  </div>
+                  <div class="s-riga">
+                    <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">✈</span>
+                    <span class="s-voce"><b>Weekend a Lisbona</b><span class="s-testo">07:30 · tre giorni</span></span>
+                  </div>
+                  <div class="s-riga">
+                    <span class="s-punto" style="background: var(--romantico-f); color: var(--romantico-t);">♥</span>
+                    <span class="s-voce"><b>Anniversario</b><span class="s-testo">Tutto il giorno</span></span>
+                  </div>
+                </div>
+                <div class="s-barra"><span></span><span class="attivo"></span><span></span><span></span><span></span><span></span></div>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            <b>Il calendario</b>
+            <span>Un'agenda che vedete in due, coi colori per tipo di serata.</span>
+          </figcaption>
+        </figure>
+
+        <!-- 3. Mappa -->
+        <figure>
+          <div class="telefono">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca" aria-hidden="true"></div>
+              <div class="schermo">
+                <div class="s-mappa">
+                  <i style="left:0; top:34%; width:100%; height:6px;"></i>
+                  <i style="left:22%; top:0; width:5px; height:100%;"></i>
+                  <i style="left:0; top:72%; width:100%; height:5px;"></i>
+                  <i style="left:68%; top:0; width:6px; height:100%;"></i>
+                  <span class="s-pin" style="left:32%; top:24%; background: var(--accento);"></span>
+                  <span class="s-pin" style="left:56%; top:48%; background: var(--vacanza-t);"></span>
+                  <span class="s-pin" style="left:76%; top:28%; background: var(--speciale-t);"></span>
+                  <span class="s-pin" style="left:38%; top:62%; background: #b9a8b3;"></span>
+                  <div style="position:absolute; left:9px; right:9px; top:9px; display:flex; gap:4px; background: var(--carta); border-radius:999px; padding:4px; box-shadow: var(--ombra-bassa);">
+                    <span style="flex:1; text-align:center; font-size:8px; font-weight:700; background: var(--accento); color:#ffffff; border-radius:999px; padding:3px 0;">Mappa</span>
+                    <span style="flex:1; text-align:center; font-size:8px; color: var(--tenue); padding:3px 0;">Elenco</span>
+                  </div>
+                  <div class="s-carta" style="position:absolute; left:9px; right:9px; bottom:9px;">
+                    <div class="s-riga">
+                      <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">◉</span>
+                      <span class="s-voce"><b>Lago di Braies</b><span class="s-testo">Ci siete stati · 12 luglio</span></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="s-barra"><span></span><span></span><span></span><span class="attivo"></span><span></span><span></span></div>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            <b>La mappa</b>
+            <span>Dove siete stati e dove volete andare. Il pin dice quale delle due.</span>
+          </figcaption>
+        </figure>
+
+        <!-- 4. Giochi -->
+        <figure>
+          <div class="telefono">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca" aria-hidden="true"></div>
+              <div class="schermo">
+                <div class="s-titolo">Giochi</div>
+                <span class="s-testo" style="margin-top:-5px;">Si risponde in segreto, si scopre insieme.</span>
+                <div class="s-giochi">
+                  <div class="s-gioco" style="background: var(--romantico-f); color: var(--romantico-t);"><span style="font-size:15px;">✎</span><b>Disegno</b></div>
+                  <div class="s-gioco" style="background: var(--impegno-f); color: var(--impegno-t);"><span style="font-size:15px;">?</span><b>Quiz</b></div>
+                  <div class="s-gioco" style="background: var(--vacanza-f); color: var(--vacanza-t);"><span style="font-size:15px;">◎</span><b>Telepatia</b></div>
+                  <div class="s-gioco" style="background: var(--speciale-f); color: var(--speciale-t);"><span style="font-size:15px;">✦</span><b>Obbligo o verità</b></div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:5px;">
+                  <span class="s-eyebrow">Punteggio della coppia</span>
+                  <div class="s-progresso"><i style="width:62%"></i></div>
+                  <span class="s-testo">Nessuno dei due vince contro l'altro.</span>
+                </div>
+                <div class="s-barra"><span></span><span></span><span class="attivo"></span><span></span><span></span><span></span></div>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            <b>I giochi</b>
+            <span>Quattro modi di scoprire quanto vi conoscete, senza classifiche.</span>
+          </figcaption>
+        </figure>
+
+        <!-- 5. Una lista aperta -->
+        <figure>
+          <div class="telefono">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca" aria-hidden="true"></div>
+              <div class="schermo">
+                <div class="s-titolo">Film</div>
+                <span class="s-testo" style="margin-top:-5px;">1 su 4 — ci siete quasi</span>
+                <div class="s-carta" style="display:grid; gap:8px;">
+                  <div class="s-riga">
+                    <span style="width:23px; height:32px; border-radius:4px; background: linear-gradient(160deg, var(--impegno-f), var(--romantico-f)); flex:none;"></span>
+                    <span class="s-voce"><b>La La Land</b><span class="s-testo">★★★★☆ · la vostra recensione</span></span>
+                  </div>
+                  <div class="s-riga">
+                    <span style="width:23px; height:32px; border-radius:4px; background: linear-gradient(160deg, var(--speciale-f), var(--vacanza-f)); flex:none;"></span>
+                    <span class="s-voce"><b>Past Lives</b><span class="s-testo">Da vedere</span></span>
+                  </div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:4px;">
+                  <span class="s-eyebrow">Aggiungi</span>
+                  <span class="s-testo">Scrivi tre lettere e arriva la locandina.</span>
+                </div>
+                <div class="s-barra"><span></span><span></span><span></span><span></span><span class="attivo"></span><span></span></div>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            <b>Le liste</b>
+            <span>Film, viaggi, ristoranti — con le vostre stelle e le vostre recensioni.</span>
+          </figcaption>
+        </figure>
+
+        <!-- 6. Galleria -->
+        <figure>
+          <div class="telefono">
+            <div class="telefono__vetro">
+              <div class="telefono__tacca" aria-hidden="true"></div>
+              <div class="schermo">
+                <div class="s-titolo">Galleria</div>
+                <div class="s-carta" style="display:grid; gap:5px;">
+                  <span class="s-eyebrow">Lisbona · 24 foto</span>
+                  <div class="s-foto">
+                    <span style="background: var(--vacanza-f);"></span>
+                    <span style="background: var(--speciale-f);"></span>
+                    <span style="background: var(--impegno-f);"></span>
+                    <span style="background: var(--romantico-f);"></span>
+                    <span style="background: var(--impegno-f);"></span>
+                    <span style="background: var(--vacanza-f);"></span>
+                  </div>
+                </div>
+                <div class="s-carta" style="display:grid; gap:5px;">
+                  <span class="s-eyebrow">Anniversario · 8 foto</span>
+                  <div class="s-foto">
+                    <span style="background: var(--romantico-f);"></span>
+                    <span style="background: var(--speciale-f);"></span>
+                    <span style="background: var(--romantico-f);"></span>
+                  </div>
+                </div>
+                <div class="s-barra"><span></span><span></span><span></span><span></span><span></span><span class="attivo"></span></div>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            <b>La galleria</b>
+            <span>Le foto in cartelle, agganciate agli eventi e ai posti.</span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <section class="sezione" id="funzioni">
+    <div class="guscio">
+      <div class="sezione__intestazione">
+        <span class="etichetta">Cosa c'è dentro</span>
+        <h2>Niente da configurare</h2>
+        <p>Si crea lo spazio, si manda l'invito, e da lì funziona tutto.</p>
+      </div>
+
+      <div class="funzioni">
+        <article class="funzione">
+          <span class="funzione__segno" style="background: var(--romantico-f); color: var(--romantico-t);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
+          </span>
+          <h3>Il diario</h3>
+          <p>Tutto quello che vivete insieme, in ordine di tempo e con le vostre foto. È la prima cosa che si apre, e non si svuota mai.</p>
+        </article>
+
+        <article class="funzione">
+          <span class="funzione__segno" style="background: var(--impegno-f); color: var(--impegno-t);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+          </span>
+          <h3>Il calendario</h3>
+          <p>Impegni, serate e vacanze in un'agenda che vedete in due. Si importa quello che avete già sul telefono, scegliendo cosa condividere.</p>
+        </article>
+
+        <article class="funzione">
+          <span class="funzione__segno" style="background: var(--vacanza-f); color: var(--vacanza-t);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+          </span>
+          <h3>La mappa</h3>
+          <p>Dove siete stati e dove volete andare, sulla stessa mappa. Un posto desiderato diventa visitato quando lo spuntate, e resta lì.</p>
+        </article>
+
+        <article class="funzione">
+          <span class="funzione__segno" style="background: var(--speciale-f); color: var(--speciale-t);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>
+          </span>
+          <h3>Le liste</h3>
+          <p>Film, viaggi, ristoranti — e tutte quelle che volete aggiungere. I film arrivano con la locandina, e le recensioni restano vostre.</p>
+        </article>
+
+        <article class="funzione">
+          <span class="funzione__segno" style="background: var(--impegno-f); color: var(--impegno-t);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.2 4.8L19 10l-4.8 2.2L12 17l-2.2-4.8L5 10l4.8-2.2Z"/><path d="M18.5 16.5 19 18l1.5.5L19 19l-.5 1.5L18 19l-1.5-.5L18 18Z"/></svg>
+          </span>
+          <h3>I giochi</h3>
+          <p>Quiz, disegni, telepatia, obbligo o verità. Si risponde in segreto e si scopre insieme — e nessuno dei due vince contro l'altro.</p>
+        </article>
+
+        <article class="funzione">
+          <span class="funzione__segno" style="background: var(--romantico-f);">
+            <img src="immagini/philippe-cucciolo.png" alt="">
+          </span>
+          <h3>Philippe</h3>
+          <p>Una lontra che vive nella schermata di casa e diventa più grande quando fate cose insieme davvero. Cresce e basta: non deperisce, e non manda notifiche di rimprovero.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <section class="sezione" id="principi">
+    <div class="guscio">
+      <div class="sezione__intestazione">
+        <span class="etichetta">Come è fatta</span>
+        <h2>Tre scelte che non cambieremo</h2>
+      </div>
+
+      <div class="principi">
+        <article class="principio">
+          <h3>Si è in due, e si resta in due</h3>
+          <p>
+            Uno spazio è di due persone: si entra con un invito che vale 72 ore e si usa
+            una volta sola. Non ci sono profili pubblici, non ci sono follower, e non c'è
+            niente da mostrare a nessun altro.
+          </p>
+        </article>
+
+        <article class="principio">
+          <h3>Nessuna classifica fra voi</h3>
+          <p>
+            Il punteggio è della coppia, mai di uno contro l'altro. Nei giochi si risponde
+            in segreto e si scopre insieme: si vince o si perde in due, e il più delle
+            volte non si fa né l'uno né l'altro.
+          </p>
+        </article>
+
+        <article class="principio">
+          <h3>I vostri ricordi restano vostri</h3>
+          <p>
+            Quello che caricate si scarica in un file quando volete. L'account si cancella
+            dall'app, senza scrivere a nessuno — e quando lo fate, sparisce davvero.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <section class="chiusura" id="scarica">
+    <div class="guscio">
+      <div class="chiusura__riquadro">
+        <svg viewBox="0 0 100 100" style="width:64px; height:64px; color: var(--accento);" aria-hidden="true"><use href="#emblema"></use></svg>
+        <h2>Bastano la tua email<br>e il tuo partner</h2>
+        <p>
+          Crei il tuo spazio, mandi l'invito, e il diario comincia dal giorno che
+          scegliete voi — anche se è molto indietro nel tempo.
+        </p>
+        <div class="apertura__azioni">
+          <a class="bottone bottone--pieno" href="#scarica">
+            <svg width="17" height="20" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true">
+              <path d="M13.9 10.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.9-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2-1.1 2.8-2.2.9-1.2 1.2-2.5 1.3-2.5-.1 0-2.5-1-2.5-3.4ZM11.6 3.3c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.7-1.3Z"/>
+            </svg>
+            App Store
+          </a>
+          <a class="bottone bottone--vetro" href="#scarica">
+            <svg width="18" height="20" viewBox="0 0 18 20" fill="currentColor" aria-hidden="true">
+              <path d="M1.6 1.2a1.6 1.6 0 0 0-.5 1.2v15.2c0 .5.2.9.5 1.2l8.1-8.8-8.1-8.8Zm9.3 7.6 2.6-2.8-8.7-4.9c-.4-.2-.8-.2-1.1 0l7.2 7.7Zm0 2.4L3.7 18.9c.3.2.7.2 1.1 0l8.7-4.9-2.6-2.8Zm3.8-1.2L16.9 8.7c.7-.4.7-1.4 0-1.8L14.7 5.7 11.9 8.7l2.8 3Z"/>
+            </svg>
+            Google Play
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="piede">
+  <div class="guscio piede__riga">
+    <span class="marchio" style="font-size:17px;">
+      <svg viewBox="0 0 100 100" style="width:26px; height:26px;" aria-hidden="true"><use href="#emblema"></use></svg>
+      LifeCouple
+    </span>
+    <p>Di F.R. di Busato Fausto</p>
+    <nav>
+      <a href="#schermate">Schermate</a>
+      <a href="#funzioni">Funzioni</a>
+      <a href="#principi">Come è fatta</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
