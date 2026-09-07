@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { Fondo } from '@/components/schermata';
 import { TondoVetro } from '@/components/ui/vetro';
 import { ElencoElementi } from '@/components/elenco-elementi';
-import { useListe, tintaDi } from '@/lib/liste';
+import { useListe, tintaDi, nomeLista } from '@/lib/liste';
 import { useCoppia } from '@/lib/coppia';
 import { useTema } from '@/lib/tema';
 import { t } from '@/lib/i18n';
@@ -62,7 +62,7 @@ export default function ListaAperta() {
               legge, il secondo no.
             */}
             <Text className="font-serif-bold text-3xl text-foreground" numberOfLines={1}>
-              {lista?.nome ?? ''}
+              {lista ? nomeLista(lista) : ''}
             </Text>
             {lista && (
               <Text className="text-sm" style={{ color: tintaDi(lista).testo, opacity: 0.85 }}>

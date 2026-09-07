@@ -9,7 +9,7 @@ import Riani, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Plus } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
-import { tintaDi, type Lista } from '@/lib/liste';
+import { tintaDi, nomeLista, type Lista } from '@/lib/liste';
 import { pastelli } from '@/lib/tema';
 import { t } from '@/lib/i18n';
 
@@ -189,7 +189,7 @@ export function CartaLista({
               style={{ color: nuova ? tinta.testo : tinta.testo }}
               numberOfLines={2}
             >
-              {nuova ? t.liste.nuovaCarta : lista.nome}
+              {nuova ? t.liste.nuovaCarta : nomeLista(lista)}
             </Text>
 
             <Text className="text-center text-sm text-muted-foreground" numberOfLines={3}>

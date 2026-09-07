@@ -268,9 +268,11 @@ export type Database = {
       // Verificata contro la migrazione, non generata dallo schema vero: e' il
       // debito gia' dichiarato nel PUNTO DI RIPRESA, e questa e' l'ennesima
       // tabella che lo rende un po' piu' caro.
+      // ⚠️ `chiave` SCRITTA A MANO (0035) — da sostituire rigenerando i tipi.
       lista: {
         Row: {
           autore_id: string
+          chiave: string | null
           coppia_id: string
           creata_il: string
           id: string
@@ -281,6 +283,7 @@ export type Database = {
         }
         Insert: {
           autore_id?: string
+          chiave?: string | null
           coppia_id: string
           creata_il?: string
           id?: string
@@ -291,6 +294,7 @@ export type Database = {
         }
         Update: {
           autore_id?: string
+          chiave?: string | null
           coppia_id?: string
           creata_il?: string
           id?: string

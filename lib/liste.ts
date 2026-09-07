@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { StatoCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
 import { pastelli, type Pastello } from '@/lib/tema';
+import { t } from '@/lib/i18n';
 
 /** I quattro colori possibili di una lista: gli stessi pastelli dei giochi. */
 export type NomePastello = keyof typeof pastelli;
@@ -25,6 +26,16 @@ export type Lista = {
    * non mostrare un comando che fallirebbe.
    */
   predefinita: boolean;
+  /**
+   * **Quale** delle tre liste di partenza è (0035), o `null` per le liste create
+   * dalla coppia.
+   *
+   * Esiste per una ragione sola: mostrarne il nome nella lingua del telefono.
+   * `tipo` non basta — «Viaggi» e «Ristoranti» sono tutte e due `luogo` — e il
+   * nome non si può usare, perché è dell'utente (la stessa trappola descritta in
+   * 0025 per la protezione).
+   */
+  chiave: 'film' | 'viaggi' | 'ristoranti' | null;
   creata_il: string;
   /** Quante voci contiene, e quante sono spuntate. Serve alla carta. */
   voci: number;
@@ -48,6 +59,46 @@ export function prossimoPastello(liste: Pick<Lista, 'pastello'>[]): NomePastello
 /** Il pastello vero a partire dal nome salvato nel database. */
 export function tintaDi(l: Pick<Lista, 'pastello'>): Pastello {
   return pastelli[l.pastello] ?? pastelli.romantico;
+}
+
+/**
+ * I nomi con cui il trigger di 0025 semina le tre liste di partenza.
+ *
+ * Non servono a **riconoscerle** — quello lo fa `chiave` — ma a rispondere a una
+ * domanda diversa: *questa lista ha ancora il nome che le è stato dato, o la
+ * coppia gliene ha messo uno suo?*
+ */
+const NOME_SEMINATO: Record<NonNullable<Lista['chiave']>, string> = {
+  film: 'Film',
+  viaggi: 'Viaggi',
+  ristoranti: 'Ristoranti',
+};
+
+/**
+ * Il nome da **mostrare** (0035): tradotto se è una lista di partenza col nome
+ * di fabbrica, così com'è in ogni altro caso.
+ *
+ * ## Perché si traduce qui e non nel database
+ *
+ * 🔑 La lingua è **di chi guarda, non del dato**. I due partner possono avere il
+ * telefono in due lingue diverse, e la lista è una riga sola: tradurla alla
+ * scrittura vorrebbe dire che chi apre l'app per ultimo riscrive il nome
+ * all'altro. Tradurre alla lettura è l'unica forma che regge in due.
+ *
+ * ## Perché confronta col nome seminato invece di fidarsi di `chiave`
+ *
+ * ⚠️ 0025 lascia **rinominabili** le liste di partenza: «Ristoranti» può
+ * diventare «Dove mangiare bene». Se `chiave` bastasse a tradurre, quel nome
+ * scelto dalla coppia sparirebbe dallo schermo — la protezione riguarda
+ * l'eliminazione, non il nome, e una traduzione che sovrascrive una scelta
+ * dell'utente è una perdita di dato travestita da funzione.
+ *
+ * Il confronto risponde quindi alla domanda giusta: *finché il nome è quello che
+ * abbiamo messo noi, è nostro e lo traduciamo; dal momento in cui è loro, no.*
+ */
+export function nomeLista(l: Pick<Lista, 'nome' | 'chiave'>): string {
+  if (!l.chiave) return l.nome;
+  return l.nome === NOME_SEMINATO[l.chiave] ? t.liste.predefinite[l.chiave] : l.nome;
 }
 
 /**

@@ -148,6 +148,13 @@ const it = {
     verifico: 'Verifico…',
     imposta: 'Imposta la password',
     fatto: 'Password aggiornata. Sei dentro.',
+    /**
+     * ⚠️ Dice **cosa fare**, non «errore». È il caso di B-59: chi arriva qui ha
+     * riscritto la password che aveva già, e non ha sbagliato niente di grave —
+     * il codice resta valido e basta scriverne un'altra. Una frase che suonasse
+     * come un guasto farebbe ricominciare tutto da capo per niente.
+     */
+    stessaPassword: 'Questa è già la tua password. Scrivine una diversa — il codice è ancora valido.',
     tornaIndietro: 'Torna indietro',
   },
   onboarding: {
@@ -795,6 +802,23 @@ const it = {
     nessunaNota: 'Scorri fino alla carta col «+» per crearne una.',
     nomeVuoto: 'Serve un nome.',
     predefinitaNota: 'Le liste di partenza non si eliminano.',
+    /**
+     * **I nomi delle tre liste di partenza** (0035).
+     *
+     * Stanno qui e non nel database perché la lingua è **di chi guarda, non del
+     * dato**: due partner col telefono in due lingue diverse devono vedere la
+     * stessa lista con due nomi, e una traduzione scritta nella riga darebbe la
+     * carta a chi apre per ultimo.
+     *
+     * ⚠️ Si applicano **solo finché il nome è quello seminato** dal trigger di
+     * 0025 — vedi `nomeLista` in `lib/liste.ts`. Una lista di partenza
+     * rinominata dalla coppia mostra il nome della coppia, in ogni lingua.
+     */
+    predefinite: {
+      film: 'Film',
+      viaggi: 'Viaggi',
+      ristoranti: 'Ristoranti',
+    },
   },
   importa: {
     titolo: 'Importa',
@@ -985,6 +1009,7 @@ const en: Dizionario = {
     verifico: 'Checking…',
     imposta: 'Set the password',
     fatto: 'Password updated. You’re in.',
+    stessaPassword: 'That’s already your password. Pick a different one — your code is still valid.',
     tornaIndietro: 'Go back',
   },
   onboarding: {
@@ -1468,6 +1493,17 @@ const en: Dizionario = {
     nessunaNota: 'Swipe to the \u201c+\u201d card to create one.',
     nomeVuoto: 'It needs a name.',
     predefinitaNota: 'The starting lists cannot be deleted.',
+    /**
+     * ⚠️ «Films» e non «Movies»: il resto di questo dizionario dice già *film*
+     * («No film with that title.», «this winter's films»). Una sola carta che
+     * dicesse «Movies» farebbe parlare l'app con due voci — e la coerenza di
+     * una traduzione si sente più della scelta del singolo termine.
+     */
+    predefinite: {
+      film: 'Films',
+      viaggi: 'Travel',
+      ristoranti: 'Restaurants',
+    },
   },
   importa: {
     titolo: 'Import',

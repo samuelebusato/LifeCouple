@@ -19,7 +19,7 @@ import { SPAZIO_BARRA } from '@/components/barra-volante';
 import { BottoneVetro, BottonePieno, CartaVetro } from '@/components/ui/vetro';
 import { Foglio } from '@/components/foglio';
 import { CartaLista } from '@/components/carta-lista';
-import { useListe } from '@/lib/liste';
+import { useListe, nomeLista } from '@/lib/liste';
 import { useCoppia } from '@/lib/coppia';
 import { useTema } from '@/lib/tema';
 import { molla } from '@/lib/movimento';
@@ -381,7 +381,7 @@ export default function Liste() {
             <View className="gap-4 p-6">
               <View className="gap-1">
                 <Text className="font-serif-bold text-2xl text-foreground">
-                  {listaScelta ? t.liste.eliminaTitolo(listaScelta.nome) : ''}
+                  {listaScelta ? t.liste.eliminaTitolo(nomeLista(listaScelta)) : ''}
                 </Text>
                 {/* ⚠️ La conferma dice **quante voci** si porta via, e che
                     possono essere del partner. «Sei sicuro?» non è una domanda:
