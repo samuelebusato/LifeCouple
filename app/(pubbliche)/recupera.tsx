@@ -53,22 +53,58 @@ export default function Recupera() {
     });
     setAttesa(false);
     if (error) return setErrore(error.message);
+    // ⚠️ Un codice nuovo è un codice da consumare: senza questa riga, chi torna
+    // indietro e se ne fa mandare un altro salterebbe la verifica e cambierebbe
+    // la password con la sessione del giro precedente.
+    codiceConsumato.current = false;
     setFase('codice');
   }
+
+  /**
+   * 🔴 **Il codice è monouso, e questo schermo lo riusava** (B-59, 2026-09-07).
+   *
+   * `verifyOtp` **consuma** il codice: al primo tentativo lo brucia e apre la
+   * sessione. Prima, ogni pressione su «Imposta» rifaceva tutto il giro — e
+   * bastava che il **secondo** passo fallisse perché il primo non fosse più
+   * ripetibile.
+   *
+   * ⚠️ Il caso che l'ha fatto emergere è quello più banale di tutti: **come
+   * password nuova si scrive per sbaglio quella vecchia.** Supabase rifiuta
+   * (*«New password should be different from the old password»*), si corregge,
+   * si ripreme — e la risposta diventa **«Token has expired or is invalid»**.
+   *
+   * 🔑 *Il messaggio d'errore raccontava la storia sbagliata, e questa è la
+   * parte che è costata di più.* Il codice non era scaduto: era **già stato
+   * usato**. Ma le due cose arrivano dal server come la stessa frase, quindi
+   * chi la legge conclude «il codice dura troppo poco» e va a cercare un
+   * problema di tempo che non esiste. *Quando due cause diverse condividono un
+   * messaggio, il messaggio smette di essere una diagnosi.*
+   *
+   * La sessione, dopo la verifica, **resta aperta**: per cambiare la password
+   * non serve più il codice, serve solo `updateUser`. Quindi il codice si
+   * consuma una volta sola e i tentativi successivi ripartono da lì.
+   */
+  const codiceConsumato = React.useRef(false);
 
   async function impostaPassword() {
     setErrore(null);
     if (nuova.length < MINIMO) return setErrore(t.registrati.troppoCorta);
 
     setAttesa(true);
-    const verifica = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: codice.trim(),
-      type: 'email',
-    });
-    if (verifica.error) {
-      setAttesa(false);
-      return setErrore(verifica.error.message);
+
+    if (!codiceConsumato.current) {
+      const verifica = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: codice.trim(),
+        type: 'email',
+      });
+      if (verifica.error) {
+        setAttesa(false);
+        return setErrore(verifica.error.message);
+      }
+      // Da qui in poi il codice è bruciato: non va più rimandato al server,
+      // qualunque cosa succeda sotto.
+      codiceConsumato.current = true;
     }
 
     // La sessione è aperta: adesso — e solo adesso — si può cambiare la
@@ -76,7 +112,15 @@ export default function Recupera() {
     // quindi l'errore si mostra invece di mandarlo avanti in silenzio.
     const cambio = await supabase.auth.updateUser({ password: nuova });
     setAttesa(false);
-    if (cambio.error) return setErrore(cambio.error.message);
+    if (cambio.error) {
+      // ⚠️ Il caso «hai riscritto quella di prima» si riconosce e si dice con
+      // parole nostre: il messaggio inglese di Supabase, in mezzo a una
+      // schermata italiana, sembra un guasto invece di una correzione da fare.
+      const uguale = /different from the old password|should be different/i.test(
+        cambio.error.message
+      );
+      return setErrore(uguale ? t.recupera.stessaPassword : cambio.error.message);
+    }
 
     router.replace('/');
   }
