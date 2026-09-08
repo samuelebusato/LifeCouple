@@ -28,6 +28,16 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-08 — Philippe si racconta sulla landing, e le schermate vere restano da fare
+
+**Chiesto dall'utente**: schermate vere al posto dei mockup **e** una sezione sulla mascotte col significato della lontra.
+
+**Fatto — meta' della richiesta** (**D-119**): la sezione «Lui e' Philippe» in `landing/index.html`, con le tre eta' che riusano proporzioni e ritratti dell'app, la voce presa da `lib/i18n.ts`, tre carte (perche' una lontra · il sasso · cresce e basta), la voce nel menu e nel piede. Nuovo asset `landing/immagini/philippe-giovane.png` (420px, come gli altri due). Verificato dal DOM su desktop e mobile: le tre eta' rendono 116/154/198 e 74/98/126, allineate a terra al pixel, nessuno scorrimento orizzontale.
+
+🔴 **L'altra meta' NON e' stata fatta: i sei mockup della sezione «Le schermate» sono ancora ricostruzioni HTML.** Serviva l'accesso all'app e non c'e' stato: l'utente ha indicato l'account e i dati di prova, ma la password non e' stata inserita e **digitarla non e' una cosa che l'agente puo' fare**. Il pannello del browser e' inoltre rimasto nascosto per tutta la sessione, e con quello nascosto la pagina non viene disegnata — **ogni scatto esce bianco**, il che vale come spiegazione di due schermate bianche viste anche il 2026-09-07.
+
+⚠️ **E un vincolo rilevato leggendo il codice, che cambia il piano**: `app/(tabs)/mappa.tsx` mostra `t.mappa.soloTelefono` al posto del componente quando `Platform.OS === 'web'`. **La schermata della mappa non e' catturabile dal browser**: quella deve arrivare da un telefono. Deciso con l'utente: cinque schermate dal web, la mappa dall'iPhone.
+
 ### 2026-09-06 (2) — La creatura entra nell'app
 
 **Chiesto dall'utente**: scrivere il componente, dopo aver visto e approvato il movimento sul prototipo.
@@ -441,6 +451,26 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-119 — La sezione di Philippe sulla landing riusa l'illustrazione del prodotto, e il perche' della lontra viene da fuori (2026-09-08)
+
+**Chiesto dall'utente il 2026-09-08**: una sezione dedicata alla mascotte che spieghi *«il significato dell'animale legato all'amore»* e che *«cresce insieme alla coppia»*. Nella stessa richiesta c'era la sostituzione dei mockup con schermate vere, **che non e' stata fatta** — vedi il PUNTO DI RIPRESA.
+
+**Tre scelte, e la prima e' quella che costa meno e rende di piu'**:
+
+1. 🔑 **Le tre eta' sulla landing sono l'illustrazione che l'app usa gia'** ([`components/ingresso-illustrazioni.tsx`](components/ingresso-illustrazioni.tsx), `IllustrazionePhilippe`, D-116): stessi tre ritratti, stesso ordine, **stesse proporzioni 74 : 98 : 126** e stesso allineamento a terra. La landing non disegna una crescita sua. *Due illustrazioni della stessa cosa divergono alla prima modifica di una delle due, e quella che invecchia e' sempre la copia in vetrina — dove nessuno la rilegge.*
+2. **Titolo e primo paragrafo sono presi da [`lib/i18n.ts`](lib/i18n.ts)** (`ingresso.pagine.philippe`), non riscritti. La pagina d'ingresso e la landing dicono a un utente nuovo la stessa frase, il che e' anche l'unico modo di accorgersi se quella frase smette di funzionare.
+3. ⚠️ **Nessun numero, e la ragione non e' di stile: la impone D-116.** P-01 e P-03 vietano che il punteggio diventi un verdetto sulla relazione, quindi niente livelli, niente percentuali, nessuna soglia. E' stata lasciata fuori anche la scala 1:2:4 di **D-104** — *«un posto vero vale quattro partite»* e' vera, racconta bene il prodotto, e apre comunque la porta a leggere Philippe come una misura. **Sulla landing quella porta non si apre**, perche' e' il punto in cui la promessa viene fatta a chi non ha ancora l'app e non puo' verificarla.
+
+🔴 **Il perche' della lontra non e' scritto da nessuna parte nel repo.** [`docs/mascotte.md`](docs/mascotte.md) descrive lo stile, i tre stadi e i tratti d'identita'; **D-95** decide che la mascotte *e'* la creatura; nessuno dei due dice **perche' proprio una lontra** — la scelta arriva dal `riferimento.jpg` fornito dall'utente il 2026-09-04, e la sua ragione non e' mai stata messa a verbale. I due fatti usati sulla landing sono quindi **verificati fuori dal progetto**, non ricordati: le lontre **di mare** dormono a pancia in su e si tengono per la zampa per non allontanarsi con la corrente; ognuna tiene un **sasso preferito** in una piega di pelle sotto la zampa, per anni e a volte per tutta la vita.
+
+✅ **E il secondo fatto si aggancia a un dettaglio che era gia' nel disegno**: guardando i tre ritratti, **il sasso c'e' in tutti e tre** mentre ciuccio → cappellino → occhiali cambiano. `docs/mascotte.md` §1 lo elenca fra i tratti d'identita' (*«non e' una posa, e' un attributo del personaggio»*) senza dire perche'; la carta della landing lo usa come la cosa che resta mentre tutto il resto cresce. 🔑 *Il significato non e' stato aggiunto al disegno: era gia' disegnato e non era ancora stato letto.*
+
+⚠️ **Una imprecisione dichiarata, non nascosta**: i due comportamenti sono delle lontre **marine**, mentre `docs/mascotte.md` §1 descrive l'attributo di Philippe come un *«sasso di fiume»*. Sulla landing e' scritto «lontre di mare» per non dire il falso, ma **il personaggio e la specie citata non coincidono** e la cosa e' stata messa davanti all'utente invece di essere risolta di iniziativa: cambiare la descrizione del sasso e' una modifica al personaggio, e quelle le decide lui.
+
+🔴 **Un difetto trovato misurando, che sarebbe passato a occhio.** `.eta img { width: 100% }` ha specificita' piu' alta delle classi `.eta__1/2/3`: le tre eta' rendevano **tutte 376px**, cioe' tre figure identiche — *precisamente la cosa che l'illustrazione esiste per smentire*. ⚠️ E sarebbe stato invisibile in uno scatto distratto, perche' tre lontre in fila sembrano giuste comunque. Corretto togliendo il `width` dalla regola generica, con il perche' scritto nel CSS perche' non ci torni.
+
+⚠️ **E un difetto che non c'era, evitato dal fatto di usare lo strumento del progetto.** Misurando le sagome col riquadro venivano 0,75 / 0,71 / 0,69 — scarti del 5% e 3%, cioe' tre stadi indistinguibili, e stava per essere segnalato come difetto grave. [`tools/confronta-stadi.py`](tools/confronta-stadi.py) misura invece la **larghezza efficace** e da' 0,570 / 0,469 / 0,376, scarti **17,8%** e **19,8%**, `ok`. 🔑 *Lo strumento esisteva apposta, ed era stato scritto proprio perche' quel giudizio non si facesse a occhio (D-106): il modo di sbagliare qui non era misurare poco, era misurare la cosa sbagliata credendo di misurare quella giusta.*
 
 ### D-118 — La landing vive dentro il progetto, e riusa il tema dell'app (2026-09-07)
 
@@ -3766,6 +3796,18 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-08 — meta' di una richiesta, e la meta' che manca e' quella grossa.** La sessione ha aggiunto la sezione di Philippe alla landing (**D-119**). Toccati `landing/index.html` e un asset nuovo, `landing/immagini/philippe-giovane.png`. **Nessuna riga dell'app e' stata toccata**, quindi tutto quello che segue resta valido parola per parola.
+>
+> 🔴 **La prima cosa da fare quando si riprende: le schermate vere al posto dei sei mockup.** Sono ancora ricostruzioni HTML fatte a mano dentro `landing/index.html` (sezione `#schermate`, sei blocchi `.telefono` con dentro `.schermo`). Il piano e' deciso con l'utente ed e' questo: **cinque catturate dal browser** (diario, calendario, giochi, liste, galleria) e **la mappa da un telefono**, perche' `app/(tabs)/mappa.tsx` sul web mostra `t.mappa.soloTelefono` invece del componente.
+>
+> ⚠️ **Le due precondizioni, e sono tutt'e due dell'utente, non dell'agente**: (1) **l'accesso** — l'account indicato e' `samuelebusato96@gmail.com` con dati di prova gia' inseriti, ma la password la digita **lui**: autenticarsi non e' nel perimetro dell'agente; (2) **il pannello del browser aperto** — con il pannello nascosto la pagina non viene disegnata e **ogni scatto esce bianco**, che e' una cosa da sapere prima di concludere che una pagina e' rotta.
+>
+> ⚠️ **Il vetro non sara' identico**: sulle cinque catturate dal web c'e' il ripiego a tre strati (D-35) e non `expo-glass-effect`. Si vede soprattutto sulla barra in basso. E' un compromesso accettato con l'utente, non una svista.
+>
+> ⚠️ **Sul sasso c'e' una domanda aperta per l'utente** (D-119): sulla landing e' scritto «lontre **di mare**», perche' e' di quelle il tenersi per la zampa e il sasso tenuto per la vita; `docs/mascotte.md` §1 chiama pero' quello di Philippe un *«sasso di fiume»*. Le due cose non coincidono e la correzione tocca il personaggio, quindi la decide lui.
+>
+> ⚠️ **Un buco di registro notato e non colmato**: il log cronologico §2 **non ha una voce per il 2026-09-07**, mentre D-117, D-118 e B-57/58/59 di quel giorno sono regolarmente in §3 e §4. Non e' stata scritta ora per non ricostruire a posteriori una giornata che non e' stata questa; il materiale per farlo sta in `workspace/sessione-2026-09-07*.md`.
 
 > **Nota del 2026-09-07 — una migrazione nuova, e una richiesta che era gia' soddisfatta.** La sessione ha chiuso **D-117**: le tre liste di partenza mostrano il nome nella lingua del telefono. Toccati `lib/i18n.ts`, `lib/liste.ts` (nuova `nomeLista`), `components/carta-lista.tsx`, `app/lista/[id].tsx`, `app/(tabs)/preferiti.tsx`, `lib/database.types.ts`, piu' la migrazione **`0035`**.
 >
