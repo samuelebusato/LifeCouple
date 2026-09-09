@@ -148,6 +148,33 @@ export default function Registrati() {
             {errore && <Text className="text-sm text-destructive">{errore}</Text>}
             {avviso && <Text className="text-sm text-foreground">{avviso}</Text>}
 
+            {/* 🔑 **I documenti stanno PRIMA del bottone che crea l'account**, non
+                dopo e non altrove: l'art. 13 GDPR vuole l'informativa resa *nel
+                momento in cui i dati si raccolgono*, e il momento della raccolta
+                è questo. Fino al 2026-09-09 questa schermata non ne mostrava
+                nessuno, quindi i documenti scritti non erano resi a nessuno.
+                ⚠️ Sono **collegamenti, non caselle da spuntare**: il trattamento
+                qui si fonda sull'esecuzione del contratto (art. 6.1.b), non sul
+                consenso — una spunta obbligatoria fingerebbe un consenso che non
+                è la base giuridica e non sarebbe comunque libero. */}
+            <View className="gap-1">
+              <Text className="text-xs text-muted-foreground">{t.legale.primaDiCreare}</Text>
+              <View className="flex-row flex-wrap gap-x-5 gap-y-1">
+                <Text
+                  className="text-xs text-primary underline"
+                  onPress={() => router.push('/legale/privacy')}
+                >
+                  {t.legale.privacyTitolo}
+                </Text>
+                <Text
+                  className="text-xs text-primary underline"
+                  onPress={() => router.push('/legale/cookie')}
+                >
+                  {t.legale.cookieTitolo}
+                </Text>
+              </View>
+            </View>
+
             <Button size="lg" disabled={attesa || !puoCreare} onPress={crea}>
               <Text>{attesa ? t.registrati.creo : t.registrati.crea}</Text>
             </Button>

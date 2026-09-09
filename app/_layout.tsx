@@ -12,6 +12,7 @@ import {
 } from '@expo-google-fonts/fraunces';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { useMomentiDiSessione } from '@/lib/valutazione';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,6 +26,17 @@ SplashScreen.preventAutoHideAsync();
  * restava sotto gli occhi e continuava a parlare di uno spazio che ormai non
  * era piu' leggibile.
  */
+/**
+ * Gli unici due momenti di valutazione che non nascono da un gesto dentro una
+ * schermata: l'accesso e il controllo periodico. Sta accanto a
+ * `GuardiaSessione` per la stessa ragione — è un componente che non disegna
+ * niente e vive per un effetto, e deve montarsi **una volta sola**.
+ */
+function MomentiDiValutazione() {
+  useMomentiDiSessione();
+  return null;
+}
+
 function GuardiaSessione() {
   const { session, loading } = useAuth();
   const router = useRouter();
@@ -77,6 +89,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <GuardiaSessione />
+        <MomentiDiValutazione />
         <Stack
           screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}
         />

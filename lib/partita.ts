@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+import { segnalaMomento } from '@/lib/valutazione';
 import type { CodiceGioco, ModoGioco } from '@/lib/giochi';
 import type { Database } from '@/lib/database.types';
 
@@ -162,6 +163,26 @@ export function usePartita(gioco: CodiceGioco) {
   const [pronti, setPronti] = React.useState<string[]>([]);
   const [caricando, setCaricando] = React.useState(true);
   const [errore, setErrore] = React.useState<string | null>(null);
+
+  /**
+   * **La valutazione a partita finita**, in un posto solo per tutti e quattro i
+   * giochi: le quattro schermate hanno gia' ciascuna il proprio
+   * `partita.stato === 'conclusa'`, e appenderci una chiamata avrebbe voluto
+   * dire ricordarsene anche nel quinto gioco.
+   *
+   * ⚠️ **Il ref tiene l'id della partita, non un booleano.** Lo stato `conclusa`
+   * viene riletto a ogni ricarica e a ogni messaggio realtime, quindi un
+   * booleano confonderebbe «una partita nuova e' finita» con «ho riletto la
+   * stessa»: chi gioca due partite di fila deve contare due momenti, chi apre
+   * due volte la stessa schermata uno solo.
+   */
+  const partitaSegnalata = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!partita || partita.stato !== 'conclusa') return;
+    if (partitaSegnalata.current === partita.id) return;
+    partitaSegnalata.current = partita.id;
+    void segnalaMomento(io, 'partita');
+  }, [partita, io]);
 
   /** Ricarica tutto lo stato di una partita dal database. */
   const rileggi = React.useCallback(async (id: string) => {

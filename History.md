@@ -28,6 +28,47 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-10 — La valutazione sullo store, e il pop-up che non si può convocare
+
+**Chiesto dall'utente**: un invito a valutare l'app su cinque eventi. Disegno, motivazioni e vincoli in **D-122**; qui cosa è entrato nel repo.
+
+- **Dipendenza nuova**: `expo-store-review` (~57.0.2), installata con `npx expo install` perché scegliesse la versione compatibile con l'SDK.
+- **[`lib/valutazione.ts`](lib/valutazione.ts)** — la politica del «momento buono»: quattro cancelli, cinque eventi, e la distinzione fra ciò che conta come momento e ciò che no.
+- **Agganci**: `usePartita` (una volta per tutti e quattro i giochi), `useCreatura` (evoluzione), `segnaVisitato` (solo la transizione a «visitato»), e un componente in `app/_layout.tsx` per accesso e controllo periodico.
+- **[`tests/valutazione.mjs`](tests/valutazione.mjs)** — 14 controlli, `npm run test:valutazione`.
+
+🔑 **La cosa che ha cambiato la richiesta prima di implementarla**: cinque eventi che invocano il nativo senza filtro **esauriscono la quota di iOS in pochi minuti**, e per un anno non succede più niente senza che nessuno se ne accorga. La richiesta è stata realizzata per intero — i cinque eventi ci sono tutti — ma quello che li separa da un tentativo vero è una politica, non un `if`.
+
+⚠️ **E una precondizione che non dipende da noi**: questo non è provabile finché non esiste una **development build**. In Expo Go il pop-up riguarderebbe Expo Go, sul web non esiste, e sul dispositivo il sistema comunque non dice se lo ha mostrato. È la stessa decisione sul prebuild ferma da **B-20** e dai widget.
+
+### 2026-09-09 (2) — Le due incoerenze che il giro precedente aveva visto e lasciato lì
+
+**Chiusa la coda dell'esame di stamattina**: le due cose che l'entrata precedente dichiarava esplicitamente di aver visto e **non** corretto, perché fuori richiesta. Erano entrambe punti in cui il repo diceva il falso.
+
+**Tolto `RECORD_AUDIO` da `app.json`** (**B-61**). Verificato prima di toccare, non dedotto: nessun `expo-av`, nessun `expo-audio`, **nessuna dipendenza audio** in `package.json`, nessuna chiamata di registrazione in `app/`, `components/`, `lib/`, `tests/`. 🔑 **L'unica occorrenza della parola «microfono» in tutto il repo era una voce del banco parole di un gioco** (`lib/parole.ts`) — cioè esattamente il falso positivo che rende inaffidabile la ricerca per nome, e il motivo per cui la prova che vale è l'assenza della dipendenza, non l'assenza della parola.
+
+**Allineato il backlog §6 alla strada individuo** (D-81, 2026-08-31): le voci *«richiedere il D-U-N-S»* e *«account come organizzazione»* sono state sostituite da *«aprire i due account come individuo»* e *«reclutare i 12 tester»*, e la stima è passata da 7–11 settimane dal 2026-08-29 a **6–10 dal 2026-08-31**. ⚠️ **Il ragionamento vecchio non è stato cancellato**: vive in [`docs/pubblicazione.md`](docs/pubblicazione.md) §2.4, che spiega quale dei suoi tre motivi è caduto — incluso quello che era un beneficio *dichiarato ma inesistente*. Qui resta un rimando, perché il backlog è un elenco di cose da fare e una cosa superata non è una cosa da fare.
+
+🔴 **E una scoperta che ha deciso il piano dei link legali**: `landing/` esiste ma **non è pubblicata da nessuna parte** — nessun workflow di deploy, nessun dominio, nessun `canonical`. `pubblicazione.md` §6 indicava `fr-busato` e `heleox-landing` come possibili ospiti, ed è stato scritto prima che questa landing esistesse. ⚠️ *Quindi la strada «l'app rimanda a un URL» non era pronta: dipendeva da una pubblicazione che è a sua volta un lavoro aperto.*
+
+## I documenti legali entrano nell'app (D-121)
+
+**Chiuso il primo punto del backlog legale**, quello senza il quale i documenti scritti stamattina non erano resi a nessuno. Scelte e motivazioni in **D-121**; qui cosa è stato costruito.
+
+- **[`docs/legal/en/privacy-policy.md`](docs/legal/en/privacy-policy.md) e [`cookie-policy.md`](docs/legal/en/cookie-policy.md)** — versioni inglesi, **senza l'apparato editoriale**: i documenti italiani in `docs/legal/` sono documenti di *lavoro* e contengono note che rimandano a `History.md` e al backlog, più segnaposto `[DA DECIDERE]` in punti che l'utente vedrebbe. 🔴 *Pubblicarli verbatim avrebbe mostrato a un utente vero le note interne del progetto.*
+- **[`tools/genera-legale.mjs`](tools/genera-legale.mjs)** — genera `lib/legale/testi.ts` dai `.md`, con `--check` (`npm run test:legale`) e il rifiuto sui segnaposto.
+- **[`components/markdown.tsx`](components/markdown.tsx)** — renderer minimo, tabelle impaginate in verticale.
+- **[`app/(pubbliche)/legale/[doc].tsx`](app/(pubbliche)/legale/%5Bdoc%5D.tsx)** — la schermata, agganciata da registrazione e Impostazioni.
+- **Email di contatto**: `info@heleox.it`, scelta dall'utente. ⚠️ È l'indirizzo di un *altro* prodotto della stessa azienda; il titolare è lo stesso soggetto giuridico, quindi è coerente, ma un utente che scrive per LifeCouple scriverà a una casella che porta un altro nome.
+
+🔴 **Il difetto che la verifica ha trovato e il ragionamento no.** La schermata era in `app/legale/`, ed è lì che sarebbe rimasta se non avessi letto `GuardiaSessione`: quella guardia rimanda a `/benvenuto` **ogni rotta fuori da `app/(pubbliche)/` quando non c'è sessione**, cioè esattamente durante la registrazione. ⚠️ *La schermata legale sarebbe stata irraggiungibile proprio per l'unica persona a cui l'art. 13 impone di renderla, e il sintomo non sarebbe stato un errore: la pagina semplicemente non si apre* — com'era già successo a `registrati` e `recupera` il 2026-08-29. Spostata dentro `(pubbliche)/`, che è la forma in cui questo progetto ha già deciso di dichiarare le schermate pre-accesso.
+
+✅ **Provato davvero, con `localStorage` vuoto** (quindi guardia attiva): `/legale/privacy` e `/legale/cookie` si aprono, restano al loro indirizzo, rendono 12.570 e 3.946 caratteri, zero `|` grezzi, zero `**`, zero backtick, zero segnaposto. La guardia sui segnaposto provata facendola fallire.
+
+⚠️ **Due difetti miei, trovati provando e non ragionando**: i backtick dentro un grassetto restavano stampati (l'analisi in linea non era ricorsiva), e rendendola ricorsiva ho introdotto un bug peggiore — una regex `g` condivisa fra chiamate annidate, il cui `lastIndex` avrebbe duplicato pezzi di testo. Corretti entrambi, e verificato che il testo **non** sia duplicato.
+
+🔑 **E il test RLS rosso non era un difetto: era una notizia.** `stadio_soglia` doveva avere sei righe secondo l'asserzione, e ne ha tre. Verificato **contro il database vero**, non dedotto dal file: tre righe, 0/250/1200 — cioè la migrazione **`0033` è stata applicata**, mentre il PUNTO DI RIPRESA del 2026-09-06 la dava per non applicata. Allineata l'asserzione alla realtà. ⚠️ *Un test rosso di solito dice che il codice è indietro; questo diceva che il database era avanti.*
+
 ### 2026-09-09 — I documenti legali: tre dichiarazioni false e il sesto documento
 
 **Chiesto dall'utente**: a che punto è la documentazione legale in vista della pubblicazione, e se quella già scritta è **completa e coerente**.
@@ -465,6 +506,46 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-122 — La valutazione sullo store si chiede col pop-up nativo, e il lavoro vero è decidere quando (2026-09-10)
+
+**Chiesto dall'utente**: un pop-up che inviti a valutare l'app su cinque eventi — partita conclusa, evoluzione della creatura, registrazione/accesso, luogo visitato, e periodicamente una volta a settimana.
+
+🔑 **Il vincolo che ha deciso tutto il disegno, posto prima di scrivere codice**: il pop-up nativo **non si mostra a comando**. `requestReview()` è una *richiesta*; iOS decide, e la concede al massimo **tre volte per anno per utente**. E non si può sapere se è comparsa — la funzione risolve comunque. ⚠️ *Quindi il rischio non era chiedere troppo poco: era che cinque eventi senza filtro bruciassero la quota nei primi minuti d'uso — quando l'utente non ha ancora un motivo per dare cinque stelle — e che per i dodici mesi successivi non succedesse più niente, in silenzio.*
+
+**Scelta dell'utente fra due strade**, poste esplicitamente: pop-up **nativo** con una politica del «momento buono», oppure un pop-up nostro con stelle disegnate che si mostra sempre ma non permette la valutazione in linea. **Ha scelto il nativo.**
+
+**Cosa fa [`lib/valutazione.ts`](lib/valutazione.ts)**: non mostra niente: **sceglie il momento**. I cinque eventi entrano tutti; sono quattro cancelli a decidere quale diventa un tentativo — età minima dell'utente (3 giorni), momenti buoni accumulati (3), distanza fra tentativi (7 giorni) e tetto annuale (3, allineato alla quota di iOS).
+
+🔑 **La distinzione che è la sostanza del file**: `accesso` e `settimanale` **non contano come momenti buoni**. Aprire l'app non è un motivo per dare cinque stelle; finire una partita sì. ⚠️ *Senza questa asimmetria basterebbe riaprire l'app tre volte per superare la soglia* — cioè chiedere una valutazione a chi non ha ancora usato niente, che è precisamente ciò che le linee guida Apple sconsigliano e che raccoglie una stella invece di cinque. Restano eventi che possono **aprire** la domanda, ma solo su momenti maturati altrove.
+
+⚠️ **«Una volta a settimana» può solo voler dire «all'apertura, non più di una volta a settimana».** Un'app chiusa non esegue codice, e senza notifiche push o attività in background — sproporzionate per una domanda di valutazione — non esiste modo di far comparire un pop-up il settimo giorno se quel giorno l'utente non apre l'app. È scritto nel codice invece di lasciar credere che ci sia un timer da qualche parte.
+
+**Due posti dove non si chiede mai**: in **Expo Go**, dove il pop-up riguarderebbe Expo Go e non LifeCouple; e dove il sistema non sa farci niente (`hasAction()` falso: web, o app senza URL di store). ✅ **E in quel secondo caso il tentativo non viene contato**: segnarlo brucerebbe uno dei tre a vuoto, per un pop-up che nessuno ha visto.
+
+**Agganci, uno per evento e mai duplicati**: la partita in `usePartita` — **una volta sola per tutti e quattro i giochi**, invece di appendere una chiamata ai quattro `partita.stato === 'conclusa'` già esistenti e doversene ricordare nel quinto gioco; l'evoluzione in `useCreatura`, sul ramo che era già lì; il luogo in `segnaVisitato`, **solo nella transizione verso «visitato»** e non nel ritorno indietro, la stessa asimmetria che il trigger sul database applica ai punti (D-15); accesso e periodico in un componente montato una volta in `app/_layout.tsx`.
+
+⚠️ **Il ref della partita tiene l'id, non un booleano**: lo stato `conclusa` viene riletto a ogni ricarica e a ogni messaggio realtime, e un booleano confonderebbe «una partita nuova è finita» con «ho riletto la stessa».
+
+**Provato**: [`tests/valutazione.mjs`](tests/valutazione.mjs), 14 controlli sulla funzione pura `vaChiesto`, estratta dal sorgente e non ricopiata. ✅ **E provato che fallisca**: facendo contare `accesso` come momento buono, il test diventa rosso e nomina la conseguenza.
+
+🔴 **Cosa NON è provato, e non lo sarà finché non c'è una development build**: che il pop-up compaia. In Expo Go è disattivato per costruzione, sul web non esiste, e sul dispositivo resta comunque invisibile all'osservazione — il sistema non dice se lo ha mostrato. *È l'unico pezzo di questo progetto la cui verifica non dipende da noi.*
+
+### D-121 — I documenti legali entrano nell'app come schermate, e sono in inglese soltanto (2026-09-09)
+
+**Il fatto da cui parte**: i documenti scritti il 2026-09-09 non erano **resi a nessuno**. L'app non aveva un solo link legale — verificato cercando in `registrati.tsx`, `impostazioni.tsx` e `lib/i18n.ts`: zero occorrenze. L'art. 13 GDPR vuole l'informativa nel momento in cui i dati si raccolgono, e quel momento è la schermata di registrazione.
+
+**Prima scelta — schermate interne, non un rimando a un sito.** 🔴 La ragione che decide non è di gusto: **al 2026-09-09 quel sito non esiste.** `landing/` è nel repo ma non è pubblicata da nessuna parte — nessun workflow di deploy, nessun dominio, nessun `canonical` — e `pubblicazione.md` §6, che indicava `fr-busato` e `heleox-landing` come ospiti, è stato scritto **prima** che questa landing esistesse. ⚠️ E anche con un sito pronto resterebbe il secondo difetto: *un'informativa leggibile solo con la rete non è resa a chi si registra senza rete.* L'URL pubblico serve **lo stesso** per la scheda dello store, ed è un requisito diverso che non sostituisce questo: resta a backlog (scelta dell'utente: «schermate ora, URL dopo»).
+
+**Seconda scelta — il testo è in inglese soltanto**, per decisione esplicita dell'utente. ⚠️ **Il rischio è stato sollevato prima, non dopo**: per un prodotto a pagamento rivolto anche al mercato italiano il Codice del Consumo chiede condizioni comprensibili al consumatore, e l'italiano è oggi la lingua predefinita dell'app. L'utente ha confermato la scelta sapendolo. È registrata fra i **rischi accettati** in §5, che è il posto dove la revisione dell'avvocato la troverà. Le **etichette** dell'interfaccia restano bilingui: è il testo legale a non esserlo, non la schermata.
+
+**Terza scelta — il `.md` resta la fonte, il TypeScript è derivato.** La strada breve era incollare il testo dentro un `.ts`: due copie dello stesso documento, e — come dice `CLAUDE.md` §5 del brain — a invecchiare è sempre la copia. [`tools/genera-legale.mjs`](tools/genera-legale.mjs) genera `lib/legale/testi.ts` da `docs/legal/en/*.md`, con `--check` esposto come `npm run test:legale`. 🔑 **E rifiuta di generare se resta un segnaposto** (`[DA DECIDERE`, `[DA VERIFICARE`, `{{…}}`): i documenti di lavoro ne contengono parecchi, e senza questa guardia il primo copia-incolla distratto pubblicherebbe *«[DA DECIDERE: email di contatto]»* dentro un'informativa resa a un utente vero. *Un documento legale con un buco dichiarato è peggio di nessun documento, perché ha l'aria di essere finito.* Provata facendola fallire: exit 1, nomina la riga, non scrive niente.
+
+**Quarta scelta — renderer scritto in casa invece di una libreria.** `react-native-markdown-display` avrebbe fatto il lavoro, ma il progetto è appena uscito dall'aggiornamento a SDK 57 — che ha rotto `expo-calendar` in un modo che né `tsc` né il bundle vedevano (**B-49**) — e legare due schermate legali a una dipendenza non mantenuta le lega al prossimo aggiornamento. Il markdown usato è un sottoinsieme piccolo e **noto**, perché lo scriviamo noi.
+
+🔑 **E il renderer esiste soprattutto per le tabelle.** I documenti ne contengono ~45 righe (dati / finalità / base giuridica / conservazione). Rese a colonne su uno schermo da 375 px darebbero quattro colonne da 90 px: **illeggibili**. Qui ogni riga diventa un blocchetto con le intestazioni come etichette. ⚠️ *Non è impaginazione: l'art. 12 GDPR chiede forma «concisa, trasparente, intelligibile e facilmente accessibile», e un'informativa che tecnicamente è stata resa ma che nessuno riesce a leggere non lo soddisfa.*
+
+**Cosa è stato agganciato**: registrazione (i link **prima** del bottone che crea l'account) e Impostazioni (sezione permanente). ⚠️ **Sono collegamenti, non caselle da spuntare**: il trattamento si fonda sull'esecuzione del contratto (art. 6.1.b), non sul consenso — una spunta obbligatoria fingerebbe un consenso che non è la base giuridica e non sarebbe comunque libero. Il terzo punto previsto, la schermata d'acquisto, **non esiste ancora**: nessuna libreria di pagamenti in `package.json`, verificato.
 
 ### D-120 — I termini d'uso nascono da zero, e portano dentro quattro decisioni che non sono di testo (2026-09-09)
 
@@ -2515,6 +2596,20 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-61 — Un permesso pericoloso chiesto per niente (2026-09-09, CORRETTO)
+
+**Il difetto**: `app.json` dichiarava `android.permission.RECORD_AUDIO` fra i permessi Android. Il codice non usa il microfono da nessuna parte. Su Android è un permesso della categoria *dangerous*, e il revisore dello store lo vede; su iOS non aveva effetto, perché non esisteva una stringa di scopo corrispondente — quindi era un difetto della sola piattaforma Android.
+
+**Da dove veniva**: non l'ha scelto nessuno. Se l'è aggiunto `eas init` il 2026-09-03 riscrivendo `app.json`, insieme agli altri permessi e a quattro plugin; probabilmente dal selettore immagini, che lo richiede per i video. Era già a backlog dal 2026-09-03 (*«va tolto se non serve, prima del primo build»*) ed è stato rivisto senza toccarlo nell'esame legale di stamattina.
+
+**Come è stato verificato prima di toglierlo** — quattro prove, nessuna delle quali è «ho guardato il codice»:
+1. nessun `expo-av`, `expo-audio`, `Audio.`, `startRecording` o `recordingOptions` in `app/`, `components/`, `lib/`, `tests/`;
+2. **nessuna dipendenza audio** in `package.json`, cercata sui nomi;
+3. nessuna stringa di scopo microfono in `app.json` (che è anche il motivo per cui su iOS non si manifestava);
+4. l'elenco dei permessi Android riletto voce per voce: gli altri quattro corrispondono a funzioni reali (calendario, posizione).
+
+🔑 **E il falso positivo che vale la pena registrare**: cercando `microfono` il repo restituisce **una** occorrenza, in `lib/parole.ts` — una carta del banco parole di un gioco. ⚠️ *Cercare il nome di una funzione trova anche i posti dove quel nome è solo una parola.* La prova che decide non è l'assenza della parola: è l'assenza della **dipendenza**, perché senza libreria non c'è modo di registrare nulla.
+
 ### B-60 — Tre dichiarazioni che il codice aveva smentito, e nessuna se n'era accorta (2026-09-09, CORRETTE)
 
 **Come sono state trovate**: rileggendo i documenti legali **contro il codice** invece che contro sé stessi, su richiesta dell'utente di verificarne coerenza e completezza. Nessun controllo automatico le vedeva, e non poteva: sono tutte e tre **frasi vere quando sono state scritte**, diventate false quando il prodotto è cambiato sotto di loro.
@@ -3469,6 +3564,18 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 ## 5. Rischi accettati esplicitamente
 
+### 🔴 I documenti legali sono in inglese soltanto, su un prodotto venduto anche in Italia (2026-09-09)
+
+**La decisione è dell'utente** (**D-121**), presa **dopo** che il rischio è stato posto esplicitamente e riformulato una seconda volta per essere sicuri di aver capito. Va qui perché è esattamente il tipo di scelta che chi la rilegge fra sei mesi deve trovare **già valutata**, non da scoprire.
+
+**Il rischio, in chiaro**: LifeCouple sarà un'app **a pagamento** distribuita anche in Italia, con l'italiano come lingua predefinita dell'interfaccia (D-18: la lingua la decide il telefono). Il Codice del Consumo chiede che le condizioni contrattuali siano comprensibili al consumatore; l'art. 12 GDPR chiede che l'informativa sia resa *«in forma concisa, trasparente, intelligibile»*. ⚠️ **Un'informativa in inglese resa a un utente il cui telefono è in italiano è un punto su cui un'autorità o un giudice può contestare la trasparenza** — e la contestazione non riguarderebbe il contenuto, che è corretto, ma il fatto che sia comprensibile a chi lo riceve.
+
+**Cosa mitiga, e cosa no.** ✅ La schermata **dichiara in cima** che il documento è disponibile solo in inglese, invece di lasciarlo scoprire a metà pagina; le etichette dell'interfaccia restano bilingui, quindi chi legge in italiano capisce *cosa* sta aprendo. ❌ Nessuna di queste due cose rende il testo comprensibile a chi l'inglese non lo legge: sono attenuazioni di forma, non rimedi.
+
+**Come si chiude**: tradurre i tre documenti pubblici. 🔑 **Non è stato fatto ora per una ragione che vale la pena scrivere**: la revisione dell'avvocato che [`Rule/legale-beta.md`](../../../Rule/legale-beta.md) prescrive prima del lancio commerciale può cambiare il testo, e tradurre prima di quella revisione significa tradurre due volte. La sequenza sensata è **revisione → traduzione**, ed è la stessa ragione per cui i quattro `[DA DECIDERE]` dei termini non sono stati riempiti con stime.
+
+⚠️ **Da portare esplicitamente all'avvocato**, insieme alla domanda sull'art. 9 già aperta in [`conformita.md`](docs/conformita.md) §9.
+
 ### 🔴 La sovrapponibilità degli umori è una premessa non verificata, e il primo dato la smentisce (2026-09-06)
 
 **D-102** vincola l'umore a cambiare *«solo la riga dell'espressione»*, e **D-103** ci si appoggia interamente: è la sovrapponibilità fra le tre immagini di uno stadio che rende sufficiente la strada raster, perché permette la **dissolvenza incrociata**. Tutto il ragionamento di D-103 — *«il difetto di (a) lo paga D-102»* — dipende da lì.
@@ -3552,8 +3659,14 @@ Un widget **non è React Native**: lo disegna il sistema operativo per conto suo
   - Le due alternative, scartate salvo ripensamenti: **`eas go` + TestFlight** (un Expo Go a SDK 54 costruito da noi — richiede l'account sviluppatore Apple, che serve comunque per pubblicare, ma lega la prova a EAS da subito) e **restare su 54 provando solo su Android** con `npx expo-go install --sdk 54 --platform android` (l'iPhone è il telefono su cui si è provato tutto finora).
 - ⬜ **Rivedere i 65 avvisi del React Compiler** (`react-hooks/set-state-in-effect` 27, `refs` 19, `immutability` 17, più due `no-unused-vars` in `lib/luoghi.ts`), portati ad avviso in `eslint.config.js` con D-92. Uno a uno, a mano: la maggior parte è deliberata (B-43, D-90) e la correzione «da manuale» — stato derivato, ref non letti in render — cambierebbe il comportamento dei giochi. Sessione dedicata, con i telefoni.
 - ⬜ **`@react-native-community/datetimepicker` è passato da 8.4 a 9.1** (un major) con `expo install --fix`, e il suo changelog non è stato letto. Se il selettore data si comporta diversamente, è il primo sospetto.
-- ⬜ **Rileggere `app.json` dopo `eas init`** (2026-09-03): ha aggiunto una lista esplicita di permessi Android (`READ/WRITE_CALENDAR`, `ACCESS_COARSE/FINE_LOCATION`, `RECORD_AUDIO`), quattro plugin (`expo-image`, `expo-sharing`, `expo-status-bar`, `expo-web-browser`) ed `extra.router: {}`. Coerenti con l'uso, ma non scelti da nessuno: `RECORD_AUDIO` in particolare va tolto se non serve (viene dal selettore immagini, per i video), prima del primo build — è un permesso che il revisore vede.
+- ⟳ **Rileggere `app.json` dopo `eas init`** (2026-09-03) — **fatto a metà il 2026-09-09**: `RECORD_AUDIO` è stato **tolto** (B-61), gli altri quattro permessi (`READ/WRITE_CALENDAR`, `ACCESS_COARSE/FINE_LOCATION`) corrispondono a funzioni che l'app usa davvero. ⬜ **Restano da rileggere i quattro plugin** aggiunti da `eas init` (`expo-image`, `expo-sharing`, `expo-status-bar`, `expo-web-browser`) ed `extra.router: {}`: coerenti con l'uso, ma non scelti da nessuno. ⚠️ `expo-web-browser` diventa rilevante se i link legali si faranno verso un URL esterno invece che con schermate interne.
 - ⬜ **Deprecazioni di RN 0.86 segnalate dal bundle web**: `props.pointerEvents` → `style.pointerEvents`, `shadow*` → `boxShadow`. Solo avvisi; da sistemare quando si toccano `components/ui/vetro.tsx` e le carte.
+
+### La valutazione sullo store — aggiunto il 2026-09-10 (D-122)
+
+- [ ] ⬜ **`expo.ios.appStoreUrl` e `expo.android.playStoreUrl` in `app.json`** — non inventabili prima della pubblicazione (servono gli identificativi veri). Senza, il pop-up nativo funziona ma **non il ripiego** verso la pagina dello store, che serve su TestFlight e su Android vecchi. Da fare insieme all'apertura degli account.
+- [ ] 🔴 **Provarla su una development build**: in Expo Go è disattivata per costruzione. ⚠️ La prova che si può fare non è «è comparso il pop-up» — iOS non lo dice — ma **leggere `lifecouple.valutazione.<utenteId>`** in AsyncStorage e vedere che i tentativi cadano dove la politica dice.
+- [ ] ⬜ **Ritarare le soglie con l'uso vero.** 3 giorni / 3 momenti / 7 giorni / 3 l'anno sono scelte ragionate, **non misurate**: stanno tutte in `SOGLIE` dentro `lib/valutazione.ts`, esposte apposta perché nessuno le ricopi altrove.
 
 ### Le funzioni — aggiornato il 2026-09-03
 
@@ -3806,8 +3919,10 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 - [ ] 🔴 **L'abbonamento è della coppia, lo store vende a una persona.** Non esiste un abbonamento intestato a due: uno paga e il diritto va esteso all'altro, cosa che il telefono di chi non ha pagato non può fare (non ha ricevute). Servono webhook → Edge Function → colonna su `coppia` → policy RLS. ✅ Non è una migrazione di dati contesi: si aggiunge una colonna. ⚠️ **Da decidere prima del codice**: che fine fa il diritto **allo scioglimento**? Se la colonna sta su `coppia`, sparisce per entrambi — è la stessa domanda che D-16 ha già dovuto sciogliere per la creatura.
 
 **Il resto, in ordine di dipendenza:**
-- [ ] 🔴 **Richiedere il D-U-N-S** — è attesa pura e blocca gli account organizzazione, quindi si fa **per primo**, prima che l'app sia pronta. 🔑 **Verificare se esiste già**: D&B assegna numeri anche senza richiesta, e molte imprese ne hanno uno senza saperlo. ⚠️ I dati su Apple devono combaciare **alla lettera** col record D&B, o la verifica fallisce senza dire quale campo non torna.
-- [ ] Account **Apple** e **Google** come **organizzazione** (non persona fisica): l'editore diventa F.R. di Busato Fausto, e su Google si evita la regola dei **12 tester per 14 giorni** che colpisce gli account personali recenti.
+- [ ] 🔴 **Aprire i due account come INDIVIDUO** (**D-81**, 2026-08-31) — giorni, non settimane, e **nessun D-U-N-S**. 🔑 Per una ditta individuale non era nemmeno una scelta libera: Apple riserva il percorso «Organization» alle **entità legali separate**, e `F.R. di Busato Fausto` **è** `Fausto Busato`. Nome venditore visibile: `Fausto Busato`. ⚠️ Nei campi nome e cognome va il **nome legale personale**, mai la denominazione dell'impresa — Apple lo dice esplicitamente, e scriverci altro fa ritardare l'approvazione.
+- [ ] 🔴 **Reclutare i 12 tester per il test chiuso di Google** — è il prezzo della strada individuo: 12 persone iscritte **14 giorni consecutivi** e ancora attive alla richiesta, poi fino a 7 giorni di revisione. Si fa **per primo** perché i 14 giorni non si comprimono. 🔑 E non è attesa passiva ma **lavoro**: sono **sei coppie**, sono gli stessi beta tester del piano marketing, e sono l'unico modo di collaudare un'app che da soli non fa niente (**D-25**). ⚠️ Da controllare prima di aprire un account nuovo: un account Play personale **anteriore al 13/11/2023** sarebbe esente dal test chiuso.
+
+> ⟳ **Queste due righe hanno sostituito il 2026-09-09 le vecchie «richiedere il D-U-N-S» e «account come organizzazione»**, superate il 2026-08-31 da [`docs/pubblicazione.md`](docs/pubblicazione.md) §2.1. Il ragionamento vecchio non è stato buttato: vive in §2.4 di quel documento, che spiega **quale** dei suoi tre motivi è caduto e perché — incluso quello che era un beneficio *dichiarato ma inesistente*.
 - [ ] **`eas.json`** (profili development / preview / production) e **variabili come secret su EAS**. ⚠️ Il `.env` non è versionato: è esattamente ciò che il 2026-08-29 ha lasciato la chiave TMDB su un dispositivo solo.
 - [ ] **Primo build di sviluppo** → si provano finalmente i **tre testi dei permessi** (B-20, mai visti da nessuno) e si chiude il **backlog 11-quater**: sono scritti solo in italiano mentre l'app è bilingue (D-18).
 - [ ] **Pagamenti**: libreria (`expo-in-app-purchases` è abbandonata — restano `react-native-iap` o RevenueCat), schermata del listino, **«Ripristina acquisti»**, prodotti configurati sui due store, accordi **Paid Apps** con dati bancari e fiscali. ⚠️ Cancellare l'account **non** cancella l'abbonamento: va detto all'utente nel momento in cui cancella.
@@ -3815,7 +3930,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 - [ ] **Documenti privacy** adattati dai modelli in `Rule/` e **pubblicati a un URL** (ci sono già `fr-busato` e `heleox-landing` per ospitarli), più **App Privacy** e **Data safety** compilate da `threat-model.md` §1.
 - [ ] **Controlli sul nome** (EUIPO cl. 9 e 42, disponibilità sui due store, dominio, handle) — già in elenco dal 2026-08-12. ⚠️ Da fare **prima** degli screenshot in due lingue, non dopo.
 
-⚠️ **Stima: 7–11 settimane** dal 2026-08-29, D-U-N-S permettendo. È una stima, non una data: non va in `elenco-progetti.md`. 🔑 Il collo di bottiglia non è il lavoro — 17 giorni sono bastati per 25 migrazioni e due giochi — sono le **attese** e le **revisioni**, che non accelerano lavorando di più.
+⚠️ **Stima: 6–10 settimane** dal 2026-08-31, ricalcolata con la strada individuo ([`docs/pubblicazione.md`](docs/pubblicazione.md) §8). ~~7–11 settimane dal 2026-08-29, D-U-N-S permettendo.~~ È una stima, non una data: non va in `elenco-progetti.md`. 🔑 Il collo di bottiglia non è il lavoro — 17 giorni sono bastati per 25 migrazioni e due giochi — sono le **attese** e le **revisioni**, che non accelerano lavorando di più. ⚠️ E si è spostato **in meglio**: da un'attesa passiva (il D-U-N-S, che nessun lavoro accelerava) a lavoro coordinabile (i tester). Fuori dal nostro controllo restano solo la **licenza TMDB** e le revisioni degli store.
 
 🔴 **E una condizione che precede tutto il piano**: l'app **non è verificata**. Sei difetti su sette dei giochi sono corretti e mai riprovati, e le Liste hanno decine di punti mai visti girare. La prima partita vera ha fatto uscire sette difetti in un colpo. Pubblicare prima significa scoprirli con le recensioni — e su un'app che incassa, con le richieste di rimborso.
 
@@ -3824,13 +3939,17 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 I sei documenti di [`docs/legal/`](docs/legal/) esistono e sono coerenti fra loro e col codice **da oggi**. Quello che resta non è scrittura: è **prodotto, decisioni e pubblicazione**.
 
 **Bloccanti sulla pubblicazione, in ordine:**
-- [ ] 🔴 **I link a termini e informativa dentro l'app** — nella **registrazione** (prima del pulsante che crea l'account: è dove l'art. 13 GDPR vuole che l'informativa sia resa), in **Impostazioni** in modo permanente, e dentro la **schermata d'acquisto**, dove sono un requisito degli store prima che della legge. 🔑 **Senza questi, i sei documenti non sono in vigore**: sono file nel repo.
+- [x] ✅ **I link a informativa e cookie policy dentro l'app** — **fatti il 2026-09-09** (**D-121**): schermate interne, agganciate alla **registrazione** (prima del pulsante che crea l'account) e a **Impostazioni** (sezione permanente). ⚠️ **Verificato da sconnesso, che è il caso che conta**: `GuardiaSessione` rimanda a `/benvenuto` ogni rotta fuori da `app/(pubbliche)/`, quindi la schermata vive lì — messa in `app/legale/` sarebbe stata irraggiungibile *proprio a chi si registra*.
+  - [ ] ⬜ **Restano i termini d'uso**, che non sono ancora resi: aspettano i quattro `[DA DECIDERE]` di prodotto e i dati DSA (telefono e indirizzo). Il documento inglese non è stato scritto per non tradurre due volte.
+  - [ ] ⬜ **Resta la schermata d'acquisto**, terzo punto d'aggancio: **non esiste ancora** (nessuna libreria di pagamenti in `package.json`). Si fa quando si fa quella schermata.
 - [ ] 🔴 **Pubblicare informativa, cookie policy e termini a un URL raggiungibile** — obbligatorio su entrambi gli store. Ci sono già `fr-busato` e `heleox-landing` per ospitarli; oggi **nessuno dei tre è pubblicato da nessuna parte**.
 - [ ] 🔴 **Indirizzo e telefono del professionista (DSA)** ed **email di contatto**, una sola per tutti i documenti.
 - [ ] 🔴 **La prova end-to-end della catena di cancellazione.** L'informativa §7 dichiara agli utenti una cancellazione *«immediata e definitiva»*; la tabella «Esito della prova» in [`docs/legal/catena-cancellazione.md`](docs/legal/catena-cancellazione.md) è **vuota**. ⚠️ *È la dichiarazione più impegnativa dell'intero corpo documentale, ed è l'unica che poggia su codice mai eseguito.* Il protocollo è già scritto passo per passo: manca eseguirlo.
-- [ ] ⚠️ **`RECORD_AUDIO` è dichiarato in `app.json` e non usato da nessuna parte** — nessun `expo-av`, `expo-audio` o registrazione nel codice. Su Android è un permesso pericoloso chiesto senza scopo: va **tolto**, o giustificato in Data safety. Su iOS non ha effetto (non c'è una stringa di scopo), quindi è un difetto della sola piattaforma Android.
+- [x] ✅ **`RECORD_AUDIO` tolto da `app.json`** — **fatto il 2026-09-09** (**B-61**). Era dichiarato fra i permessi Android e non usato da nessuna parte: nessun `expo-av`, nessun `expo-audio`, nessuna dipendenza audio in `package.json`, nessuna chiamata di registrazione nel codice. ⚠️ *L'unica occorrenza della parola «microfono» in tutto il repo era una voce del banco parole di un gioco* — cioè il tipo di falso positivo che rende inutile cercare col solo nome. Su Android era un permesso pericoloso chiesto senza scopo, e il revisore lo vede.
 - [ ] ⚠️ **Consenso espresso + presa d'atto della perdita del recesso** nella schermata d'acquisto: senza queste due frasi, prima del pulsante che paga, la decadenza del recesso **non opera** e restano quattordici giorni esercitabili.
-- [ ] ⚠️ **Traduzione inglese** di informativa, cookie policy e termini — l'app è bilingue per decisione esplicita (**D-18**).
+- [x] ⟳ **Versione inglese di informativa e cookie policy** — **scritte il 2026-09-09** in [`docs/legal/en/`](docs/legal/en/), e sono quelle che l'app mostra: **D-121** ha deciso che il testo legale è **solo** in inglese. 🔴 **Si è capovolto il problema, non risolto**: ora è la versione *italiana* a non essere resa a nessuno, su un prodotto venduto in Italia. Il rischio è in §5, ed è accettato consapevolmente dall'utente.
+  - [ ] ⬜ **Versione inglese dei termini d'uso**, quando i quattro `[DA DECIDERE]` saranno chiusi.
+  - [ ] ⬜ **Riportare i documenti italiani in pari**, se dopo la revisione dell'avvocato si decide di renderli entrambi. Oggi le due lingue **divergono**: l'italiano in `docs/legal/` porta ancora i segnaposto, l'inglese in `docs/legal/en/` no. ⚠️ *Nessuno script se ne accorgerebbe: `genera-legale.mjs` guarda solo l'inglese, perché solo l'inglese entra nell'app.*
 - [ ] ⚠️ **Accordi art. 28** con Supabase, Google e TMDB: da accettare e archiviare.
 
 **Le quattro decisioni che i termini aspettano** — non sono di testo, e finché non si prendono il documento non può entrare in vigore:
@@ -3865,11 +3984,33 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
+> **Nota del 2026-09-10 — la valutazione sullo store è a bordo, e nessuno può vederla funzionare.** **D-122**: `expo-store-review`, la politica in `lib/valutazione.ts`, gli agganci ai cinque eventi, e `tests/valutazione.mjs` (14 controlli). Tutto verde a compilazione e nella preview web, dove la funzione è **inerte per costruzione**.
+>
+> 🔴 **La prima cosa da sapere prima di provare a provarla**: in **Expo Go non chiede niente**, di proposito — lì il pop-up sarebbe quello di Expo Go. Non è un difetto e non va «aggiustato»: serve una **development build**, cioè la stessa decisione sul prebuild ferma da **B-20** e dai widget. Fino ad allora l'unica verifica possibile è quella che c'è già, sulla funzione pura.
+>
+> ⚠️ **E quando ci sarà, resterà comunque non osservabile**: iOS non dice se ha mostrato il pop-up. La prova che si potrà fare è indiretta — che la politica *chieda* nei momenti giusti — e per quella serve poter leggere `lifecouple.valutazione.<utenteId>` in AsyncStorage.
+>
+> ⬜ **Manca in `app.json`**: `expo.ios.appStoreUrl` e `expo.android.playStoreUrl`. Non sono inventabili prima di aver pubblicato — servono gli identificativi veri — e senza di essi funziona il pop-up nativo ma **non il ripiego** verso la pagina dello store (TestFlight, Android vecchi). Da aggiungere insieme agli account.
+
+> **Nota del 2026-09-09 (2) — i documenti legali ora si leggono dentro l'app, e questo giro HA toccato il codice.** Tolto `RECORD_AUDIO` (**B-61**), allineato il backlog §6 alla strada individuo, e chiuso il primo punto del blocco legale con **D-121**: informativa e cookie policy come schermate interne, in inglese, agganciate a registrazione e Impostazioni.
+>
+> ⚠️ **A differenza del giro precedente, qui il prodotto è cambiato.** File nuovi: `docs/legal/en/{privacy-policy,cookie-policy}.md`, `tools/genera-legale.mjs`, `lib/legale/testi.ts` (derivato), `components/markdown.tsx`, `app/(pubbliche)/legale/[doc].tsx`. Modificati: `app/(pubbliche)/registrati.tsx`, `app/impostazioni.tsx`, `lib/i18n.ts`, `package.json`, `app.json`, `tests/rls.avversariali.mjs`. **Tutto il resto di questo PUNTO DI RIPRESA resta valido**, e la lista dei controlli sul telefono si allunga di quanto segue.
+>
+> 🔴 **Da guardare su un telefono, in aggiunta a tutto il resto:**
+> 1. **Dalla registrazione**, i due link sotto i campi devono aprire il documento **senza essere entrati**. È il caso che il ragionamento aveva sbagliato una volta (la schermata era fuori da `(pubbliche)/`): verificato nella preview web con `localStorage` vuoto, mai su un telefono.
+> 2. **L'impaginazione delle tabelle** dell'informativa §3 e §4 su uno schermo stretto: sono la ragione per cui il renderer esiste, e la misura — *si legge?* — la dà l'occhio, non un controllo.
+> 3. **Da Impostazioni**, la sezione nuova sta **sopra** «Cose senza ritorno»: che non si confonda con quelle.
+> 4. **Il ritorno indietro** dalla X in alto a destra, da entrambi i punti d'ingresso.
+>
+> ✅ **Verificato nella preview web, non dedotto**: entrambi i documenti si aprono da sconnesso e restano al loro indirizzo, 12.570 e 3.946 caratteri, nessun segnaposto, nessuna sintassi markdown rimasta a vista.
+>
+> 🔑 **E una notizia che veniva da un test rosso**: la migrazione **`0033` risulta applicata** — `stadio_soglia` ha tre righe (0/250/1200), verificate interrogando il database. La nota del 2026-09-06 qui sotto la dà per non applicata: **è superata**. Restano invece da provare le sue conseguenze, che nessuno ha ancora visto: concludere una partita e vedere `creatura.punti` salire di **5**, e concluderla di nuovo senza che ne aggiunga altri.
+
 > **Nota del 2026-09-09 — la documentazione legale è coerente, l'applicazione non la mostra.** La sessione ha corretto **tre dichiarazioni false** (**B-60**) e scritto il sesto documento, i **termini d'uso** (**D-120**). Toccati `app.json`, `docs/legal/informativa-privacy.md`, `docs/legal/cookie-policy.md`, `docs/conformita.md`, e il file nuovo `docs/legal/termini-uso.md`. **Nessuna riga di codice dell'app è stata toccata** — l'unica modifica al prodotto è la stringa del permesso in `app.json` — quindi tutto quello che segue resta valido parola per parola.
 >
 > 🔴 **Cosa guardare per primo al prossimo giro su questo fronte**: i **link legali dentro l'app**. Finché non ci sono, i sei documenti non sono resi a nessuno e il lavoro fatto finora non produce alcun effetto — è la voce in cima al blocco *«I documenti legali»* del backlog §6.
 >
-> ⚠️ **E una cosa che il prossimo giro deve sapere prima di rileggere qualcosa**: `app.json` porta ancora `RECORD_AUDIO` fra i permessi Android **senza che il codice usi mai il microfono**, e il backlog §6 chiede ancora il **D-U-N-S** e gli account *«come organizzazione»*, che [`docs/pubblicazione.md`](docs/pubblicazione.md) §2.1 ha superato il 2026-08-31 con la strada **individuo**. Entrambe sono state viste e **non** corrette: erano fuori dalla richiesta di oggi.
+> ✅ ~~E una cosa che il prossimo giro deve sapere prima di rileggere qualcosa: `app.json` porta ancora `RECORD_AUDIO`… e il backlog §6 chiede ancora il D-U-N-S…~~ — **entrambe chiuse nel secondo giro del 2026-09-09**, vedi la nota in cima a questa sezione.
 >
 > **Nota del 2026-09-08 — meta' di una richiesta, e la meta' che manca e' quella grossa.** La sessione ha aggiunto la sezione di Philippe alla landing (**D-119**). Toccati `landing/index.html` e un asset nuovo, `landing/immagini/philippe-giovane.png`. **Nessuna riga dell'app e' stata toccata**, quindi tutto quello che segue resta valido parola per parola.
 >

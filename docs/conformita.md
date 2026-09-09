@@ -83,11 +83,11 @@ I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno
 
 | Documento | Base | Dove vive | Stato |
 |---|---|---|---|
-| Informativa privacy (artt. 13-14) | `Rule/informativa-privacy-app.md` | 🔴 **URL pubblico** — obbligatorio su entrambi gli store | ✅ [`legal/informativa-privacy.md`](legal/informativa-privacy.md) — ⬜ da pubblicare |
+| Informativa privacy (artt. 13-14) | `Rule/informativa-privacy-app.md` | ✅ **dentro l'app** (2026-09-09) + 🔴 **URL pubblico**, obbligatorio su entrambi gli store | ✅ [`legal/informativa-privacy.md`](legal/informativa-privacy.md) (IT, di lavoro) · ✅ [`legal/en/privacy-policy.md`](legal/en/privacy-policy.md) (EN, **è quella resa**) — ⬜ da pubblicare a un URL |
 | Registro dei trattamenti (art. 30) | `Rule/registro-trattamenti.md` | interno, si esibisce al Garante | ✅ [`legal/registro-trattamenti.md`](legal/registro-trattamenti.md) |
 | Catena di cancellazione | `Rule/catena-cancellazione.md` | interno — **§2 qui sopra è ciò che deve descrivere** | ✅ [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) — contiene il **protocollo di prova** |
 | Procedura data breach (artt. 33-34) | `Rule/procedura-data-breach.md` | interno, cronometro di 72 ore | ✅ [`legal/procedura-data-breach.md`](legal/procedura-data-breach.md) |
-| Cookie policy | `Rule/cookie-policy-app.md` | sul **sito** che ospita l'informativa, non nell'app | ✅ [`legal/cookie-policy.md`](legal/cookie-policy.md) — ⬜ da pubblicare |
+| Cookie policy | `Rule/cookie-policy-app.md` | ⟳ **dentro l'app** (2026-09-09) + sul sito che ospita l'informativa | ✅ [`legal/cookie-policy.md`](legal/cookie-policy.md) (IT, di lavoro) · ✅ [`legal/en/cookie-policy.md`](legal/en/cookie-policy.md) (EN, **è quella resa**) — ⬜ da pubblicare a un URL |
 | **Termini d'uso** | 🔑 **nessun modello in `Rule/`** — scritti da zero | 🔴 **URL pubblico** + link dentro l'app | ✅ [`legal/termini-uso.md`](legal/termini-uso.md) *(2026-09-09)* — ⬜ da pubblicare |
 
 > 🔴 **Il sesto documento, aggiunto il 2026-09-09: i termini d'uso.** La tabella qui sopra ne elencava cinque, e per nove giorni la loro assenza non è stata contata come lacuna perché **nessuna riga la nominava** — mentre tre documenti diversi li davano per esistenti: l'informativa §10-bis (*«va scritta qui e nei termini d'uso»*), il §8 qui sotto (Apple può chiederli per i contenuti generati dagli utenti) e [`pubblicazione.md`](pubblicazione.md) §3.1, che elenca *«mancano i link a termini e privacy»* fra i rifiuti frequenti.
@@ -96,7 +96,13 @@ I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno
 >
 > ⚠️ **E il documento nuovo ha una natura diversa dagli altri cinque**: quattro dei suoi punti aperti non sono scelte di testo ma **decisioni di prodotto** già ferme nel backlog (sorte dell'abbonamento e dello spazio foto allo scioglimento, durata del preavviso, un modo di segnalare). Finché non si decidono, i termini non possono entrare in vigore — e nessuna riscrittura del testo lo cambia.
 
-✅ Per ospitare l'informativa esistono già due siti nel brain: `fr-busato` e `heleox-landing`.
+> ⟳ **Aggiornamento del 2026-09-09 (D-121): due documenti sono ora resi dentro l'app**, e la riga *«sul sito, non nell'app»* della cookie policy è superata. Informativa e cookie policy si leggono da **registrazione** e **Impostazioni**, come schermate interne — l'art. 13 vuole l'informativa nel momento della raccolta, e quel momento è la registrazione.
+>
+> 🔴 **Ma il testo reso è quello INGLESE, e solo quello.** Decisione dell'utente, col rischio sollevato prima e accettato: vedi [`History.md`](../History.md) §5. Le versioni italiane in `legal/` restano **documenti di lavoro** — contengono note editoriali e segnaposto `[DA DECIDERE]` — e **non sono rese a nessuno**. ⚠️ *Le due lingue da oggi divergono, e nessun controllo automatico se ne accorge: `tools/genera-legale.mjs` guarda solo `legal/en/`, perché solo quello entra nell'app.*
+>
+> ⬜ **Restano fuori**: i **termini d'uso** (aspettano i quattro `[DA DECIDERE]` di prodotto e i dati DSA) e la **schermata d'acquisto**, che non esiste ancora.
+
+✅ Per ospitare l'informativa esistono già due siti nel brain: `fr-busato` e `heleox-landing`. ⚠️ **La landing di LifeCouple non è fra questi**: `landing/` esiste nel repo ma non è pubblicata da nessuna parte — nessun deploy, nessun dominio — verificato il 2026-09-09.
 
 ---
 

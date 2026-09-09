@@ -905,6 +905,24 @@ const it = {
       'Il primo appuntamento che segnate resta qui. Anche solo per ricordarvi di guardare un film insieme.',
     dataNonValida: 'Data non valida: usa il formato 2026-09-01 20:00.',
   },
+
+  /**
+   * **I documenti legali** (D-121, 2026-09-09).
+   *
+   * ⚠️ Le etichette sono bilingui, il **testo dei documenti no**: quello è in
+   * inglese soltanto, per decisione dell'utente. `soloInglese` è la riga che lo
+   * dice a chi apre il documento con il telefono in italiano — perché scoprirlo
+   * a metà pagina è peggio che saperlo prima.
+   */
+  legale: {
+    sezione: 'Documenti legali',
+    privacyTitolo: 'Informativa privacy',
+    cookieTitolo: 'Cookie policy',
+    primaDiCreare: 'Creando l’account dichiari di aver letto:',
+    impostazioniNota: 'Puoi rileggerli quando vuoi, anche senza connessione.',
+    soloInglese: 'Questo documento è disponibile solo in inglese.',
+    nonTrovato: 'Documento non disponibile.',
+  },
 };
 
 // Senza `as const`: il tipo cattura le CHIAVI (una dimenticata non compila) ma
@@ -1581,6 +1599,15 @@ const en: Dizionario = {
     vuotoTesto:
       'The first plan you save shows up here. Even just a reminder to watch a film together.',
     dataNonValida: 'Invalid date: use the format 2026-09-01 20:00.',
+  },
+  legale: {
+    sezione: 'Legal',
+    privacyTitolo: 'Privacy Policy',
+    cookieTitolo: 'Cookie Policy',
+    primaDiCreare: 'By creating an account you confirm you have read:',
+    impostazioniNota: 'You can read them again any time, even offline.',
+    soloInglese: 'This document is available in English only.',
+    nonTrovato: 'Document not available.',
   },
 };
 

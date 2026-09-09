@@ -2,6 +2,7 @@ import * as React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { segnalaMomento } from '@/lib/valutazione';
 
 /**
  * Quante volte il canale della creatura e' stato aperto in questa esecuzione.
@@ -231,8 +232,14 @@ export function useCreatura(coppiaId: string | null, utenteId: string | undefine
     }
 
     const prima = visto.current ?? { punti, stadio };
-    if (stadio > prima.stadio) setEvoluzioneInSospeso(true);
-    else if (punti > prima.punti) setFestaInSospeso(true);
+    if (stadio > prima.stadio) {
+      setEvoluzioneInSospeso(true);
+      // La creatura che cambia stadio e' il momento piu' raro e piu' bello che
+      // questa app produca: se c'e' un istante in cui chiedere una valutazione
+      // non e' un'intrusione, e' questo. ⚠️ Il `void` e' voluto — non si
+      // attende, e chi non e' pronto a chiedere non fa niente (`valutazione.ts`).
+      void segnalaMomento(utenteId, 'evoluzione');
+    } else if (punti > prima.punti) setFestaInSospeso(true);
     // ⚠️ `else if`: quando si sale di stadio i punti sono cresciuti per forza,
     // e mettere in coda anche la festa farebbe partire due momenti uno sopra
     // l'altro. L'evoluzione e' la piu' rara delle due e vince.

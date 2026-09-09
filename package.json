@@ -11,7 +11,10 @@
     "test:rls": "node tests/rls.avversariali.mjs",
     "test:parole": "node tests/parole.mjs",
     "test:partita": "node tests/partita.mjs",
-    "test:creatura": "node tests/creatura.mjs"
+    "test:creatura": "node tests/creatura.mjs",
+    "test:legale": "node tools/genera-legale.mjs --check",
+    "genera:legale": "node tools/genera-legale.mjs",
+    "test:valutazione": "node tests/valutazione.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
@@ -41,6 +44,7 @@
     "expo-sharing": "~57.0.17",
     "expo-splash-screen": "~57.0.8",
     "expo-status-bar": "~57.0.1",
+    "expo-store-review": "~57.0.2",
     "expo-symbols": "~57.0.2",
     "expo-system-ui": "~57.0.3",
     "expo-web-browser": "~57.0.2",

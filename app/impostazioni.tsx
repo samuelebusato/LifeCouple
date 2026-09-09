@@ -379,6 +379,21 @@ export default function Impostazioni() {
             )}
           </View>
 
+          {/* --- Documenti legali ----------------------------------------- */}
+          {/* Il secondo dei due punti d'ingresso richiesti: la registrazione li
+              mostra una volta sola, qui restano **permanenti**. È anche l'unico
+              posto in cui li ritrova chi ha creato l'account mesi fa. */}
+          <View className="gap-2">
+            <Sezione titolo={t.legale.sezione} />
+            <Button variant="ghost" onPress={() => router.push('/legale/privacy')}>
+              <Text>{t.legale.privacyTitolo}</Text>
+            </Button>
+            <Button variant="ghost" onPress={() => router.push('/legale/cookie')}>
+              <Text>{t.legale.cookieTitolo}</Text>
+            </Button>
+            <Text className="text-sm text-muted-foreground">{t.legale.impostazioniNota}</Text>
+          </View>
+
           {/* --- Cose senza ritorno --------------------------------------- */}
           <View className="gap-4">
             <Sezione titolo={t.impostazioni.sezionePericolo} pericolo />

@@ -150,8 +150,16 @@ const coppiaB = await coppiaDi(b1);
   esito('una sola coppia attiva a testa', /gia/.test(error?.message ?? ''), error?.message);
   const { data: cb } = await a1.from('coppia').select('*').eq('id', coppiaB);
   esito('A1 non vede la riga della coppia B', cb?.length === 0);
+  // ⟳ **Erano sei, sono tre dalla `0033`** (2026-09-04, D-96: gli stadi della
+  // creatura sono tre). L'asserzione era rimasta a sei e faceva fallire la suite
+  // *perche' la migrazione era stata applicata* — cioe' l'esatto contrario di
+  // quello che un test rosso di solito significa.
+  //
+  // ⚠️ Verificato contro il database vero il 2026-09-09, non dedotto dal file di
+  // migrazione: tre righe, 0/250/1200. *Un test che si allinea al codice invece
+  // che alla realta' verifica solo la coerenza di chi lo ha scritto.*
   const { data: soglie } = await a1.from('stadio_soglia').select('*');
-  esito('autenticato legge le 6 soglie stadio', soglie?.length === 6);
+  esito('autenticato legge le 3 soglie stadio', soglie?.length === 3);
 }
 
 // --- contenuti: il confine coppia<->coppia (TB-3) -------------------------------

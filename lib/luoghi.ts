@@ -2,6 +2,8 @@ import * as React from 'react';
 import { supabase } from '@/lib/supabase';
 import type { StatoCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
+import { useAuth } from '@/lib/auth';
+import { segnalaMomento } from '@/lib/valutazione';
 
 export type Luogo = {
   id: string;
@@ -28,6 +30,9 @@ export type Luogo = {
  * funzione che potrebbe abilitare.
  */
 export function useLuoghi(coppiaId: string | null) {
+  // Serve solo alla valutazione, che vuole una chiave per utente: sullo stesso
+  // telefono possono entrare persone diverse.
+  const { session } = useAuth();
   const [luoghi, setLuoghi] = React.useState<Luogo[]>([]);
   const [errore, setErrore] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -113,9 +118,13 @@ export function useLuoghi(coppiaId: string | null) {
         .eq('luogo_id', id)
         .eq('tipo', 'luogo');
       await ricarica();
+      // ⚠️ **Solo la transizione verso «visitato»**, mai il ritorno indietro:
+      // spuntare un posto e' il momento buono, toglierlo non lo e'. E' la stessa
+      // asimmetria che il trigger sul database applica ai punti (D-15).
+      if (visitato) void segnalaMomento(session?.user?.id, 'luogo');
       return null;
     },
-    [ricarica]
+    [ricarica, session?.user?.id]
   );
 
   /**
