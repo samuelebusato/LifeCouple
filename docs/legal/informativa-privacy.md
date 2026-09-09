@@ -1,10 +1,12 @@
 # Informativa privacy — LifeCouple
 
-> **Versione `app-1.0` — bozza del 2026-08-31, non ancora in vigore.** Resa ai sensi degli **artt. 13-14 del Regolamento (UE) 2016/679 (GDPR)**.
+> **Versione `app-1.0` — bozza del 2026-08-31, rivista il 2026-09-09, non ancora in vigore.** Resa ai sensi degli **artt. 13-14 del Regolamento (UE) 2016/679 (GDPR)**.
 >
 > 🔴 **Da pubblicare a un URL pubblico prima della sottomissione agli store**: è un requisito obbligatorio sia di Apple sia di Google. I due siti disponibili sono `fr-busato` e `heleox-landing`.
 >
-> ⚠️ **Tre punti sono marcati `[DA DECIDERE]` / `[DA VERIFICARE]`**: non sono stati riempiti con stime. Vanno chiusi prima della pubblicazione — l'elenco è in fondo.
+> ⚠️ **Quattro punti sono marcati `[DA DECIDERE]` / `[DA VERIFICARE]`**: non sono stati riempiti con stime. Vanno chiusi prima della pubblicazione — l'elenco è in fondo. *(Diceva «tre»: erano quattro già il 2026-08-31, contati il 2026-09-09.)*
+>
+> 🔑 **Revisione del 2026-09-09 — §6 diceva il contrario di §3.1.** La sezione «cosa vede il tuo partner» affermava ancora *«non vede la tua posizione attuale»* e rimandava, per la prova, proprio al paragrafo che la smentiva: §3 e §3.1 erano stati aggiornati dopo **D-100** (condivisione della posizione, 2026-09-05), §6 no. ⚠️ *Un'informativa che si contraddice non è imprecisa: è inutilizzabile come prova di trasparenza, perché non esiste una versione «giusta» da opporre a chi legge l'altra.*
 >
 > Adattata da [`Rule/informativa-privacy-app.md`](../../../../Rule/informativa-privacy-app.md), che è scritta per HeleoX. **Non è una copia**: LifeCouple tratta categorie di dati che HeleoX non tratta affatto — fotografie private, cronologia di luoghi, e il legame sentimentale fra due persone.
 
@@ -99,7 +101,9 @@ Copia delle garanzie adottate può essere richiesta ai contatti della §1.
 
 Questa sezione descrive l'aspetto più importante del servizio, ed è scritta per essere letta **prima** di iniziare.
 
-**Durante la coppia**, il tuo partner vede i contenuti condivisi: calendario, luoghi, fotografie, liste, e i risultati dei giochi. Non vede la tua posizione attuale (§3.1) e non può leggere le tue risposte a un gioco prima che entrambi abbiate risposto.
+**Durante la coppia**, il tuo partner vede i contenuti condivisi: calendario, luoghi, fotografie, liste, i risultati dei giochi e la tua data di nascita, che compare come compleanno sul calendario che condividete. **Non** può leggere le tue risposte a un gioco prima che entrambi abbiate risposto.
+
+⚠️ **La tua posizione attuale è l'unica cosa che dipende da un tuo gesto**: il partner la vede **solo se sei tu ad accendere la condivisione**, che è spenta finché non la accendi e si spegne in un tocco. Le condizioni esatte — nessuno storico, scadenza a quindici minuti, spegnimento non notificato — sono descritte alla **§3.1**, e vanno lette prima di accenderla.
 
 **Ciascuno resta autore di ciò che ha caricato**: solo chi ha inserito un contenuto può modificarlo o cancellarlo. Il tuo partner non può cancellare le tue fotografie o i tuoi contenuti.
 
@@ -149,7 +153,7 @@ Prima di quella data potrai **esportare i tuoi dati** dall'applicazione, funzion
 
 Gli abbonamenti in corso sono gestiti da Apple e Google: il rinnovo automatico viene disattivato e il servizio resta disponibile **fino alla scadenza del periodo già pagato**.
 
-> ⚠️ **[DA DECIDERE — la durata del preavviso non è ancora fissata]** e va scritta qui e nei termini d'uso. Non è una formula: se si dichiara un preavviso, va rispettato. E la sua durata **dipende dalla decisione sugli abbonamenti annuali** — con un annuale in corso, chiudere prima della scadenza significa gestire rimborsi. 🔴 **Va inoltre costruita una procedura di cancellazione di massa**: oggi la catena di cancellazione funziona per un utente alla volta, e spegnere l'infrastruttura non è una cancellazione a norma. Vedi il backlog di [`History.md`](../../History.md) → *«La fine del servizio»*.
+> ⚠️ **[DA DECIDERE — la durata del preavviso non è ancora fissata]** e va scritta qui e nei [**termini d'uso**](termini-uso.md) §15 — che dal 2026-09-09 esistono e portano lo stesso `[DA DECIDERE]`. 🔑 **Si decide una volta e i due documenti devono dire lo stesso numero**: due preavvisi diversi nello stesso servizio sono peggio di nessun preavviso, perché l'utente sceglie il più lungo e ha ragione. Non è una formula: se si dichiara un preavviso, va rispettato. E la sua durata **dipende dalla decisione sugli abbonamenti annuali** — con un annuale in corso, chiudere prima della scadenza significa gestire rimborsi. 🔴 **Va inoltre costruita una procedura di cancellazione di massa**: oggi la catena di cancellazione funziona per un utente alla volta, e spegnere l'infrastruttura non è una cancellazione a norma. Vedi il backlog di [`History.md`](../../History.md) → *«La fine del servizio»*.
 
 ## 11. Età minima
 

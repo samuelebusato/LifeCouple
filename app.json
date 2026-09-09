@@ -58,7 +58,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "LifeCouple usa la posizione solo per centrare la mappa dove sei: non ti segue mai, non la registra e il tuo partner non può vedere dove sei adesso.",
+          "locationWhenInUsePermission": "LifeCouple usa la posizione per centrare la mappa dove sei e, se sei tu ad accendere la condivisione, per mostrare al tuo partner dove ti trovi adesso. Non ti segue quando l'app è chiusa e non conserva nessuno storico dei tuoi spostamenti.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false
         }
