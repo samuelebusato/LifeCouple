@@ -75,7 +75,7 @@ Costruita in [`lib/esporta.ts`](../lib/esporta.ts) + un comando in Impostazioni.
 
 ## 5. I documenti da produrre
 
-I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno riadattati, non riusati.
+I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno riadattati, non riusati. ⚠️ **E i modelli non esauriscono i documenti necessari** — i termini d'uso non ne hanno uno, ed è il motivo per cui sono mancati fino al 2026-09-09 (vedi la nota sotto la tabella).
 
 > ✅ **Scritti tutti e cinque il 2026-08-31** in [`docs/legal/`](legal/) — vedi **D-80**. Sono **bozze non ancora in vigore**: restano quattro punti aperti, marcati dentro i documenti e non riempiti di stime (email per i diritti · dati del professionista per il DSA · retention dei backup Supabase, da **leggere** nel pannello · valutazione professionale sull'art. 9, §9 qui sotto).
 >
@@ -88,6 +88,13 @@ I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno
 | Catena di cancellazione | `Rule/catena-cancellazione.md` | interno — **§2 qui sopra è ciò che deve descrivere** | ✅ [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) — contiene il **protocollo di prova** |
 | Procedura data breach (artt. 33-34) | `Rule/procedura-data-breach.md` | interno, cronometro di 72 ore | ✅ [`legal/procedura-data-breach.md`](legal/procedura-data-breach.md) |
 | Cookie policy | `Rule/cookie-policy-app.md` | sul **sito** che ospita l'informativa, non nell'app | ✅ [`legal/cookie-policy.md`](legal/cookie-policy.md) — ⬜ da pubblicare |
+| **Termini d'uso** | 🔑 **nessun modello in `Rule/`** — scritti da zero | 🔴 **URL pubblico** + link dentro l'app | ✅ [`legal/termini-uso.md`](legal/termini-uso.md) *(2026-09-09)* — ⬜ da pubblicare |
+
+> 🔴 **Il sesto documento, aggiunto il 2026-09-09: i termini d'uso.** La tabella qui sopra ne elencava cinque, e per nove giorni la loro assenza non è stata contata come lacuna perché **nessuna riga la nominava** — mentre tre documenti diversi li davano per esistenti: l'informativa §10-bis (*«va scritta qui e nei termini d'uso»*), il §8 qui sotto (Apple può chiederli per i contenuti generati dagli utenti) e [`pubblicazione.md`](pubblicazione.md) §3.1, che elenca *«mancano i link a termini e privacy»* fra i rifiuti frequenti.
+>
+> 🔑 **La lezione è la stessa del progetto applicata alla documentazione invece che al codice**: *un elenco di cose da fare non segnala ciò che non contiene*. I cinque erano completi rispetto ai modelli disponibili in `Rule/`, e la completezza rispetto ai modelli era stata scambiata per completezza rispetto al bisogno.
+>
+> ⚠️ **E il documento nuovo ha una natura diversa dagli altri cinque**: quattro dei suoi punti aperti non sono scelte di testo ma **decisioni di prodotto** già ferme nel backlog (sorte dell'abbonamento e dello spazio foto allo scioglimento, durata del preavviso, un modo di segnalare). Finché non si decidono, i termini non possono entrare in vigore — e nessuna riscrittura del testo lo cambia.
 
 ✅ Per ospitare l'informativa esistono già due siti nel brain: `fr-busato` e `heleox-landing`.
 
@@ -107,6 +114,8 @@ Ognuno riceve dati personali, va **nominato nell'informativa e nel registro**, e
 ---
 
 ## 7. Quando si incassa: diritto dei consumatori
+
+> ✅ **Dal 2026-09-09 questi tre punti hanno una casa**: sono redatti in [`legal/termini-uso.md`](legal/termini-uso.md) §8, §9 e §16. Qui restano come **mappa dei temi**, che è il ruolo di questo documento; il testo contrattuale sta lì e non si duplica.
 
 - **Recesso di 14 giorni** per i contenuti digitali, e le condizioni precise a cui decade (esecuzione immediata con consenso espresso e presa d'atto).
 - **Informazioni precontrattuali** prima dell'acquisto: prezzo, durata, **rinnovo automatico**, come disdire. 🔑 È insieme obbligo di legge e regola Apple: si scrive una volta e vale per due.

@@ -28,6 +28,20 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-09 — I documenti legali: tre dichiarazioni false e il sesto documento
+
+**Chiesto dall'utente**: a che punto è la documentazione legale in vista della pubblicazione, e se quella già scritta è **completa e coerente**.
+
+**L'esame** ha confrontato i cinque documenti di `docs/legal/`, `conformita.md` e `pubblicazione.md` **contro il codice**, non contro sé stessi. Esito: i documenti sono di buona qualità e onesti — ogni buco è marcato invece che riempito di stime — ma **tre dichiarazioni erano diventate false** e **un documento intero mancava**.
+
+**Corretto (B-60)**: la stringa del permesso di posizione in `app.json`, l'autocontraddizione fra §3.1 e §6 dell'informativa, e la tabella della cookie policy. Dettaglio e verifica in §4.
+
+**Scritto (D-120)**: [`docs/legal/termini-uso.md`](docs/legal/termini-uso.md), il sesto documento — che non esisteva mentre **tre documenti diversi lo davano per esistente**.
+
+⚠️ **Non fatto, e sono cose che l'esame ha portato alla luce senza risolverle**: i link legali dentro l'app (senza i quali né i termini né l'informativa sono mai resi), il permesso `RECORD_AUDIO` dichiarato e mai usato, il «modo di segnalare» che le linee guida degli store chiedono per i contenuti generati dagli utenti, e le **quattro decisioni di prodotto** che i termini portano dentro senza poterle prendere. Tutte a backlog in §6.
+
+⚠️ **E una incoerenza segnalata e deliberatamente non toccata**: il backlog §6 chiede ancora *«richiedere il D-U-N-S»* e gli account *«come organizzazione»*, mentre [`docs/pubblicazione.md`](docs/pubblicazione.md) §2.1 registra la decisione del 2026-08-31 di pubblicare **come individuo**, con il D-U-N-S non necessario su nessuno dei due store. Non è stata corretta perché fuori dalla richiesta di oggi, ma **è un punto in cui questo file dice il contrario del documento che l'ha aggiornato**, e vale la regola già scritta: *un registro che dice il falso è peggio di uno vuoto, perché al primo si crede*.
+
 ### 2026-09-08 — Philippe si racconta sulla landing, e le schermate vere restano da fare
 
 **Chiesto dall'utente**: schermate vere al posto dei mockup **e** una sezione sulla mascotte col significato della lontra.
@@ -451,6 +465,22 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-120 — I termini d'uso nascono da zero, e portano dentro quattro decisioni che non sono di testo (2026-09-09)
+
+**Il fatto da cui parte**: al 2026-09-09 LifeCouple non aveva termini d'uso, e **nessun elenco lo segnalava**. `conformita.md` §5 ne contava cinque, di documenti, ed erano cinque perché **cinque erano i modelli disponibili in [`Rule/`](../../../Rule/)** — dove un modello di termini d'uso non c'è. Intanto tre documenti diversi li davano per esistenti: l'informativa §10-bis (*«va scritta qui e nei termini d'uso»*), `conformita.md` §8 (Apple può chiederli per i contenuti generati dagli utenti) e `pubblicazione.md` §3.1, che elenca *«mancano i link a termini e privacy»* fra i tre rifiuti banali e frequentissimi.
+
+🔑 **La lezione, che è quella del progetto applicata alla documentazione invece che al codice**: *un elenco di cose da fare non segnala ciò che non contiene*. La completezza rispetto ai modelli era stata scambiata per completezza rispetto al bisogno — ed è la stessa forma dell'errore che il progetto insegue da settimane, uno stato scritto che nessuno ha verificato contro la realtà.
+
+**Tre scelte nella redazione:**
+
+1. **Struttura riusata da [`Projects/HeleoX/docs/legal/condizioni-beta.md`](../../HeleoX/docs/legal/condizioni-beta.md), contenuto no.** Quelle regolano una beta **B2B** con clausole di autorizzazione alla scansione; LifeCouple è **B2C puro con abbonamento**. Riusare l'impianto costa poco e mantiene la casa riconoscibile; riusare le clausole avrebbe prodotto un contratto per un altro prodotto.
+2. 🔑 **I quattro punti aperti sono stati lasciati aperti, e marcati come decisioni di prodotto invece che come buchi di testo.** Sorte dell'abbonamento e dello spazio foto allo scioglimento, durata del preavviso di chiusura, un modo di segnalare: nessuno dei quattro si chiude riscrivendo una frase. *Riempirli con un valore plausibile avrebbe prodotto un documento completo e falso, che è lo stato peggiore dei due — perché da fuori sembra finito.* È la stessa regola che il 2026-08-31 ha impedito di dichiarare una conservazione a termine che il sistema non applica.
+3. ⚠️ **Le sezioni sull'offerta commerciale (§7 e §8) descrivono un listino deciso e un prodotto non costruito.** In `package.json` non esiste alcuna libreria di pagamenti e nel codice non esiste il concetto di abbonamento: il documento lo dice in testa alle due sezioni e impone di riverificarle contro il prodotto prima di entrare in vigore. *È il punto in cui è più facile che un termine prometta più di quanto l'app dia.*
+
+🔴 **E una cosa che il documento nomina e nessun altro nominava: non esiste, nell'applicazione, il punto in cui i termini vengono accettati.** `app/(pubbliche)/registrati.tsx` chiede email, password e data di nascita, e non mostra né i termini né l'informativa. ⚠️ *Non è solo un problema contrattuale: l'art. 13 GDPR vuole che l'informativa sia resa **al momento della raccolta**, e il momento della raccolta è esattamente quella schermata.* Un contratto che nessuno accetta e un'informativa che nessuno vede non sono documenti deboli — non sono in vigore affatto.
+
+✅ **Una scelta minore ma da non perdere**: **nessun rinvio alla piattaforma ODR europea**, che compare in quasi tutti i termini in circolazione e **ha cessato di operare nel 2025**. Indicare al consumatore uno strumento che non esiste è peggio che non indicarne nessuno; se si vuole una via stragiudiziale va nominato un organismo ADR reale, alla pubblicazione.
 
 ### D-119 — La sezione di Philippe sulla landing riusa l'illustrazione del prodotto, e il perche' della lontra viene da fuori (2026-09-08)
 
@@ -2485,6 +2515,22 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-60 — Tre dichiarazioni che il codice aveva smentito, e nessuna se n'era accorta (2026-09-09, CORRETTE)
+
+**Come sono state trovate**: rileggendo i documenti legali **contro il codice** invece che contro sé stessi, su richiesta dell'utente di verificarne coerenza e completezza. Nessun controllo automatico le vedeva, e non poteva: sono tutte e tre **frasi vere quando sono state scritte**, diventate false quando il prodotto è cambiato sotto di loro.
+
+🔑 **La causa comune, ed è una sola: D-100.** La condivisione della posizione, aggiunta il 2026-09-05, ha ribaltato **D-05** — la mitigazione della sorveglianza fra partner che consisteva nel *non avere la funzione*. Chi l'ha costruita ha aggiornato ciò che descriveva la funzione (informativa §3, §3.1, registro A8) e non ciò che descriveva la sua **assenza**, che stava altrove. ⚠️ *Aggiungere una funzione obbliga a cercare le frasi che dicevano che non c'era — e quelle non si trovano cercando il nome della funzione, perché non lo contengono.*
+
+**1. 🔴 `app.json` — la stringa del permesso di posizione diceva il falso.** Il testo che il sistema operativo mostra nel momento in cui si concede il permesso recitava *«non ti segue mai, non la registra e il tuo partner non può vedere dove sei adesso»*. L'ultima clausola è falsa dal 2026-09-05. **È la peggiore delle tre**: non è un documento che l'utente potrebbe non leggere, è la frase esatta su cui decide se concedere il permesso — e per Apple è una *purpose string* che non corrisponde alla funzione, cioè un motivo di rifiuto. **Riscritta** per dire le due cose vere insieme: la mappa si centra, e il partner vede la posizione **solo se la condivisione la accendi tu**; niente inseguimento ad app chiusa, nessuno storico.
+
+**2. 🔴 L'informativa privacy si contraddiceva al suo interno.** §3.1 spiega per esteso che il partner vede la posizione se accendi la condivisione; §6 — *«cosa vede il tuo partner»* — affermava ancora *«Non vede la tua posizione attuale»* e rimandava, come prova, **proprio al paragrafo che la smentiva**. ⚠️ *Un'informativa che si contraddice non è imprecisa: è inutilizzabile come prova di trasparenza, perché non esiste una versione «giusta» da opporre a chi ha letto l'altra.* §6 **riscritta**, con la posizione trattata come l'unica cosa che dipende da un gesto dell'utente.
+
+**3. ⚠️ La cookie policy elencava una cosa che non esiste e ne ometteva tre che esistono.** Cercando ogni scrittura su `AsyncStorage` invece di rileggere la tabella: la riga *«preferenze dell'interfaccia (es. lingua)»* **non ha corrispondenza nel codice** — `lib/i18n.ts` legge la lingua dal telefono a ogni avvio e non memorizza nulla — mentre mancavano `lifecouple.condivido-posizione`, `lifecouple.creatura-vista` e `lifecouple.ingresso-rimandato`. Tabella **rifatta** dal codice, con la nota che la lingua non c'è e il perché.
+
+**Come è stata verificata la correzione**: `app.json` riletto da `JSON.parse` e la stringa nuova stampata dal file (non dall'editor); ricerca in tutto il repo della frase vecchia, che non compare più da nessuna parte; le tre chiavi di `AsyncStorage` elencate cercandole nel codice, non ricordandole.
+
+🔑 **E la cosa che questo difetto insegna per la prossima volta**: due delle tre erano **invisibili leggendo il documento da solo** — servivano il codice a fianco per la cookie policy e la *seconda metà dello stesso documento* per l'informativa. ⚠️ *Un documento si rilegge contro la sua fonte, mai contro sé stesso: contro sé stesso è sempre coerente, perché è la stessa persona ad aver scritto entrambe le frasi.*
+
 ### B-59 — Il recupero password si rompeva da solo se la nuova password era uguale alla vecchia (2026-09-07, CORRETTO)
 
 **Riferito dall'utente il 2026-09-07**: *«prima ho per sbaglio inserito come password nuova la password vecchia e il meccanismo si è rotto e il token è scaduto»*.
@@ -3773,6 +3819,28 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 🔴 **E una condizione che precede tutto il piano**: l'app **non è verificata**. Sei difetti su sette dei giochi sono corretti e mai riprovati, e le Liste hanno decine di punti mai visti girare. La prima partita vera ha fatto uscire sette difetti in un colpo. Pubblicare prima significa scoprirli con le recensioni — e su un'app che incassa, con le richieste di rimborso.
 
+### 🔴 I documenti legali — cosa resta dopo l'esame del 2026-09-09
+
+I sei documenti di [`docs/legal/`](docs/legal/) esistono e sono coerenti fra loro e col codice **da oggi**. Quello che resta non è scrittura: è **prodotto, decisioni e pubblicazione**.
+
+**Bloccanti sulla pubblicazione, in ordine:**
+- [ ] 🔴 **I link a termini e informativa dentro l'app** — nella **registrazione** (prima del pulsante che crea l'account: è dove l'art. 13 GDPR vuole che l'informativa sia resa), in **Impostazioni** in modo permanente, e dentro la **schermata d'acquisto**, dove sono un requisito degli store prima che della legge. 🔑 **Senza questi, i sei documenti non sono in vigore**: sono file nel repo.
+- [ ] 🔴 **Pubblicare informativa, cookie policy e termini a un URL raggiungibile** — obbligatorio su entrambi gli store. Ci sono già `fr-busato` e `heleox-landing` per ospitarli; oggi **nessuno dei tre è pubblicato da nessuna parte**.
+- [ ] 🔴 **Indirizzo e telefono del professionista (DSA)** ed **email di contatto**, una sola per tutti i documenti.
+- [ ] 🔴 **La prova end-to-end della catena di cancellazione.** L'informativa §7 dichiara agli utenti una cancellazione *«immediata e definitiva»*; la tabella «Esito della prova» in [`docs/legal/catena-cancellazione.md`](docs/legal/catena-cancellazione.md) è **vuota**. ⚠️ *È la dichiarazione più impegnativa dell'intero corpo documentale, ed è l'unica che poggia su codice mai eseguito.* Il protocollo è già scritto passo per passo: manca eseguirlo.
+- [ ] ⚠️ **`RECORD_AUDIO` è dichiarato in `app.json` e non usato da nessuna parte** — nessun `expo-av`, `expo-audio` o registrazione nel codice. Su Android è un permesso pericoloso chiesto senza scopo: va **tolto**, o giustificato in Data safety. Su iOS non ha effetto (non c'è una stringa di scopo), quindi è un difetto della sola piattaforma Android.
+- [ ] ⚠️ **Consenso espresso + presa d'atto della perdita del recesso** nella schermata d'acquisto: senza queste due frasi, prima del pulsante che paga, la decadenza del recesso **non opera** e restano quattordici giorni esercitabili.
+- [ ] ⚠️ **Traduzione inglese** di informativa, cookie policy e termini — l'app è bilingue per decisione esplicita (**D-18**).
+- [ ] ⚠️ **Accordi art. 28** con Supabase, Google e TMDB: da accettare e archiviare.
+
+**Le quattro decisioni che i termini aspettano** — non sono di testo, e finché non si prendono il documento non può entrare in vigore:
+- [ ] 🔴 **Sorte dell'abbonamento allo scioglimento** (decide *dove* il diritto viene scritto nel database: vedi §1-bis di `monetizzazione.md`).
+- [ ] 🔴 **Sorte dello spazio fotografico allo scioglimento**, quando paga uno solo e le foto hanno autori distinti (**D-21**).
+- [ ] 🔴 **Durata del preavviso di chiusura** — lo stesso numero deve comparire nei termini §15 **e** nell'informativa §10-bis.
+- [ ] 🔴 **Un modo di segnalare**, o l'argomento da portare al revisore. Le linee guida per i contenuti generati dagli utenti chiedono di norma un modo di **bloccare** e uno di **segnalare**: il primo esiste ed è lo scioglimento, il secondo no. ⚠️ L'argomento contrario è forte — qui il contenuto raggiunge **una sola persona scelta dall'utente**, non un pubblico — ma va **deciso**, non lasciato scoprire in revisione.
+
+**E una revisione che non è rimandabile all'infinito**: 🔴 la validazione di un **avvocato** prima del lancio commerciale, che [`Rule/legale-beta.md`](../../../Rule/legale-beta.md) prescrive da prima che questo progetto esistesse. Con la §9 di [`docs/conformita.md`](docs/conformita.md) — un'app che registra l'esistenza di una relazione può rivelare l'orientamento sessuale, art. 9 **dedotto dalla struttura del prodotto** — quella revisione può cambiare la nomina del DPO e imporre una **DPIA**.
+
 ### 🔴 La fine del servizio — tre domande da decidere PRIMA, non quando servirà (2026-08-31)
 
 Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve costruire niente adesso: serve decidere**, perché tutte e tre vincolano cose che si stanno per scrivere.
@@ -3797,6 +3865,12 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
+> **Nota del 2026-09-09 — la documentazione legale è coerente, l'applicazione non la mostra.** La sessione ha corretto **tre dichiarazioni false** (**B-60**) e scritto il sesto documento, i **termini d'uso** (**D-120**). Toccati `app.json`, `docs/legal/informativa-privacy.md`, `docs/legal/cookie-policy.md`, `docs/conformita.md`, e il file nuovo `docs/legal/termini-uso.md`. **Nessuna riga di codice dell'app è stata toccata** — l'unica modifica al prodotto è la stringa del permesso in `app.json` — quindi tutto quello che segue resta valido parola per parola.
+>
+> 🔴 **Cosa guardare per primo al prossimo giro su questo fronte**: i **link legali dentro l'app**. Finché non ci sono, i sei documenti non sono resi a nessuno e il lavoro fatto finora non produce alcun effetto — è la voce in cima al blocco *«I documenti legali»* del backlog §6.
+>
+> ⚠️ **E una cosa che il prossimo giro deve sapere prima di rileggere qualcosa**: `app.json` porta ancora `RECORD_AUDIO` fra i permessi Android **senza che il codice usi mai il microfono**, e il backlog §6 chiede ancora il **D-U-N-S** e gli account *«come organizzazione»*, che [`docs/pubblicazione.md`](docs/pubblicazione.md) §2.1 ha superato il 2026-08-31 con la strada **individuo**. Entrambe sono state viste e **non** corrette: erano fuori dalla richiesta di oggi.
+>
 > **Nota del 2026-09-08 — meta' di una richiesta, e la meta' che manca e' quella grossa.** La sessione ha aggiunto la sezione di Philippe alla landing (**D-119**). Toccati `landing/index.html` e un asset nuovo, `landing/immagini/philippe-giovane.png`. **Nessuna riga dell'app e' stata toccata**, quindi tutto quello che segue resta valido parola per parola.
 >
 > 🔴 **La prima cosa da fare quando si riprende: le schermate vere al posto dei sei mockup.** Sono ancora ricostruzioni HTML fatte a mano dentro `landing/index.html` (sezione `#schermate`, sei blocchi `.telefono` con dentro `.schermo`). Il piano e' deciso con l'utente ed e' questo: **cinque catturate dal browser** (diario, calendario, giochi, liste, galleria) e **la mappa da un telefono**, perche' `app/(tabs)/mappa.tsx` sul web mostra `t.mappa.soloTelefono` invece del componente.
