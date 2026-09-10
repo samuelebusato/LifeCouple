@@ -4,8 +4,9 @@
  * Rigenera: node tools/genera-legale.mjs
  *
  * I documenti sono in inglese soltanto, per decisione dell'utente del 2026-09-09
- * (D-121). Le etichette dell'interfaccia restano bilingui: è il testo legale a
- * non esserlo.
+ * (D-121), confermata e allargata il 2026-09-10 (D-123): l'inglese è la lingua
+ * ufficiale della documentazione, landing compresa. Le etichette dell'interfaccia
+ * restano bilingui: è il testo legale a non esserlo.
  */
 
 export type ChiaveDocumento = 'privacy' | 'cookie';
@@ -147,7 +148,7 @@ You have the right to lodge a **complaint with the Italian Data Protection Autho
 
 ## 10-bis. If the service were to close
 
-If LifeCouple were one day to stop being offered, you would receive **advance notice** inside the app and at your account's email address, with a definite date.
+If LifeCouple were one day to stop being offered, you would receive **at least 60 days' advance notice** inside the app and at your account's email address, with a definite date. The closing date is **never earlier than the end of a subscription period you have already paid for**.
 
 Before that date you would be able to **export your data** from the app, a feature already available today in Settings. On closure, data is deleted in accordance with section 7, with the sole exception of the accounting and tax data the law requires us to keep.
 
