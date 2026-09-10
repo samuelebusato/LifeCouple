@@ -67,3 +67,24 @@ supabase/.temp/*
 # ⚠️ Il riferimento resta tracciato: non e' una generazione, e' la sorgente di
 # verita' visiva (docs/mascotte.md §1), e senza di lui nessun prompt funziona.
 assets/mascotte/grezze/
+
+# --------------------------------------------------------------- TERRAFORM
+# infra/.terraform/ e' la cache dei provider scaricati: 830 MB per il solo
+# provider AWS, e si ricostruisce da sola con `terraform init`. Committarla
+# renderebbe il repo inutilizzabile.
+infra/.terraform/
+
+# I piani salvati sono istantanee usa-e-getta di una proposta di modifica.
+# ⚠️ Non sono nemmeno innocui: un piano in chiaro puo' contenere valori di
+# risorse che non vanno in un repository.
+*.tfplan
+
+# Lo stato vive su S3 (infra/backend.tf), non qui. Questi file compaiono solo
+# se qualcuno lancia Terraform senza backend: se appaiono, e' un errore.
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# ✅ infra/.terraform.lock.hcl INVECE va committato -- e' il file che fissa
+# le versioni dei provider, e serve proprio perche' un altro dispositivo
+# faccia `init` con le stesse identiche versioni.

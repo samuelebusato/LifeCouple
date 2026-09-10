@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Page not found — LifeCouple</title>
+
+<!-- Pagina servita da CloudFront con stato 404 VERO (infra/main.tf).
+     Non e' un dettaglio estetico: senza di lei un indirizzo sbagliato di
+     una pagina legale servirebbe altro contenuto, e chi cerca QUEL testo
+     a QUELL'indirizzo - un revisore dello store, per esempio - crederebbe
+     di averlo letto. I due link piu' sotto sono la ragione per cui questa
+     pagina esiste: da un URL rotto si torna ai documenti, non nel vuoto.
+
+     Font auto-ospitati come nella landing, stessa motivazione: la cookie
+     policy promette che nessun terzo segue chi legge, e la promessa vale
+     anche per la pagina d'errore. -->
+
+<style>
+@font-face {
+  font-family: "Fraunces";
+  src: url("fonts/fraunces-latin-wght.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Karla";
+  src: url("fonts/karla-latin-wght.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+:root {
+  color-scheme: light;
+
+  --accento:      #e4259e;
+  --accento-cupo: #c11a83;
+  --inchiostro:   #251d22;
+  --tenue:        #816e7b;
+  --linea:        #ede4ea;
+  --fondo:        #fdfbfc;
+
+  --lavata-a: #d8eafc;
+  --lavata-b: #ffffff;
+  --lavata-c: #fcdcef;
+
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --testo:   "Karla", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: var(--fondo);
+  background-image: linear-gradient(160deg, var(--lavata-a) 0%, var(--lavata-b) 45%, var(--lavata-c) 100%);
+  color: var(--inchiostro);
+  font-family: var(--testo);
+  line-height: 1.6;
+  text-align: center;
+}
+
+main { max-width: 30rem; }
+
+.emblema { color: var(--accento); margin-bottom: 20px; }
+
+h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 6vw, 2.6rem);
+  line-height: 1.15;
+  margin: 0 0 12px;
+}
+
+p { color: var(--tenue); margin: 0 0 28px; }
+
+.torna {
+  display: inline-block;
+  padding: 13px 28px;
+  border-radius: 999px;
+  background: var(--accento);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+.torna:hover { background: var(--accento-cupo); }
+
+.legali {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linea);
+  font-size: .9rem;
+}
+.legali a { color: var(--tenue); margin: 0 10px; }
+</style>
+</head>
+<body>
+
+<main>
+  <!-- L'emblema dell'app: due cuori intrecciati, gli stessi tracciati di
+       components/emblema.tsx. Se cambia li', va cambiato qui. -->
+  <svg class="emblema" width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+       fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round">
+    <path d="M42 78C30 68 16 58 16 42c0-9 7-16 16-16 6 0 10 3 13 8"/>
+    <path d="M58 78c12-10 26-20 26-36 0-9-7-16-16-16-6 0-10 3-13 8"/>
+    <path d="M50 34c-3 6-8 11-8 20 0 10 4 18 8 24 4-6 8-14 8-24 0-9-5-14-8-20z"/>
+  </svg>
+
+  <h1>This page doesn&rsquo;t exist</h1>
+  <p>The link may be out of date, or mistyped. Everything else is still where you left it.</p>
+
+  <a class="torna" href="/">Back to LifeCouple</a>
+
+  <div class="legali">
+    <a href="/privacy-policy.html">Privacy Policy</a>
+    <a href="/cookie-policy.html">Cookie Policy</a>
+  </div>
+</main>
+
+</body>
+</html>
