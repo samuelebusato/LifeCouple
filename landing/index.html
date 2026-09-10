@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="LifeCouple: the shared diary of two people. A calendar, a map of your places, lists, photos and games to play together.">
 <title>LifeCouple</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap">
 
 <style>
 /* ==========================================================================
@@ -23,6 +20,40 @@
    Se la palette dell'app cambia, si cambia li' e si riporta qui.
    ========================================================================== */
 
+/* ------------------------------------------------------------- CARATTERI
+   Font AUTO-OSPITATI, non caricati da Google. La ragione non e' la velocita':
+   il piede di questa pagina linka la cookie policy, e quel documento dice
+   «no profiling, analytics, advertising or tracking tools whatsoever [...]
+   nothing follows you, inside or outside the app». Un <link> a
+   fonts.googleapis.com manda l'IP di chi legge a Google prima ancora che
+   quella frase compaia a schermo, e la smentisce dalla stessa pagina che la
+   ospita. E' anche il pattern che una sentenza tedesca del 2022 ha ritenuto
+   una violazione. Stessa scelta e stessa motivazione di heleox-landing
+   (base.css): «la promessa "nessun terzo" vale anche per i caratteri».
+
+   Subset latin (U+0000-00FF piu' la punteggiatura tipografica): copre tutto
+   il testo della pagina. ⚠️ I simboli decorativi (✈ ♥ ★ ◆ ...) non stanno
+   in questi caratteri nemmeno nella versione servita da Google — cadono sul
+   font di sistema oggi esattamente come prima: nessuna regressione.
+
+   font-display: swap → il testo si legge subito col carattere di sistema e
+   viene sostituito all'arrivo del file: mai una pagina senza testo.
+   Licenze in fonts/LICENSE-*.txt (SIL Open Font License).
+   ------------------------------------------------------------------------ */
+@font-face {
+  font-family: "Fraunces";
+  src: url("fonts/fraunces-latin-wght.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Karla";
+  src: url("fonts/karla-latin-wght.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+  font-style: normal;
+}
 :root {
   color-scheme: light;
 
