@@ -110,7 +110,11 @@ I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno
 
 ⟳ **Dove vive l'URL pubblico — rivisto il 2026-09-10.** Le pagine ci sono: `landing/privacy-policy.html` e `landing/cookie-policy.html`, **generate dalla stessa fonte inglese** che entra nell'app (`tools/genera-legale.mjs`), linkate dal piede della landing. 🔑 *Generarle invece di scriverle è la sola difesa contro il caso in cui la versione pubblicata e quella resa nell'app dicano cose diverse — e una versione pubblicata che contraddice quella resa non è un disallineamento tecnico: è la prova documentale che la trasparenza non c'è.*
 
-🔴 **Ma l'URL non esiste ancora, perché la landing non è pubblicata**: `landing/` sta nel repo e non è online da nessuna parte — nessun deploy, nessun dominio — verificato il 2026-09-09 e ancora vero il 2026-09-10. ⚠️ *Gli store chiedono un indirizzo raggiungibile, non un file nel repository.* Restano disponibili anche `fr-busato` e `heleox-landing`, se si preferisce ospitarli lì invece di pubblicare questa landing.
+✅ **E dal 2026-09-10 l'URL esiste: <https://d2ehd6ideoltsh.cloudfront.net>.** La landing è pubblicata su S3 + CloudFront nell'account AWS di HeleoX (infrastruttura in [`infra/`](../infra/), procedura in [`deploy-landing.md`](deploy-landing.md), disegno in `History.md` **D-125**). Le due pagine rispondono a `/privacy-policy.html` e `/cookie-policy.html`, verificate a 200 sulla distribuzione reale. *Nessun dominio, per ora: agli store serve un indirizzo raggiungibile, non un bel nome.*
+
+🔑 **Pubblicare ha però richiesto di chiudere prima una cosa**: la landing caricava i font da `fonts.googleapis.com`, e il piede di quella pagina linka **questa** cookie policy — il documento che dice «nothing follows you, inside or outside the app». ⚠️ *Finché il file stava in un repo privato non mandava l'IP di nessuno a nessuno; pubblicarlo è l'atto che avrebbe reso la dichiarazione falsa.* I font sono ora auto-ospitati, e `font-src 'self'` nella CSP fa bloccare dal browser qualunque reintroduzione.
+
+⚠️ **Il deploy è manuale**: chi rigenera un documento legale deve anche **caricarlo**, o resta online una versione diversa da quella resa nell'app. Automazione nel backlog di `History.md` §6.
 
 ---
 

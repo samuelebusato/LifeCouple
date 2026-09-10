@@ -28,6 +28,23 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-10 (4) — La landing è online, e i font non passano più da Google
+
+**Chiesto dall'utente**: pubblicare la landing su AWS, «lo stesso account usato per heleox». La premessa reggeva, con una precisazione: gli account sono **due**, e `fr-busato` sta sull'altro (`219712358948`) per scelta esplicita del suo `docs/deploy-aws.md` §1. Quello di HeleoX è `790304250429`, ed è dove la landing è finita.
+
+🔑 **Prima di pubblicare però una cosa andava chiusa: i font.** `landing/index.html` caricava Fraunces e Karla da `fonts.googleapis.com` — voce aperta dal 2026-09-09. ⚠️ *Pubblicare è l'atto che la rende reale*: finché il file stava in un repo privato non mandava l'IP di nessuno a nessuno. E la ragione che decide non era la sentenza tedesca del 2022: era che **il piede di quella pagina linka la propria cookie policy**, e quel documento dice «nothing follows you, inside or outside the app». Chi l'apriva l'avrebbe letta da un sito che aveva appena mandato il suo IP a Google.
+
+✅ **Font auto-ospitati**, come `heleox-landing` fa già e per la stessa ragione scritta nel suo `base.css` (*«la promessa "nessun terzo" vale anche per i caratteri»*): `landing/fonts/`, subset `latin`, `@font-face` con `font-display: swap`, e le due licenze OFL accanto — che vanno **pubblicate anche loro**, perché servire i woff2 da CloudFront è ridistribuzione.
+
+**Infrastruttura come codice, in un root Terraform nuovo**: `Projects/LifeCouple/infra/`, stato `lifecouple/terraform.tfstate` nello stesso bucket di HeleoX ma con **chiave diversa** — stato separato, nessuna interferenza. 6 risorse create, 0 modificate, 0 distrutte. Disegno e alternative scartate in **D-125**.
+
+**Online**: <https://d2ehd6ideoltsh.cloudfront.net>. Nessun dominio, per ora: agli store basta un indirizzo raggiungibile.
+
+✅ **Verificato sulla distribuzione vera, non sul locale.** I cinque header di sicurezza presenti e la CSP esattamente quella scritta; `/privacy-policy.html` e `/cookie-policy.html` a 200; i font caricati con **console muta**, cioè nessuna violazione della CSP; zero risorse esterne in pagina. ⚠️ *E un dettaglio che sarebbe passato inosservato*: il `Content-Type` dei font. `mimetypes` non conosce `.woff2`, quindi l'AWS CLI da solo li avrebbe caricati come `binary/octet-stream` — impostato a mano a `font/woff2`.
+
+🔑 **Il 404 è un 404 vero, ed è il motivo per cui questo non riusa il modulo di HeleoX.** `/privacy-policy.htm` — un refuso di una lettera — risponde **404**, non la homepage con «200 OK». Il modulo `static-site` rimanda 403/404 a `index.html` con stato 200 perché lì c'è una SPA React; qui avrebbe servito in silenzio la pagina sbagliata a un revisore che cerca *quel* testo a *quell'indirizzo*, e lui non avrebbe avuto modo di accorgersene.
+
+⚠️ **Un allarme rientrato, che vale la pena aver scritto.** A 375 px `document.documentElement.scrollWidth` (413) superava `clientWidth` (375), che di norma significa scorrimento orizzontale. *Non lo era*: `window.scrollTo(2000, 0)` lascia `scrollX` a **0**. Era l'emulazione del viewport (`innerWidth` 413). Trovato provando a scorrere, invece di dedurlo dai rettangoli — che è lo stesso metodo con cui il giro precedente aveva trovato B-62.
 ### 2026-09-10 (3) — Le quattro decisioni, e un difetto trovato mentre le si verificava
 
 **Chiuse le quattro decisioni di prodotto** che tenevano fermi i termini d'uso (**D-124**): due prese dall'utente — l'abbonamento resta a chi paga, si segnala scrivendo a `info@heleox.it` — e due delegate: preavviso di **60 giorni** mai prima della fine di un periodo pagato, e **niente cancellazioni per fare spazio**.
@@ -543,6 +560,26 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-125 — Dove vive l'infrastruttura della landing, e perché non è un modulo dentro HeleoX (2026-09-10)
+
+**Il contesto**: l'account AWS di HeleoX è gestito da Terraform (`heliox-terraform-state-790304250429`) e contiene già un modulo `static-site` che fa esattamente questo mestiere, in produzione su `www.heleox.it` e `app.heleox.it`. La scelta quindi non era «Terraform sì o no»: era **in quale stato**.
+
+| Strada | Perché scartata / scelta |
+|---|---|
+| Un `module` in `HeleoX/infra/envs/dev/main.tf` | ❌ Zero duplicazione e un solo apply — ma metterebbe le **pagine legali pubbliche** di un prodotto dentro lo stato dell'ambiente **dev** di un altro. Sbagliato su due assi insieme, prodotto e ambiente: un `destroy` andato male là dentro spegnerebbe l'indirizzo che gli store pretendono raggiungibile. |
+| A mano, come fu fatto per `fr-busato` | ❌ Veloce e già collaudato, ma lascerebbe risorse **non tracciate** in un account che è gestito da Terraform: chi legge lo stato non le vede. |
+| ✅ Root separato in `Projects/LifeCouple/infra/` | Stato proprio (chiave `lifecouple/`), stesso bucket. Ogni progetto è autonomo e la sua infrastruttura vive nel suo repo (`CLAUDE.md` §4.1). **Costo dichiarato**: ~150 righe di Terraform che possono divergere da quelle di HeleoX. |
+
+**Due differenze deliberate rispetto al modulo di HeleoX**, entrambe scritte accanto alla risorsa che le porta:
+
+1. 🔑 **Niente fallback SPA**, cioè un 404 vero invece di `index.html` con stato 200. Richiede `s3:ListBucket` nella bucket policy: senza, S3 risponde **403** alle chiavi inesistenti e non si distingue «pagina che non c'è» da «permessi rotti». Il 403 è rimappato anch'esso su 404, per non far capire a un estraneo quali oggetti esistono nel bucket.
+2. 🔑 **CSP completa invece della sola `frame-ancestors`.** Il modulo di HeleoX si ferma lì **dichiarando il perché**: non si sapeva cosa caricasse davvero il bundle Vite. Qui si sa — verificato a pagina aperta: 3 immagini, 2 font, **zero JavaScript**. La ragione del rinvio non si applica, quindi `default-src 'none'` e si riapre solo il necessario.
+
+⚠️ **`style-src` tiene `'unsafe-inline'` per necessità reale** — il CSS sta in un blocco `<style>` e ci sono 89 attributi `style="…"` — e non è una concessione di comodo: senza una riga di JavaScript in pagina, il rischio che `'unsafe-inline'` sugli stili porta con sé è molto ridotto.
+
+🔑 **`font-src 'self'` non è decorazione: è la metà tecnica della scelta sui font.** Se qualcuno rimettesse un `<link>` a `fonts.googleapis.com`, **il browser lo blocca**. La promessa della cookie policy smette così di dipendere dalla memoria di chi modifica il file — che è l'unico modo perché una mitigazione non decada da sola, com'è successo a quella del rischio §5 il 2026-09-10 (2).
+
+**Nessun dominio, per ora**: niente `aliases` e certificato CloudFront di default. Aggiungerne uno dopo non rifà niente — si aggiungono `aliases` e un certificato ACM in `us-east-1`. E i **controlli sul nome** (EUIPO classi 9 e 42, store, dominio, handle) non sono mai stati fatti: comprare un dominio prima di quelli sarebbe stato un rischio, non un progresso.
 ### D-124 — Le quattro decisioni che tenevano fermi i termini d'uso (2026-09-10)
 
 Erano aperte dal 2026-09-09 e **non erano scelte di testo**: finché non si prendevano, il documento non poteva dire il vero. Due le ha prese l'utente, due le ha delegate.
@@ -630,7 +667,7 @@ Gli store chiedono un **URL pubblico** per l'informativa. La strada breve era sc
 
 - ⬜ **Il piano si chiama «Insieme»**, una parola italiana dentro documenti inglesi. Nei termini è glossata (*insieme is Italian for together*); se il nome commerciale debba diventare inglese è una decisione di marketing, non di documentazione, e non è stata presa.
 - ⚠️ **Il marketing di LifeCouple è pianificato in italiano**, e questa decisione non lo tocca: [`Marketing/LifeCouple/video-tiktok-ai.md`](../../Marketing/LifeCouple/video-tiktok-ai.md) sceglie strumenti *«perché hanno un italiano ottimo»*, e [`piano-marketing.md`](../../Marketing/LifeCouple/piano-marketing.md) è scritto per un pubblico italiano. 🔴 **Un video in italiano che porta a una vetrina in inglese perde per strada la persona a cui parlava**: è una decisione di marketing, non di documentazione, e va presa — non è stata presa qui.
-- 🔴 **La landing carica i font da `fonts.googleapis.com`.** Su un sito europeo è il pattern che una nota sentenza tedesca del 2022 ha ritenuto una violazione, perché manda l'IP del visitatore a Google senza consenso — ⚠️ *e le pagine che lo caricherebbero sono l'informativa privacy e la cookie policy, cioè i due documenti in cui si dichiara che nulla segue l'utente*. Per questo le **pagine generate NON caricano font esterni** e usano i caratteri di sistema; la landing sì, ed è una voce aperta: si risolve ospitando i font, non discutendone.
+- ✅ **La landing caricava i font da `fonts.googleapis.com`; dal 2026-09-10 (4) non più.** Su un sito europeo è il pattern che una nota sentenza tedesca del 2022 ha ritenuto una violazione, perché manda l'IP del visitatore a Google senza consenso — ⚠️ *e le pagine che lo caricherebbero sono l'informativa privacy e la cookie policy, cioè i due documenti in cui si dichiara che nulla segue l'utente*. Le **pagine generate non hanno mai caricato font esterni**; la landing sì, ed è stata sistemata **prima di pubblicarla**, ospitando i font invece di discuterne. 🔑 *E la cosa non può tornare per distrazione*: `font-src 'self'` nella CSP della distribuzione fa bloccare dal browser qualunque `<link>` esterno reintrodotto (**D-125**).
 
 ### D-122 — La valutazione sullo store si chiede col pop-up nativo, e il lavoro vero è decidere quando (2026-09-10)
 
@@ -3784,6 +3821,15 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
+### Deploy della landing: automatizzarlo — aperto dal 2026-09-10
+
+Oggi la landing si aggiorna **a mano**: `aws s3 sync` più invalidazione, i comandi stanno in [`docs/deploy-landing.md`](docs/deploy-landing.md). ⚠️ *Il rischio non è la fatica, è la dimenticanza.* Un documento legale rigenerato nel repo e non caricato lascia online una versione **diversa da quella resa nell'app** — che è esattamente la prova documentale che D-121 e D-123 volevano evitare.
+
+`heleox-landing` e `fr-busato` hanno entrambi un workflow GitHub Actions; quello di `fr-busato` usa **OIDC senza access key** ed è il modello da copiare (`Projects/fr-busato/docs/deploy-aws.md` §8, con l'avvertenza sul formato del `sub` di questo account GitHub). ⬜ Qui serve in più un `working-directory: landing`, perché la landing è una **sottocartella** e non l'intero repo. Richiede un provider OIDC e un ruolo IAM nell'account, più tre secret sul repo — accessi che vanno dati a mano.
+
+### Un dominio per la landing — aperto dal 2026-09-10
+
+Oggi risponde su `d2ehd6ideoltsh.cloudfront.net`: agli store basta, a una persona no. 🔴 **Prima del dominio vanno fatti i controlli sul nome** ([`docs/pubblicazione.md`](docs/pubblicazione.md) §7): EUIPO classi 9 e 42, disponibilità sui due store, handle. *Comprare il dominio prima di sapere se il nome è libero è il modo di pagarlo due volte.* Sul lato tecnico non c'è niente da rifare: `aliases` più un certificato ACM in `us-east-1`.
 ### Widget per la home screen — rimandati dall'utente il 2026-09-05
 
 **Chiesti dall'utente** il 2026-09-05, su iPhone **e** Android, e **rimandati** lo stesso giorno dopo aver visto i vincoli. Cinque, tutti «dinamici» nel senso di *a rotazione fra gli elementi disponibili*:
@@ -4166,6 +4212,17 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
+> **Nota del 2026-09-10 (4) — LA LANDING È ONLINE, e questo chiude due voci che il resto del documento dà per aperte.**
+>
+> ✅ **Indirizzo pubblico**: <https://d2ehd6ideoltsh.cloudfront.net>. `privacy-policy.html` e `cookie-policy.html` sono raggiungibili, quindi **l'URL che gli store chiedono ora esiste** — era una delle due voci che bloccavano la sottomissione, insieme ai dati DSA.
+>
+> ✅ **I font non passano più da Google**: auto-ospitati in `landing/fonts/`, e `font-src 'self'` nella CSP impedisce che la cosa torni per distrazione. La voce aperta dal 2026-09-09 è chiusa.
+>
+> ⚠️ **Il deploy è MANUALE**, e chi tocca `docs/legal/en/` deve fare **tre** cose, non due: rigenerare, **caricare**, invalidare. I comandi stanno in [`docs/deploy-landing.md`](docs/deploy-landing.md). 🔴 *Rigenerare e non caricare lascia online una versione diversa da quella resa nell'app*, che è precisamente il difetto contro cui i documenti si generano invece di scriverli.
+>
+> 🔴 **Cosa NON è cambiato, e resta il primo lavoro: B-62 non è ancora provata.** Questo giro non ha toccato il database, né `app/`, `components/`, `lib/` — tutto il resto di questo PUNTO DI RIPRESA resta valido parola per parola, e la lista dei controlli sul telefono non si allunga.
+>
+> ⚠️ **E una cosa che la pubblicazione ha reso più concreta invece che più sicura**: il rischio §5 sulla lingua. La vetrina interamente in inglese ora **è pubblica**, non più un file in un repo privato. Il rischio è lo stesso; la superficie no.
 > **Nota del 2026-09-10 (3) — c'è una migrazione SCRITTA E NON APPLICATA, ed è la prima cosa da sapere.**
 >
 > ✅ **`supabase/migrations/0037_foto_dell_autore_dopo_lo_scioglimento.sql` è stata applicata dall'utente il 2026-09-10** (**B-62**): allarga `foto_leggi` all'autore, come `foto_cancella` già faceva. Repo e database sono allineati.
