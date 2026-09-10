@@ -44,6 +44,17 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 🔑 **Il 404 è un 404 vero, ed è il motivo per cui questo non riusa il modulo di HeleoX.** `/privacy-policy.htm` — un refuso di una lettera — risponde **404**, non la homepage con «200 OK». Il modulo `static-site` rimanda 403/404 a `index.html` con stato 200 perché lì c'è una SPA React; qui avrebbe servito in silenzio la pagina sbagliata a un revisore che cerca *quel* testo a *quell'indirizzo*, e lui non avrebbe avuto modo di accorgersene.
 
+**Poi la favicon** — e la richiesta «metti il logo dell'applicazione» ha rivelato che **un logo dell'applicazione non esiste**.
+
+🔴 **`assets/images/icon.png`, `favicon.png` e `android-icon-foreground.png` sono tutti il chevron blu del template Expo**, mai sostituito. Guardati uno per uno, non dedotti dal nome: `icon.png` porta perfino le linee-guida di costruzione dell'icona Expo. ⚠️ *Sono le icone che `app.json` dichiara*, quindi oggi l'app si presenterebbe agli store col logo di Expo — voce nuova nel backlog, ed è bloccante per la pubblicazione.
+
+✅ **Il marchio vero è l'emblema**: i due cuori intrecciati di `components/emblema.tsx`, usati in home, onboarding, benvenuto e già nell'intestazione della landing. La favicon nasce da **quei tracciati**: `landing/immagini/favicon.svg` come versione principale, più due PNG di ripiego (Safari non carica favicon SVG, iOS vuole un `apple-touch-icon`) rigenerabili con `tools/genera-favicon.py`.
+
+⚠️ **Due scostamenti dall'emblema, entrambi dovuti alla dimensione**: tratto 9 invece di 3 — *a 16 px un tratto da 3/100 vale 0,48 px e semplicemente non si vede* — e tessera piena color accento invece di line-art trasparente, perché una favicon rosa su fondo trasparente sparisce sia sulla barra chiara di Chrome sia su quella scura di Safari.
+
+🔑 **Le pagine legali non sono state toccate a mano**: la favicon è entrata nel `<head>` che costruisce `tools/genera-legale.mjs`, e le due pagine sono state **rigenerate**. `test:legale` verde.
+
+🔴 **E aggiungendola è uscito B-63**, un difetto mio di un'ora prima: la pagina 404 usava percorsi relativi per i font.
 ⚠️ **Un allarme rientrato, che vale la pena aver scritto.** A 375 px `document.documentElement.scrollWidth` (413) superava `clientWidth` (375), che di norma significa scorrimento orizzontale. *Non lo era*: `window.scrollTo(2000, 0)` lascia `scrollX` a **0**. Era l'emulazione del viewport (`innerWidth` 413). Trovato provando a scorrere, invece di dedurlo dai rettangoli — che è lo stesso metodo con cui il giro precedente aveva trovato B-62.
 ### 2026-09-10 (3) — Le quattro decisioni, e un difetto trovato mentre le si verificava
 
@@ -2758,6 +2769,28 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-63 — La pagina 404 perde i propri font a ogni indirizzo annidato (2026-09-10)
+
+**Trovato** aggiungendo la favicon, ragionando su dove puntassero i percorsi — e **poi provato**, che è la parte che conta.
+
+#### Il fatto
+
+CloudFront rende `404.html` **all'URL richiesto**: chiedendo `/a/b/c-non-esiste` la barra dell'indirizzo resta `/a/b/c-non-esiste`, non diventa `/404.html`. Quindi un `url("fonts/...")` **relativo** dentro quella pagina risolve contro `/a/b/`.
+
+```
+GET /a/b/c-non-esiste
+  → risorse tentate: /a/b/fonts/fraunces-latin-wght.woff2   404
+                     /a/b/fonts/karla-latin-wght.woff2      404
+  → document.fonts: "Fraunces error", "Karla error"
+```
+
+⚠️ **Il sintomo non è un errore visibile**: è una pagina d'errore col carattere sbagliato. Nessuno l'avrebbe segnalata, e chi la vedesse penserebbe che il sito è fatto male — non che manca un file. *Alla radice funzionava benissimo, ed è lì che l'avevo provata.*
+
+#### La correzione, e perché era già mezza scritta
+
+🔑 **I link della stessa pagina erano già assoluti** (`/privacy-policy.html`, `/`) — li avevo scritti così **per la ragione giusta**, senza applicarla ai font che stavano venti righe più su. Ora lo sono tutti, e il perché è scritto nel commento in testa al file invece che solo qui.
+
+✅ **Verificato dopo il deploy**, sullo stesso indirizzo che l'aveva fatto fallire: `/a/b/c-non-esiste` carica `/fonts/...`, `document.fonts.check('700 32px Fraunces')` risponde `true`.
 ### B-62 — Dopo lo scioglimento nessuno dei due può più aprire le fotografie, e i documenti promettono il contrario (2026-09-10)
 
 **Trovato** mentre si decideva D-124 §4 — cioè scrivendo la regola *«non si cancella mai niente per fare spazio»* e andando a verificare **come** il tetto è imposto. Il difetto non c'entrava con la domanda: è uscito dalla verifica.
@@ -3821,6 +3854,15 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
+### 🔴 Le icone dell'app sono ancora quelle di Expo — bloccante, aperto dal 2026-09-10
+
+`assets/images/icon.png` (1024×1024), `favicon.png` (48×48) e `android-icon-foreground.png` sono **il chevron blu del template Expo**, mai sostituiti — `icon.png` porta perfino le linee-guida di costruzione. Sono le icone che `app.json` dichiara per iOS, Android e per la build web.
+
+🔴 **È bloccante per la pubblicazione**, non estetico: un'app non passa la revisione con l'icona segnaposto del framework, e su Android l'icona adattiva è la prima cosa che si vede. ⚠️ *Ed è il tipo di lacuna che non si nota lavorando*: in Expo Go l'icona mostrata è quella di Expo Go comunque, quindi provando l'app non si vede mai il problema.
+
+✅ **Il marchio da cui partire esiste già** ed è l'emblema di `components/emblema.tsx` — gli stessi due cuori ora usati per la favicon della landing (`landing/immagini/favicon.svg`, generabile in PNG con `tools/genera-favicon.py`). Servono le misure che gli store chiedono, non un'idea nuova.
+
+⬜ Da rifare insieme: `icon.png`, `adaptiveIcon.foregroundImage`, `android-icon-monochrome.png`, `splash-icon.png` e il `favicon.png` della build web. ⬜ Da togliere, già che si apre la cartella: `react-logo*.png` e `partial-react-logo.png`, residui del template che non usa nessuno.
 ### Deploy della landing: automatizzarlo — aperto dal 2026-09-10
 
 Oggi la landing si aggiorna **a mano**: `aws s3 sync` più invalidazione, i comandi stanno in [`docs/deploy-landing.md`](docs/deploy-landing.md). ⚠️ *Il rischio non è la fatica, è la dimenticanza.* Un documento legale rigenerato nel repo e non caricato lascia online una versione **diversa da quella resa nell'app** — che è esattamente la prova documentale che D-121 e D-123 volevano evitare.
@@ -4221,6 +4263,8 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 > ⚠️ **Il deploy è MANUALE**, e chi tocca `docs/legal/en/` deve fare **tre** cose, non due: rigenerare, **caricare**, invalidare. I comandi stanno in [`docs/deploy-landing.md`](docs/deploy-landing.md). 🔴 *Rigenerare e non caricare lascia online una versione diversa da quella resa nell'app*, che è precisamente il difetto contro cui i documenti si generano invece di scriverli.
 >
 > 🔴 **Cosa NON è cambiato, e resta il primo lavoro: B-62 non è ancora provata.** Questo giro non ha toccato il database, né `app/`, `components/`, `lib/` — tutto il resto di questo PUNTO DI RIPRESA resta valido parola per parola, e la lista dei controlli sul telefono non si allunga.
+>
+> 🔴 **E una lacuna trovata mettendo la favicon: le icone dell'app sono ancora quelle di Expo.** `icon.png`, `favicon.png` e l'icona adattiva Android sono il chevron blu del template. È **bloccante** per gli store, non estetico, e non si vede mai lavorando perché in Expo Go l'icona è comunque quella di Expo Go. Il marchio da cui partire esiste (l'emblema); mancano le misure. Backlog §6.
 >
 > ⚠️ **E una cosa che la pubblicazione ha reso più concreta invece che più sicura**: il rischio §5 sulla lingua. La vetrina interamente in inglese ora **è pubblica**, non più un file in un repo privato. Il rischio è lo stesso; la superficie no.
 > **Nota del 2026-09-10 (3) — c'è una migrazione SCRITTA E NON APPLICATA, ed è la prima cosa da sapere.**

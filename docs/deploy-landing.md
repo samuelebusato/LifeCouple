@@ -51,6 +51,25 @@ Perché sono tre e non uno:
 aws s3 cp fonts/ s3://lifecouple-landing-790304250429/fonts/ --recursive --exclude "*" --include "*.woff2" --content-type "font/woff2" --cache-control "public, max-age=86400"
 ```
 
+## La favicon
+
+Viene dall'emblema dell'app (`components/emblema.tsx`), **non** da
+`assets/images/icon.png`: quelle icone sono ancora il segnaposto del
+template Expo (`History.md` §6). `landing/immagini/favicon.svg` è la
+versione principale; i due PNG di ripiego servono a Safari, che non carica
+favicon SVG, e a iOS, che vuole un `apple-touch-icon`. Si rigenerano:
+
+```bash
+python tools/genera-favicon.py
+```
+
+⚠️ I tracciati sono ricopiati dentro lo script perché PIL non legge SVG: se
+l'emblema cambia, vanno cambiati **sia** in `favicon.svg` **sia** lì.
+
+🔴 **Nella pagina 404 i percorsi devono restare assoluti** (`/immagini/...`,
+`/fonts/...`). CloudFront la rende all'URL richiesto, quindi a `/a/b/c` un
+percorso relativo cercherebbe `/a/b/...` — è stato **B-63**.
+
 ## 🔴 La regola che riguarda i documenti legali
 
 Le pagine `privacy-policy.html` e `cookie-policy.html` sono **generate** da
