@@ -28,6 +28,42 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-10 (3) — Le quattro decisioni, e un difetto trovato mentre le si verificava
+
+**Chiuse le quattro decisioni di prodotto** che tenevano fermi i termini d'uso (**D-124**): due prese dall'utente — l'abbonamento resta a chi paga, si segnala scrivendo a `info@heleox.it` — e due delegate: preavviso di **60 giorni** mai prima della fine di un periodo pagato, e **niente cancellazioni per fare spazio**.
+
+**Scritte nei documenti**: prima l'inglese, che è il testo ufficiale (`en/terms-of-use.md` §6, §8, §15 e `en/privacy-policy.md` §10-bis), poi le copie di lavoro italiane. ⟳ **Ricontati i segnaposto dichiarati in testa a ciascun documento**, che erano diventati falsi: i termini ne dichiaravano sette e ne restano **tre** (telefono, indirizzo, chi è il venditore); l'informativa ne dichiarava quattro e ne restano **tre**.
+
+🔴 **E verificando come è imposto il tetto di 1 GB è uscito B-62**, che non c'entrava con la domanda: dopo lo scioglimento **nessuno dei due riesce più ad aprire le fotografie**, mentre due documenti promettono che ciascuno conserva ciò di cui è autore. ⚠️ *La riga che lo rende indiscutibile*: `foto_cancella` usa già il criterio dell'autore, `foto_leggi` no — quindi oggi **puoi cancellare la tua foto e non puoi guardarla**.
+
+**Scritta la correzione**: `supabase/migrations/0037_foto_dell_autore_dopo_lo_scioglimento.sql`, che ricalca parola per parola il criterio già usato da `foto_cancella`. ✅ **Applicata dall'utente il 2026-09-10**, dopo averla letta. 🔴 **Non ancora provata**: la prova sullo storage in `tests/rls.avversariali.mjs` non esiste.
+
+✅ **La decisione sullo spazio non ha richiesto di costruire niente**, e la verifica lo ha dimostrato invece di assumerlo: il tetto è un trigger `BEFORE INSERT` (`0001:330`), non esiste nessuna potatura, e dopo lo scioglimento `foto_insert` impedisce comunque ogni caricamento in quella cartella. *Il ritorno a 1 GB non ha niente da cancellare.*
+
+### 2026-09-10 (2) — L'inglese diventa la lingua ufficiale, e la vetrina lo diventa con lei
+
+**Chiesto dall'utente**: *«allinea i documenti — la documentazione ufficiale deve essere in inglese, così come la landing page»*. Disegno e motivazioni in **D-123**; qui cosa è cambiato nel repo.
+
+⚠️ **La richiesta descriveva uno stato che non c'era.** La landing **non** era in inglese: `landing/index.html` era `lang="it"` con tutto il testo in italiano, e non conteneva **nessun** link ai documenti legali. Detto prima di toccare qualcosa, e le tre decisioni che ne sono seguite sono dell'utente: documenti italiani *user-facing* **tenuti come documenti di lavoro** (non cancellati), landing **tradotta per intero**, documenti **interni** lasciati in italiano.
+
+**Scritto il documento che nel set ufficiale mancava**: [`docs/legal/en/terms-of-use.md`](docs/legal/en/terms-of-use.md), 16 sezioni. 🔴 **Nasce esplicitamente NON in vigore**: porta i `[TO BE DECIDED]` che l'italiano già portava, perché sono decisioni di prodotto e non di testo. Il generatore lo elenca fra i **non resi**, col motivo, a ogni esecuzione — così il buco è dichiarato invece che silenzioso.
+
+**I tre documenti italiani *user-facing*** (informativa, cookie policy, termini) hanno in testa un blocco che dice **«DOCUMENTO DI LAVORO — non è il testo ufficiale»** e la regola di conflitto: *in caso di divergenza vince l'inglese; si corregge la copia, mai l'originale*. **I tre interni** dicono in testa che restano in italiano **di proposito**, perché si esibiscono al Garante.
+
+**Chiusi i segnaposto che una decisione aveva già superato**: l'email di contatto era `[DA DECIDERE]` in quattro documenti italiani mentre l'inglese diceva già `info@heleox.it` dal 2026-09-09. ⚠️ *Un segnaposto che sopravvive alla decisione che lo chiude è peggio di uno aperto: fa sembrare aperta una cosa decisa.*
+
+**Corretta una dichiarazione diventata falsa in un giorno**: `termini-uso.md` §2 e la sua testata affermavano che nell'applicazione *«non esiste il punto in cui i termini vengono accettati»* e che la registrazione *«non mostra né questi termini né l'informativa privacy»*. **D-121**, il giorno prima, aveva aggiunto i link a informativa e cookie policy in `registrati.tsx` e `impostazioni.tsx`: verificato leggendo i due file, non dedotto. La frase ora distingue ciò che c'è da ciò che manca — i termini, che restano fuori.
+
+**[`tools/genera-legale.mjs`] — tre cose, non una:**
+
+1. 🔑 **La guardia dei segnaposto ora riconosce anche le forme inglesi** (`[TO BE DECIDED`, `[TO BE VERIFIED`). ⚠️ *Cercava solo `[DA DECIDERE` e `[DA VERIFICARE`: da quando i documenti ufficiali si scrivono in inglese era cieca esattamente su ciò che doveva proteggere, e non sarebbe fallita — avrebbe generato.* Provata facendola fallire con un segnaposto inglese messo apposta in `privacy-policy.md`: exit 1, nomina la riga, non scrive niente.
+2. **Genera anche le pagine web**: `landing/privacy-policy.html` e `landing/cookie-policy.html`, dalla stessa fonte che entra nell'app. Il `--check` verifica tutti e tre i derivati.
+3. **Dichiara i documenti non resi** invece di ignorarli.
+
+**[`landing/index.html`] — tradotta per intero**: `lang="en"`, meta description, testata, apertura, i sei schermi finti, le sei funzioni, Philippe, i tre principi, la chiusura e il piede. 🔑 **I testi che l'app mostra davvero non sono stati ritradotti: sono copiati da `lib/i18n.ts` (versione `en`)** — il paragrafo di Philippe, *«All you need is your email and your partner»*, le tre età. *Una vetrina che descrive il prodotto con parole diverse da quelle del prodotto racconta un'altra app.* Aggiunti nel piede i link alle due pagine legali, che prima non c'erano.
+
+**Verificato nel browser**, non dedotto: landing servita su `localhost:4322`, testo interamente inglese (257 nodi visibili controllati, zero italiano residuo), le due pagine legali rese a 1100 px e a 375 px, i link fra pagine presenti e corretti.
+
 ### 2026-09-10 — La valutazione sullo store, e il pop-up che non si può convocare
 
 **Chiesto dall'utente**: un invito a valutare l'app su cinque eventi. Disegno, motivazioni e vincoli in **D-122**; qui cosa è entrato nel repo.
@@ -506,6 +542,95 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-124 — Le quattro decisioni che tenevano fermi i termini d'uso (2026-09-10)
+
+Erano aperte dal 2026-09-09 e **non erano scelte di testo**: finché non si prendevano, il documento non poteva dire il vero. Due le ha prese l'utente, due le ha delegate.
+
+| # | Decisione | Da chi |
+|---|---|---|
+| 1 | **L'abbonamento resta a chi l'ha pagato** | utente |
+| 2 | **Si segnala scrivendo a `info@heleox.it`** | utente |
+| 3 | **Preavviso di chiusura: 60 giorni**, mai prima della fine di un periodo pagato | delegata |
+| 4 | **Non si cancella mai niente per fare spazio** | delegata |
+
+#### 1. L'abbonamento segue chi paga — e la conseguenza è nello schema
+
+🔑 **La parte che conta non è la clausola, è dove il diritto viene scritto.** «L'abbonamento è della coppia» era vero come *effetto*, non come *titolarità*: lo store lo intesta comunque alla persona che paga, perché un abbonamento non può avere due intestatari. La decisione lo rende esplicito: **il diritto si registra sull'utente**, e mentre la coppia esiste si **proietta** su entrambi. Allo scioglimento finisce la proiezione, non il diritto.
+
+⚠️ **Va costruito così**, quando si costruiranno i pagamenti: una tabella di diritti per utente, e la lettura «questa coppia ha le funzioni a pagamento?» come *derivata* — mai il contrario. Scriverlo sulla coppia costringerebbe, allo scioglimento, a scegliere a chi toglierlo, che è la domanda che questa decisione elimina.
+
+#### 2. Segnalare è un'email, e bloccare esisteva già
+
+Le linee guida degli store per i contenuti generati dagli utenti chiedono **un modo di bloccare** e **un modo di segnalare**. Il primo c'era ed è lo scioglimento della coppia; il secondo ora è `info@heleox.it`.
+
+🔑 **L'argomento che regge questa forma, se il revisore lo chiede**: qui il contenuto raggiunge **una sola persona scelta dall'utente**, mai un pubblico. Un pulsante «segnala» accanto a ogni foto del proprio partner risponderebbe a un problema che questo prodotto non ha, e ne suggerirebbe uno che non c'è. ⬜ **Il ripiego è pronto e costa poco**: una voce «Segnala un contenuto» in Impostazioni che apra la stessa email. Si aggiunge in un giro, se serve.
+
+#### 3. Sessanta giorni, e mai prima della scadenza di ciò che hai pagato
+
+Il vincolo che rendeva difficile la scelta: un preavviso dichiarato è una **promessa esigibile**, e con un abbonamento annuale in corso chiudere prima della scadenza significa gestire rimborsi.
+
+🔑 **La seconda metà della clausola scioglie il nodo senza costruire niente**: *«la data di chiusura non è mai anteriore alla fine di un periodo già pagato»* si mantiene **non spegnendo**. Nessun meccanismo, nessun codice, nessuna cassa.
+
+🔴 **L'alternativa è stata scartata per un motivo verificabile, non per gusto.** «Chiudo prima e rimborso il non goduto» è una promessa la cui **esecuzione dipende da un terzo**: su iOS i rimborsi li emette Apple, non lo sviluppatore. ⚠️ *Dichiarare un rimborso che non puoi erogare è la stessa categoria di errore del «termine di conservazione dichiarato e non applicato» già rifiutata in D-80.*
+
+⚠️ **Il costo è dichiarato**: un annuale venduto il giorno prima dell'annuncio tiene il servizio in piedi fino a dodici mesi. Si limita **smettendo di vendere abbonamenti nel momento dell'annuncio** — che è la mossa ovvia e va ricordata quando ci saranno i pagamenti.
+
+#### 4. Lo spazio: non si cancella niente, e non è una scelta nuova
+
+**È ciò che il codice già fa, verificato leggendolo e non ricordandolo.** Il tetto di 1 GB è un trigger `BEFORE INSERT` che solleva un'eccezione (`supabase/migrations/0001_schema_iniziale.sql:330`); **non esiste nessuna potatura, nessuno sweeper, nessun job**. Superare il limite blocca il caricamento; non toglie niente.
+
+🔑 **E lo scenario temuto non è raggiungibile.** La domanda era: *«se paga uno solo e le foto hanno autori distinti, il ritorno a 1 GB cancella materiale di chi non ha deciso nulla?»*. No — e non per una clausola, per come sono fatte le policy: `foto_insert` richiede `e_membro_attivo`, quindi **dopo lo scioglimento in quella cartella non carica più nessuno**, e una coppia nuova nasce con il contatore azzerato. *Il ritorno a 1 GB non ha niente da cancellare.*
+
+⚠️ **Cancellare per fare spazio contraddirebbe la promessa più forte dell'intero corpo documentale** — *«lo scioglimento non cancella»*, *«solo l'autore può cancellare ciò che ha caricato»* — e richiederebbe di **costruire** un meccanismo che oggi non esiste. La decisione è quindi la più economica e la più coerente insieme, il che capita di rado.
+
+🔴 **Ma proprio verificando questo è emerso B-62**: le foto, dopo lo scioglimento, non sono cancellate — sono **irraggiungibili**. La clausola qui sopra è corretta come regola e **oggi il codice non la onora**. Vedi §4.
+
+### D-123 — L'inglese è la lingua ufficiale della documentazione, landing compresa, e le versioni italiane restano documenti di lavoro (2026-09-10)
+
+**Chiesto dall'utente**: *«allinea i documenti — la documentazione ufficiale deve essere in inglese, così come la landing page»*.
+
+⚠️ **La premessa non reggeva, ed è stato detto prima di lavorare.** «Così come la landing page» descriveva la landing come già inglese: era `lang="it"`, tutta in italiano, e per giunta **senza un solo link ai documenti legali**. Tre cose erano quindi da decidere, non da dedurre, e sono state poste all'utente:
+
+| Domanda | Scelta dell'utente |
+|---|---|
+| Le tre versioni italiane *user-facing* | **Tenute come documenti di lavoro**, non cancellate |
+| La landing | **Tradotta per intero in inglese** |
+| I tre documenti interni (registro art. 30, breach, catena) | **Restano in italiano** |
+
+#### Perché la divergenza si chiude così, e non riportando l'italiano in pari
+
+Il backlog del 2026-09-09 conteneva la voce *«riportare i documenti italiani in pari, se dopo la revisione dell'avvocato si decide di renderli entrambi»*. Quella voce **è chiusa nel verso opposto**: non si mantengono due testi allineati, se ne dichiara **uno solo** ufficiale.
+
+🔑 **La ragione è che due testi ufficiali della stessa cosa non restano allineati — divergono, e in silenzio.** Era già successo in un giorno: l'email di contatto è stata decisa il 2026-09-09, è entrata nella versione inglese, e il 2026-09-10 **quattro documenti italiani portavano ancora `[DA DECIDERE: email di contatto]`**. Nessun controllo se ne era accorto, perché nessun controllo guardava l'italiano. *Con due versioni ufficiali il problema si sposta soltanto: da «quale è giusta» a «quale è aggiornata».*
+
+⚠️ **Tenerle però ha un valore che cancellarle avrebbe perso**: i documenti italiani contengono il **ragionamento** — perché una clausola è scritta così, quale alternativa è stata scartata, quali rimandi al brain. È materiale di lavoro, non testo contrattuale. La condizione perché convivano è che dicano **in testa** di non essere ufficiali, con la regola di conflitto esplicita: *vince l'inglese, si corregge la copia italiana e mai il contrario*.
+
+#### Perché i documenti interni NON seguono la regola
+
+Registro dei trattamenti (art. 30), procedura data breach e catena di cancellazione **non li legge nessun utente**: si esibiscono al **Garante**, che è l'autorità italiana. 🔑 *Tradurli avrebbe reso più difficile un'ispezione senza dare niente in cambio* — e una regola applicata dove non serve non è coerenza, è cerimonia. La deroga è scritta **in testa a ciascuno dei tre**, perché al prossimo giro non sembri una dimenticanza dell'allineamento: è l'allineamento.
+
+#### La guardia era cieca nella lingua in cui adesso si scrive
+
+`tools/genera-legale.mjs` rifiutava di generare se un documento conteneva `[DA DECIDERE` o `[DA VERIFICARE`. 🔴 **Da quando i documenti ufficiali sono in inglese, i loro segnaposto si scrivono in inglese**, e la guardia non li vedeva. ⚠️ *Il modo in cui avrebbe fallito è il peggiore possibile: non con un errore, ma generando — cioè mandando dentro un'informativa resa a un utente vero una riga «[TO BE DECIDED: the professional's telephone number]».* Aggiunte le due forme inglesi, e provate facendole fallire.
+
+#### Le pagine legali si generano, non si scrivono
+
+Gli store chiedono un **URL pubblico** per l'informativa. La strada breve era scrivere due `.html` a mano; la scartata per la stessa ragione di **D-121**: sarebbero due copie dello stesso documento, e a invecchiare è sempre la copia. Ora `genera-legale.mjs` produce **tre** derivati dalla stessa fonte — `lib/legale/testi.ts` per l'app, `landing/privacy-policy.html` e `landing/cookie-policy.html` per il web — e `--check` li verifica tutti.
+
+🔑 **Il rischio che questo chiude non è estetico**: se la versione pubblicata e quella resa nell'app dicono cose diverse, non è un disallineamento tecnico — *è la prova documentale che la trasparenza dichiarata non c'è*, e la prova la fornisce chi si difende.
+
+⚠️ **E il rendering delle due destinazioni è stato reso deliberatamente simile.** Su schermo stretto la tabella dei trattamenti diventa un elenco di blocchetti con l'intestazione come etichetta — la stessa scelta che `components/markdown.tsx` fa nell'app, presa per la stessa ragione (quattro colonne in 330 px sono ~80 px l'una: testo che l'art. 12 GDPR vuole *intelligibile*, non solo consegnato). Misurato a 375 px: la pagina non scorre in orizzontale, e nessuna tabella eccede il suo contenitore.
+
+#### Il rischio accettato non cambia, e si allarga
+
+🔴 **Resta in vigore il rischio già accettato il 2026-09-09** (§5): un prodotto venduto anche in Italia con il testo contrattuale in sola lingua inglese. ⚠️ **Questa decisione lo estende alla comunicazione commerciale**: ora anche la vetrina è in inglese, e il Codice del Consumo riguarda le informazioni precontrattuali quanto il contratto. L'utente ne è stato informato scegliendo, e la scelta è sua.
+
+#### Cosa resta aperto e non è stato deciso qui
+
+- ⬜ **Il piano si chiama «Insieme»**, una parola italiana dentro documenti inglesi. Nei termini è glossata (*insieme is Italian for together*); se il nome commerciale debba diventare inglese è una decisione di marketing, non di documentazione, e non è stata presa.
+- ⚠️ **Il marketing di LifeCouple è pianificato in italiano**, e questa decisione non lo tocca: [`Marketing/LifeCouple/video-tiktok-ai.md`](../../Marketing/LifeCouple/video-tiktok-ai.md) sceglie strumenti *«perché hanno un italiano ottimo»*, e [`piano-marketing.md`](../../Marketing/LifeCouple/piano-marketing.md) è scritto per un pubblico italiano. 🔴 **Un video in italiano che porta a una vetrina in inglese perde per strada la persona a cui parlava**: è una decisione di marketing, non di documentazione, e va presa — non è stata presa qui.
+- 🔴 **La landing carica i font da `fonts.googleapis.com`.** Su un sito europeo è il pattern che una nota sentenza tedesca del 2022 ha ritenuto una violazione, perché manda l'IP del visitatore a Google senza consenso — ⚠️ *e le pagine che lo caricherebbero sono l'informativa privacy e la cookie policy, cioè i due documenti in cui si dichiara che nulla segue l'utente*. Per questo le **pagine generate NON caricano font esterni** e usano i caratteri di sistema; la landing sì, ed è una voce aperta: si risolve ospitando i font, non discutendone.
 
 ### D-122 — La valutazione sullo store si chiede col pop-up nativo, e il lavoro vero è decidere quando (2026-09-10)
 
@@ -2596,6 +2721,54 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-62 — Dopo lo scioglimento nessuno dei due può più aprire le fotografie, e i documenti promettono il contrario (2026-09-10)
+
+**Trovato** mentre si decideva D-124 §4 — cioè scrivendo la regola *«non si cancella mai niente per fare spazio»* e andando a verificare **come** il tetto è imposto. Il difetto non c'entrava con la domanda: è uscito dalla verifica.
+
+#### Il fatto
+
+| Oggetto | Policy | Dopo lo scioglimento |
+|---|---|---|
+| Righe della tabella `foto` | `e_membro_attivo(coppia_id) **or autore_id = auth.uid()**` (`0001:419`) | ✅ l'autore legge |
+| **File** nel bucket — `foto_leggi` (`0009:24`) | `e_membro_attivo(...)` **e basta** | 🔴 **nessuno dei due legge** |
+| **Cancellazione** dei file — `foto_cancella` (`0009:46`) | `exists (... f.autore_id = auth.uid())` | ✅ l'autore cancella |
+
+🔴 **La riga che rende il difetto indiscutibile è la terza.** Oggi, dopo lo scioglimento, **l'autore può cancellare la propria fotografia ma non può guardarla.** Le due policy sullo stesso bucket usano criteri diversi, e quella più permissiva è quella distruttiva.
+
+`foto_leggi` è definita **una volta sola**, nella 0009, e mai ridefinita dopo — verificato cercando ogni `create policy` su `storage.objects` in tutte le migrazioni, non dedotto dall'ultima letta.
+
+#### Perché è grave più di quanto sembri
+
+**I documenti dichiarano il contrario, in due posti**: informativa privacy §6 e termini d'uso §5 — *«ciascuno resta autore di ciò che ha caricato»*, *«lo scioglimento non cancella i dati: ciascuno conserva ciò di cui è autore»*.
+
+⚠️ **Il dato non è cancellato, è irraggiungibile — che per la persona è la stessa cosa, e peggio**: le **righe** restano leggibili, quindi i metadati si vedono. L'utente vede che la fotografia esiste, con la sua data e il suo luogo, e non riesce ad aprirla. *Una perdita silenziosa sarebbe stata meno crudele di una visibile e inspiegabile.*
+
+🔴 **E l'esportazione non fa da rete di sicurezza.** [`lib/esporta.ts`](lib/esporta.ts) dichiara di non includere le immagini e rimanda *«alla galleria dell'app»* — che dopo lo scioglimento non riesce più a ottenere gli URL firmati. Quindi la via d'uscita che i termini §10 indicano (*«puoi esportare i tuoi dati in qualsiasi momento»*) per le fotografie **non esiste in quel momento**, cioè esattamente quando serve.
+
+#### Perché era sfuggito
+
+🔑 **La frase è vera nel posto in cui è scritta.** Chi ha scritto le policy delle tabelle ha applicato `or autore_id` a `evento`, `luogo` e `foto`, con criterio; le policy dello storage stanno in un'altra migrazione, scritta due mesi dopo per un altro oggetto, e lì il criterio è stato riscritto invece che riusato. ⚠️ *È la stessa forma di **B-60**: una dichiarazione corretta quando è stata scritta, resa falsa da qualcosa che vive in un altro file.* E come B-60, non si trova cercando il nome della funzione — si trova solo confrontando due policy che nessuno legge insieme.
+
+#### Perché nemmeno i test lo hanno visto — e questa è la parte utile
+
+Eseguita la suite dopo l'applicazione della `0037`: **tutti i test passano**, e fra loro c'è `PASS D-04: ciascuno conserva le proprie foto`. ⚠️ **Quel test misurava le RIGHE, non i file**: era verde mentre la promessa che porta nel nome era rotta. *Un test che nomina la garanzia e ne misura solo metà è peggio di un test assente, perché occupa il posto di quello che serviva.*
+
+🔑 **E il gap era perfino dichiarato — con una motivazione scaduta.** In fondo alla suite, fra i *«Dichiarati NON coperti (nessun gap silenzioso)»*, si legge: *«file nello storage delle foto: la riga si cancella, il file no — **non c'e ancora storage**»*. Quella frase era vera quando è stata scritta ed **è falsa dal 2026-08-31**, da quando la migrazione `0009` ha creato il bucket. ⚠️ *La dichiarazione di non-copertura ha continuato a rassicurare chi la leggeva, con una ragione che non esisteva più.*
+
+**Da farne una regola**: un elenco di cose *non* coperte va riletto quando cambia il perimetro, esattamente come il codice. Altrimenti diventa il posto più tranquillo dove nascondere un buco — dichiarato, quindi non cercato.
+
+#### La correzione
+
+Scritta in [`supabase/migrations/0037_foto_dell_autore_dopo_lo_scioglimento.sql`](supabase/migrations/0037_foto_dell_autore_dopo_lo_scioglimento.sql) e **applicata dall'utente il 2026-09-10**, dopo averla letta. *Scritta da un lato e applicata dall'altro: applicare una migrazione al database è un'azione che si conferma, non si prende di iniziativa.*
+
+Il criterio nuovo **ricalca parola per parola** quello che `foto_cancella` già usa, invece di scriverne un terzo: così le policy dello stesso bucket non possono divergere di nuovo.
+
+🔑 **Non allarga niente a nessuno**: il criterio è l'autore **della riga**, non la cartella. Dopo lo scioglimento ciascuno vede le proprie foto e non quelle dell'altro — non esiste un caso in cui questa modifica dia a un ex-partner qualcosa che prima non aveva.
+
+#### Come va verificata, e non lo è ancora
+
+🔴 **Applicata non vuol dire verificata, e al 2026-09-10 non lo è.** La prova non è deducibile, va eseguita: su una coppia di prova **sciolta**, l'autore deve ottenere un URL firmato per una propria fotografia e **non** ottenerlo per una dell'altro. Il posto è [`tests/rls.avversariali.mjs`](tests/rls.avversariali.mjs), che quel confine già lo esercita sulle tabelle e non sullo storage. ⚠️ *Finché quel controllo non esiste, la correzione è ragionata e non provata — e questo difetto è nato proprio da un confine che nessun test guardava.*
+
 ### B-61 — Un permesso pericoloso chiesto per niente (2026-09-09, CORRETTO)
 
 **Il difetto**: `app.json` dichiarava `android.permission.RECORD_AUDIO` fra i permessi Android. Il codice non usa il microfono da nessuna parte. Su Android è un permesso della categoria *dangerous*, e il revisore dello store lo vede; su iOS non aveva effetto, perché non esisteva una stringa di scopo corrispondente — quindi era un difetto della sola piattaforma Android.
@@ -3576,6 +3749,12 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 ⚠️ **Da portare esplicitamente all'avvocato**, insieme alla domanda sull'art. 9 già aperta in [`conformita.md`](docs/conformita.md) §9.
 
+> ⟳ **Esteso il 2026-09-10 (D-123), e il rischio cresce invece di restare fermo.** L'utente ha stabilito che **la documentazione ufficiale è in inglese, landing compresa**: non più solo il contratto e l'informativa, ma anche la **comunicazione commerciale che li precede**. ⚠️ *Il Codice del Consumo riguarda le informazioni precontrattuali quanto quelle contrattuali*, quindi la superficie contestabile si allarga dalla schermata legale alla vetrina.
+>
+> 🔑 **E una parte della mitigazione descritta qui sopra è caduta senza che nessuno la togliesse.** *«Le etichette dell'interfaccia restano bilingui, quindi chi legge in italiano capisce cosa sta aprendo»* vale dentro l'app; **sulla landing non vale niente di simile** — lì non c'è nessuna etichetta italiana e nessun avviso, c'è una pagina interamente in inglese. La mitigazione era vera per il canale per cui era stata scritta, ed è stata ereditata da un canale diverso senza essere riverificata.
+>
+> ⬜ **Cosa la chiuderebbe, se si volesse**: una versione italiana della landing (non dei documenti — quelli restano come sono per la sequenza *revisione → traduzione* scritta qui sopra), oppure un avviso in italiano sulla landing che dica in una riga di cosa si tratta. **Non è stato fatto e non è stato chiesto**: è registrato perché la scelta sia trovata già valutata, non da scoprire.
+
 ### 🔴 La sovrapponibilità degli umori è una premessa non verificata, e il primo dato la smentisce (2026-09-06)
 
 **D-102** vincola l'umore a cambiare *«solo la riga dell'espressione»*, e **D-103** ci si appoggia interamente: è la sovrapponibilità fra le tre immagini di uno stadio che rende sufficiente la strada raster, perché permette la **dissolvenza incrociata**. Tutto il ragionamento di D-103 — *«il difetto di (a) lo paga D-102»* — dipende da lì.
@@ -3940,23 +4119,26 @@ I sei documenti di [`docs/legal/`](docs/legal/) esistono e sono coerenti fra lor
 
 **Bloccanti sulla pubblicazione, in ordine:**
 - [x] ✅ **I link a informativa e cookie policy dentro l'app** — **fatti il 2026-09-09** (**D-121**): schermate interne, agganciate alla **registrazione** (prima del pulsante che crea l'account) e a **Impostazioni** (sezione permanente). ⚠️ **Verificato da sconnesso, che è il caso che conta**: `GuardiaSessione` rimanda a `/benvenuto` ogni rotta fuori da `app/(pubbliche)/`, quindi la schermata vive lì — messa in `app/legale/` sarebbe stata irraggiungibile *proprio a chi si registra*.
-  - [ ] ⬜ **Restano i termini d'uso**, che non sono ancora resi: aspettano i quattro `[DA DECIDERE]` di prodotto e i dati DSA (telefono e indirizzo). Il documento inglese non è stato scritto per non tradurre due volte.
+  - [ ] ⬜ **Restano i termini d'uso**, che non sono ancora resi: aspettano i quattro `[DA DECIDERE]` di prodotto e i dati DSA (telefono e indirizzo). ⟳ *Il documento inglese ora esiste* ([`docs/legal/en/terms-of-use.md`](docs/legal/en/terms-of-use.md), **D-123**), ma **non entra nell'app**: il generatore lo elenca fra i non resi e si rifiuterebbe di costruirlo finché porta segnaposto. ⚠️ **Quando entrerà servirà anche il link** in `registrati.tsx` e `impostazioni.tsx`, che oggi puntano solo a informativa e cookie policy — la §2 dei termini lo dà per fatto, e diventa falsa il giorno in cui vanno in vigore senza quel link.
   - [ ] ⬜ **Resta la schermata d'acquisto**, terzo punto d'aggancio: **non esiste ancora** (nessuna libreria di pagamenti in `package.json`). Si fa quando si fa quella schermata.
-- [ ] 🔴 **Pubblicare informativa, cookie policy e termini a un URL raggiungibile** — obbligatorio su entrambi gli store. Ci sono già `fr-busato` e `heleox-landing` per ospitarli; oggi **nessuno dei tre è pubblicato da nessuna parte**.
-- [ ] 🔴 **Indirizzo e telefono del professionista (DSA)** ed **email di contatto**, una sola per tutti i documenti.
+- [ ] 🔴 **Pubblicare informativa, cookie policy e termini a un URL raggiungibile** — obbligatorio su entrambi gli store. ⟳ *Metà del lavoro è fatta il 2026-09-10* (**D-123**): le pagine **esistono e sono generate** dalla stessa fonte inglese che entra nell'app — `landing/privacy-policy.html`, `landing/cookie-policy.html` — e sono linkate dal piede della landing. 🔴 **Manca la pubblicazione**: la landing non è online, quindi l'URL non c'è. Restano possibili anche `fr-busato` e `heleox-landing`. ⬜ *I termini non hanno pagina, e non devono averla finché sono una bozza.*
+- [ ] 🔴 **Indirizzo e telefono del professionista (DSA)** — bloccanti, e **nel brain non esistono da nessuna parte**: vanno chiesti, non stimati. ✅ **L'email invece è chiusa**: `info@heleox.it`, e il 2026-09-10 è stata riportata nei quattro documenti italiani che la davano ancora per `[DA DECIDERE]` mentre l'inglese la conteneva già.
 - [ ] 🔴 **La prova end-to-end della catena di cancellazione.** L'informativa §7 dichiara agli utenti una cancellazione *«immediata e definitiva»*; la tabella «Esito della prova» in [`docs/legal/catena-cancellazione.md`](docs/legal/catena-cancellazione.md) è **vuota**. ⚠️ *È la dichiarazione più impegnativa dell'intero corpo documentale, ed è l'unica che poggia su codice mai eseguito.* Il protocollo è già scritto passo per passo: manca eseguirlo.
 - [x] ✅ **`RECORD_AUDIO` tolto da `app.json`** — **fatto il 2026-09-09** (**B-61**). Era dichiarato fra i permessi Android e non usato da nessuna parte: nessun `expo-av`, nessun `expo-audio`, nessuna dipendenza audio in `package.json`, nessuna chiamata di registrazione nel codice. ⚠️ *L'unica occorrenza della parola «microfono» in tutto il repo era una voce del banco parole di un gioco* — cioè il tipo di falso positivo che rende inutile cercare col solo nome. Su Android era un permesso pericoloso chiesto senza scopo, e il revisore lo vede.
 - [ ] ⚠️ **Consenso espresso + presa d'atto della perdita del recesso** nella schermata d'acquisto: senza queste due frasi, prima del pulsante che paga, la decadenza del recesso **non opera** e restano quattordici giorni esercitabili.
 - [x] ⟳ **Versione inglese di informativa e cookie policy** — **scritte il 2026-09-09** in [`docs/legal/en/`](docs/legal/en/), e sono quelle che l'app mostra: **D-121** ha deciso che il testo legale è **solo** in inglese. 🔴 **Si è capovolto il problema, non risolto**: ora è la versione *italiana* a non essere resa a nessuno, su un prodotto venduto in Italia. Il rischio è in §5, ed è accettato consapevolmente dall'utente.
-  - [ ] ⬜ **Versione inglese dei termini d'uso**, quando i quattro `[DA DECIDERE]` saranno chiusi.
-  - [ ] ⬜ **Riportare i documenti italiani in pari**, se dopo la revisione dell'avvocato si decide di renderli entrambi. Oggi le due lingue **divergono**: l'italiano in `docs/legal/` porta ancora i segnaposto, l'inglese in `docs/legal/en/` no. ⚠️ *Nessuno script se ne accorgerebbe: `genera-legale.mjs` guarda solo l'inglese, perché solo l'inglese entra nell'app.*
+  - [x] ✅ **Versione inglese dei termini d'uso** — **scritta il 2026-09-10** (**D-123**), senza aspettare le quattro decisioni: porta i `[TO BE DECIDED]` tradotti, ed è il generatore a impedire che venga resa. *Scriverla prima costa poco e rende visibile quanto manca; aspettare avrebbe lasciato il set ufficiale incompleto senza che si vedesse.*
+  - [x] ⟳ **La divergenza fra le due lingue è chiusa il 2026-09-10 — nel verso opposto** (**D-123**). Non si riportano in pari due testi ufficiali: **l'inglese è l'unico ufficiale**, e i tre documenti italiani *user-facing* sono marcati in testa **«DOCUMENTO DI LAVORO — non è il testo ufficiale»**, con la regola di conflitto scritta dentro. 🔑 *La prova che due testi ufficiali non restano allineati è arrivata in un giorno solo: l'email decisa il 2026-09-09 era già nell'inglese e ancora `[DA DECIDERE]` in quattro documenti italiani.* I tre documenti **interni** restano in italiano di proposito, perché si esibiscono al Garante.
 - [ ] ⚠️ **Accordi art. 28** con Supabase, Google e TMDB: da accettare e archiviare.
 
-**Le quattro decisioni che i termini aspettano** — non sono di testo, e finché non si prendono il documento non può entrare in vigore:
-- [ ] 🔴 **Sorte dell'abbonamento allo scioglimento** (decide *dove* il diritto viene scritto nel database: vedi §1-bis di `monetizzazione.md`).
-- [ ] 🔴 **Sorte dello spazio fotografico allo scioglimento**, quando paga uno solo e le foto hanno autori distinti (**D-21**).
-- [ ] 🔴 **Durata del preavviso di chiusura** — lo stesso numero deve comparire nei termini §15 **e** nell'informativa §10-bis.
-- [ ] 🔴 **Un modo di segnalare**, o l'argomento da portare al revisore. Le linee guida per i contenuti generati dagli utenti chiedono di norma un modo di **bloccare** e uno di **segnalare**: il primo esiste ed è lo scioglimento, il secondo no. ⚠️ L'argomento contrario è forte — qui il contenuto raggiunge **una sola persona scelta dall'utente**, non un pubblico — ma va **deciso**, non lasciato scoprire in revisione.
+**Le quattro decisioni che i termini aspettavano** — ✅ **tutte chiuse il 2026-09-10** (**D-124**). Non erano di testo, ed è il motivo per cui hanno tenuto fermo il documento per un giorno intero:
+- [x] ✅ **L'abbonamento resta a chi l'ha pagato.** ⬜ *Lascia dietro un vincolo di costruzione*: il diritto va scritto **sull'utente** e proiettato sulla coppia, mai il contrario. Da rispettare quando si costruiranno i pagamenti.
+- [x] ✅ **Non si cancella mai niente per fare spazio** — ed era già ciò che il codice fa: il tetto è un trigger `BEFORE INSERT`, non una potatura. Lo scenario temuto non è nemmeno raggiungibile (`foto_insert` richiede `e_membro_attivo`).
+- [x] ✅ **Preavviso: 60 giorni**, e mai prima della fine di un periodo già pagato. Scritto con lo stesso numero nei termini §15 e nell'informativa §10-bis. ⬜ *Da ricordare quando ci saranno i pagamenti*: all'annuncio si smette di vendere abbonamenti, altrimenti la coda può arrivare a dodici mesi.
+- [x] ✅ **Si segnala scrivendo a `info@heleox.it`**; bloccare esisteva già ed è lo scioglimento. ⬜ *Ripiego pronto se il revisore non lo accetta*: una voce «Segnala un contenuto» in Impostazioni che apra la stessa email.
+
+**E un bloccante nuovo, uscito dalla verifica della terza:**
+- [x] ⟳ **B-62 — `0037` applicata il 2026-09-10, NON ancora provata.** Dopo lo scioglimento nessuno dei due poteva aprire le fotografie, mentre informativa §6 e termini §5 promettono che ciascuno conserva ciò di cui è autore. 🔴 **Resta la prova**, che non è deducibile: su una coppia sciolta l'autore deve ottenere l'URL firmato della propria foto e **non** di quella dell'altro. Il posto è `tests/rls.avversariali.mjs`, che oggi quel confine lo esercita solo sulle tabelle — ed è il buco da cui il difetto è passato.
 
 **E una revisione che non è rimandabile all'infinito**: 🔴 la validazione di un **avvocato** prima del lancio commerciale, che [`Rule/legale-beta.md`](../../../Rule/legale-beta.md) prescrive da prima che questo progetto esistesse. Con la §9 di [`docs/conformita.md`](docs/conformita.md) — un'app che registra l'esistenza di una relazione può rivelare l'orientamento sessuale, art. 9 **dedotto dalla struttura del prodotto** — quella revisione può cambiare la nomina del DPO e imporre una **DPIA**.
 
@@ -3983,6 +4165,29 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-10 (3) — c'è una migrazione SCRITTA E NON APPLICATA, ed è la prima cosa da sapere.**
+>
+> ✅ **`supabase/migrations/0037_foto_dell_autore_dopo_lo_scioglimento.sql` è stata applicata dall'utente il 2026-09-10** (**B-62**): allarga `foto_leggi` all'autore, come `foto_cancella` già faceva. Repo e database sono allineati.
+>
+> 🔴 **Ma NON è provata, ed è la prima cosa da fare.** Su una coppia di prova **sciolta**, l'autore deve ottenere un URL firmato per una propria foto e **non** per una dell'altro. `tests/rls.avversariali.mjs` oggi quel confine lo esercita sulle tabelle e non sullo storage — è esattamente il buco da cui B-62 è passato, e finché il controllo non esiste la correzione è ragionata e non misurata.
+>
+> ✅ **Le quattro decisioni di prodotto sono chiuse** (**D-124**), quindi i termini d'uso non aspettano più il prodotto: aspettano **telefono e indirizzo** (che vanno chiesti) e la verifica su chi è il venditore. *Il generatore continua a rifiutarsi di renderli, ed è giusto così.*
+>
+> ⚠️ **Il testo reso nell'app è cambiato**: l'informativa §10-bis ora dichiara **60 giorni** di preavviso. È il primo cambiamento al testo che l'utente legge dal 2026-09-09, e `lib/legale/testi.ts` e le due pagine della landing sono state rigenerate di conseguenza.
+
+> **Nota del 2026-09-10 (2) — la documentazione ufficiale è in inglese, la landing anche, e il prodotto non è stato toccato.** **D-123**. File nuovi: `docs/legal/en/terms-of-use.md`, `landing/privacy-policy.html`, `landing/cookie-policy.html` (gli ultimi due **generati**). Modificati: `tools/genera-legale.mjs`, `landing/index.html`, i sei documenti di `docs/legal/`, `docs/conformita.md`, `docs/pubblicazione.md`, e `lib/legale/testi.ts` (derivato: è cambiata solo la sua intestazione).
+>
+> ✅ **Nessun file di `app/`, `components/` o `lib/` diverso dal derivato è stato toccato**: tutto il resto di questo PUNTO DI RIPRESA resta valido parola per parola, e **la lista dei controlli sul telefono non si allunga**.
+>
+> 🔑 **La cosa da sapere prima di rimettere le mani sui documenti legali**: la fonte è `docs/legal/en/`, i file italiani in `docs/legal/` sono **documenti di lavoro non resi a nessuno**, e in caso di divergenza si corregge **l'italiano**. Chi trova una differenza fra i due e «allinea» quello sbagliato peggiora le cose in silenzio — per questo la regola sta scritta in testa a ciascun file e non solo qui.
+>
+> ⚠️ **E la trappola concreta**: `tools/genera-legale.mjs` costruisce **tre** derivati, non uno. Toccare un `.md` in `docs/legal/en/` e rigenerare solo l'app lascia le pagine web indietro; `npm run test:legale` li controlla tutti e tre ed è il modo di accorgersene.
+>
+> 🔴 **Cosa resta da guardare con gli occhi, e non è stato guardato:**
+> 1. **La landing intera a occhio, scorrendola.** Sono stati verificati il testo (interamente inglese, 257 nodi controllati) e le due pagine legali in due larghezze; della landing esiste **uno scatto solo, dell'apertura**. ⚠️ *Lo scatto oltre il primo paint torna bianco* — è il guasto già noto dal 2026-09-09 — quindi tutto ciò che sta sotto la prima schermata è verificato per struttura e non per resa.
+> 2. **Le pagine legali in un browser vero**, non nel pannello: `python -m http.server` sulla cartella `landing/`, oppure `preview_start` con la configurazione `lifecouple-landing` (porta 4322).
+> 3. **Le pagine generate non caricano font esterni** e la landing sì: le due cose, viste una accanto all'altra, hanno caratteri diversi. È voluto (vedi D-123, ultimo punto), ma va deciso se stonano.
 
 > **Nota del 2026-09-10 — la valutazione sullo store è a bordo, e nessuno può vederla funzionare.** **D-122**: `expo-store-review`, la politica in `lib/valutazione.ts`, gli agganci ai cinque eventi, e `tests/valutazione.mjs` (14 controlli). Tutto verde a compilazione e nella preview web, dove la funzione è **inerte per costruzione**.
 >

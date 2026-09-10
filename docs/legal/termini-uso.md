@@ -1,14 +1,16 @@
 # Termini d'uso — LifeCouple
 
+> 🔴 **DOCUMENTO DI LAVORO — NON È IL TESTO UFFICIALE.** Dal **2026-09-10** la documentazione ufficiale di LifeCouple è **in inglese** (**D-123**): il testo di riferimento è [`en/terms-of-use.md`](en/terms-of-use.md), scritto lo stesso giorno. ⚠️ **Nessuno dei due è in vigore** — restano le decisioni di prodotto elencate in fondo — ma quando lo saranno sarà **l'inglese** a esserlo. In caso di divergenza vince l'inglese, sempre: si corregge questo file, mai quello.
+>
 > **Versione `termini-1.0` — bozza del 2026-09-09, non ancora in vigore.**
 >
 > 🔴 **Non è consulenza legale.** Vale la stessa frase con cui si apre [`conformita.md`](../conformita.md): *dal momento in cui il servizio incassa, serve la validazione di un avvocato prima del lancio commerciale*. Questo documento è la mappa dei temi da coprire e il testo su cui farla, non il testo definitivo.
 >
 > 🔑 **A differenza degli altri cinque documenti di [`legal/`](.), questo non è l'adattamento di un modello: in [`Rule/`](../../../../Rule/) non esiste un modello di termini d'uso.** Gli unici termini scritti nel brain sono [`Projects/HeleoX/docs/legal/condizioni-beta.md`](../../../HeleoX/docs/legal/condizioni-beta.md), che regolano una **beta B2B** con clausole di autorizzazione alla scansione: struttura riusabile, contenuto no. LifeCouple è **B2C puro con abbonamento**, ed è un altro contratto.
 >
-> ⚠️ **Sette punti sono marcati `[DA DECIDERE]` / `[DA VERIFICARE]`** e non sono stati riempiti con stime: quattro di essi non sono scelte di testo ma **decisioni di prodotto già aperte** nel backlog. L'elenco è in fondo.
+> ⟳ **Ne restano TRE**, e nessuno è più una decisione di prodotto: **telefono** e **indirizzo** del professionista (obbligo DSA, vanno chiesti — non si stimano) e **chi è il venditore verso l'utente finale** (da verificare sui contratti Apple/Google). *(Erano otto il 2026-09-09 e il documento ne dichiarava sette. Il 2026-09-10 si è chiusa l'email, poi le **quattro decisioni di prodotto** — **D-124**. Ricontati: tre.)*
 >
-> 🔴 **E una condizione che precede il documento: oggi non esiste, nell'applicazione, il punto in cui questi termini vengono accettati.** [`app/(pubbliche)/registrati.tsx`](../../app/(pubbliche)/registrati.tsx) chiede email, password e data di nascita, e non mostra né questi termini né l'informativa privacy. Un contratto che nessuno accetta non è in vigore, per quanto ben scritto sia. Vedi §2.
+> 🔴 **E una condizione che precede il documento: nell'applicazione non esiste il punto in cui QUESTI termini vengono accettati.** ⟳ *Rivisto il 2026-09-10*: dal 2026-09-09 [`app/(pubbliche)/registrati.tsx`](../../app/(pubbliche)/registrati.tsx) mostra i link all'**informativa privacy** e alla **cookie policy** prima del pulsante che crea l'account (**D-121**) — ma **non ai termini d'uso**, che nell'app non entrano finché portano segnaposto. Un contratto che nessuno accetta non è in vigore, per quanto ben scritto sia. Vedi §2.
 
 ---
 
@@ -16,7 +18,7 @@
 
 LifeCouple è offerta da **Fausto Busato**, titolare dell'impresa individuale **F.R. di Busato Fausto**, Novellara (RE) — P.IVA **01878620358**, REA **RE 232527**.
 
-- Email: **[DA DECIDERE: la stessa scelta della §1 dell'[informativa privacy](informativa-privacy.md), da non moltiplicare]**
+- Email: **info@heleox.it** *(scelta il 2026-09-10, D-121 — la stessa della §1 dell'[informativa privacy](informativa-privacy.md), come doveva essere: una sola)*
 - Telefono: **[DA DECIDERE — obbligo DSA, vedi sotto]**
 - Indirizzo: **[DA DECIDERE — obbligo DSA]**
 - PEC: **fr-busato@pec.fr-busato.it**
@@ -29,13 +31,14 @@ LifeCouple è offerta da **Fausto Busato**, titolare dell'impresa individuale **
 
 Creando un account accetti questi termini e dichiari di aver letto l'[informativa privacy](informativa-privacy.md). Se non li accetti, non puoi usare il servizio.
 
-🔴 **Questo punto oggi è scritto e non costruito.** Perché la frase qui sopra sia vera servono, dentro l'applicazione:
+⟳ **Questo punto era scritto e non costruito. Dal 2026-09-09 lo è a metà** (**D-121**). Perché la frase qui sopra sia vera servono, dentro l'applicazione:
 
-1. nella schermata di registrazione, i **link a questi termini e all'informativa**, prima del pulsante che crea l'account — è anche il momento in cui l'art. 13 GDPR vuole che l'informativa sia resa, cioè *al momento della raccolta*;
-2. gli stessi due link **permanenti** in Impostazioni, raggiungibili in ogni momento e non solo una volta;
-3. i medesimi link **dentro la schermata di acquisto**, dove sono un requisito degli store prima ancora che della legge ([`pubblicazione.md`](../pubblicazione.md) §3.1 li elenca fra i tre rifiuti banali e frequentissimi).
+1. ✅ nella schermata di registrazione, i link **all'informativa e alla cookie policy**, prima del pulsante che crea l'account — fatti, `app/(pubbliche)/registrati.tsx`. È anche il momento in cui l'art. 13 GDPR vuole che l'informativa sia resa, cioè *al momento della raccolta*;
+2. ✅ gli stessi link **permanenti** in Impostazioni — fatti, `app/impostazioni.tsx`;
+3. 🔴 **i link a QUESTI termini: non esistono, in nessuno dei due punti.** Il documento non entra nell'app finché porta segnaposto, e il generatore si rifiuta di costruirlo — quindi il buco non è una dimenticanza ma la conseguenza voluta delle decisioni ancora aperte;
+4. 🔴 i medesimi link **dentro la schermata di acquisto**, che non esiste ancora: sono un requisito degli store prima ancora che della legge ([`pubblicazione.md`](../pubblicazione.md) §3.1 li elenca fra i tre rifiuti banali e frequentissimi).
 
-⚠️ **Non serve una casella da spuntare**: per un contratto a distanza è sufficiente che i termini siano conoscibili prima di concludere, e un'accettazione per spunta obbligatoria non aggiunge validità. Serve invece che i link **ci siano**, e oggi non ce n'è nessuno.
+⚠️ **Non serve una casella da spuntare**: per un contratto a distanza è sufficiente che i termini siano conoscibili prima di concludere, e un'accettazione per spunta obbligatoria non aggiunge validità. Serve invece che i link **ci siano** — e per i termini d'uso, oggi, non ce n'è nessuno.
 
 ## 3. Cos'è LifeCouple
 
@@ -70,7 +73,9 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 
 ⚠️ **Attenzione a cosa scrivi nei campi liberi.** Recensioni, note e domande personalizzate arrivano sui nostri server. Non ti chiediamo mai dati particolari ai sensi dell'art. 9 GDPR e non analizziamo ciò che scrivi, ma se scegli di scriverli spontaneamente restano comunque memorizzati.
 
-🔴 **[DA DECIDERE — non è testo, è prodotto] Un modo di segnalare.** Le linee guida di Apple per le app con contenuti generati dagli utenti chiedono di norma **un modo per bloccare** e **un modo per segnalare**. Il primo esiste ed è lo scioglimento della coppia ([`conformita.md`](../conformita.md) §8); **il secondo non esiste**. Va deciso se costruirlo o se argomentare al revisore che qui il contenuto raggiunge **una sola persona scelta dall'utente**, e non un pubblico.
+✅ **Segnalare i contenuti — deciso dall'utente il 2026-09-10 (D-124): si scrive a `info@heleox.it`.** Ogni segnalazione viene letta, si risponde senza ritardo ingiustificato, e i contenuti illeciti hanno priorità.
+
+🔑 **Bloccare non richiede noi** ed esiste già: lo scioglimento della coppia revoca l'accesso reciproco, e lo può fare solo l'interessato. ⚠️ *L'argomento da portare al revisore, se lo chiede*: qui il contenuto raggiunge **una sola persona scelta dall'utente**, mai un pubblico — quindi i due meccanismi che le linee guida chiedono ci sono entrambi, in una forma proporzionata al prodotto. **Se il revisore non lo accetta**, il ripiego è una voce «Segnala un contenuto» dentro l'app che apra la stessa email: costa poco e si aggiunge in un giro.
 
 ## 7. Cosa è gratuito e cosa si paga
 
@@ -90,8 +95,8 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 - **Momento della disdetta**: se disdici, il servizio resta disponibile **fino alla fine del periodo già pagato**, e non oltre.
 - **Ripristino acquisti**: se cambi o reinstalli, puoi ripristinare l'abbonamento dall'applicazione.
 - ⚠️ **[DA VERIFICARE] Chi è il venditore verso di te.** Apple e Google agiscono da rivenditori nella UE, e questo determina **chi emette il documento fiscale e a chi si chiede il rimborso**. Va verificato sui contratti di programma, non assunto: cambia il testo di questa clausola e gli obblighi fiscali dell'impresa ([`conformita.md`](../conformita.md) §7).
-- 🔴 **[DA DECIDERE] Che cosa succede all'abbonamento se la coppia si scioglie.** Chi ha pagato lo conserva? Lo perde chi non ha pagato? È aperta nel backlog ([`History.md`](../../History.md), *«La fine del servizio»*, e `monetizzazione.md` §5) e **decide dove il diritto viene scritto nel database**: va risolta prima del codice, non prima del testo.
-- 🔴 **[DA DECIDERE] Lo spazio fotografico allo scioglimento.** Se paga uno solo e le fotografie hanno autori distinti, il ritorno a 1 GB cancellerebbe materiale di chi non ha deciso nulla.
+- ✅ **L'abbonamento resta a chi l'ha pagato** — deciso dall'utente il 2026-09-10 (**D-124**). 🔑 **La conseguenza tecnica è la parte che conta**: il diritto si scrive **sull'utente**, non sulla coppia, e mentre la coppia esiste si *proietta* su entrambi. Allo scioglimento finisce la proiezione, non il diritto. Va costruito così quando si costruiranno i pagamenti.
+- ✅ **Non si cancella mai niente per fare spazio** — deciso il 2026-09-10 (**D-124**), e **non è una scelta nuova: è ciò che il codice già fa.** Il tetto è un trigger `BEFORE INSERT` che solleva un'eccezione (`0001_schema_iniziale.sql:330`); non esiste nessuna potatura. ⚠️ *E lo scenario temuto non è raggiungibile*: dopo lo scioglimento `foto_insert` richiede `e_membro_attivo`, quindi in quella cartella non carica più nessuno, e una coppia nuova nasce col contatore a zero.
 
 ## 9. Diritto di recesso
 
@@ -150,7 +155,9 @@ Riceverai un **preavviso** dentro l'applicazione e all'indirizzo email del tuo a
 
 Gli abbonamenti in corso: il rinnovo automatico viene disattivato e il servizio resta disponibile **fino alla scadenza del periodo già pagato**.
 
-> 🔴 **[DA DECIDERE — la durata del preavviso non è fissata.]** Non è una formula: se si dichiara un preavviso diventa una **promessa esigibile**, e la sua durata dipende dalla decisione sugli abbonamenti annuali — con un annuale in corso, chiudere prima della scadenza significa gestire rimborsi. La stessa decisione è aperta nell'[informativa privacy](informativa-privacy.md) §10-bis: **si scrive una volta e vale per due documenti**, e devono dire lo stesso numero.
+> ✅ **Preavviso: almeno 60 giorni, e mai prima della fine di un periodo già pagato** — deciso il 2026-09-10 (**D-124**). Lo stesso numero è nell'[informativa privacy](informativa-privacy.md) §10-bis.
+>
+> 🔑 **Perché la seconda metà, e non un rimborso pro-rata.** «Non chiudo prima che scada quello che hai pagato» è una promessa mantenibile **senza costruire niente**: basta non spegnere. Il rimborso del non goduto invece **su iOS non lo puoi emettere tu** — lo emette Apple — quindi sarebbe una promessa la cui esecuzione dipende da un terzo. ⚠️ *Il costo di questa scelta è dichiarato: con un annuale venduto il giorno prima dell'annuncio, il servizio resta in piedi fino a dodici mesi.* Si limita smettendo di vendere abbonamenti nel momento dell'annuncio.
 
 ## 16. Assistenza, reclami, legge applicabile
 
@@ -167,16 +174,16 @@ Non sono dettagli redazionali. I primi quattro **non sono decisioni di testo**: 
 
 | # | Cosa | Dove è già aperta |
 |---|---|---|
-| 1 | 🔴 **I link ai termini e all'informativa dentro l'app** — registrazione, Impostazioni, schermata d'acquisto. Senza, nessuna delle due è mai resa | §2 di questo documento |
-| 2 | 🔴 **Sorte dell'abbonamento e dello spazio foto allo scioglimento** | `monetizzazione.md` §5 · `History.md`, *«La fine del servizio»* |
-| 3 | 🔴 **Durata del preavviso di chiusura** — stesso numero anche nell'informativa §10-bis | `History.md`, *«La fine del servizio»* |
-| 4 | 🔴 **Un modo di segnalare** (le linee guida store per i contenuti generati dagli utenti) | `conformita.md` §8 |
+| 1 | ⟳ **I link dentro l'app** — ✅ informativa e cookie policy in registrazione e Impostazioni dal 2026-09-09 (**D-121**); 🔴 **i termini d'uso no**, e la schermata d'acquisto non esiste | §2 di questo documento |
+| 2 | ✅ **Sorte dell'abbonamento e dello spazio foto allo scioglimento** — **chiuse il 2026-09-10** (**D-124**): l'abbonamento resta a chi paga; per lo spazio non si cancella mai niente | **D-124** |
+| 3 | ✅ **Durata del preavviso di chiusura** — **chiusa il 2026-09-10**: **60 giorni**, mai prima della fine di un periodo pagato. Scritto in entrambi i documenti | **D-124** |
+| 4 | ✅ **Un modo di segnalare** — **chiusa il 2026-09-10**: email a `info@heleox.it`. ⬜ *Resta l'eventuale voce in-app, se il revisore la chiede* | **D-124** |
 | 5 | 🔴 **Indirizzo e telefono del professionista** — obbligo DSA, bloccante | `conformita.md` §8 |
-| 6 | ⚠️ **Email di contatto** — una sola, condivisa con l'informativa | `informativa-privacy.md` §1 |
+| 6 | ✅ **Email di contatto** — **chiusa il 2026-09-10**: `info@heleox.it`, una sola, condivisa con l'informativa | `informativa-privacy.md` §1 |
 | 7 | ⚠️ **Chi è il venditore verso l'utente finale** (Apple/Google) | `conformita.md` §7 |
 | 8 | ⚠️ **Consenso espresso + presa d'atto** nella schermata d'acquisto, o il recesso non decade | §9 |
 | 9 | ⚠️ **Riverificare §7 e §8 contro il prodotto costruito** — oggi non esiste codice di pagamento | §7 |
-| 10 | ⚠️ **Traduzione inglese** — l'app è bilingue per decisione esplicita (D-18) | `informativa-privacy.md`, stessa voce |
+| 10 | ✅ **Versione inglese** — **scritta il 2026-09-10** in [`en/terms-of-use.md`](en/terms-of-use.md), ed è **quella ufficiale** (**D-123**). I segnaposto di questa tabella sono gli stessi, tradotti: si chiudono una volta e si riportano nei due file | **D-123** |
 | 11 | 🔴 **Pubblicazione a un URL** insieme all'informativa e alla cookie policy | `conformita.md` §5 |
 | 12 | 🔴 **Revisione professionale** dell'intero documento prima del lancio commerciale | `Rule/legale-beta.md` |
 

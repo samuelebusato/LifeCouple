@@ -1,10 +1,12 @@
 # Informativa privacy — LifeCouple
 
+> 🔴 **DOCUMENTO DI LAVORO — NON È IL TESTO UFFICIALE.** Dal **2026-09-10** la documentazione ufficiale di LifeCouple è **in inglese** (**D-123**): il testo in vigore è [`en/privacy-policy.md`](en/privacy-policy.md), ed è quello reso dentro l'app e pubblicato sulla landing. Questo file **non è reso a nessuno**: conserva le note editoriali, i rimandi al brain e i segnaposto che la versione inglese non ha. ⚠️ **In caso di divergenza vince l'inglese, sempre** — qui non vive nessun fatto che non stia anche lì, e allineare significa correggere *questo* file, mai quello.
+>
 > **Versione `app-1.0` — bozza del 2026-08-31, rivista il 2026-09-09, non ancora in vigore.** Resa ai sensi degli **artt. 13-14 del Regolamento (UE) 2016/679 (GDPR)**.
 >
-> 🔴 **Da pubblicare a un URL pubblico prima della sottomissione agli store**: è un requisito obbligatorio sia di Apple sia di Google. I due siti disponibili sono `fr-busato` e `heleox-landing`.
+> ✅ **La pubblicazione a un URL ha una casa dal 2026-09-10**: `landing/privacy-policy.html`, generato dalla versione inglese. Resta da **pubblicare la landing**, che è nel repo e non è online da nessuna parte. *(Diceva «i due siti disponibili sono `fr-busato` e `heleox-landing`»: scritto prima che questa landing esistesse.)*
 >
-> ⚠️ **Quattro punti sono marcati `[DA DECIDERE]` / `[DA VERIFICARE]`**: non sono stati riempiti con stime. Vanno chiusi prima della pubblicazione — l'elenco è in fondo. *(Diceva «tre»: erano quattro già il 2026-08-31, contati il 2026-09-09.)*
+> ⟳ **Ne restano TRE**, non riempiti con stime: i **dati del professionista** per il DSA (§1), la **retention dei backup** Supabase (§7, va **letta** nel pannello, non stimata) e la **conservazione a termine** (§8). L'elenco è in fondo. *(Diceva «tre», poi «quattro»; il 2026-09-10 si sono chiuse l'email e la durata del preavviso — **D-121**, **D-124** — e sono tornati tre. Ricontati.)*
 >
 > 🔑 **Revisione del 2026-09-09 — §6 diceva il contrario di §3.1.** La sezione «cosa vede il tuo partner» affermava ancora *«non vede la tua posizione attuale»* e rimandava, per la prova, proprio al paragrafo che la smentiva: §3 e §3.1 erano stati aggiornati dopo **D-100** (condivisione della posizione, 2026-09-05), §6 no. ⚠️ *Un'informativa che si contraddice non è imprecisa: è inutilizzabile come prova di trasparenza, perché non esiste una versione «giusta» da opporre a chi legge l'altra.*
 >
@@ -16,7 +18,7 @@
 
 **F.R. di Busato Fausto**, titolare **Fausto Busato**, Novellara (RE) — P.IVA **01878620358**, REA **RE 232527**.
 
-- Contatti, assistenza ed **esercizio dei diritti**: **[DA DECIDERE: email dedicata all'app, es. privacy@lifecouple.app, oppure info@fr-busato.it]**
+- Contatti, assistenza ed **esercizio dei diritti**: **info@heleox.it** *(scelta dall'utente nella sessione del 2026-09-10, **D-121**; è l'indirizzo di un altro prodotto della stessa azienda — coerente sul piano giuridico, meno per chi scrive)*
 - PEC: **fr-busato@pec.fr-busato.it**
 
 ⚠️ **Dati del professionista ai sensi del DSA**: chi vende nella UE deve fornire agli store e rendere visibili nome, indirizzo, telefono ed email del professionista. Gli stessi dati vanno esposti qui e nella scheda dello store.
@@ -153,7 +155,7 @@ Prima di quella data potrai **esportare i tuoi dati** dall'applicazione, funzion
 
 Gli abbonamenti in corso sono gestiti da Apple e Google: il rinnovo automatico viene disattivato e il servizio resta disponibile **fino alla scadenza del periodo già pagato**.
 
-> ⚠️ **[DA DECIDERE — la durata del preavviso non è ancora fissata]** e va scritta qui e nei [**termini d'uso**](termini-uso.md) §15 — che dal 2026-09-09 esistono e portano lo stesso `[DA DECIDERE]`. 🔑 **Si decide una volta e i due documenti devono dire lo stesso numero**: due preavvisi diversi nello stesso servizio sono peggio di nessun preavviso, perché l'utente sceglie il più lungo e ha ragione. Non è una formula: se si dichiara un preavviso, va rispettato. E la sua durata **dipende dalla decisione sugli abbonamenti annuali** — con un annuale in corso, chiudere prima della scadenza significa gestire rimborsi. 🔴 **Va inoltre costruita una procedura di cancellazione di massa**: oggi la catena di cancellazione funziona per un utente alla volta, e spegnere l'infrastruttura non è una cancellazione a norma. Vedi il backlog di [`History.md`](../../History.md) → *«La fine del servizio»*.
+> ✅ **Preavviso: almeno 60 giorni, e mai prima della fine di un periodo già pagato** — deciso il 2026-09-10 (**D-124**), e scritto con lo stesso numero nei [**termini d'uso**](termini-uso.md) §15. 🔑 *«Non chiudo prima che scada quello che hai pagato» è mantenibile senza costruire niente — basta non spegnere; il rimborso del non goduto su iOS non lo emetteresti tu.* 🔴 **Resta però da costruire una procedura di cancellazione di massa**: oggi la catena funziona per un utente alla volta, e spegnere l'infrastruttura non è una cancellazione a norma. Vedi il backlog di [`History.md`](../../History.md) → *«La fine del servizio»*.
 
 ## 11. Età minima
 
@@ -173,11 +175,12 @@ Le modifiche a questa informativa sono pubblicate con aggiornamento della versio
 
 Non sono dettagli redazionali: ognuno cambia il testo.
 
-1. **[§1] L'indirizzo email** per l'esercizio dei diritti — dedicato all'app o aziendale.
+1. ✅ **[§1] L'indirizzo email** per l'esercizio dei diritti — **chiuso il 2026-09-10**: `info@heleox.it`.
 2. **[§1] I dati del professionista ai sensi del DSA** — indirizzo e telefono da esporre, obbligo bloccante.
 3. **[§7] La retention dei backup** del piano Supabase in uso — va letta, non stimata.
 4. **[§8] La conservazione a termine** — decisione di prodotto: nessun termine (com'è oggi) oppure costruirlo prima di dichiararlo.
-5. **Traduzione inglese**: l'app è bilingue per decisione esplicita (D-18). Se la scheda store esce in due lingue, serve anche l'informativa in inglese.
+5-bis. ✅ **[§10-bis] La durata del preavviso** — **chiusa il 2026-09-10**: 60 giorni, e mai prima della fine di un periodo pagato (**D-124**).
+5. ✅ **Traduzione inglese** — **fatta il 2026-09-09** ed è diventata **il testo ufficiale** il 2026-09-10 (**D-123**). ⚠️ *Si è capovolto il verso della voce: non serve più tradurre questo documento, serve tenerlo allineato all'inglese — e il verso di quell'allineamento è a senso unico.*
 6. **Revisione professionale** della §9 di [`conformita.md`](../conformita.md): un'app che registra l'esistenza di una relazione fra due persone può, per certi utenti, rivelare l'orientamento sessuale — categoria art. 9 dedotta dalla struttura del prodotto, non richiesta all'utente. Questa informativa **non risolve** quella domanda: la lascia aperta consapevolmente.
 
 ## Fonti di questo documento

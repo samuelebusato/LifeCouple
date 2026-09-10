@@ -2,6 +2,8 @@
 
 > Documento **interno**, del 2026-08-31. Adattato da [`Rule/catena-cancellazione.md`](../../../../Rule/catena-cancellazione.md), che è scritta per HeleoX.
 >
+> 🔑 **Resta in italiano di proposito** (**D-123**, 2026-09-10): la documentazione *user-facing* di LifeCouple è ufficialmente in inglese, ma questo documento non lo vede nessun utente — si esibisce al **Garante**, che è l'autorità italiana. Tradurlo renderebbe più difficile un'ispezione senza nessun vantaggio. ⚠️ *Non è una dimenticanza dell'allineamento: è l'allineamento.*
+>
 > 🔴 **La catena descritta qui è COSTRUITA e DEPLOYATA, ma NON ANCORA VERIFICATA end-to-end.** Nessuna cancellazione reale è mai stata eseguita. Finché non lo è, questo documento descrive un'intenzione del codice, non un fatto misurato. Il protocollo di prova è alla fine.
 
 ---

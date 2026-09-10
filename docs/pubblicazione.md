@@ -175,7 +175,8 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 
 ## 6. Documentazione e dichiarazioni
 
-- **URL pubblico dell'informativa privacy** — un indirizzo web raggiungibile, non un allegato. ⚠️ In `Rule/` i modelli esistono già (`informativa-privacy-app.md`, `cookie-policy-app.md`, `registro-trattamenti.md`, `catena-cancellazione.md`, `procedura-data-breach.md`): vanno **adattati**, non scritti. E per ospitarli ci sono già due siti nel brain, `fr-busato` e `heleox-landing`.
+- **URL pubblico dell'informativa privacy** — un indirizzo web raggiungibile, non un allegato. ⟳ *Rivisto il 2026-09-10*: i documenti **esistono** (sei, in [`legal/`](legal/), scritti fra il 2026-08-31 e il 2026-09-10 — non più «modelli da adattare») e le **pagine web pure**, generate da `tools/genera-legale.mjs` in `landing/privacy-policy.html` e `landing/cookie-policy.html`. 🔴 **Manca solo la pubblicazione**: la landing di LifeCouple non è online. Alternative già disponibili se non la si vuole pubblicare: `fr-busato` e `heleox-landing`.
+- **Schede store e testi legali sono in inglese** (**D-123**, 2026-09-10), e la voce «schede store in due lingue» qui sotto va riletta con quella decisione in mano: ⚠️ *se le schede escono anche in italiano mentre l'informativa collegata è solo in inglese, l'incoerenza la vede il revisore prima dell'utente.*
 - **App Privacy** (Apple) e **Data safety** (Google). ⚠️ Devono corrispondere alla realtà: `threat-model.md` §1 mappa già quali dati esistono ed è la fonte da cui compilarle. Una dichiarazione che non corrisponde è motivo di rimozione **anche dopo** l'approvazione.
 - **Classificazione per età**, su entrambi.
 - **Schede store in due lingue** — nome, descrizione, screenshot. È la voce più sistematicamente sottostimata del piano.

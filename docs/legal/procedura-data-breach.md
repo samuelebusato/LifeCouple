@@ -2,6 +2,8 @@
 
 > Documento **interno**, del 2026-08-31. Artt. 33-34 GDPR. Adattato da [`Rule/procedura-data-breach.md`](../../../../Rule/procedura-data-breach.md).
 >
+> 🔑 **Resta in italiano di proposito** (**D-123**, 2026-09-10): la documentazione *user-facing* di LifeCouple è ufficialmente in inglese, ma questo documento non lo vede nessun utente — si esibisce al **Garante**, che è l'autorità italiana. Tradurlo renderebbe più difficile un'ispezione senza nessun vantaggio. ⚠️ *Non è una dimenticanza dell'allineamento: è l'allineamento.*
+>
 > ⚠️ **Esiste per essere letto in un momento in cui non si ragiona bene.** Va tenuto dove si trova in fretta, non dove è ordinato.
 
 ---

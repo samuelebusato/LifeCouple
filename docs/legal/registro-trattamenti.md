@@ -2,6 +2,8 @@
 
 > Documento **interno**, redatto ai sensi dell'**art. 30 GDPR**. Bozza del 2026-08-31. Si esibisce al Garante su richiesta; non si pubblica.
 >
+> 🔑 **Resta in italiano di proposito** (**D-123**, 2026-09-10): la documentazione *user-facing* di LifeCouple è ufficialmente in inglese, ma questo documento non lo vede nessun utente — si esibisce al **Garante**, che è l'autorità italiana. Tradurlo renderebbe più difficile un'ispezione senza nessun vantaggio. ⚠️ *Non è una dimenticanza dell'allineamento: è l'allineamento.*
+>
 > Adattato da [`Rule/registro-trattamenti.md`](../../../../Rule/registro-trattamenti.md), scritto per HeleoX. LifeCouple ha trattamenti **strutturalmente diversi**: nessun trattamento in qualità di responsabile, ma dati a sensibilità molto più alta.
 >
 > ⚠️ I punti marcati `[DA DECIDERE]` / `[DA VERIFICARE]` non sono stati riempiti con stime.
@@ -13,7 +15,7 @@
 **F.R. di Busato Fausto** — titolare **Fausto Busato**
 Novellara (RE) — P.IVA **01878620358** — REA **RE 232527**
 PEC: fr-busato@pec.fr-busato.it
-Contatto per gli interessati: **[DA DECIDERE: email dedicata all'app]**
+Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 
 **DPO**: non nominato. ⚠️ Valutazione da confermare con un professionista — vedi §D.
 
@@ -189,7 +191,7 @@ Contatto per gli interessati: **[DA DECIDERE: email dedicata all'app]**
 |---|---|
 | **[DA DECIDERE] Conservazione a termine** | Non esiste. Lo scioglimento revoca ma non cancella: i dati restano finché l'account esiste. È una **decisione di prodotto**, e va presa **prima** di scrivere un termine nell'informativa — dichiararlo senza applicarlo sarebbe falso |
 | **[DA VERIFICARE] Retention dei backup** | Va letta nel pannello Supabase; il numero finisce nell'informativa §7 |
-| **[DA DECIDERE] Email per l'esercizio dei diritti** | Dedicata all'app o aziendale |
+| ✅ **Email per l'esercizio dei diritti** | **Chiusa il 2026-09-10**: `info@heleox.it` |
 | **[DA FARE] Accordi art. 28** | Supabase, Google, TMDB — da accettare e archiviare |
 | 🔴 **[DA VALUTARE con un professionista]** | Un'app che registra l'esistenza di una relazione fra due persone può, per certi utenti, rivelare l'**orientamento sessuale** — categoria art. 9 **dedotta dalla struttura del prodotto**, non richiesta all'utente. Non si risolve togliendo una funzione. Se la valutazione conferma il rischio, cambiano: la nomina del DPO, l'eventuale necessità di una **DPIA** (art. 35), e il testo dell'informativa. Vedi [`conformita.md`](../conformita.md) §9 |
 

@@ -77,18 +77,18 @@ Costruita in [`lib/esporta.ts`](../lib/esporta.ts) + un comando in Impostazioni.
 
 I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno riadattati, non riusati. ⚠️ **E i modelli non esauriscono i documenti necessari** — i termini d'uso non ne hanno uno, ed è il motivo per cui sono mancati fino al 2026-09-09 (vedi la nota sotto la tabella).
 
-> ✅ **Scritti tutti e cinque il 2026-08-31** in [`docs/legal/`](legal/) — vedi **D-80**. Sono **bozze non ancora in vigore**: restano quattro punti aperti, marcati dentro i documenti e non riempiti di stime (email per i diritti · dati del professionista per il DSA · retention dei backup Supabase, da **leggere** nel pannello · valutazione professionale sull'art. 9, §9 qui sotto).
+> ✅ **Scritti tutti e cinque il 2026-08-31** in [`docs/legal/`](legal/) — vedi **D-80**; il sesto il 2026-09-09. Sono **bozze non ancora in vigore**. ⟳ *Aggiornato il 2026-09-10*: dei punti aperti si sono chiusi l'**email per i diritti** (`info@heleox.it`) e le **quattro decisioni di prodotto** dei termini (**D-124**). 🔴 **Restano**: i **dati del professionista per il DSA** — telefono e indirizzo, che nel brain non esistono da nessuna parte e vanno **chiesti** · la **retention dei backup** Supabase, da **leggere** nel pannello · la **conservazione a termine** · **chi è il venditore** verso l'utente finale · la **valutazione professionale sull'art. 9**, §9 qui sotto.
 >
 > 🔑 **La decisione che li attraversa**: sulla conservazione a termine si dichiara **che non c'è**, perché è ciò che il sistema fa davvero. Dichiarare un termine senza la configurazione che lo applica non è un'imprecisione, è una dichiarazione falsa — quindi se un termine si vuole, **prima si costruisce e poi si scrive**.
 
 | Documento | Base | Dove vive | Stato |
 |---|---|---|---|
-| Informativa privacy (artt. 13-14) | `Rule/informativa-privacy-app.md` | ✅ **dentro l'app** (2026-09-09) + 🔴 **URL pubblico**, obbligatorio su entrambi gli store | ✅ [`legal/informativa-privacy.md`](legal/informativa-privacy.md) (IT, di lavoro) · ✅ [`legal/en/privacy-policy.md`](legal/en/privacy-policy.md) (EN, **è quella resa**) — ⬜ da pubblicare a un URL |
-| Registro dei trattamenti (art. 30) | `Rule/registro-trattamenti.md` | interno, si esibisce al Garante | ✅ [`legal/registro-trattamenti.md`](legal/registro-trattamenti.md) |
-| Catena di cancellazione | `Rule/catena-cancellazione.md` | interno — **§2 qui sopra è ciò che deve descrivere** | ✅ [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) — contiene il **protocollo di prova** |
-| Procedura data breach (artt. 33-34) | `Rule/procedura-data-breach.md` | interno, cronometro di 72 ore | ✅ [`legal/procedura-data-breach.md`](legal/procedura-data-breach.md) |
-| Cookie policy | `Rule/cookie-policy-app.md` | ⟳ **dentro l'app** (2026-09-09) + sul sito che ospita l'informativa | ✅ [`legal/cookie-policy.md`](legal/cookie-policy.md) (IT, di lavoro) · ✅ [`legal/en/cookie-policy.md`](legal/en/cookie-policy.md) (EN, **è quella resa**) — ⬜ da pubblicare a un URL |
-| **Termini d'uso** | 🔑 **nessun modello in `Rule/`** — scritti da zero | 🔴 **URL pubblico** + link dentro l'app | ✅ [`legal/termini-uso.md`](legal/termini-uso.md) *(2026-09-09)* — ⬜ da pubblicare |
+| Informativa privacy (artt. 13-14) | `Rule/informativa-privacy-app.md` | ✅ **dentro l'app** (2026-09-09) + ⟳ **URL pubblico**, obbligatorio su entrambi gli store | ✅ [`legal/en/privacy-policy.md`](legal/en/privacy-policy.md) — **è il testo ufficiale** (EN) · [`legal/informativa-privacy.md`](legal/informativa-privacy.md) (IT, **documento di lavoro, non reso**) · ✅ pagina pronta in `landing/privacy-policy.html` — ⬜ resta da **pubblicare la landing** |
+| Registro dei trattamenti (art. 30) | `Rule/registro-trattamenti.md` | interno, si esibisce al Garante | ✅ [`legal/registro-trattamenti.md`](legal/registro-trattamenti.md) — **in italiano di proposito** (D-123) |
+| Catena di cancellazione | `Rule/catena-cancellazione.md` | interno — **§2 qui sopra è ciò che deve descrivere** | ✅ [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) — contiene il **protocollo di prova**; **in italiano di proposito** (D-123) |
+| Procedura data breach (artt. 33-34) | `Rule/procedura-data-breach.md` | interno, cronometro di 72 ore | ✅ [`legal/procedura-data-breach.md`](legal/procedura-data-breach.md) — **in italiano di proposito** (D-123) |
+| Cookie policy | `Rule/cookie-policy-app.md` | ⟳ **dentro l'app** (2026-09-09) + sul sito che ospita l'informativa | ✅ [`legal/en/cookie-policy.md`](legal/en/cookie-policy.md) — **è il testo ufficiale** (EN) · [`legal/cookie-policy.md`](legal/cookie-policy.md) (IT, **documento di lavoro, non reso**) · ✅ pagina pronta in `landing/cookie-policy.html` — ⬜ resta da **pubblicare la landing** |
+| **Termini d'uso** | 🔑 **nessun modello in `Rule/`** — scritti da zero | 🔴 **URL pubblico** + link dentro l'app | ✅ [`legal/en/terms-of-use.md`](legal/en/terms-of-use.md) *(2026-09-10)* — **testo ufficiale, bozza NON in vigore** · [`legal/termini-uso.md`](legal/termini-uso.md) (IT, di lavoro) — 🔴 **non reso e non pubblicato**: porta ancora i `[TO BE DECIDED]`, e il generatore si rifiuta di costruirlo |
 
 > 🔴 **Il sesto documento, aggiunto il 2026-09-09: i termini d'uso.** La tabella qui sopra ne elencava cinque, e per nove giorni la loro assenza non è stata contata come lacuna perché **nessuna riga la nominava** — mentre tre documenti diversi li davano per esistenti: l'informativa §10-bis (*«va scritta qui e nei termini d'uso»*), il §8 qui sotto (Apple può chiederli per i contenuti generati dagli utenti) e [`pubblicazione.md`](pubblicazione.md) §3.1, che elenca *«mancano i link a termini e privacy»* fra i rifiuti frequenti.
 >
@@ -98,11 +98,19 @@ I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno
 
 > ⟳ **Aggiornamento del 2026-09-09 (D-121): due documenti sono ora resi dentro l'app**, e la riga *«sul sito, non nell'app»* della cookie policy è superata. Informativa e cookie policy si leggono da **registrazione** e **Impostazioni**, come schermate interne — l'art. 13 vuole l'informativa nel momento della raccolta, e quel momento è la registrazione.
 >
-> 🔴 **Ma il testo reso è quello INGLESE, e solo quello.** Decisione dell'utente, col rischio sollevato prima e accettato: vedi [`History.md`](../History.md) §5. Le versioni italiane in `legal/` restano **documenti di lavoro** — contengono note editoriali e segnaposto `[DA DECIDERE]` — e **non sono rese a nessuno**. ⚠️ *Le due lingue da oggi divergono, e nessun controllo automatico se ne accorge: `tools/genera-legale.mjs` guarda solo `legal/en/`, perché solo quello entra nell'app.*
+> 🔴 **Ma il testo reso è quello INGLESE, e solo quello.** Decisione dell'utente, col rischio sollevato prima e accettato: vedi [`History.md`](../History.md) §5. Le versioni italiane in `legal/` restano **documenti di lavoro** — contengono note editoriali e segnaposto `[DA DECIDERE]` — e **non sono rese a nessuno**.
+>
+> ⟳ **Aggiornamento del 2026-09-10 (D-123) — la divergenza fra le due lingue è chiusa, e non riportando l'italiano in pari.** L'utente ha stabilito che **la documentazione ufficiale è in inglese**, landing compresa. Da qui discendono tre cose, e sono verificabili:
+>
+> 1. i tre documenti italiani *user-facing* portano in testa un blocco che dice **«DOCUMENTO DI LAVORO — non è il testo ufficiale»**, con la regola di conflitto scritta dentro: *in caso di divergenza vince l'inglese, si corregge la copia italiana e mai il contrario*;
+> 2. i tre documenti **interni** (registro art. 30, procedura breach, catena di cancellazione) **restano in italiano di proposito** — non li vede nessun utente, si esibiscono al **Garante**, e tradurli renderebbe più difficile un'ispezione senza nessun vantaggio. È scritto in testa a ciascuno perché non sembri una dimenticanza;
+> 3. 🔑 **la guardia dei segnaposto di `tools/genera-legale.mjs` ora riconosce anche `[TO BE DECIDED]` e `[TO BE VERIFIED]`.** ⚠️ *Cercava solo le forme italiane: da quando i documenti ufficiali si scrivono in inglese, era cieca esattamente su ciò che doveva proteggere — e non avrebbe fallito, avrebbe generato.* Provata facendola fallire con un segnaposto inglese inserito apposta: exit 1, nomina la riga, non scrive niente.
 >
 > ⬜ **Restano fuori**: i **termini d'uso** (aspettano i quattro `[DA DECIDERE]` di prodotto e i dati DSA) e la **schermata d'acquisto**, che non esiste ancora.
 
-✅ Per ospitare l'informativa esistono già due siti nel brain: `fr-busato` e `heleox-landing`. ⚠️ **La landing di LifeCouple non è fra questi**: `landing/` esiste nel repo ma non è pubblicata da nessuna parte — nessun deploy, nessun dominio — verificato il 2026-09-09.
+⟳ **Dove vive l'URL pubblico — rivisto il 2026-09-10.** Le pagine ci sono: `landing/privacy-policy.html` e `landing/cookie-policy.html`, **generate dalla stessa fonte inglese** che entra nell'app (`tools/genera-legale.mjs`), linkate dal piede della landing. 🔑 *Generarle invece di scriverle è la sola difesa contro il caso in cui la versione pubblicata e quella resa nell'app dicano cose diverse — e una versione pubblicata che contraddice quella resa non è un disallineamento tecnico: è la prova documentale che la trasparenza non c'è.*
+
+🔴 **Ma l'URL non esiste ancora, perché la landing non è pubblicata**: `landing/` sta nel repo e non è online da nessuna parte — nessun deploy, nessun dominio — verificato il 2026-09-09 e ancora vero il 2026-09-10. ⚠️ *Gli store chiedono un indirizzo raggiungibile, non un file nel repository.* Restano disponibili anche `fr-busato` e `heleox-landing`, se si preferisce ospitarli lì invece di pubblicare questa landing.
 
 ---
 
@@ -133,7 +141,7 @@ Ognuno riceve dati personali, va **nominato nell'informativa e nel registro**, e
 
 - 🔴 **DSA — dati del professionista.** Chi vende nella UE deve fornire agli store e **mostrare** nome, indirizzo, telefono ed email del professionista. Riguarda F.R. di Busato Fausto direttamente, ed è **bloccante** sulla pubblicazione.
 - ⚠️ **Minori.** L'art. 8 GDPR fissa in Italia a **14 anni** l'età del consenso: serve un'età minima nei termini, coerente con la classificazione dichiarata negli store.
-- ⚠️ **Contenuti condivisi con un'altra persona.** L'invito fa sì che i contenuti raggiungano un altro utente: Apple può trattarla come app con contenuti generati dagli utenti e chiedere termini d'uso, un modo di segnalare e uno di bloccare. ✅ Il «bloccare» esiste — è lo scioglimento.
+- ✅ **Contenuti condivisi con un'altra persona — chiuso il 2026-09-10 (D-124).** L'invito fa sì che i contenuti raggiungano un altro utente: Apple può trattarla come app con contenuti generati dagli utenti e chiedere termini d'uso, un modo di **segnalare** e uno di **bloccare**. Il «bloccare» esisteva ed è lo **scioglimento della coppia**; il «segnalare» ora è **`info@heleox.it`**, scritto nei termini §6. 🔑 *L'argomento da portare al revisore, se lo chiede*: qui il contenuto raggiunge **una sola persona scelta dall'utente**, mai un pubblico — un pulsante «segnala» accanto a ogni foto del proprio partner risponderebbe a un problema che questo prodotto non ha. ⬜ **Ripiego pronto**: una voce «Segnala un contenuto» in Impostazioni che apra la stessa email.
 
 ---
 

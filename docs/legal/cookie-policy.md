@@ -1,10 +1,12 @@
 # Cookie policy e strumenti di memorizzazione — LifeCouple
 
+> 🔴 **DOCUMENTO DI LAVORO — NON È IL TESTO UFFICIALE.** Dal **2026-09-10** la documentazione ufficiale di LifeCouple è **in inglese** (**D-123**): il testo in vigore è [`en/cookie-policy.md`](en/cookie-policy.md), reso dentro l'app e pubblicato sulla landing. Questo file **non è reso a nessuno**. ⚠️ **In caso di divergenza vince l'inglese, sempre** — si corregge questo file, mai quello.
+>
 > **Versione `cookie-1.0` — bozza del 2026-08-31, rivista il 2026-09-09, non ancora in vigore.** Redatta secondo le *Linee guida cookie e altri strumenti di tracciamento* del Garante privacy (provv. 10 giugno 2021) e l'**art. 122 del Codice Privacy** (D.lgs. 196/2003).
 >
 > 🔑 **Revisione del 2026-09-09 — la tabella è stata verificata contro il codice, non contro la memoria.** Elencava una preferenza di lingua **che non esiste** (la lingua si legge dal telefono a ogni avvio, `lib/i18n.ts`) e ometteva **tre** valori realmente memorizzati. È il controllo che il documento stesso metteva fra le cose da chiudere prima della pubblicazione: fatto una volta, va rifatto ogni volta che si aggiunge una libreria che scrive sul dispositivo.
 >
-> 🔴 **Va pubblicata sullo stesso sito che ospita l'informativa privacy**, non dentro l'app.
+> ✅ **Dal 2026-09-10 il sito che la ospita esiste**: `landing/cookie-policy.html`, generato dalla versione inglese, accanto all'informativa. *(Diceva «non dentro l'app»: dal 2026-09-09 è resa **anche** dentro l'app — le due cose non si escludono, e gli store chiedono l'URL pubblico comunque.)*
 >
 > ⚠️ Adattata da [`Rule/cookie-policy-app.md`](../../../../Rule/cookie-policy-app.md), che riguarda un'**applicazione web**. LifeCouple è un'**app nativa**: non usa cookie di browser, ma strumenti equivalenti di memorizzazione locale — ed è la differenza che questo documento deve spiegare, non nascondere.
 
@@ -12,7 +14,7 @@
 
 ## Titolare
 
-**F.R. di Busato Fausto**, Novellara (RE) — P.IVA 01878620358 — **[DA DECIDERE: email di contatto]**
+**F.R. di Busato Fausto**, Novellara (RE) — P.IVA 01878620358 — **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 
 ## In breve
 
@@ -69,6 +71,6 @@ Per il trattamento dei dati personali si rinvia all'**[Informativa privacy](info
 
 ## ⚠️ Da chiudere prima della pubblicazione
 
-1. **L'email di contatto** (stessa scelta dell'informativa §1).
+1. ✅ **L'email di contatto** — **chiusa il 2026-09-10**: `info@heleox.it`, la stessa dell'informativa §1.
 2. ✅ **Elenco verificato contro il codice il 2026-09-09** — cercando ogni scrittura su `AsyncStorage` invece di rileggere la tabella. Esito: una riga di troppo (la lingua, che non si memorizza) e tre mancanti. ⚠️ **Il controllo va rifatto alla sottomissione**: se venisse aggiunta una libreria che memorizza altro sul dispositivo, questa tabella tornerebbe incompleta — e una cookie policy incompleta è una dichiarazione inesatta.
-3. **Traduzione inglese**, se la scheda store esce in due lingue.
+3. ✅ **Traduzione inglese** — **fatta il 2026-09-09** ed è diventata **il testo ufficiale** il 2026-09-10 (**D-123**). Da qui in avanti la voce è il contrario: tenere *questo* file allineato all'inglese.
