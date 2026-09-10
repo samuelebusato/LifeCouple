@@ -17,14 +17,48 @@
 #      aperta il 2026-09-10: 3 immagini, 2 font, zero JavaScript, zero
 #      risorse esterne. La ragione del rinvio non si applica.
 #
-# Il dominio: nessuno, per ora. Niente `aliases` e certificato CloudFront di
-# default -- la landing vive sul suo *.cloudfront.net, che e' un indirizzo
-# raggiungibile e agli store basta. Aggiungere un dominio dopo non rifa'
-# niente: si aggiungono `aliases` e un certificato ACM in us-east-1.
+# Il dominio: lifecouple.heleox.it, aggiunto il 2026-09-10. Il DNS vive su
+# Cloudflare e il record e' un CNAME in "DNS only" verso la distribuzione:
+# proxiandolo, Cloudflare entrerebbe nel percorso come destinatario dell'IP
+# di ogni visitatore -- un terzo che l'informativa non nomina -- e potrebbe
+# depositare il cookie __cf_bm, mentre la cookie policy linkata da questa
+# stessa pagina dichiara che nessuno segue chi legge.
 # ==========================================================================
 
 locals {
-  nome = "lifecouple-landing-790304250429"
+  nome    = "lifecouple-landing-790304250429"
+  dominio = "lifecouple.heleox.it"
+}
+
+# ------------------------------------------------------------ CERTIFICATO
+# In us-east-1 per il vincolo CloudFront (vedi backend.tf). Validazione DNS
+# invece che via email: la prova e' un record nella zona, quindi si rinnova
+# da sola finche' il record resta -- una validazione via email va rifatta a
+# mano ogni volta, e prima o poi non la rifa' nessuno.
+resource "aws_acm_certificate" "landing" {
+  provider = aws.us_east_1
+
+  domain_name       = local.dominio
+  validation_method = "DNS"
+
+  lifecycle {
+    # Un certificato in uso da CloudFront non si puo' cancellare: se un
+    # domani cambiasse il nome, il nuovo va creato PRIMA di togliere il
+    # vecchio, altrimenti l'apply si blocca a meta'.
+    create_before_destroy = true
+  }
+}
+
+# Attende che il certificato risulti emesso. ⚠️ Il record di validazione lo
+# aggiunge una persona su Cloudflare: questa risorsa non lo crea, lo aspetta.
+resource "aws_acm_certificate_validation" "landing" {
+  provider = aws.us_east_1
+
+  certificate_arn = aws_acm_certificate.landing.arn
+
+  timeouts {
+    create = "30m"
+  }
 }
 
 # --------------------------------------------------------------- IL BUCKET
@@ -148,6 +182,8 @@ resource "aws_cloudfront_distribution" "landing" {
     response_page_path = "/404.html"
   }
 
+  aliases = [local.dominio]
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
@@ -155,10 +191,12 @@ resource "aws_cloudfront_distribution" "landing" {
   }
 
   viewer_certificate {
-    # Nessun dominio personalizzato: resta il certificato *.cloudfront.net
-    # gestito da AWS. Con un dominio servirebbe un certificato ACM in
-    # us-east-1 (vincolo di CloudFront), e i due modi si escludono a vicenda.
-    cloudfront_default_certificate = true
+    # Dipende dalla VALIDAZIONE, non dal certificato: CloudFront rifiuta un
+    # certificato non ancora emesso, e senza questo riferimento Terraform
+    # proverebbe ad agganciarlo troppo presto.
+    acm_certificate_arn      = aws_acm_certificate_validation.landing.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 }
 

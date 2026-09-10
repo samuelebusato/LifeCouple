@@ -12,7 +12,9 @@ Terraform e si applica. Disegno e alternative scartate in `History.md` **D-125**
 | Regione | `eu-west-1` |
 | Bucket | `lifecouple-landing-790304250429` (privato: legge solo CloudFront, via OAC) |
 | Distribuzione | `E24HEU9QRSMF0N` |
-| URL | <https://d2ehd6ideoltsh.cloudfront.net> — nessun dominio, per ora |
+| URL | <https://lifecouple.heleox.it> (e <https://d2ehd6ideoltsh.cloudfront.net>, sempre valido) |
+| DNS | `heleox.it` sta su **Cloudflare**; il record è un CNAME **DNS only**, non proxied — vedi sotto |
+| Certificato | ACM in `us-east-1`, validazione DNS, gestito da Terraform |
 | Stato Terraform | `s3://heliox-terraform-state-790304250429/lifecouple/terraform.tfstate` |
 
 🔑 **Lo stato è separato da quello di HeleoX**: stesso bucket, **chiave diversa**.
@@ -50,6 +52,17 @@ Perché sono tre e non uno:
 ```bash
 aws s3 cp fonts/ s3://lifecouple-landing-790304250429/fonts/ --recursive --exclude "*" --include "*.woff2" --content-type "font/woff2" --cache-control "public, max-age=86400"
 ```
+
+## 🔴 Il record DNS deve restare "DNS only"
+
+Su Cloudflare il CNAME `lifecouple` → `d2ehd6ideoltsh.cloudfront.net` va tenuto
+con la **nuvoletta grigia**. Accendendola, Cloudflare entra nel percorso come
+destinatario dell'IP di ogni visitatore — un terzo che l'informativa non
+nomina — e può depositare il cookie `__cf_bm`, mentre la cookie policy linkata
+dal piede di quella pagina dichiara che nessuno segue chi legge (**D-126**).
+
+⚠️ Lo stesso vale per il **record di validazione** del certificato: proxiato,
+la validazione non passa mai, e il certificato non si rinnova.
 
 ## La favicon
 

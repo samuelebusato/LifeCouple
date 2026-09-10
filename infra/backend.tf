@@ -30,6 +30,21 @@ terraform {
   }
 }
 
+# CloudFront accetta certificati SOLO da us-east-1, ovunque viva il resto
+# dell'infrastruttura. Non e' una preferenza: e' un vincolo del servizio, e
+# per questo serve un secondo provider con alias invece di cambiare regione.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = {
+      Project   = "LifeCouple"
+      ManagedBy = "Terraform"
+    }
+  }
+}
+
 provider "aws" {
   region = "eu-west-1"
 
