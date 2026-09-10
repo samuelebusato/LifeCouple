@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="LifeCouple: il diario condiviso di due persone. Calendario, mappa dei vostri posti, liste, foto e giochi da fare insieme.">
+<meta name="description" content="LifeCouple: the shared diary of two people. A calendar, a map of your places, lists, photos and games to play together.">
 <title>LifeCouple</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -335,6 +335,15 @@ img { max-width: 100%; }
 </head>
 <body>
 
+<!-- 🔑 PAGINA IN INGLESE, per decisione dell'utente del 2026-09-10 (D-123):
+     la documentazione ufficiale di LifeCouple e' in inglese, e la vetrina lo e'
+     con lei. ⚠️ I testi che l'app mostra anche a schermo — il paragrafo di
+     Philippe, «All you need is your email and your partner», le tre eta' — sono
+     COPIATI da lib/i18n.ts (versione en), non ritradotti qui: una vetrina che
+     descrive il prodotto con parole diverse da quelle del prodotto racconta
+     un'altra app. Se cambiano li', vanno cambiati qui.
+     I commenti e i nomi delle classi restano in italiano: li legge chi sviluppa. -->
+
 <!-- L'emblema dell'app, con gli stessi tracciati di components/emblema.tsx:
      due cuori intrecciati — «due meta' che diventano una».
      ⚠️ Se cambia li', va cambiato qui. -->
@@ -357,12 +366,12 @@ img { max-width: 100%; }
         LifeCouple
       </span>
       <nav class="navigazione">
-        <a href="#schermate">Schermate</a>
-        <a href="#funzioni">Funzioni</a>
+        <a href="#schermate">Screens</a>
+        <a href="#funzioni">Features</a>
         <a href="#philippe">Philippe</a>
-        <a href="#principi">Come è fatta</a>
+        <a href="#principi">How it’s made</a>
       </nav>
-      <a class="bottone bottone--pieno" href="#scarica">Scarica</a>
+      <a class="bottone bottone--pieno" href="#scarica">Download</a>
     </div>
   </div>
 </header>
@@ -373,37 +382,37 @@ img { max-width: 100%; }
     <div class="apertura__lavata" aria-hidden="true"></div>
     <div class="guscio">
       <div class="apertura__testo">
-        <h1>Un posto solo <em>per voi due</em></h1>
+        <h1>A place just <em>for the two of you</em></h1>
         <p class="apertura__sotto">
-          Il calendario, la mappa dei vostri posti, le liste, le foto e i giochi da fare
-          insieme. Tutto quello che vivete in due, in un diario che non si svuota mai.
+          The calendar, the map of your places, the lists, the photos and the games to play
+          together. Everything the two of you live, in a diary that never empties.
         </p>
         <div class="apertura__azioni">
           <a class="bottone bottone--pieno" href="#scarica">
             <svg width="17" height="20" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true">
               <path d="M13.9 10.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.9-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2-1.1 2.8-2.2.9-1.2 1.2-2.5 1.3-2.5-.1 0-2.5-1-2.5-3.4ZM11.6 3.3c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.7-1.3Z"/>
             </svg>
-            Scarica l'app
+            Download the app
           </a>
-          <a class="bottone bottone--vetro" href="#schermate">Guarda le schermate</a>
+          <a class="bottone bottone--vetro" href="#schermate">See the screens</a>
         </div>
-        <p class="apertura__nota">Per iOS e Android · Si entra in due, con un invito</p>
+        <p class="apertura__nota">For iOS and Android · You come in as two, with an invitation</p>
       </div>
 
       <div class="scena">
         <article class="fluttuante fluttuante--sx">
-          <span class="etichetta">Prossimo in calendario</span>
-          <span class="fluttuante__titolo">Weekend a Lisbona</span>
+          <span class="etichetta">Next on the calendar</span>
+          <span class="fluttuante__titolo">Weekend in Lisbon</span>
           <div class="s-riga">
             <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">✈</span>
-            <p>19 settembre · tutto il giorno</p>
+            <p>19 September · all day</p>
           </div>
         </article>
 
         <article class="fluttuante fluttuante--dx">
-          <span class="etichetta">Insieme da</span>
-          <span class="fluttuante__titolo">1.178 giorni</span>
-          <p>Il conto parte dal giorno che scegliete voi, anche molto indietro nel tempo.</p>
+          <span class="etichetta">Together for</span>
+          <span class="fluttuante__titolo">1,178 days</span>
+          <p>The count starts from the day you choose, however far back it is.</p>
         </article>
 
         <div class="scena__telefoni">
@@ -412,10 +421,10 @@ img { max-width: 100%; }
             <div class="telefono__vetro">
               <div class="telefono__tacca"></div>
               <div class="schermo">
-                <div class="s-titolo">Settembre 2026</div>
+                <div class="s-titolo">September 2026</div>
                 <div class="s-carta">
                   <div class="s-mese">
-                    <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+                    <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
                     <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span class="oggi">7</span>
                     <span>8</span><span>9</span><span>10</span><span class="segnato">11</span><span>12</span><span>13</span><span>14</span>
                     <span>15</span><span>16</span><span>17</span><span>18</span><span class="segnato">19</span><span>20</span><span>21</span>
@@ -423,18 +432,18 @@ img { max-width: 100%; }
                   </div>
                 </div>
                 <div class="s-carta" style="display:grid; gap:7px;">
-                  <span class="s-eyebrow">Questo mese</span>
+                  <span class="s-eyebrow">This month</span>
                   <div class="s-riga">
                     <span class="s-punto" style="background: var(--impegno-f); color: var(--impegno-t);">◆</span>
-                    <span class="s-voce"><b>Cena da Nonna Rosa</b><span class="s-testo">Ven 11 · 20:00</span></span>
+                    <span class="s-voce"><b>Dinner at Nonna Rosa’s</b><span class="s-testo">Fri 11 · 20:00</span></span>
                   </div>
                   <div class="s-riga">
                     <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">✈</span>
-                    <span class="s-voce"><b>Weekend a Lisbona</b><span class="s-testo">Sab 19 · 07:30</span></span>
+                    <span class="s-voce"><b>Weekend in Lisbon</b><span class="s-testo">Sat 19 · 07:30</span></span>
                   </div>
                   <div class="s-riga">
                     <span class="s-punto" style="background: var(--romantico-f); color: var(--romantico-t);">♥</span>
-                    <span class="s-voce"><b>Anniversario</b><span class="s-testo">Dom 27 · tutto il giorno</span></span>
+                    <span class="s-voce"><b>Anniversary</b><span class="s-testo">Sun 27 · all day</span></span>
                   </div>
                 </div>
                 <div class="s-barra"><span></span><span class="attivo"></span><span></span><span></span><span></span></div>
@@ -448,26 +457,26 @@ img { max-width: 100%; }
               <div class="telefono__tacca" aria-hidden="true"></div>
               <div class="schermo">
                 <div style="text-align:center; display:grid; gap:1px;">
-                  <span class="s-eyebrow">Insieme da</span>
-                  <span class="s-titolo" style="font-size:17px;">1.178 giorni</span>
+                  <span class="s-eyebrow">Together for</span>
+                  <span class="s-titolo" style="font-size:17px;">1,178 days</span>
                 </div>
-                <img class="s-philippe" src="immagini/philippe-adulto.png" alt="Philippe, la lontra che vive nella schermata di casa">
+                <img class="s-philippe" src="immagini/philippe-adulto.png" alt="Philippe, the otter who lives on the home screen">
                 <div class="s-carta" style="display:grid; gap:5px;">
-                  <span class="s-testo" style="text-align:center;">Mancano 250 punti e Philippe cresce</span>
+                  <span class="s-testo" style="text-align:center;">250 points and Philippe grows</span>
                   <div class="s-progresso"><i style="width:62%"></i></div>
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                   <div class="s-carta" style="display:grid; gap:1px;">
-                    <span class="s-eyebrow">Posti visitati</span>
+                    <span class="s-eyebrow">Places visited</span>
                     <span class="s-titolo" style="font-size:15px;">12</span>
                   </div>
                   <div class="s-carta" style="display:grid; gap:1px;">
-                    <span class="s-eyebrow">Ultimo film</span>
+                    <span class="s-eyebrow">Last film</span>
                     <span style="font-size:9px; font-weight:700;">La La Land</span>
                   </div>
                 </div>
                 <div class="s-carta" style="display:grid; gap:4px;">
-                  <span class="s-eyebrow">Un ricordo</span>
+                  <span class="s-eyebrow">A memory</span>
                   <div class="s-foto">
                     <span style="background: var(--vacanza-f);"></span>
                     <span style="background: var(--speciale-f);"></span>
@@ -484,20 +493,20 @@ img { max-width: 100%; }
             <div class="telefono__vetro">
               <div class="telefono__tacca"></div>
               <div class="schermo">
-                <div class="s-titolo">Liste</div>
-                <span class="s-testo" style="margin-top:-5px;">Le cose che volete fare, in un posto solo.</span>
+                <div class="s-titolo">Lists</div>
+                <span class="s-testo" style="margin-top:-5px;">The things you want to do, all in one place.</span>
                 <div class="s-carta" style="background: var(--romantico-f); display:grid; gap:3px;">
-                  <span class="s-eyebrow" style="color: var(--romantico-t);">4 voci</span>
-                  <span class="s-titolo" style="color: var(--romantico-t);">Film</span>
-                  <span style="font-size:8px; color: var(--romantico-t); opacity:.85;">1 su 4 — ci siete quasi</span>
+                  <span class="s-eyebrow" style="color: var(--romantico-t);">4 entries</span>
+                  <span class="s-titolo" style="color: var(--romantico-t);">Films</span>
+                  <span style="font-size:8px; color: var(--romantico-t); opacity:.85;">1 of 4 — almost there</span>
                 </div>
                 <div class="s-carta" style="background: var(--vacanza-f); display:grid; gap:3px;">
-                  <span class="s-eyebrow" style="color: var(--vacanza-t);">3 voci</span>
-                  <span class="s-titolo" style="color: var(--vacanza-t);">Viaggi</span>
+                  <span class="s-eyebrow" style="color: var(--vacanza-t);">3 entries</span>
+                  <span class="s-titolo" style="color: var(--vacanza-t);">Trips</span>
                 </div>
                 <div class="s-carta" style="background: var(--speciale-f); display:grid; gap:3px;">
-                  <span class="s-eyebrow" style="color: var(--speciale-t);">2 voci</span>
-                  <span class="s-titolo" style="color: var(--speciale-t);">Ristoranti</span>
+                  <span class="s-eyebrow" style="color: var(--speciale-t);">2 entries</span>
+                  <span class="s-titolo" style="color: var(--speciale-t);">Restaurants</span>
                 </div>
                 <div class="s-barra"><span></span><span></span><span></span><span></span><span class="attivo"></span></div>
               </div>
@@ -514,9 +523,9 @@ img { max-width: 100%; }
   <section class="sezione schermate" id="schermate">
     <div class="guscio">
       <div class="sezione__intestazione">
-        <span class="etichetta">Le schermate</span>
-        <h2>Sei sezioni, e si arriva ovunque in un tocco</h2>
-        <p>La barra in basso è sempre lì. Si apre sul diario, e il resto è a una riga di distanza.</p>
+        <span class="etichetta">The screens</span>
+        <h2>Six sections, and everywhere is one tap away</h2>
+        <p>The bar at the bottom is always there. It opens on the diary, and the rest is one row away.</p>
       </div>
 
       <div class="vetrina">
@@ -526,34 +535,34 @@ img { max-width: 100%; }
             <div class="telefono__vetro">
               <div class="telefono__tacca" aria-hidden="true"></div>
               <div class="schermo">
-                <div class="s-titolo">Diario</div>
+                <div class="s-titolo">Diary</div>
                 <div class="s-carta" style="padding:0; overflow:hidden;">
                   <span style="display:block; height:54px; background: linear-gradient(120deg, var(--vacanza-f), var(--impegno-f));"></span>
                   <div style="padding:8px 9px 9px; display:grid; gap:3px;">
-                    <span class="s-eyebrow">Sab 19 settembre</span>
-                    <b style="font-size:11px;">Weekend a Lisbona</b>
-                    <span class="s-testo">Tre giorni, un tram giallo e troppa pastelería.</span>
+                    <span class="s-eyebrow">Sat 19 September</span>
+                    <b style="font-size:11px;">Weekend in Lisbon</b>
+                    <span class="s-testo">Three days, a yellow tram and too much pastelería.</span>
                   </div>
                 </div>
                 <div class="s-carta" style="display:grid; gap:5px;">
-                  <span class="s-eyebrow">Dom 27 settembre</span>
-                  <b style="font-size:11px;">Anniversario</b>
+                  <span class="s-eyebrow">Sun 27 September</span>
+                  <b style="font-size:11px;">Anniversary</b>
                   <div class="s-riga">
                     <span class="s-punto" style="background: var(--romantico-f); color: var(--romantico-t);">♥</span>
-                    <span class="s-testo">2 commenti</span>
+                    <span class="s-testo">2 comments</span>
                   </div>
                 </div>
                 <div class="s-carta" style="display:grid; gap:4px;">
-                  <span class="s-eyebrow">Ven 11 settembre</span>
-                  <b style="font-size:11px;">Cena da Nonna Rosa</b>
+                  <span class="s-eyebrow">Fri 11 September</span>
+                  <b style="font-size:11px;">Dinner at Nonna Rosa’s</b>
                 </div>
                 <div class="s-barra"><span class="attivo"></span><span></span><span></span><span></span><span></span><span></span></div>
               </div>
             </div>
           </div>
           <figcaption>
-            <b>Il diario</b>
-            <span>In ordine di tempo, con le vostre foto e i vostri commenti.</span>
+            <b>The diary</b>
+            <span>In order of time, with your photos and your comments.</span>
           </figcaption>
         </figure>
 
@@ -563,10 +572,10 @@ img { max-width: 100%; }
             <div class="telefono__vetro">
               <div class="telefono__tacca" aria-hidden="true"></div>
               <div class="schermo">
-                <div class="s-titolo">Settembre 2026</div>
+                <div class="s-titolo">September 2026</div>
                 <div class="s-carta">
                   <div class="s-mese">
-                    <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+                    <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
                     <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span class="oggi">7</span>
                     <span>8</span><span>9</span><span>10</span><span class="segnato">11</span><span>12</span><span>13</span><span>14</span>
                     <span>15</span><span>16</span><span>17</span><span>18</span><span class="segnato">19</span><span>20</span><span>21</span>
@@ -577,15 +586,15 @@ img { max-width: 100%; }
                 <div class="s-carta" style="display:grid; gap:7px;">
                   <div class="s-riga">
                     <span class="s-punto" style="background: var(--impegno-f); color: var(--impegno-t);">◆</span>
-                    <span class="s-voce"><b>Cena da Nonna Rosa</b><span class="s-testo">20:00 · 2 ore</span></span>
+                    <span class="s-voce"><b>Dinner at Nonna Rosa’s</b><span class="s-testo">20:00 · 2 hours</span></span>
                   </div>
                   <div class="s-riga">
                     <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">✈</span>
-                    <span class="s-voce"><b>Weekend a Lisbona</b><span class="s-testo">07:30 · tre giorni</span></span>
+                    <span class="s-voce"><b>Weekend in Lisbon</b><span class="s-testo">07:30 · three days</span></span>
                   </div>
                   <div class="s-riga">
                     <span class="s-punto" style="background: var(--romantico-f); color: var(--romantico-t);">♥</span>
-                    <span class="s-voce"><b>Anniversario</b><span class="s-testo">Tutto il giorno</span></span>
+                    <span class="s-voce"><b>Anniversary</b><span class="s-testo">All day</span></span>
                   </div>
                 </div>
                 <div class="s-barra"><span></span><span class="attivo"></span><span></span><span></span><span></span><span></span></div>
@@ -593,8 +602,8 @@ img { max-width: 100%; }
             </div>
           </div>
           <figcaption>
-            <b>Il calendario</b>
-            <span>Un'agenda che vedete in due, coi colori per tipo di serata.</span>
+            <b>The calendar</b>
+            <span>A diary the two of you share, with a colour for each kind of evening.</span>
           </figcaption>
         </figure>
 
@@ -614,13 +623,13 @@ img { max-width: 100%; }
                   <span class="s-pin" style="left:76%; top:28%; background: var(--speciale-t);"></span>
                   <span class="s-pin" style="left:38%; top:62%; background: #b9a8b3;"></span>
                   <div style="position:absolute; left:9px; right:9px; top:9px; display:flex; gap:4px; background: var(--carta); border-radius:999px; padding:4px; box-shadow: var(--ombra-bassa);">
-                    <span style="flex:1; text-align:center; font-size:8px; font-weight:700; background: var(--accento); color:#ffffff; border-radius:999px; padding:3px 0;">Mappa</span>
-                    <span style="flex:1; text-align:center; font-size:8px; color: var(--tenue); padding:3px 0;">Elenco</span>
+                    <span style="flex:1; text-align:center; font-size:8px; font-weight:700; background: var(--accento); color:#ffffff; border-radius:999px; padding:3px 0;">Map</span>
+                    <span style="flex:1; text-align:center; font-size:8px; color: var(--tenue); padding:3px 0;">List</span>
                   </div>
                   <div class="s-carta" style="position:absolute; left:9px; right:9px; bottom:9px;">
                     <div class="s-riga">
                       <span class="s-punto" style="background: var(--vacanza-f); color: var(--vacanza-t);">◉</span>
-                      <span class="s-voce"><b>Lago di Braies</b><span class="s-testo">Ci siete stati · 12 luglio</span></span>
+                      <span class="s-voce"><b>Lake Braies</b><span class="s-testo">You’ve been · 12 July</span></span>
                     </div>
                   </div>
                 </div>
@@ -629,8 +638,8 @@ img { max-width: 100%; }
             </div>
           </div>
           <figcaption>
-            <b>La mappa</b>
-            <span>Dove siete stati e dove volete andare. Il pin dice quale delle due.</span>
+            <b>The map</b>
+            <span>Where you’ve been and where you want to go. The pin says which of the two.</span>
           </figcaption>
         </figure>
 
@@ -640,26 +649,26 @@ img { max-width: 100%; }
             <div class="telefono__vetro">
               <div class="telefono__tacca" aria-hidden="true"></div>
               <div class="schermo">
-                <div class="s-titolo">Giochi</div>
-                <span class="s-testo" style="margin-top:-5px;">Si risponde in segreto, si scopre insieme.</span>
+                <div class="s-titolo">Games</div>
+                <span class="s-testo" style="margin-top:-5px;">You answer in secret, you find out together.</span>
                 <div class="s-giochi">
-                  <div class="s-gioco" style="background: var(--romantico-f); color: var(--romantico-t);"><span style="font-size:15px;">✎</span><b>Disegno</b></div>
+                  <div class="s-gioco" style="background: var(--romantico-f); color: var(--romantico-t);"><span style="font-size:15px;">✎</span><b>Drawing</b></div>
                   <div class="s-gioco" style="background: var(--impegno-f); color: var(--impegno-t);"><span style="font-size:15px;">?</span><b>Quiz</b></div>
-                  <div class="s-gioco" style="background: var(--vacanza-f); color: var(--vacanza-t);"><span style="font-size:15px;">◎</span><b>Telepatia</b></div>
-                  <div class="s-gioco" style="background: var(--speciale-f); color: var(--speciale-t);"><span style="font-size:15px;">✦</span><b>Obbligo o verità</b></div>
+                  <div class="s-gioco" style="background: var(--vacanza-f); color: var(--vacanza-t);"><span style="font-size:15px;">◎</span><b>Telepathy</b></div>
+                  <div class="s-gioco" style="background: var(--speciale-f); color: var(--speciale-t);"><span style="font-size:15px;">✦</span><b>Truth or dare</b></div>
                 </div>
                 <div class="s-carta" style="display:grid; gap:5px;">
-                  <span class="s-eyebrow">Punteggio della coppia</span>
+                  <span class="s-eyebrow">The couple’s score</span>
                   <div class="s-progresso"><i style="width:62%"></i></div>
-                  <span class="s-testo">Nessuno dei due vince contro l'altro.</span>
+                  <span class="s-testo">Neither of you wins against the other.</span>
                 </div>
                 <div class="s-barra"><span></span><span></span><span class="attivo"></span><span></span><span></span><span></span></div>
               </div>
             </div>
           </div>
           <figcaption>
-            <b>I giochi</b>
-            <span>Quattro modi di scoprire quanto vi conoscete, senza classifiche.</span>
+            <b>The games</b>
+            <span>Four ways to find out how well you know each other, with no leaderboards.</span>
           </figcaption>
         </figure>
 
@@ -669,29 +678,29 @@ img { max-width: 100%; }
             <div class="telefono__vetro">
               <div class="telefono__tacca" aria-hidden="true"></div>
               <div class="schermo">
-                <div class="s-titolo">Film</div>
-                <span class="s-testo" style="margin-top:-5px;">1 su 4 — ci siete quasi</span>
+                <div class="s-titolo">Films</div>
+                <span class="s-testo" style="margin-top:-5px;">1 of 4 — almost there</span>
                 <div class="s-carta" style="display:grid; gap:8px;">
                   <div class="s-riga">
                     <span style="width:23px; height:32px; border-radius:4px; background: linear-gradient(160deg, var(--impegno-f), var(--romantico-f)); flex:none;"></span>
-                    <span class="s-voce"><b>La La Land</b><span class="s-testo">★★★★☆ · la vostra recensione</span></span>
+                    <span class="s-voce"><b>La La Land</b><span class="s-testo">★★★★☆ · your review</span></span>
                   </div>
                   <div class="s-riga">
                     <span style="width:23px; height:32px; border-radius:4px; background: linear-gradient(160deg, var(--speciale-f), var(--vacanza-f)); flex:none;"></span>
-                    <span class="s-voce"><b>Past Lives</b><span class="s-testo">Da vedere</span></span>
+                    <span class="s-voce"><b>Past Lives</b><span class="s-testo">To watch</span></span>
                   </div>
                 </div>
                 <div class="s-carta" style="display:grid; gap:4px;">
-                  <span class="s-eyebrow">Aggiungi</span>
-                  <span class="s-testo">Scrivi tre lettere e arriva la locandina.</span>
+                  <span class="s-eyebrow">Add</span>
+                  <span class="s-testo">Type three letters and the poster arrives.</span>
                 </div>
                 <div class="s-barra"><span></span><span></span><span></span><span></span><span class="attivo"></span><span></span></div>
               </div>
             </div>
           </div>
           <figcaption>
-            <b>Le liste</b>
-            <span>Film, viaggi, ristoranti — con le vostre stelle e le vostre recensioni.</span>
+            <b>The lists</b>
+            <span>Films, trips, restaurants — with your stars and your reviews.</span>
           </figcaption>
         </figure>
 
@@ -701,9 +710,9 @@ img { max-width: 100%; }
             <div class="telefono__vetro">
               <div class="telefono__tacca" aria-hidden="true"></div>
               <div class="schermo">
-                <div class="s-titolo">Galleria</div>
+                <div class="s-titolo">Gallery</div>
                 <div class="s-carta" style="display:grid; gap:5px;">
-                  <span class="s-eyebrow">Lisbona · 24 foto</span>
+                  <span class="s-eyebrow">Lisbon · 24 photos</span>
                   <div class="s-foto">
                     <span style="background: var(--vacanza-f);"></span>
                     <span style="background: var(--speciale-f);"></span>
@@ -714,7 +723,7 @@ img { max-width: 100%; }
                   </div>
                 </div>
                 <div class="s-carta" style="display:grid; gap:5px;">
-                  <span class="s-eyebrow">Anniversario · 8 foto</span>
+                  <span class="s-eyebrow">Anniversary · 8 photos</span>
                   <div class="s-foto">
                     <span style="background: var(--romantico-f);"></span>
                     <span style="background: var(--speciale-f);"></span>
@@ -726,8 +735,8 @@ img { max-width: 100%; }
             </div>
           </div>
           <figcaption>
-            <b>La galleria</b>
-            <span>Le foto in cartelle, agganciate agli eventi e ai posti.</span>
+            <b>The gallery</b>
+            <span>Photos in folders, attached to events and places.</span>
           </figcaption>
         </figure>
       </div>
@@ -738,9 +747,9 @@ img { max-width: 100%; }
   <section class="sezione" id="funzioni">
     <div class="guscio">
       <div class="sezione__intestazione">
-        <span class="etichetta">Cosa c'è dentro</span>
-        <h2>Niente da configurare</h2>
-        <p>Si crea lo spazio, si manda l'invito, e da lì funziona tutto.</p>
+        <span class="etichetta">What’s inside</span>
+        <h2>Nothing to set up</h2>
+        <p>You create the space, you send the invitation, and from there everything works.</p>
       </div>
 
       <div class="funzioni">
@@ -748,40 +757,40 @@ img { max-width: 100%; }
           <span class="funzione__segno" style="background: var(--romantico-f); color: var(--romantico-t);">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
           </span>
-          <h3>Il diario</h3>
-          <p>Tutto quello che vivete insieme, in ordine di tempo e con le vostre foto. È la prima cosa che si apre, e non si svuota mai.</p>
+          <h3>The diary</h3>
+          <p>Everything you live together, in order of time and with your photos. It is the first thing that opens, and it never empties.</p>
         </article>
 
         <article class="funzione">
           <span class="funzione__segno" style="background: var(--impegno-f); color: var(--impegno-t);">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
           </span>
-          <h3>Il calendario</h3>
-          <p>Impegni, serate e vacanze in un'agenda che vedete in due. Si importa quello che avete già sul telefono, scegliendo cosa condividere.</p>
+          <h3>The calendar</h3>
+          <p>Plans, evenings and holidays in a diary the two of you share. You can import what is already on your phone, choosing what to share.</p>
         </article>
 
         <article class="funzione">
           <span class="funzione__segno" style="background: var(--vacanza-f); color: var(--vacanza-t);">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
           </span>
-          <h3>La mappa</h3>
-          <p>Dove siete stati e dove volete andare, sulla stessa mappa. Un posto desiderato diventa visitato quando lo spuntate, e resta lì.</p>
+          <h3>The map</h3>
+          <p>Where you have been and where you want to go, on the same map. A place you wished for becomes a place you visited when you tick it off, and it stays there.</p>
         </article>
 
         <article class="funzione">
           <span class="funzione__segno" style="background: var(--speciale-f); color: var(--speciale-t);">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>
           </span>
-          <h3>Le liste</h3>
-          <p>Film, viaggi, ristoranti — e tutte quelle che volete aggiungere. I film arrivano con la locandina, e le recensioni restano vostre.</p>
+          <h3>The lists</h3>
+          <p>Films, trips, restaurants — and any others you want to add. Films arrive with their poster, and the reviews stay yours.</p>
         </article>
 
         <article class="funzione">
           <span class="funzione__segno" style="background: var(--impegno-f); color: var(--impegno-t);">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.2 4.8L19 10l-4.8 2.2L12 17l-2.2-4.8L5 10l4.8-2.2Z"/><path d="M18.5 16.5 19 18l1.5.5L19 19l-.5 1.5L18 19l-1.5-.5L18 18Z"/></svg>
           </span>
-          <h3>I giochi</h3>
-          <p>Quiz, disegni, telepatia, obbligo o verità. Si risponde in segreto e si scopre insieme — e nessuno dei due vince contro l'altro.</p>
+          <h3>The games</h3>
+          <p>Quizzes, drawings, telepathy, truth or dare. You answer in secret and find out together — and neither of you wins against the other.</p>
         </article>
 
         <article class="funzione">
@@ -789,7 +798,7 @@ img { max-width: 100%; }
             <img src="immagini/philippe-cucciolo.png" alt="">
           </span>
           <h3>Philippe</h3>
-          <p>Una lontra che vive nella schermata di casa e diventa più grande quando fate cose insieme davvero. <a href="#philippe">La sua storia è qui sotto.</a></p>
+          <p>An otter who lives on the home screen and gets bigger when you really do things together. <a href="#philippe">His story is just below.</a></p>
         </article>
       </div>
     </div>
@@ -803,12 +812,12 @@ img { max-width: 100%; }
   <section class="sezione philippe" id="philippe">
     <div class="guscio">
       <div class="sezione__intestazione">
-        <span class="etichetta">La mascotte</span>
-        <h2>Lui è Philippe</h2>
+        <span class="etichetta">The mascot</span>
+        <h2>This is Philippe</h2>
         <p>
-          Una lontra che vive con voi e cresce insieme a voi. Ogni gioco che fate,
-          ogni posto in cui andate davvero, ogni cosa che spuntate dalle vostre liste
-          lo fa diventare un po' più grande.
+          An otter who lives with you and grows up alongside you. Every game you play,
+          every place you actually go, everything you tick off your lists makes him a
+          little bigger.
         </p>
       </div>
 
@@ -816,18 +825,18 @@ img { max-width: 100%; }
       <div class="eta">
         <figure>
           <img class="eta__1" src="immagini/philippe-cucciolo.png"
-               alt="Philippe da cucciolo, col ciuccio, che tiene il suo sasso">
-          <figcaption>Cucciolo</figcaption>
+               alt="Philippe as a cub, with his dummy, holding his stone">
+          <figcaption>Cub</figcaption>
         </figure>
         <figure>
           <img class="eta__2" src="immagini/philippe-giovane.png"
-               alt="Philippe da giovane, col cappellino al contrario, che tiene il suo sasso">
-          <figcaption>Giovane</figcaption>
+               alt="Philippe as a young one, with his cap on backwards, holding his stone">
+          <figcaption>Young</figcaption>
         </figure>
         <figure>
           <img class="eta__3" src="immagini/philippe-adulto.png"
-               alt="Philippe adulto, con gli occhiali tondi, che tiene il suo sasso">
-          <figcaption class="ora">Adulto</figcaption>
+               alt="Philippe grown up, with his round glasses, holding his stone">
+          <figcaption class="ora">Grown up</figcaption>
         </figure>
       </div>
 
@@ -842,12 +851,11 @@ img { max-width: 100%; }
               <path d="M12 15.7v3.9"/>
             </svg>
           </span>
-          <h3>Perché proprio una lontra</h3>
+          <h3>Why an otter</h3>
           <p>
-            Le lontre di mare dormono galleggiando sulla schiena, e per non allontanarsi
-            con la corrente <b>si tengono per la zampa</b>. È il modo più semplice che
-            conosciamo di dire <em>restiamo vicini</em> — anche mentre non si sta
-            facendo niente.
+            Sea otters sleep floating on their backs, and to keep the current from pulling
+            them apart <b>they hold paws</b>. It is the simplest way we know of saying
+            <em>let’s stay close</em> — even while nothing at all is happening.
           </p>
         </article>
 
@@ -859,12 +867,12 @@ img { max-width: 100%; }
               <path d="M9.1 10.6c.7-.3 1.5 0 1.8.7"/>
             </svg>
           </span>
-          <h3>Il sasso che non lascia mai</h3>
+          <h3>The stone he never lets go of</h3>
           <p>
-            Ogni lontra ne ha uno preferito: se lo tiene in una piega di pelle sotto la
-            zampa e se lo porta dietro per anni, a volte per tutta la vita. Guardate le
-            tre figure qui sopra — Philippe cambia taglia, perde il ciuccio, mette gli
-            occhiali. <b>Il sasso è sempre lo stesso.</b>
+            Every otter has a favourite one: it keeps it in a fold of skin under its arm and
+            carries it around for years, sometimes for life. Look at the three figures
+            above — Philippe changes size, loses the dummy, puts on glasses.
+            <b>The stone is always the same one.</b>
           </p>
         </article>
 
@@ -877,11 +885,11 @@ img { max-width: 100%; }
               <path d="M12 4.4v5.4M14.9 6.3 12 9.8 9.1 6.3"/>
             </svg>
           </span>
-          <h3>Cresce e basta</h3>
+          <h3>He only grows</h3>
           <p>
-            Non deperisce, non si ammala, non vi rimprovera se sparite per un mese.
-            Non c'è nessun modo di far stare male Philippe e niente da ricordarsi di
-            fare: <b>quando tornate, riprende da dov'era.</b>
+            He does not waste away, does not fall ill, does not scold you if you disappear
+            for a month. There is no way to make Philippe unhappy and nothing to
+            remember to do: <b>when you come back, he picks up where he was.</b>
           </p>
         </article>
       </div>
@@ -892,34 +900,35 @@ img { max-width: 100%; }
   <section class="sezione" id="principi">
     <div class="guscio">
       <div class="sezione__intestazione">
-        <span class="etichetta">Come è fatta</span>
-        <h2>Tre scelte che non cambieremo</h2>
+        <span class="etichetta">How it’s made</span>
+        <h2>Three choices we will not change</h2>
       </div>
 
       <div class="principi">
         <article class="principio">
-          <h3>Si è in due, e si resta in due</h3>
+          <h3>Two of you, and it stays two</h3>
           <p>
-            Uno spazio è di due persone: si entra con un invito che vale 72 ore e si usa
-            una volta sola. Non ci sono profili pubblici, non ci sono follower, e non c'è
-            niente da mostrare a nessun altro.
+            A space belongs to two people: you come in with an invitation that lasts 72 hours
+            and works once. There are no public profiles, no followers, and nothing to
+            show anybody else.
           </p>
         </article>
 
         <article class="principio">
-          <h3>Nessuna classifica fra voi</h3>
+          <h3>No leaderboard between you</h3>
           <p>
-            Il punteggio è della coppia, mai di uno contro l'altro. Nei giochi si risponde
-            in segreto e si scopre insieme: si vince o si perde in due, e il più delle
-            volte non si fa né l'uno né l'altro.
+            The score belongs to the couple, never to one of you against the other. In the
+            games you answer in secret and find out together: you win or lose as two, and
+            most of the time you do neither.
           </p>
         </article>
 
         <article class="principio">
-          <h3>I vostri ricordi restano vostri</h3>
+          <h3>Your memories stay yours</h3>
           <p>
-            Quello che caricate si scarica in un file quando volete. L'account si cancella
-            dall'app, senza scrivere a nessuno — e quando lo fate, sparisce davvero.
+            What you upload comes back out as a file whenever you want. The account is deleted
+            from inside the app, without writing to anyone — and when you do it, it really
+            does disappear.
           </p>
         </article>
       </div>
@@ -931,10 +940,10 @@ img { max-width: 100%; }
     <div class="guscio">
       <div class="chiusura__riquadro">
         <svg viewBox="0 0 100 100" style="width:64px; height:64px; color: var(--accento);" aria-hidden="true"><use href="#emblema"></use></svg>
-        <h2>Bastano la tua email<br>e il tuo partner</h2>
+        <h2>All you need is your email<br>and your partner</h2>
         <p>
-          Crei il tuo spazio, mandi l'invito, e il diario comincia dal giorno che
-          scegliete voi — anche se è molto indietro nel tempo.
+          You create your space, you send the invitation, and the diary starts from the day
+          the two of you choose — however far back that is.
         </p>
         <div class="apertura__azioni">
           <a class="bottone bottone--pieno" href="#scarica">
@@ -961,12 +970,14 @@ img { max-width: 100%; }
       <svg viewBox="0 0 100 100" style="width:26px; height:26px;" aria-hidden="true"><use href="#emblema"></use></svg>
       LifeCouple
     </span>
-    <p>Di F.R. di Busato Fausto</p>
+    <p>By F.R. di Busato Fausto</p>
     <nav>
-      <a href="#schermate">Schermate</a>
-      <a href="#funzioni">Funzioni</a>
+      <a href="#schermate">Screens</a>
+      <a href="#funzioni">Features</a>
       <a href="#philippe">Philippe</a>
-      <a href="#principi">Come è fatta</a>
+      <a href="#principi">How it’s made</a>
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="cookie-policy.html">Cookie Policy</a>
     </nav>
   </div>
 </footer>
