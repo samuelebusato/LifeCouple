@@ -198,6 +198,80 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 
 ---
 
+## 7-bis. Il piano operativo, aggiornato al 2026-09-10
+
+> §7 dice **perché** l'ordine è quello. Questa sezione dice **cosa fare**, nello stato in cui il progetto si trova stasera. Le voci barrate qui sotto sono chiuse oggi.
+
+**Cosa è cambiato oggi, e cambia il piano:**
+
+- ✅ **La landing è pubblicata** — gli URL di informativa e cookie policy esistono. Era una voce bloccante.
+- ✅ 🔑 **Il muro §1.2 (TMDB) non si applica più.** Nascondendo la lista film (**D-127**) l'app non chiama TMDB e non disegna locandine: non c'è uso commerciale da licenziare. Non è risolto, è **tolto dal percorso** — che per pubblicare è la stessa cosa.
+- ✅ **Abbonamento Apple Developer pagato** e **contratto Paid Apps firmato**.
+- 🔴 Resta il muro §1.1: la cancellazione account è **costruita e mai provata**.
+
+### Adesso — le tre cose che hanno una coda dietro
+
+1. **Verificare che Paid Apps risulti ATTIVO**, non in attesa. ⚠️ La firma è uno dei tre pezzi: mancano spesso **banca** e **moduli fiscali**, e finché non è attivo gli abbonamenti non si creano né si vendono — quindi RevenueCat resta fermo comunque.
+2. **Primo messaggio ai 12 tester di Google.** ~3 settimane non comprimibili (14 giorni di permanenza + fino a 7 di revisione): è la coda più lunga rimasta, e ogni giorno di ritardo si somma in fondo. 🔑 Sono anche gli unici che possono collaudare l'app, che da soli non è collaudabile.
+3. **Registrare l'App ID `com.lifecouple.app` e creare la scheda app.** Non dipende da Paid Apps.
+4. **Controlli sul nome** — EUIPO classi 9 e 42, disponibilità sui due store, handle. Prima degli screenshot, o si rifanno.
+
+### Poi — la development build, che da sola ne sblocca tre
+
+⚠️ **Prima dei build, i secret su EAS**: le chiavi API non stanno nel repo e non passano da qui.
+
+```bash
+npx eas secret:list
+```
+
+5. **Android per primo**, perché non chiede nient'altro (il profilo `development` produce un APK installabile direttamente):
+
+```bash
+npx eas build --profile development --platform android
+```
+
+6. **iOS**: il profilo ha `simulator: false`, quindi è un build per telefono vero e i dispositivi vanno registrati prima.
+
+```bash
+npx eas device:create
+```
+
+```bash
+npx eas build --profile development --platform ios
+```
+
+**Con la build in mano si chiudono tre cose ferme da settimane:**
+
+7. I **tre testi dei permessi** (**B-20**) — mai visti da nessuno, e scritti **solo in italiano** mentre l'app è bilingue (D-18). Si guardano e si traducono nello stesso giro.
+8. L'**invito a valutare** sullo store (**D-122**), inerte in Expo Go per costruzione.
+9. L'**SDK di RevenueCat**, che è nativo e in Expo Go non gira.
+
+### I pagamenti, quando Paid Apps è attivo
+
+10. **Gruppo di abbonamento** e prodotto «Insieme» con Product ID, prezzo, localizzazioni.
+11. **In-App Purchase Key** (`.p8`) — 🔴 *si scarica una volta sola*; annotare Key ID e Issuer ID. Più l'**App-Specific Shared Secret**.
+12. **RevenueCat**: progetto, app App Store, caricamento della chiave, prodotti → **entitlement** → **offering**.
+13. **App Store Server Notifications** (v2, produzione **e** sandbox) con l'URL che dà RevenueCat.
+14. La **schermata del listino**, con i tre rifiuti banali già evitati: «Ripristina acquisti», cosa/quanto/per quanto **prima** del pagamento, link a termini e privacy **dentro quella schermata**.
+15. 🔴 **Il diritto a livello di coppia.** RevenueCat ragiona per *app user ID*: dirà che una persona ha l'entitlement, mai che «la coppia» ce l'ha. Estenderlo all'altro è logica in Supabase su webhook, e va progettata **insieme** allo scioglimento (D-04) e al rimborso — scritta dopo, è di nuovo un dato conteso da migrare (§3.2).
+
+### Le prove che altrimenti le fa fallire il revisore
+
+16. 🔴 **Cancellazione account end-to-end** su un account di prova — protocollo in [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md). È fra i primi controlli di Apple: non è un rischio, è un esito.
+17. 🔴 **Account demo già appaiato** per il revisore, che è **una persona sola** e con questa app da solo non fa niente. ⚠️ L'accesso è via codice email, che non può ricevere: serve una porta dedicata, progettata guardando il threat model.
+18. 🔴 **B-62 sullo storage** — `0037` è applicata e non provata: su una coppia sciolta l'autore deve ottenere l'URL firmato della propria foto e non di quella dell'altro.
+
+### Prima della sottomissione
+
+19. 🔴 **Le icone dell'app** — sono ancora il segnaposto Expo su tutte e tre le piattaforme. Il marchio esiste (l'emblema), mancano le misure.
+20. 🔴 **Indirizzo e telefono** per il DSA → sbloccano i **termini d'uso**, l'ultimo documento legale non reso.
+21. **Screenshot** (dopo il punto 4), moduli **Data safety** e **App Privacy**.
+22. **TestFlight / test chiuso**, poi invio.
+
+> 🔴 **E la condizione di §9 resta in piedi**: l'app non è verificata. I 12 tester del punto 2 sono la cosa che risolve insieme il requisito di Google e questa condizione — *è la ragione per cui stanno in cima e non in fondo.*
+
+---
+
 ## 8. Tempi
 
 ⚠️ **Sono stime, non misure**, e non vanno riportate in `Projects/elenco-progetti.md` come date: quel file vuole date vere.

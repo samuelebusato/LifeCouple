@@ -54,6 +54,12 @@ La confusione fra i tre è il rischio principale: un utente che preme «cancella
 | 5 | Il trigger `foto_pulisci_storage` (migrazione 0009) ripulisce eventuali `storage.objects` rimasti | Database |
 | 6 | **Rilegge e fallisce esplicitamente** se l'utente esiste ancora | Edge Function |
 
+⟳ **Aggiunto il 2026-09-10 — i token push.** La migrazione **0038** ha introdotto `dispositivo` (i token dei telefoni) e `preferenze_notifiche` (i consensi). ✅ **Entrambe pendono da `auth.users` con `on delete cascade`**, quindi il passo 4 se le porta via da sé e la Edge Function non è stata toccata.
+
+⚠️ **Ma questo documento andava aggiornato lo stesso, e la ragione non è formale.** È l'inventario che si esibisce per dimostrare l'art. 17: se elenca foto, file e contenuti e **tace su un identificativo di dispositivo**, la prova è incompleta anche nel momento in cui il codice fa la cosa giusta. 🔑 *Un inventario che non nomina un dato personale è il posto più tranquillo dove nasconderlo — e la 0038 lo dice in fondo a sé stessa, perché non dipendesse dalla memoria di nessuno.*
+
+🔑 **Lo scioglimento invece non tocca niente di tutto questo, ed è corretto**: il telefono resta di chi ce l'ha. Le notifiche che riguardano l'altro smettono da sé, perché chi le manda legge l'appartenenza **attiva**.
+
 🔑 **Perché il passo 2 non è rimpiazzabile dal trigger del passo 5.** Il trigger toglie la riga da `storage.objects`, il che rende il file **irraggiungibile** — non lo cancella. Il binario resta finché il fornitore non fa pulizia degli orfani. La migrazione 0009 lo scriveva e rimandava esplicitamente: *«il resto lo farà la cancellazione dell'account»*. Il passo 2 **è** quel resto.
 
 ### La divisione dei privilegi, e perché è questa

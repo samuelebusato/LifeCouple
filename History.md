@@ -28,6 +28,20 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-10 (5) — Le notifiche push: metà costruita, e la metà che manca è dichiarata
+
+**Chieste dall'utente**: tre notifiche — quando il partner segna un posto, «dov'eravate N anni fa», e un invito periodico a inserire nuovi viaggi. Disegno e vincoli in **D-128**.
+
+🔴 **La funzione NON è finita, e va detto prima di tutto il resto.** È costruito il lato app — tabelle, consensi, permesso, registrazione del dispositivo, interruttori — e **non è costruito l'invio**: nessuna Edge Function, nessun trigger, nessun lavoro pianificato. *Oggi una persona può accendere le notifiche e non riceverne nessuna.* ⚠️ Chi riprende deve saperlo, perché l'interfaccia esistente suggerisce il contrario.
+
+✅ **Applicata dall'utente**: `supabase/migrations/0038_notifiche_push.sql`. **Verificata contro il database**, non creduta sulla parola: `dispositivo` e `preferenze_notifiche` rispondono entrambe HTTP 200 via PostgREST. *È la stessa lezione della 0033, dove il database era avanti rispetto a quello che il PUNTO DI RIPRESA diceva.*
+
+**Scritto**: `lib/notifiche.ts` (permesso, token, hook dei consensi), la sezione in `app/impostazioni.tsx` con i tre interruttori, le stringhe **in entrambe le lingue**, il plugin e `POST_NOTIFICATIONS` in `app.json`. ⚠️ I tipi in `lib/database.types.ts` sono **scritti a mano e marcati** — il CLI Supabase non è collegato su questo dispositivo e non ha potuto rigenerarli. Vanno rigenerati al primo `supabase gen types typescript`.
+
+✅ `npx tsc --noEmit` esce **0**.
+
+🔴 **Niente di tutto questo è provabile senza una development build**: il push su iOS non funziona in Expo Go. È la terza funzione che aspetta quella decisione, dopo i permessi (B-20) e la valutazione (D-122).
+
 ### 2026-09-10 (4) — La landing è online, e i font non passano più da Google
 
 **Chiesto dall'utente**: pubblicare la landing su AWS, «lo stesso account usato per heleox». La premessa reggeva, con una precisazione: gli account sono **due**, e `fr-busato` sta sull'altro (`219712358948`) per scelta esplicita del suo `docs/deploy-aws.md` §1. Quello di HeleoX è `790304250429`, ed è dove la landing è finita.
@@ -570,6 +584,102 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-128 — Le tre notifiche push, e le tre cose che non fanno (2026-09-10)
+
+| Tipo | Cos'è | Consenso |
+|---|---|---|
+| `luogo_del_partner` | l'altro ha segnato un posto come visitato | servizio, **acceso** |
+| `ricordi` | «dov'eravate N anni fa», su eventi con la stessa data | servizio, **acceso** |
+| `inviti_a_tornare` | sollecito a inserire nuovi viaggi | 🔴 marketing, **spento** |
+
+#### 🔴 La prima non usa la posizione, ed è la decisione che pesa di più
+
+*«Una notifica quando si visita un posto»* si può leggere in due modi: **il telefono che se ne accorge** (geofencing, quindi posizione in background) oppure **il partner che segna il posto** (una riga scritta da una persona).
+
+⚠️ **Il primo modo ribalta il threat model.** `threat-model.md` §3 elenca, fra le mitigazioni **implementate** su TB-2, *«niente posizione in background, niente cronologia automatica»* — contro una minaccia che nomina per esteso: *intimate partner surveillance*, con la nota che le app di coppia ne sono un vettore documentato. E `app.json` disattiva `locationAlwaysPermission` di proposito.
+
+**Scelto il secondo**, dichiarandolo invece di dedurlo. 🔑 *Il geofencing resta possibile, ma è un'altra funzione e una decisione da prendere in `threat-model.md`, non un dettaglio di implementazione da sbrigare in un file di libreria.*
+
+#### Il consenso non è uno solo, e la ragione è giuridica
+
+I primi due raccontano qualcosa che la coppia **ha fatto**: sono comunicazioni di servizio, e nascono accese. Il terzo è un **sollecito a usare il prodotto** — promozionale a tutti gli effetti — e vuole un consenso **espresso**, non presunto da revocare.
+
+⚠️ Due ragioni indipendenti: le linee guida di Apple vietano il push promozionale senza consenso esplicito e revocabile, e la cookie policy dichiara *«no profiling [...] nothing follows you»*. **Un sollecito basato sull'inattività è la cosa più vicina alla profilazione che questa app avrà mai**: se si accende, lo accende chi lo riceve.
+
+#### Dopo lo scioglimento «N anni fa» non arriva a nessuno
+
+**Deciso dall'utente.** Le alternative erano mandarlo a entrambi come prima, o solo su ciò di cui ciascuno è autore (coerente con D-04).
+
+🔑 **La ragione per cui «a nessuno» è la scelta giusta e non solo la più prudente**: quel ricordo può puntare a fotografie che dopo lo scioglimento la persona **non riesce ad aprire** — era B-62, e `0037` ha corretto le policy ma non la natura della cosa. *Una notifica che invita a guardare un ricordo irraggiungibile è la stessa crudeltà di B-62, spedita a domicilio.* E per una relazione finita, il silenzio è il comportamento che non si deve spiegare.
+
+#### Il partner non vede i tuoi dispositivi
+
+Ovunque in questo schema le policy dicono `e_membro_attivo(coppia_id)`. Su `dispositivo` e `preferenze_notifiche` **no**: solo `utente_id = auth.uid()`.
+
+⚠️ Un token è un identificativo di **dispositivo**, e `visto_il` direbbe all'altro **quando ha usato il telefono l'ultima volta**. È TB-2 applicato a un dato tecnico, che è il posto dove i confini si dimenticano più facilmente — perché sembra infrastruttura e non contenuto.
+
+🔑 E il vincolo di unicità sul token non è pedanteria: se un telefono cambia proprietario e la vecchia riga restasse, **le notifiche di una persona arriverebbero a un'altra**.
+
+#### Il permesso si chiede dalle impostazioni, non all'avvio
+
+⚠️ iOS mostra il dialogo **una volta sola**: negato, l'unica strada resta le impostazioni di sistema. Chiederlo all'apertura, prima che esista qualcosa da notificare, è il modo più efficace di **perdere la possibilità di chiederlo quando serve**. Nella schermata delle impostazioni la persona sta già leggendo cosa riceverà.
+
+#### Cosa manca — e non è un dettaglio
+
+🔴 **Tutto l'invio.** Vedi il backlog: senza, gli interruttori accendono qualcosa che non parte.
+
+### D-127 — La lista «Film» si nasconde dal frontend, e non si cancella niente (2026-09-10)
+
+**Deciso dall'utente**, con parole sue: *«non devi cancellarla, devi solamente nasconderla dal frontend in modo che al momento sia inaccessibile»*. Il motivo è il blocco delle locandine: TMDB è gratuito solo per uso non commerciale e LifeCouple nasce con gli abbonamenti attivi (`docs/pubblicazione.md` §1.2). Finché la licenza non è risolta, la funzione esce dalla portata dell'utente.
+
+**Un interruttore solo**: `LISTA_FILM_NASCOSTA` in [`lib/funzioni-nascoste.ts`](lib/funzioni-nascoste.ts). Nessuna migrazione, nessuna riga cancellata, nessun codice rimosso: righe, elementi e locandine già inseriti restano dove sono e ricompaiono mettendo `false`.
+
+#### 🔴 Il motivo per cui «nascondere la lista» non bastava
+
+`lib/preferiti.ts` carica gli elementi con `.eq('coppia_id', ...)` — **tutti** quelli della coppia, non quelli della lista aperta — e `riparaLocandine()` parte da `elenco-elementi.tsx` all'apertura di una lista **qualsiasi**.
+
+⚠️ **Quindi, nascondendo solo la lista, aprire «Viaggi» avrebbe continuato a interrogare TMDB per i film.** Stesso rischio di licenza di prima, ma senza più niente a schermo che lo suggerisse — *la versione peggiore: non il rischio in meno, ma il rischio invisibile.* La riga che lo ferma davvero è il `return` in cima a `riparaLocandine`, non il filtro sulle liste.
+
+#### Cosa spegne, e perché ciascun punto
+
+| Punto | Cosa | Perché non era facoltativo |
+|---|---|---|
+| `lib/liste.ts` | filtra `tipo === 'film'` da `useListe` | 🔑 chiude **anche** il link diretto per id: `app/lista/[id].tsx` risolve la lista con lo stesso hook e cade nel ramo «lista inesistente» già scritto — nessuna guardia nuova |
+| `lib/preferiti.ts` | `riparaLocandine()` non parte | 🔴 **è questa che ferma le chiamate a TMDB** |
+| `lib/riepilogo.ts` | `ultimoFilm` sempre nullo | la home nominava un film che non si può più aprire |
+| `app/(tabs)/home.tsx` | via il riquadro, galleria allargata | i riquadri a metà scendevano a tre e l'ultimo restava spaiato |
+| `components/elenco-elementi.tsx` | niente `urlLocandina` | ⚠️ compone un indirizzo della **CDN di TMDB**: disegnarla *è* una richiesta. Oggi irraggiungibile, ma se un film finisse in una lista visibile il difetto sarebbe invisibile |
+
+**Il filtro è su `tipo`, non sul nome**: il nome si rinomina, e `tipo` è esattamente ciò che governa ricerca e locandina. Le liste create dall'utente non impostano `tipo`, quindi il predicato colpisce solo quella seminata dal trigger.
+
+**La costante è tipata `boolean` e non lasciata al letterale `true`**: col tipo letterale TypeScript considererebbe morto il ramo spento e smetterebbe di controllarlo — riaccendendo la funzione i primi errori li troverebbe l'utente invece del compilatore.
+
+#### Cosa è verificato e cosa no
+
+✅ `npx tsc --noEmit` **esce 0** — e vale la pena notarlo: i cinque errori preesistenti di questo dispositivo (`expo-store-review` assente da `node_modules`) non ci sono più.
+✅ Ricognizione statica di **ogni** punto che può raggiungere TMDB o rendere visibile una lista: `cercaFilm`, `identitaFilm`, `urlLocandina`, `CercaFilm`, `useListe`. Tutti contenuti.
+✅ L'app parte e serve la schermata di benvenuto con **zero richieste a TMDB**.
+🔴 **Non verificato a sessione aperta**: che la lista sia sparita dalla tab Liste e il riquadro dalla home richiede un account appaiato, e le credenziali non passano da qui. *È il pezzo che manca, ed è dell'utente.*
+
+⬜ **Alternative esaminate e non scelte**: togliere solo ricerca e locandine lasciando la lista come elenco scritto a mano (toglieva lo stesso rischio con meno prodotto in meno), e non crearla per le coppie nuove (avrebbe lasciato il rischio acceso per chi ce l'ha già, tester compresi). L'utente ha scelto di nasconderla per intero.
+
+### D-126 — Il dominio: un sottodominio di heleox.it, e il DNS resta "solo DNS" (2026-09-10)
+
+A fine giornata l'utente ha creato su Cloudflare un CNAME `lifecouple.heleox.it` verso la distribuzione, e ha visto **errore 1016 — Origin DNS error**. La diagnosi ha trovato **due** problemi impilati, e sistemare solo quello visibile avrebbe spostato l'errore invece di toglierlo.
+
+| | Sintomo | Causa |
+|---|---|---|
+| Lato Cloudflare | `1016 Origin DNS error` | il record era **proxied**, e Cloudflare non risolveva l'origine indicata. Il dominio CloudFront risolveva benissimo (`54.230.11.x`): il bersaglio scritto nel record non era quello |
+| Lato AWS | `403 Forbidden · Server: CloudFront` | la distribuzione aveva **`Aliases: 0`**. CloudFront serve solo i nomi elencati fra i suoi alternate domain names — verificato mandando l'Host giusto alla distribuzione, non dedotto |
+
+🔑 **Il record va in "DNS only", non proxied — e la ragione non è tecnica ma documentale.** Proxiando, Cloudflare entra nel percorso come **destinatario dell'IP di ogni visitatore** — un terzo che l'informativa non nomina — e il suo proxy può depositare il cookie `__cf_bm`, mentre la cookie policy **linkata da quella stessa pagina** dichiara *«no third-party tools whatsoever [...] nothing follows you»*. ⚠️ *Sarebbe stata la stessa classe di problema chiusa poche ore prima coi font, rientrata dalla porta del DNS.* In grigio il visitatore parla direttamente con CloudFront, che HTTPS, cache e header di sicurezza li dà già.
+
+**Il certificato**: ACM in `us-east-1` — vincolo di CloudFront, non una preferenza — con validazione **DNS** invece che via email, perché la prova è un record che resta nella zona e il rinnovo avviene da solo. Quello esistente non serviva: copre `app.heleox.it` e `www.heleox.it`, verificato leggendo i SAN.
+
+⬜ **Registrato senza giudicarlo**: un'app per coppie sotto il dominio di un prodotto di sicurezza per PMI è un accostamento insolito, e l'URL comparirà così nella scheda degli store. È una scelta dell'utente, presa sapendolo.
+
+✅ **L'indirizzo CloudFront resta valido** e non va buttato: è il modo di raggiungere il sito se un domani il DNS di `heleox.it` cambiasse gestore.
 
 ### D-125 — Dove vive l'infrastruttura della landing, e perché non è un modulo dentro HeleoX (2026-09-10)
 
@@ -3854,6 +3964,33 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
+### 🔴 Le notifiche push: manca tutto l'invio — dal 2026-09-10
+
+Il lato app è fatto (**D-128**), l'invio no. ⚠️ *Oggi una persona può accendere le notifiche e non riceverne nessuna*: l'interfaccia promette una cosa che non accade, ed è il difetto da chiudere per primo se la funzione resta in programma.
+
+| Pezzo | Nota |
+|---|---|
+| Edge Function di invio | verso l'API push di Expo. Serve `service_role`: i token di una persona non sono leggibili da chi scatena l'evento (0038) |
+| Trigger «il partner ha segnato un posto» | ⚠️ **non** dal trigger Postgres direttamente: legherebbe la scrittura di un luogo alla raggiungibilità della rete |
+| Lavoro pianificato «N anni fa» | `pg_cron` o Edge Function schedulata. 🔴 **Dopo lo scioglimento non parte per nessuno** (D-128) |
+| Lavoro pianificato «inviti a tornare» | solo per chi ha `inviti_a_tornare = true` |
+| Capability **Push Notifications** sull'App ID | e la chiave **APNs** su EAS |
+| Prove RLS avversariali | elencate in fondo alla `0038`, da far fallire prima di crederci |
+
+🔴 **E prima che la funzione arrivi a un utente vero**: informativa §4 e §5 e registro art. 30 devono nominare **Expo** (servizio push, USA) e **Apple/Google** (APNs/FCM). Oggi non lo fanno, perché non c'è ancora nessun invio — ma il giorno in cui parte, tacerlo sarebbe un destinatario non dichiarato.
+
+### La lista «Film» è nascosta: cosa serve per riaccenderla — dal 2026-09-10
+
+Spenta con `LISTA_FILM_NASCOSTA` (**D-127**) finché il nodo delle locandine non è sciolto. Riaccenderla è **una costante**, non un lavoro — ma prima va chiusa una di queste:
+
+1. **Licenza TMDB commerciale** — 149 $/mese, cioè 50-70 coppie abbonate l'anno solo per l'API.
+2. **TheTVDB** — gratuita sotto i 50.000 $/anno di ricavi con attribuzione linkata. 🔴 Fallì il 2026-09-05 perché non si riusciva a creare l'account (**D-99**), non per la licenza: **va semplicemente riprovata**. Il lavoro di migrazione è descritto lì, inclusa la trappola del `POST /login` con token mensile.
+3. **La foto della coppia al posto della locandina** — 🔑 l'unica che chiude *entrambe* le colonne del rischio: nessun contratto con un fornitore **e** nessuna opera altrui. Per un diario condiviso si può argomentare che sia anche prodotto migliore.
+
+⚠️ **Fanart.tv e Trakt sono stati esaminati e non risolvono.** Fanart.tv non ha nessun endpoint di ricerca — si interroga con un id TMDb o IMDb, quindi è un'aggiunta a TMDB e non un sostituto. Trakt cerca per titolo e restituisce immagini, ma **vieta l'hotlink** e impone di ricopiarle sulla propria infrastruttura: un atto di riproduzione più consistente di quello di oggi, quindi il rischio a monte **cresce**. I suoi termini d'uso commerciale non è stato possibile leggerli (controllo anti-bot).
+
+🔑 **E la domanda di fondo resta comunque aperta, qualunque fornitore vinca**: la locandina è un'opera dello studio, che nessuno di loro possiede. Cambiare fornitore cambia quale contratto si rispetta, non i diritti sull'immagine — è la voce **«revisione dell'avvocato»**, e questa è la domanda concreta con cui andarci.
+
 ### 🔴 Le icone dell'app sono ancora quelle di Expo — bloccante, aperto dal 2026-09-10
 
 `assets/images/icon.png` (1024×1024), `favicon.png` (48×48) e `android-icon-foreground.png` sono **il chevron blu del template Expo**, mai sostituiti — `icon.png` porta perfino le linee-guida di costruzione. Sono le icone che `app.json` dichiara per iOS, Android e per la build web.
@@ -4253,6 +4390,16 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-10 (5) — le notifiche push sono a METÀ, e la metà che manca è quella che le fa funzionare.**
+>
+> ✅ **Applicata e verificata**: `0038` (tabelle `dispositivo` e `preferenze_notifiche`) — controllata interrogando il database, non creduta sulla parola. Fatto anche il lato app: `lib/notifiche.ts`, gli interruttori in impostazioni, le stringhe bilingui, il plugin in `app.json`. `tsc` esce 0.
+>
+> 🔴 **Manca TUTTO L'INVIO**: nessuna Edge Function, nessun trigger, nessun lavoro pianificato. ⚠️ *Oggi gli interruttori accendono qualcosa che non parte* — l'interfaccia promette e il sistema non mantiene. È la prima cosa da fare se la funzione resta in programma, ed è dettagliata nel backlog §6.
+>
+> ⚠️ **I tipi di `lib/database.types.ts` sono scritti a mano** perché il CLI Supabase non è collegato su questo dispositivo. Da rigenerare al primo `supabase gen types typescript` — il marcatore nel file lo dice.
+>
+> 🔴 **Prima che la funzione tocchi un utente vero**, informativa e registro devono nominare Expo e Apple/Google fra i destinatari. Oggi tacciono correttamente, perché non parte niente.
 
 > **Nota del 2026-09-10 (4) — LA LANDING È ONLINE, e questo chiude due voci che il resto del documento dà per aperte.**
 >

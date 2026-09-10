@@ -163,6 +163,10 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **Apple** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
 | **Google Play** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
 | **[RevenueCat]** | Normalizzazione ricevute, webhook | Identificativo utente, stato abbonamento | USA | ⚠️ **[SE ADOTTATO]** |
+| **[Expo]** | Servizio push: instrada le notifiche verso Apple e Google | Token del dispositivo, testo della notifica | USA | ⚠️ **[QUANDO L'INVIO SARÀ ATTIVO]** |
+| **[Apple (APNs) / Google (FCM)]** | Consegna della notifica al telefono | Token del dispositivo, testo della notifica | Vedi §5 | ⚠️ **[QUANDO L'INVIO SARÀ ATTIVO]** |
+
+> ⟳ **Le due righe del push, aggiunte il 2026-09-10 con le parentesi di proposito.** La migrazione 0038 e il lato app esistono (**D-128**), ma **non esiste ancora nessun invio**: nessun token lascia il database, quindi oggi non c'è nessun destinatario da dichiarare. 🔴 *Le parentesi si tolgono nello stesso giro in cui parte la prima notifica, non dopo* — e il backlog di `History.md` lo elenca fra i passi obbligatori, non fra i miglioramenti.
 
 🔑 **Nessun contenuto degli utenti esce dall'UE.** I soli trasferimenti verso gli USA riguardano il testo delle ricerche di luoghi e film — non fotografie, non account, non contenuti.
 
