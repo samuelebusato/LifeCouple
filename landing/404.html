@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Page not found — LifeCouple</title>
+<link rel="icon" href="/immagini/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/immagini/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/immagini/apple-touch-icon.png">
 
 <!-- Pagina servita da CloudFront con stato 404 VERO (infra/main.tf).
      Non e' un dettaglio estetico: senza di lei un indirizzo sbagliato di
@@ -15,19 +18,26 @@
 
      Font auto-ospitati come nella landing, stessa motivazione: la cookie
      policy promette che nessun terzo segue chi legge, e la promessa vale
-     anche per la pagina d'errore. -->
+     anche per la pagina d'errore.
+
+     🔴 TUTTI i percorsi qui dentro sono ASSOLUTI, e devono restarlo.
+     CloudFront rende questa pagina all'URL RICHIESTO: a /a/b/c la barra
+     dell'indirizzo resta /a/b/c, quindi un url("fonts/...") relativo
+     cercherebbe /a/b/fonts/... e non troverebbe niente. ⚠️ Il sintomo non
+     e' un errore visibile ma una pagina d'errore col carattere sbagliato
+     — trovato provando /a/b/c-non-esiste, non leggendo il codice. -->
 
 <style>
 @font-face {
   font-family: "Fraunces";
-  src: url("fonts/fraunces-latin-wght.woff2") format("woff2");
+  src: url("/fonts/fraunces-latin-wght.woff2") format("woff2");
   font-weight: 400 700;
   font-display: swap;
   font-style: normal;
 }
 @font-face {
   font-family: "Karla";
-  src: url("fonts/karla-latin-wght.woff2") format("woff2");
+  src: url("/fonts/karla-latin-wght.woff2") format("woff2");
   font-weight: 400 700;
   font-display: swap;
   font-style: normal;

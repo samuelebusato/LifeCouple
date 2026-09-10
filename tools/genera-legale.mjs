@@ -394,6 +394,9 @@ function pagina(doc, altri) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="index,follow">
 <title>${fuggi(doc.titolo)}</title>
+<link rel="icon" href="/immagini/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/immagini/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/immagini/apple-touch-icon.png">
 <style>
 /* PAGINA GENERATA da tools/genera-legale.mjs — non modificarla a mano. */
 :root {
