@@ -25,6 +25,7 @@ import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
 import { useRiepilogo } from '@/lib/riepilogo';
+import { LISTA_FILM_NASCOSTA } from '@/lib/funzioni-nascoste';
 import { useTema } from '@/lib/tema';
 import { cascata } from '@/lib/movimento';
 import { lingua, t } from '@/lib/i18n';
@@ -240,13 +241,19 @@ export default function Home() {
                 onPress={() => router.push('/mappa')}
                 indice={2}
               />
-              <Riquadro
-                Icona={Film}
-                etichetta={t.riepilogo.ultimoFilm}
-                valore={r.ultimoFilm ? r.ultimoFilm.titolo : t.riepilogo.nessunFilm}
-                onPress={() => router.push('/preferiti')}
-                indice={3}
-              />
+              {/* Via il riquadro finche' la lista dei film e' nascosta: senza
+                  di lei porterebbe a una schermata dove quel film non c'e'
+                  piu'. Il buco che lascia nella griglia si chiude allargando
+                  la galleria qui sotto. Vedi lib/funzioni-nascoste.ts. */}
+              {!LISTA_FILM_NASCOSTA && (
+                <Riquadro
+                  Icona={Film}
+                  etichetta={t.riepilogo.ultimoFilm}
+                  valore={r.ultimoFilm ? r.ultimoFilm.titolo : t.riepilogo.nessunFilm}
+                  onPress={() => router.push('/preferiti')}
+                  indice={3}
+                />
+              )}
               <Riquadro
                 Icona={Sparkles}
                 etichetta={t.riepilogo.ultimaPartita}
@@ -262,6 +269,9 @@ export default function Home() {
                 etichetta={t.riepilogo.galleria}
                 valore={r.fotoACaso ? t.riepilogo.unRicordo : t.riepilogo.nessunaFoto}
                 onPress={() => router.push('/galleria')}
+                /* Con il film nascosto i riquadri a meta' larghezza scendono
+                   a tre, e l'ultimo resterebbe spaiato in fondo alla riga. */
+                largo={LISTA_FILM_NASCOSTA}
                 indice={5}
               />
             </View>

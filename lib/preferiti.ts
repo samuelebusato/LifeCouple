@@ -4,6 +4,7 @@ import type { StatoCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
 import { cercaIdentita, fotoDiUnPosto } from '@/lib/ricerca-luoghi';
 import { identitaFilm } from '@/lib/ricerca-film';
+import { LISTA_FILM_NASCOSTA } from '@/lib/funzioni-nascoste';
 
 /**
  * I due tipi della lista dei desideri.
@@ -383,6 +384,14 @@ export function usePreferiti(coppiaId: string | null) {
   const tentatiFilm = React.useRef(new Set<string>());
 
   const riparaLocandine = React.useCallback(async () => {
+    /* 🔴 QUESTA E' LA RIGA CHE FERMA DAVVERO LE CHIAMATE A TMDB, e va prima
+       di ogni altra cosa. `elementi` contiene TUTTI gli elementi della
+       coppia (.eq('coppia_id', ...)), non quelli della lista aperta: questa
+       riparazione parte all'apertura di una lista QUALSIASI. Senza questo
+       ritorno, nascondere la lista dei film lascerebbe l'app a interrogare
+       TMDB aprendo «Viaggi» — stesso rischio di licenza, ma invisibile.
+       Vedi lib/funzioni-nascoste.ts. */
+    if (LISTA_FILM_NASCOSTA) return;
     const rotti = elementi.filter(
       (e) => e.tipo === 'film' && !e.locandina && !tentatiFilm.current.has(e.id)
     );

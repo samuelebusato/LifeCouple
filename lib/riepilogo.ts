@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { supabase } from '@/lib/supabase';
+import { LISTA_FILM_NASCOSTA } from '@/lib/funzioni-nascoste';
 
 /**
  * I numeri della home, letti in una volta sola.
@@ -76,9 +77,16 @@ export function useRiepilogo(coppiaId: string | null) {
 
     setDati({
       postiVisitati: luoghi.count ?? 0,
-      ultimoFilm: film.data?.[0]
-        ? { titolo: film.data[0].titolo, quando: film.data[0].fatto_il }
-        : null,
+      /* Nascosta la lista dei film, la home non ha piu' dove mandare chi
+         tocca il riquadro: sarebbe un'etichetta che nomina qualcosa di
+         irraggiungibile. L'interrogazione qui sopra resta e il suo esito si
+         scarta — costa un giro sul NOSTRO database, non una licenza, e
+         lasciarla intatta fa si' che riaccendere la funzione sia una
+         costante sola. Vedi lib/funzioni-nascoste.ts. */
+      ultimoFilm:
+        LISTA_FILM_NASCOSTA || !film.data?.[0]
+          ? null
+          : { titolo: film.data[0].titolo, quando: film.data[0].fatto_il },
       ultimaPartita:
         p && risultato
           ? { gioco: p.gioco, punti: risultato.punti_assegnati, quando: risultato.rivelato_il }

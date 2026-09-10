@@ -31,6 +31,7 @@ import { assicuraCoppia } from '@/lib/invito';
 import { caricaFoto, copertinePerElemento, fotoDegliEventiPerElemento, scegliFoto } from '@/lib/foto';
 import { CercaFilm } from '@/components/cerca-film';
 import { urlLocandina } from '@/lib/ricerca-film';
+import { LISTA_FILM_NASCOSTA } from '@/lib/funzioni-nascoste';
 import { supabase } from '@/lib/supabase';
 import type { Evento } from '@/lib/eventi';
 import { usePreferiti, type Elemento, type TipoElemento } from '@/lib/preferiti';
@@ -367,7 +368,14 @@ export function ElencoElementi({
                       (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined) ??
                       // 4. la **locandina TMDB** (0023), per i film. Ultima
                       //    perché una foto vostra vale sempre più di un poster.
-                      (urlLocandina(e.locandina, 500) ?? undefined)
+                      // ⚠️ urlLocandina compone un indirizzo della CDN di TMDB:
+                      //    disegnarla È una richiesta a TMDB. Con la funzione
+                      //    nascosta i film non sono raggiungibili da nessuna
+                      //    lista, quindi qui non ci si arriva — ma la guardia
+                      //    resta, perché il giorno in cui un elemento film
+                      //    finisse in una lista visibile il difetto sarebbe
+                      //    invisibile. Vedi lib/funzioni-nascoste.ts.
+                      (LISTA_FILM_NASCOSTA ? undefined : urlLocandina(e.locandina, 500) ?? undefined)
                     }
                     foto={fotoLuoghi[e.id]}
                     onFoto={(i) => setFotoAperte({ id: e.id, da: i })}
@@ -421,7 +429,14 @@ export function ElencoElementi({
                       (e.foto_google ? urlFotoGoogle(e.foto_google) : undefined) ??
                       // 4. la **locandina TMDB** (0023), per i film. Ultima
                       //    perché una foto vostra vale sempre più di un poster.
-                      (urlLocandina(e.locandina, 500) ?? undefined)
+                      // ⚠️ urlLocandina compone un indirizzo della CDN di TMDB:
+                      //    disegnarla È una richiesta a TMDB. Con la funzione
+                      //    nascosta i film non sono raggiungibili da nessuna
+                      //    lista, quindi qui non ci si arriva — ma la guardia
+                      //    resta, perché il giorno in cui un elemento film
+                      //    finisse in una lista visibile il difetto sarebbe
+                      //    invisibile. Vedi lib/funzioni-nascoste.ts.
+                      (LISTA_FILM_NASCOSTA ? undefined : urlLocandina(e.locandina, 500) ?? undefined)
                     }
                     foto={fotoLuoghi[e.id]}
                     onFoto={(i) => setFotoAperte({ id: e.id, da: i })}

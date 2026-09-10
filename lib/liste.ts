@@ -4,6 +4,7 @@ import type { StatoCoppia } from '@/lib/coppia';
 import { assicuraCoppia } from '@/lib/invito';
 import { pastelli, type Pastello } from '@/lib/tema';
 import { t } from '@/lib/i18n';
+import { LISTA_FILM_NASCOSTA } from '@/lib/funzioni-nascoste';
 
 /** I quattro colori possibili di una lista: gli stessi pastelli dei giochi. */
 export type NomePastello = keyof typeof pastelli;
@@ -136,7 +137,17 @@ export function useListe(coppiaId: string | null) {
     setErrore(error?.message ?? null);
     if (!error) {
       setListe(
-        (data ?? []).map((r) => {
+        (data ?? [])
+          /* La lista dei film e' nascosta finche' la licenza delle locandine
+             non e' risolta (lib/funzioni-nascoste.ts). Il filtro e' su `tipo`
+             e non sul nome: il nome si rinomina, il tipo e' quello che
+             governa ricerca e locandina. ⚠️ Le righe restano in banca dati e
+             tornano visibili spegnendo la costante — non si cancella niente.
+             🔑 Filtrando qui si chiude anche il link diretto per id: la rotta
+             app/lista/[id].tsx risolve la lista con questo stesso hook, e
+             cade da sola nel ramo «lista inesistente» che c'era gia'. */
+          .filter((r) => !(LISTA_FILM_NASCOSTA && (r as { tipo?: string }).tipo === 'film'))
+          .map((r) => {
           const { elemento_lista, ...resto } = r as typeof r & {
             elemento_lista: { id: string; stato: string }[];
           };
