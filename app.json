@@ -24,7 +24,8 @@
         "android.permission.READ_CALENDAR",
         "android.permission.WRITE_CALENDAR",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -66,6 +67,12 @@
         "expo-image-picker",
         {
           "photosPermission": "LifeCouple accede alle foto solo per quelle che scegli tu di aggiungere ai vostri ricordi."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#e4259e"
         }
       ],
       "expo-image",

@@ -987,6 +987,61 @@ export type Database = {
       }
       // ⚠️ SCRITTO A MANO — migrazione 0031 (la posizione condivisa, D-100).
       // Da rigenerare con gli altri alla prima `supabase gen types typescript`.
+      // ⚠️ SCRITTE A MANO — migrazione 0038 (le notifiche push).
+      // Da rigenerare con le altre alla prima `supabase gen types typescript`,
+      // che è possibile solo DOPO aver applicato la 0038: finché non lo è, il
+      // generatore non sa che queste tabelle esistono.
+      dispositivo: {
+        Row: {
+          id: string
+          utente_id: string
+          token: string
+          piattaforma: string
+          creato_il: string
+          visto_il: string
+        }
+        Insert: {
+          id?: string
+          utente_id: string
+          token: string
+          piattaforma: string
+          creato_il?: string
+          visto_il?: string
+        }
+        Update: {
+          id?: string
+          utente_id?: string
+          token?: string
+          piattaforma?: string
+          creato_il?: string
+          visto_il?: string
+        }
+        Relationships: []
+      }
+      preferenze_notifiche: {
+        Row: {
+          utente_id: string
+          luogo_del_partner: boolean
+          ricordi: boolean
+          inviti_a_tornare: boolean
+          aggiornate_il: string
+        }
+        Insert: {
+          utente_id: string
+          luogo_del_partner?: boolean
+          ricordi?: boolean
+          inviti_a_tornare?: boolean
+          aggiornate_il?: string
+        }
+        Update: {
+          utente_id?: string
+          luogo_del_partner?: boolean
+          ricordi?: boolean
+          inviti_a_tornare?: boolean
+          aggiornate_il?: string
+        }
+        Relationships: []
+      }
       posizione_membro: {
         Row: {
           utente_id: string

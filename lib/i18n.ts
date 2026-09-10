@@ -287,6 +287,23 @@ const it = {
     cancellaNonRiuscita:
       'Non siamo riusciti a eliminare l’account, e non abbiamo cancellato niente a metà. Riprova fra poco.',
   },
+  notifiche: {
+    sezione: 'Notifiche',
+    nota: 'Scegli cosa vuoi che ti arrivi. Puoi cambiare idea quando vuoi.',
+    chiediPermesso: 'Attiva le notifiche',
+    permessoNegato:
+      'Le notifiche sono spente per LifeCouple nelle impostazioni del telefono. Da lì puoi riaccenderle.',
+    permessoNonSupportato: 'Su questo dispositivo le notifiche non sono disponibili.',
+    luogoDelPartner: 'Quando il tuo partner segna un posto',
+    luogoDelPartnerNota:
+      'Ti avvisiamo quando è lui o lei a segnare un posto come visitato. Non usiamo mai la tua posizione per accorgercene.',
+    ricordi: 'I ricordi di questo giorno',
+    ricordiNota: 'Se in questa data, negli anni scorsi, avete vissuto qualcosa.',
+    invitiATornare: 'Ogni tanto, un invito a tornare',
+    invitiATornareNota:
+      'Un suggerimento a segnare un viaggio che vorreste fare. È l’unica notifica che non racconta qualcosa che avete già fatto, e per questo nasce spenta.',
+    nonRiuscito: 'Non siamo riusciti a salvare la scelta. Riprova.',
+  },
   coppia: {
     servePartner: 'Invita il tuo partner per continuare',
     servePartnerNota: 'Questa parte si fa in due: appena il tuo partner entra, si apre.',
@@ -1145,6 +1162,23 @@ const en: Dizionario = {
     cancellaInCorso: 'Deleting…',
     cancellaNonRiuscita:
       'We could not delete the account, and we did not delete anything halfway. Please try again shortly.',
+  },
+  notifiche: {
+    sezione: 'Notifications',
+    nota: 'Choose what you want to receive. You can change your mind at any time.',
+    chiediPermesso: 'Turn notifications on',
+    permessoNegato:
+      'Notifications are turned off for LifeCouple in your phone settings. You can turn them back on from there.',
+    permessoNonSupportato: 'Notifications are not available on this device.',
+    luogoDelPartner: 'When your partner marks a place',
+    luogoDelPartnerNota:
+      'We let you know when they mark a place as visited. We never use your location to notice it.',
+    ricordi: 'This day, in other years',
+    ricordiNota: 'If on this date, in previous years, the two of you lived something.',
+    invitiATornare: 'Once in a while, a nudge',
+    invitiATornareNota:
+      'A suggestion to note down a trip you would like to take. It is the only notification that is not about something you have already done, and that is why it starts off.',
+    nonRiuscito: 'We could not save your choice. Please try again.',
   },
   coppia: {
     servePartner: 'Invite your partner to continue',

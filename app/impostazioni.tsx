@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Alert, View, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { Alert, View, ScrollView, TextInput, ActivityIndicator, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
@@ -18,6 +18,11 @@ import { SceltaData } from '@/components/scelta-data';
 import { anniCompiuti, ETA_MINIMA, salvaDataNascita, useCompleanni } from '@/lib/compleanni';
 import { esportaMieiDati } from '@/lib/esporta';
 import { useTema } from '@/lib/tema';
+import {
+  registraDispositivo,
+  usePreferenzeNotifiche,
+  type TipoNotifica,
+} from '@/lib/notifiche';
 import { t } from '@/lib/i18n';
 
 /**
@@ -114,6 +119,30 @@ export default function Impostazioni() {
     [impostaCondivisione, pubblica, smettiDiCondividere]
   );
 
+  /* --- Le notifiche ---------------------------------------------------
+   * Il permesso si chiede QUI e non all'avvio, ed è una scelta.
+   * ⚠️ iOS mostra il dialogo **una volta sola**: negato una volta, l'unica
+   * strada resta le impostazioni di sistema. Chiederlo all'apertura, prima
+   * che esista qualcosa da notificare, è il modo più efficace di perdere la
+   * possibilità di chiederlo quando serve. Qui la persona sta già leggendo
+   * cosa riceverà. */
+  const { preferenze, cambia } = usePreferenzeNotifiche();
+  const [esitoNotifiche, setEsitoNotifiche] = React.useState<string | null>(null);
+
+  async function accendiNotifiche(tipo: TipoNotifica, acceso: boolean) {
+    setEsitoNotifiche(null);
+    if (acceso) {
+      // Il permesso di sistema serve prima del consenso al singolo tipo:
+      // senza, l'interruttore direbbe «acceso» e non arriverebbe niente.
+      const esito = await registraDispositivo();
+      if (esito.stato === 'negato') return setEsitoNotifiche(t.notifiche.permessoNegato);
+      if (esito.stato === 'non-supportato')
+        return setEsitoNotifiche(t.notifiche.permessoNonSupportato);
+    }
+    const errore = await cambia(tipo, acceso);
+    if (errore) setEsitoNotifiche(t.notifiche.nonRiuscito);
+  }
+
   async function esporta() {
     setEsitoExport(null);
     setEsporto(true);
@@ -198,6 +227,41 @@ export default function Impostazioni() {
               <Text>{esporto ? t.impostazioni.esportaInCorso : t.impostazioni.esporta}</Text>
             </Button>
             {!!esitoExport && <Text className="text-sm text-foreground">{esitoExport}</Text>}
+          </View>
+
+          {/* --- Le notifiche --------------------------------------------- */}
+          {/* 🔑 I due interruttori di servizio e quello promozionale stanno
+              nella stessa lista ma non sono la stessa cosa: `inviti_a_tornare`
+              nasce SPENTO (migrazione 0038) perché è un sollecito a usare il
+              prodotto, e un consenso presunto lì non sarebbe valido. La nota
+              sotto l'interruttore lo dice a chi legge, invece di lasciarlo
+              dedurre dallo stato iniziale. */}
+          <View className="gap-3">
+            <Sezione titolo={t.notifiche.sezione} />
+            <Text className="text-sm text-muted-foreground">{t.notifiche.nota}</Text>
+
+            {(
+              [
+                ['luogo_del_partner', t.notifiche.luogoDelPartner, t.notifiche.luogoDelPartnerNota],
+                ['ricordi', t.notifiche.ricordi, t.notifiche.ricordiNota],
+                ['inviti_a_tornare', t.notifiche.invitiATornare, t.notifiche.invitiATornareNota],
+              ] as [TipoNotifica, string, string][]
+            ).map(([tipo, titolo, nota]) => (
+              <View key={tipo} className="gap-1">
+                <View className="flex-row items-center justify-between gap-3">
+                  <Text className="flex-1 text-base text-foreground">{titolo}</Text>
+                  <Switch
+                    value={preferenze[tipo]}
+                    onValueChange={(v) => accendiNotifiche(tipo, v)}
+                  />
+                </View>
+                <Text className="text-sm text-muted-foreground">{nota}</Text>
+              </View>
+            ))}
+
+            {!!esitoNotifiche && (
+              <Text className="text-sm text-foreground">{esitoNotifiche}</Text>
+            )}
           </View>
 
           {/* --- La coppia: invito ---------------------------------------- */}
