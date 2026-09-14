@@ -623,6 +623,102 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 
 ## 3. Decisioni
 
+### D-135 — Il confine gratis/a pagamento si stringe, e c'e' una settimana di prova (2026-09-14)
+
+**Decisione dell'utente**, presa scegliendo fra alternative proposte. Sostituisce il confine di [`Marketing/LifeCouple/monetizzazione.md`](../../Marketing/LifeCouple/monetizzazione.md) §3, che resta scritto e annotato.
+
+| | Gratis | A pagamento |
+|---|---|---|
+| Calendario ed eventi | ✅ | — |
+| Foto | **una per evento** | tutte |
+| Giochi | **una partita al giorno** | senza limite |
+| Mappa e luoghi | — | 🔒 |
+| Liste | — | 🔒 |
+| Creatura | — | 🔒 |
+
+**Più una prova gratuita di una settimana**, e il paywall compare **a fine onboarding**.
+
+#### Cosa questo sostituisce, detto per intero
+
+`monetizzazione.md` §3 dichiarava gratis per sempre: calendario, mappa e luoghi, liste, foto fino a 1 GB, **la creatura per intero**, un gioco completo al giorno. Tre di quelle voci passano a pagamento.
+
+🔴 **E una di esse il documento la difendeva per nome**: *«Mai la crescita: è il differenziatore, e metterlo dietro il muro produce esattamente la recensione già raccolta — unless you're willing to pay for the premium version you get basically nothing»*.
+
+⚠️ **L'obiezione è stata sollevata prima della decisione, con la citazione, e l'utente ha deciso lo stesso.** Resta scritta qui e nel documento di marketing per un motivo preciso: **è la prima cosa da riverificare** quando arriveranno recensioni e dati di conversione. Non è un rimprovero, è un punto di misura — se la previsione del documento si avvera, si saprà dove guardare.
+
+#### Cosa NON cambia, e non era negoziabile
+
+✅ **L'accesso ai propri dati e la loro esportazione restano fuori dal muro**, qualunque sia il confine: sono un obbligo (artt. 15 e 20 GDPR), e `esportaMieiDati` esiste già. Il muro tocca le funzioni, mai la possibilità di riprendersi ciò che si è messo dentro.
+
+#### Le due cose che il muro implica e non sono ovvie
+
+⚠️ **«Una foto per evento» e «una partita al giorno» sono limiti che vanno imposti dal DATABASE, non solo nascosti nell'interfaccia.** Un limite disegnato e non imposto e' una porta chiusa con un cartello: chi parla direttamente all'API lo scavalca. E' la stessa lezione di `assegna_punti` (D-15) e del tetto foto (D-22), che sono trigger e non controlli nel client.
+
+⚠️ **La prova gratuita non si programma: si configura** come *Introductory Offer* nel gruppo di abbonamento su App Store Connect. L'app la legge dalle Offerings e non la promette se non c'è. 🔴 **Ma cambia le frasi legali**: durata, prezzo alla scadenza e come disdire devono comparire **prima** del pulsante — e sono in `app/paywall.tsx`, non in un documento.
+
+### D-134 — Il listino sale a €7,99 / €39,99 (2026-09-14)
+
+**Decisione dell'utente.** Sostituisce €4,99 / €34,99, deciso in [`Marketing/LifeCouple/monetizzazione.md`](../../Marketing/LifeCouple/monetizzazione.md) §3 il 2026-09-01.
+
+⬜ **Il perché non è stato dichiarato, e non viene stimato**: resta `—` finché l'utente non lo scrive. ⚠️ *È il campo che serve di più fra sei mesi*, quando i primi dati d'uso arriveranno e bisognerà sapere contro quale aspettativa confrontarli.
+
+#### Cosa dicono i numeri, che invece si calcolano
+
+| | Prima | Ora |
+|---|---|---|
+| Mensile | €4,99 | **€7,99** |
+| Annuale | €34,99 | **€39,99** |
+| Sconto dell'annuale | −42% | **−58%** |
+| Equivalente mensile dell'annuale | €2,92 | **€3,33** |
+| Mesi per pareggiare l'annuale | 7,0 | **5,0** |
+
+#### Il ragionamento che viene scavalcato, e quello che viene rafforzato
+
+🔴 **Scavalcato — la soglia dei €6.** `monetizzazione.md` §3 motivava €4,99 come *«parità esatta con Cupla»*, il gemello strutturale, e avvertiva che **sopra i €6** il confronto mentale dell'utente smette di essere Cupla e diventa **Paired** — la terapia di coppia a €14,99, contro cui quel documento dice che LifeCouple «non ha niente da mettere sul piatto». €7,99 supera quella soglia. ⚠️ **L'argomento non è stato confutato: è stato scavalcato da una decisione**, ed è lasciato scritto nel documento perché è **la prima cosa da riverificare** quando ci saranno conversioni vere.
+
+✅ **Rafforzato — l'annuale.** Lo stesso §3 chiama l'annuale aggressivo *«la scelta più importante delle due»*, perché un'app di coppia ha **due motivi di abbandono invece di uno** — la noia e la rottura — contro una retention D30 di categoria intorno al 3%. Il listino nuovo sconta il **58%** invece del 42%, più vicino al −72% di Polarsteps che il documento addita come riferimento, e porta il pareggio **da sette mesi a cinque**. 🔑 *Il listino nuovo spinge sull'annuale più di quanto facesse il vecchio.*
+
+#### Dove viveva il prezzo, e perché conta
+
+⚠️ **In sei posti, e uno era il contratto.** Oltre ai due documenti di marketing e al runbook dei pagamenti, il listino è dichiarato agli utenti dai **termini d'uso** — [`docs/legal/en/terms-of-use.md`](docs/legal/en/terms-of-use.md), che dal 2026-09-10 sono la versione **ufficiale**, e dal documento di lavoro italiano che li accompagna.
+
+🔑 **Cambiarlo nel solo piano marketing avrebbe lasciato il contratto a contraddirlo**, ed è la quarta volta in una settimana che una modifica rende falsa una frase che vive in un altro file. *Stavolta è stata trovata prima, cercando tutte le occorrenze invece di editare quella ovvia.*
+
+✅ I termini **non sono ancora resi a nessuno** — il generatore li rifiuta finché portano i segnaposto dei dati DSA — quindi nessun derivato conteneva il prezzo vecchio e `npm run test:legale` resta verde.
+
+### D-133 — I pagamenti passano da RevenueCat (2026-09-14)
+
+**Chiesto dall'utente**, subito dopo D-132. Conferma la raccomandazione che [`docs/pubblicazione.md`](docs/pubblicazione.md) §3.1 aveva già scritto senza sceglierla.
+
+*Alternativa scartata*: **`react-native-iap`**. Costo: validazione delle ricevute e webhook da costruire e mantenere per conto proprio — per una persona sola è il lavoro che RevenueCat toglie, ed è anche quello in cui un errore non si vede finché qualcuno non paga due volte o non paga affatto. *(`expo-in-app-purchases` non era un'alternativa: è abbandonata.)*
+
+**Il costo di RevenueCat è dichiarato, non nascosto**: è una **dipendenza da un terzo in mezzo al flusso del denaro**. Se il servizio è giù, gli acquisti nuovi non si registrano; se chiude, il diritto va ricostruito dalle ricevute. Si accetta perché il piano gratuito copre una soglia di fatturato che questo progetto non sfiorerà, e perché il vincolo «non è core» dice di non costruire infrastruttura che qualcun altro regala.
+
+#### 🔑 La conseguenza che conta più della scelta: **il prebuild non è più rimandabile**
+
+`react-native-purchases` è un **modulo nativo**, e in Expo Go non esiste. Adottarlo **scioglie la decisione ferma da B-20**, che era stata rimandata quattro volte.
+
+⚠️ **E la scioglie nel verso buono**, perché la stessa development build sblocca in un colpo le altre tre cose che l'aspettavano: il pop-up di valutazione (D-122, inerte in Expo Go di proposito), i **tre testi dei permessi mai comparsi a nessuno** (B-20, e sono solo in italiano su un'app bilingue — backlog 11-quater), e la verifica delle **icone** fatte oggi (D-131), che in Expo Go non si vedono. *Quattro funzioni che aspettavano lo stesso gesto.*
+
+### D-132 — La distribuzione parte da iPhone soltanto (2026-09-14)
+
+**Decisione dell'utente**, presa dopo aver aperto l'account sviluppatore Apple. Android non è escluso per sempre: **non è nella versione 1.0**.
+
+#### Cosa cade, e non è poco
+
+| Cosa | Perché cade |
+|---|---|
+| 🔑 **I 12 tester per 14 giorni consecutivi** | era un requisito **di Google** per la strada «individuo», non di Apple. **Era il cammino critico dell'intera pubblicazione** — la sola cosa che non si potesse comprimere |
+| Google Play Billing, il secondo listino, il secondo webhook | un solo store, una sola catena del denaro |
+| FCM, e la limitazione di `expo-notifications` su Android | il push da Expo Go non funziona **solo su Android** (vedi il log del 2026-09-14): su iOS non è mai stato un problema |
+| Le icone adattive Android | ⚠️ *generate comunque oggi* (D-131), e restano: costano zero e servono il giorno in cui Android torna |
+
+⚠️ **Cosa NON si tocca**: la configurazione `android` in `app.json`, il `package`, i permessi. Toglierli sarebbe lavoro con beneficio zero e rischio di doverlo rifare.
+
+#### Il costo, dichiarato
+
+🔴 **In Italia Android ha la quota maggiore**, quindi partire da iOS lascia fuori la fetta più grande del mercato potenziale. **Si accetta perché l'obiettivo del progetto non è la diffusione**: i tre vincoli della §1 dicono *imparare il ciclo* — e un ciclo si impara per intero su **uno** store meglio che a metà su due. *Alternativa scartata*: pubblicare su entrambi insieme; costo: due settimane immobili in attesa di dodici persone, due revisioni, due configurazioni di prodotti, e gli errori dei due mondi sommati invece che separati — che è esattamente il ragionamento con cui P-02 era già stata rimandata.
+
 ### D-131 — L'icona dell'app è il cuore dell'onboarding (2026-09-14)
 
 **Chiesto dall'utente**, che ha anche fissato il perimetro: la stessa immagine vale per **l'app, le notifiche e la distribuzione**. Chiude la voce bloccante aperta il 2026-09-10 — `icon.png`, `favicon.png` e le tre Android erano ancora il chevron blu del template Expo.
