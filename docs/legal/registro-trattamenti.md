@@ -136,6 +136,21 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **Misure specifiche** | Scrivibile **solo dall'interessato** (RLS `utente_id = auth.uid()`); leggibile dal partner solo finché **entrambi** sono membri attivi — allo scioglimento la lettura cessa da sé, senza bisogno di cancellare niente. Il dato **non muore con la coppia**: appartiene alla persona (D-04) |
 | **Riferimenti** | Migrazione `0032_data_di_nascita.sql` · `lib/compleanni.ts` |
 
+### A10 — Notifiche push
+
+| | |
+|---|---|
+| **Finalità** | Tre, e **non hanno la stessa natura**: (1) avvisare che il partner ha segnato un luogo come visitato; (2) ricordare un anniversario di un evento della coppia («N anni fa»); (3) 🔴 **sollecitare a inserire nuovi viaggi** — che è promozionale |
+| **Categorie di interessati** | Solo gli utenti che hanno concesso il permesso di notifica sul telefono e non l'hanno revocato |
+| **Categorie di dati** | Token push (identificativo di **installazione**, non di persona), piattaforma, **lingua del telefono**, data dell'ultimo accesso, preferenze di consenso, e il testo della notifica — che per la prima finalità **contiene il nome di un luogo** |
+| **Base giuridica** | Esecuzione del contratto (art. 6.1.b) per le finalità (1) e (2), che raccontano qualcosa che la coppia ha fatto; 🔴 **consenso (art. 6.1.a)** per la (3), che nasce **spenta** e si accende solo con un gesto esplicito |
+| **Conservazione** | Il token finché il dispositivo non viene rimosso, l'app disinstallata o l'account cancellato (`on delete cascade` su `auth.users`). Le righe in coda restano come prova di cosa è stato inviato e cosa è stato **scartato** |
+| **Destinatari** | Supabase (responsabile), **Expo** (instradamento), **Apple (APNs) / Google (FCM)** (consegna) |
+| **Trasferimenti extra-UE** | 🔴 **Sì, verso gli USA**, e solo per questo trattamento esce un contenuto della coppia: il **nome del luogo** dentro il testo della notifica. Non escono fotografie, note, diario, posizione né account |
+| 🔑 **Nota** | **Il partner non vede i dispositivi dell'altro.** Ovunque nello schema le policy dicono `e_membro_attivo(coppia_id)`; qui no, solo `utente_id = auth.uid()`. Un token dice quanti telefoni ha una persona e `visto_il` **quando li ha usati l'ultima volta**: è il confine TB-2 applicato a un dato che sembra infrastruttura e non contenuto |
+| **Misure specifiche** | Consenso verificato **al momento dell'invio** e non dell'accodamento (chi spegne nel frattempo non riceve) · 🔴 **dopo lo scioglimento non parte nulla, per nessuno dei due** · testo senza nomi di persona, perché compare sulla schermata di blocco · nessun suono · `notifica_in_coda` con RLS attiva e **zero policy**: nessun client la legge e nessuno ci scrive · invio dietro segreto dedicato, **non** con la chiave `service_role` · token `DeviceNotRegistered` rimossi automaticamente |
+| **Riferimenti** | Migrazioni `0038_notifiche_push.sql` e `0039_notifiche_invio.sql` · `supabase/functions/invia-notifiche/` · `lib/notifiche.ts` · **D-128**, **D-129** |
+
 ## Trattamenti che NON vengono svolti — e vale la pena scriverlo
 
 | Trattamento | Stato |
@@ -163,12 +178,18 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **Apple** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
 | **Google Play** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
 | **[RevenueCat]** | Normalizzazione ricevute, webhook | Identificativo utente, stato abbonamento | USA | ⚠️ **[SE ADOTTATO]** |
-| **[Expo]** | Servizio push: instrada le notifiche verso Apple e Google | Token del dispositivo, testo della notifica | USA | ⚠️ **[QUANDO L'INVIO SARÀ ATTIVO]** |
-| **[Apple (APNs) / Google (FCM)]** | Consegna della notifica al telefono | Token del dispositivo, testo della notifica | Vedi §5 | ⚠️ **[QUANDO L'INVIO SARÀ ATTIVO]** |
+| **Expo** | Servizio push: instrada le notifiche verso Apple e Google | Token del dispositivo, lingua del telefono, testo della notifica | USA | ⚠️ **[DA FARE]** — SCC / DPF |
+| **Apple (APNs) / Google (FCM)** | Consegna della notifica al telefono | Token del dispositivo, testo della notifica | Vedi §5 | Accordi di programma |
 
-> ⟳ **Le due righe del push, aggiunte il 2026-09-10 con le parentesi di proposito.** La migrazione 0038 e il lato app esistono (**D-128**), ma **non esiste ancora nessun invio**: nessun token lascia il database, quindi oggi non c'è nessun destinatario da dichiarare. 🔴 *Le parentesi si tolgono nello stesso giro in cui parte la prima notifica, non dopo* — e il backlog di `History.md` lo elenca fra i passi obbligatori, non fra i miglioramenti.
+> ⟳ **Le parentesi tolte il 2026-09-14, ed è bene dire esattamente perché.** Il 2026-09-10 le due righe erano state scritte fra parentesi perché l'invio non esisteva: nessun token lasciava il database, quindi non c'era nessun destinatario da dichiarare. **Oggi l'invio esiste** — migrazione `0039`, Edge Function `invia-notifiche` (**D-129**) — e la regola scritta allora era *«le parentesi si tolgono nello stesso giro in cui parte la prima notifica, non dopo»*.
+>
+> ⚠️ **Stato reale, per non sostituire una imprecisione con un'altra**: il codice è completo, ma perché una notifica parta davvero servono ancora tre gesti dell'utente — applicare la `0039`, pubblicare la funzione, pianificarne l'esecuzione. Finché non avvengono, queste due righe dichiarano un destinatario che non ha ancora ricevuto nulla. 🔑 *È l'errore giusto da fare*: dichiarare in anticipo non danneggia nessuno, dichiarare in ritardo è un destinatario taciuto.
 
-🔑 **Nessun contenuto degli utenti esce dall'UE.** I soli trasferimenti verso gli USA riguardano il testo delle ricerche di luoghi e film — non fotografie, non account, non contenuti.
+🔴 **Un contenuto degli utenti esce dall'UE, e da oggi va detto.** Fino al 2026-09-13 questa riga diceva *«nessun contenuto degli utenti esce dall'UE»*, ed era vero: verso gli USA andava solo il testo delle ricerche di luoghi e film. La notifica «il partner ha segnato un posto» **porta con sé il nome del luogo**, che è contenuto della coppia, e lo fa passare da Expo e poi da Apple o Google.
+
+⚠️ *Questa frase era corretta quando è stata scritta ed è stata resa falsa da una funzione aggiunta altrove* — la stessa forma di **B-60** e di **B-62**. Restano fuori, e continuano a non uscire mai: fotografie, note, contenuto del diario, posizione, account.
+
+🔑 **E resta vero che si può azzerare**: chi spegne le notifiche dalle impostazioni non fa uscire niente, perché la coda scarta la notifica prima di spedirla e nessun testo raggiunge Expo.
 
 ---
 

@@ -44,6 +44,7 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 | **Dati contabili e fiscali** relativi agli acquisti | Adempimenti di legge | Obbligo legale (art. 6.1.c) | 10 anni |
 | **Data di nascita** | Due cose insieme: mostrare il tuo compleanno sul calendario che condividi col partner, e verificare che tu abbia l'età minima per usare il servizio | Esecuzione del contratto (art. 6.1.b) per il compleanno; **obbligo di legge** (art. 6.1.c, in relazione all'art. 8 GDPR) per la verifica dell'età | Durata del rapporto |
 | **Posizione attuale**, se scegli di condividerla col tuo partner | Farvi vedere a vicenda dove siete e la distanza fra voi | **Consenso (art. 6.1.a)** | Solo il dato **corrente**: ogni aggiornamento sostituisce il precedente e **non viene conservato nessuno storico**. Sparisce quando spegni la condivisione o quando la coppia si scioglie |
+| **Token delle notifiche push** (un identificativo dell'app installata su un telefono), la lingua del telefono e le tue preferenze di notifica — solo se accendi le notifiche | Consegnarti le notifiche che hai scelto | Esecuzione del contratto (art. 6.1.b) per le due notifiche di servizio — il partner che segna un posto come visitato, e gli anniversari dei vostri eventi; **consenso (art. 6.1.a)** per il promemoria ad aggiungere un posto nuovo, che resta spento finché non lo accendi tu | Finché non rimuovi quel dispositivo, disinstalli l'app o cancelli l'account |
 
 Il conferimento dell'indirizzo email è **necessario**: senza di esso l'account non può essere creato.
 
@@ -85,7 +86,8 @@ I dati **non sono venduti né ceduti**. Sono trattati da fornitori nominati **re
 | **Supabase** | Account, contenuti, fotografie — l'intera base dati | Regione **eu-central-1 (Francoforte, Germania)** — **Unione Europea** |
 | **Google (Places)** | Il testo delle ricerche di luoghi e i luoghi selezionati | Stati Uniti — vedi §5 |
 | **TMDB** *(The Movie Database)* | Il testo delle ricerche di film | Stati Uniti — vedi §5 |
-| **Apple** e **Google** | Dati relativi agli acquisti e agli abbonamenti | Vedi §5 |
+| **Expo** *(servizio di notifiche push)* | Il token del tuo dispositivo e il testo della notifica, solo quando una notifica ti viene effettivamente inviata | Stati Uniti — vedi §5 |
+| **Apple** e **Google** | Dati relativi agli acquisti e agli abbonamenti e — tramite APNs e FCM — il testo delle notifiche consegnate al tuo telefono | Vedi §5 |
 
 ⚠️ **Non utilizziamo strumenti di analisi del comportamento, pubblicità o profilazione**, né di terze parti né propri.
 
@@ -95,7 +97,13 @@ I dati possono essere comunicati ad autorità competenti quando richiesto per le
 
 ✅ **La base dati e le fotografie risiedono nell'Unione Europea** (Francoforte, Germania). Non lasciano lo Spazio economico europeo.
 
-Trasferiscono dati negli Stati Uniti i soli servizi di ricerca **luoghi** e **film**, e ricevono unicamente **il testo che digiti nella ricerca** — non i tuoi contenuti, non le tue fotografie, non il tuo account. Il trasferimento avviene sulla base di **clausole contrattuali standard approvate dalla Commissione europea** o di meccanismi equivalenti, quale l'adesione al **Data Privacy Framework** ove applicabile.
+Verso gli Stati Uniti viaggiano tre cose. Sono elencate una per una perché un elenco parziale sarebbe peggio di nessun elenco.
+
+1. **Le ricerche di luoghi e film.** Questi servizi ricevono unicamente **il testo che digiti nella ricerca** — non i tuoi contenuti, non le tue fotografie, non il tuo account.
+2. **Le notifiche push, e solo se le accendi.** Il testo della notifica e il token del tuo dispositivo passano da **Expo** e poi da **Apple (APNs)** o **Google (FCM)** per raggiungere il tuo telefono. ⚠️ È l'unico caso in cui un tuo contenuto lascia l'Unione Europea: la notifica che ti avvisa che il partner ha segnato un posto come visitato **contiene il nome di quel posto**. Non contiene mai fotografie, note, il contenuto del tuo diario o la tua posizione. Se preferisci che non viaggi nulla, le notifiche si spengono dalle impostazioni — e allora non viene inviato niente.
+3. **Acquisti e abbonamenti**, gestiti da Apple e Google.
+
+Il trasferimento avviene sulla base di **clausole contrattuali standard approvate dalla Commissione europea** o di meccanismi equivalenti, quale l'adesione al **Data Privacy Framework** ove applicabile.
 
 Copia delle garanzie adottate può essere richiesta ai contatti della §1.
 

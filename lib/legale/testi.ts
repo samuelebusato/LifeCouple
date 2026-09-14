@@ -48,6 +48,7 @@ LifeCouple is the private diary of **two people**: a shared calendar, places, ph
 | **Accounting and tax data** relating to purchases | Legal obligations | Legal obligation (Art. 6.1.c) | 10 years |
 | **Date of birth** | Two things at once: showing your birthday on the calendar you share with your partner, and checking that you meet the minimum age for the service | Performance of the contract (Art. 6.1.b) for the birthday; **legal obligation** (Art. 6.1.c, in relation to Art. 8 GDPR) for the age check | For as long as the account exists |
 | **Current location**, if you choose to share it with your partner | Letting you see where each other are, and the distance between you | **Consent (Art. 6.1.a)** | Only the **current** value: each update replaces the previous one and **no history is kept**. It disappears when you turn sharing off, or when the couple is dissolved |
+| **Push notification token** (an identifier for the app installed on one phone), the phone's language, and your notification preferences — only if you turn notifications on | Delivering the notifications you have chosen | Performance of the contract (Art. 6.1.b) for the two service notifications — your partner marking a place as visited, and anniversaries of your own events; **consent (Art. 6.1.a)** for the reminder to add somewhere new, which stays off unless you switch it on | Until you remove that device, uninstall the app, or delete your account |
 
 Providing an email address is **required**: without it an account cannot be created.
 
@@ -86,7 +87,8 @@ Data is **never sold or traded**. It is processed by suppliers appointed as proc
 | **Supabase** | Accounts, content, photographs — the entire database | Region **eu-central-1 (Frankfurt, Germany)** — **European Union** |
 | **Google (Places)** | The text of place searches, and the places you select | United States — see section 5 |
 | **TMDB** *(The Movie Database)* | The text of film searches | United States — see section 5 |
-| **Apple** and **Google** | Data relating to purchases and subscriptions | See section 5 |
+| **Expo** *(push notification service)* | Your device token and the text of the notification, only when a notification is actually sent to you | United States — see section 5 |
+| **Apple** and **Google** | Data relating to purchases and subscriptions, and — through APNs and FCM — the text of the notifications delivered to your phone | See section 5 |
 
 **We do not use behavioural analytics, advertising or profiling tools**, neither third-party nor our own.
 
@@ -96,7 +98,13 @@ Data may be disclosed to competent authorities where required by law.
 
 **The database and the photographs reside in the European Union** (Frankfurt, Germany). They do not leave the European Economic Area.
 
-The only services that transfer data to the United States are the **place** and **film** search services, and they receive only **the text you type into the search box** — not your content, not your photographs, not your account. The transfer is based on **standard contractual clauses approved by the European Commission**, or on equivalent mechanisms such as adherence to the Data Privacy Framework where applicable.
+Three things travel to the United States. They are listed one by one because a partial list would be worse than none.
+
+1. **Place and film searches.** These services receive only **the text you type into the search box** — not your content, not your photographs, not your account.
+2. **Push notifications, and only if you switch them on.** The text of the notification and your device token pass through **Expo**, and then through **Apple (APNs)** or **Google (FCM)** to reach your phone. ⚠️ This is the one case in which a piece of your own content leaves the European Union: the notification telling you that your partner has marked somewhere as visited **contains the name of that place**. It never contains photographs, notes, the content of your diary, or your location. If you would rather nothing travelled at all, notifications can be turned off in Settings — and then nothing is sent.
+3. **Purchases and subscriptions**, handled by Apple and Google.
+
+The transfer is based on **standard contractual clauses approved by the European Commission**, or on equivalent mechanisms such as adherence to the Data Privacy Framework where applicable.
 
 A copy of the safeguards adopted can be requested at the contact address in section 1.
 
