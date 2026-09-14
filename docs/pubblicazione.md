@@ -312,7 +312,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 
 | | Cosa | Chi | Dipende da |
 |---|---|---|---|
-| **A1** | 🔴 **Prova end-to-end della cancellazione** su un account di prova, col protocollo già scritto. *È fra i primi controlli di Apple: non è un rischio, è un esito* | io, **col tuo sì** — cancella davvero su infrastruttura vera | — |
+| **A1** | ✅ **FATTA il 2026-09-14 (3)**, e non era una formalità: la cancellazione **non funzionava** — due difetti sovrapposti (**B-68**), corretti dalle migrazioni `0044` e `0045`, applicate. Ora la catena regge su tutti e cinque i controlli, **bucket compreso** | ✅ io | — |
 | **A2** | 🔴 **Account demo già appaiato per il revisore**, con dentro contenuti veri: eventi, foto, luoghi, una partita conclusa. ⟳ **Ridimensionata il 2026-09-14 (3)**: non serve nessuna porta dedicata — si entra con email e password (**D-74**), e questa riga diceva il contrario per errore mio, ereditato da §5 (**B-67**). ⚠️ **Ma c'è una conseguenza nuova da decidere**: coi muri della `0042` un revisore senza «Insieme» trova mappa, liste e creatura **chiuse**, e il diritto lo scrive **solo il webhook** | io costruisco, **tu decidi contenuti e diritto** | le foto da usare |
 | **A3** | 🔴 **Indirizzo e telefono del professionista (DSA)** — nel brain non esistono da nessuna parte | **solo tu** | — |
 | **A4** | 🔴 **I termini d'uso entrano nell'app**: oggi il generatore si rifiuta di costruirli perché portano segnaposto, quindi **non sono resi a nessuno**. 🔑 *Senza, il paywall vende senza contratto* | io | **A3** |
