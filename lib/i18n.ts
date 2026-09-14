@@ -357,9 +357,22 @@ const it = {
     nessunaOfferta:
       'Non riusciamo a caricare i prezzi in questo momento. Riprova fra poco.',
     annullato: 'Nessun problema. Trovi Insieme quando vuoi, nelle impostazioni.',
-    // \u26a0\ufe0f Obbligo, non stile: Apple e il Codice del Consumo pretendono
-    // che PRIMA del pulsante si legga durata, prezzo alla scadenza e come
-    // disdire. Senza queste frasi la decadenza del recesso non opera.
+    // ⚠️ Obbligo, non stile: PRIMA del pulsante si devono leggere durata,
+    // prezzo alla scadenza e come disdire. 🔑 Questo lo pretende **Apple**, ed è
+    // esattamente ciò che questa stringa dice.
+    //
+    // 🔴 **B-66 — e questo commento ha detto il falso fino al 2026-09-14.**
+    // Sosteneva che senza queste frasi «la decadenza del recesso non opera»,
+    // cioè dichiarava soddisfatto un obbligo diverso da quello che assolve. La
+    // decadenza del diritto di recesso (art. 59.1.o Codice del Consumo) chiede
+    // altre due cose: il **consenso espresso** all'esecuzione immediata e la
+    // **presa d'atto** di perderlo. Non ci sono — né qui né nel paywall, che
+    // per giunta non linka nessun documento legale. Finché è così restano
+    // quattordici giorni esercitabili su ogni acquisto.
+    //
+    // ⚠️ Sono testo legale vincolante su una schermata che incassa: le scrive
+    // l'avvocato, non questo file. Ciò che si può fare qui è non darle per
+    // fatte — *una lacuna nota si chiude, una dichiarata chiusa no.*
     condizioni:
       'Rinnovo automatico. Disdici quando vuoi dalle impostazioni del telefono, almeno 24 ore prima. Durante la prova non paghi nulla.',
     avvisoCancellazione:
@@ -1282,6 +1295,9 @@ const en: Dizionario = {
     caricamento: 'One moment\u2026',
     nessunaOfferta: 'We cannot load the prices right now. Please try again shortly.',
     annullato: 'No problem. You can find Insieme any time, in Settings.',
+    // 🔴 **B-66 vale soprattutto qui.** Dal 2026-09-10 (D-123) l'inglese è
+    // l'**unico testo ufficiale**: quando le due frasi del recesso arriveranno,
+    // è questa la stringa che le porta, e l'italiana è la traduzione di cortesia.
     condizioni:
       'Renews automatically. Cancel any time in your phone settings, at least 24 hours before. During the trial you pay nothing.',
     avvisoCancellazione:
