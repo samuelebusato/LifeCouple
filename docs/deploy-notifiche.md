@@ -30,24 +30,52 @@ npx supabase functions deploy invia-notifiche
 
 La funzione **non** si accontenta del JWT che Supabase verifica di suo: quel token è di *un utente qualunque*, e far girare il lavoro a comando significherebbe poter spedire notifiche a terzi. Serve un segreto dedicato.
 
+🔴 **Non generarlo sulla riga di comando.** La forma `NOTIFICHE_CRON_SECRET="$(openssl rand -hex 32)"` funziona in bash e **fallisce in silenzio in `cmd.exe`**, che non conosce `$(...)`: imposta come segreto la stringa `$(openssl rand -hex 32)` alla lettera — ventiquattro caratteri, e per giunta **scritti in questo stesso documento**, quindi pubblici — mentre `secrets set` risponde `Finished` identico nei due casi. ⚠️ *È successo il 2026-09-14, e nessun messaggio lo ha segnalato: il difetto è stato trovato solo confrontando il digest.*
+
+Genera il valore **in un file**: non dipende dalla shell, e non finisce nella cronologia dei comandi.
+
 ```bash
-npx supabase secrets set NOTIFICHE_CRON_SECRET="$(openssl rand -hex 32)"
+node -e "require('fs').writeFileSync('.env.segreto.local','NOTIFICHE_CRON_SECRET='+require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-⚠️ **Deliberatamente NON la chiave `service_role`**: chi pianifica il lavoro non ha nessun motivo di possedere la chiave che può fare tutto. Se il segreto trapela, si spediscono notifiche di troppo; se trapelasse la `service_role`, si perde il database.
+```bash
+npx supabase secrets set --env-file .env.segreto.local --project-ref <progetto>
+```
 
-🔴 **Annotare il valore in un gestore di password prima di incollarlo**: `supabase secrets set` non lo rimostra.
+⚠️ **Il nome del file non è arbitrario.** `.gitignore` ignora `.env` esatto e `.env*.local`: `.env.segreto.local` è coperto, `.segreto.env` **no** — e sarebbe un segreto committabile, cioè un rimedio peggiore del male. Verificalo con `git check-ignore .env.segreto.local` prima di scriverci dentro.
+
+✅ **Poi verifica che sia arrivato quello giusto: `Finished` non lo dimostra.** Lo stesso digest che impedisce di rileggere il segreto permette di confrontarlo — l'API restituisce per ogni voce lo **sha256 del valore**, non il valore.
+
+```bash
+node -e "const c=require('crypto'),f=require('fs');const v=f.readFileSync('.env.segreto.local','utf8').split('=')[1].trim();console.log('atteso:',c.createHash('sha256').update(v).digest('hex'))"
+```
+
+```bash
+npx supabase secrets list --project-ref <progetto> --output json
+```
+
+I due valori per `NOTIFICHE_CRON_SECRET` devono coincidere. 🔑 *Se non coincidono, il segreto impostato non è quello che credi di avere* — ed è esattamente il caso in cui il comando è stato mangiato dalla shell.
+
+🔴 **Infine annota il valore in un gestore di password e cancella il file.** Non lo rimostra né `secrets set` né il pannello: se lo perdi non si recupera, si sostituisce.
+
+⚠️ **Deliberatamente NON la chiave `service_role`**: chi pianifica il lavoro non ha nessun motivo di possedere la chiave che può fare tutto. Se il segreto trapela, si spediscono notifiche di troppo; se trapelasse la `service_role`, si perde il database.
 
 ## 4. Pianificare l'esecuzione
 
 Da **Integrations → Cron** nel pannello Supabase, un lavoro che chiama la funzione. Cadenza consigliata: **ogni ora**.
 
+🔑 **La chiamata passa due cancelli in fila, e questo elenco ne conteneva uno solo.** La funzione è deployata con `verify_jwt` attivo: *prima* che il suo codice parta, la piattaforma pretende una API key; solo dopo la funzione controlla `x-cron-secret`. Servono **entrambi** gli header, e senza il primo la funzione non viene nemmeno eseguita.
+
+⚠️ **Le chiavi di questo progetto sono del formato nuovo** (`sb_publishable_…`, non `eyJ…`): non essendo JWT vanno sull'header **`apikey`**, non su `Authorization: Bearer`. Si usa la **publishable** e non la secret — la publishable è già dentro l'app, e quel cancello non autentica nessuno: l'autenticazione vera è il segreto.
+
 | Campo | Valore |
 |---|---|
 | Schedule | `0 * * * *` |
-| Tipo | HTTP Request → POST |
+| Tipo | **Supabase Edge Function** → POST |
 | URL | `https://<progetto>.supabase.co/functions/v1/invia-notifiche` |
 | Header | `x-cron-secret: <il segreto del passo 3>` |
+
+Scegliendo il tipo **Supabase Edge Function** il pannello precompila da sé `apikey` e `Content-Type`: resta da aggiungere solo `x-cron-secret`. Scegliendo *HTTP Request* vanno messi **tutti e tre** a mano.
 
 ⚠️ **Perché un'ora e non cinque minuti.** I «ricordi» si calcolano sul giorno, non sul minuto, e il trigger dei luoghi accoda comunque in tempo reale: girare più spesso non anticipa nulla di percepibile e moltiplica le chiamate. ⚠️ **E perché non una volta al giorno**: un invio fallito aspetterebbe 24 ore per il secondo tentativo.
 
@@ -57,7 +85,13 @@ Da **Integrations → Cron** nel pannello Supabase, un lavoro che chiama la funz
 
 ## Come si capisce che funziona
 
-La funzione risponde con un riepilogo, e **i numeri vanno letti insieme**:
+La funzione risponde con un riepilogo, e **i numeri vanno letti insieme**.
+
+⚠️ **Le forme sono due, non una.** A coda vuota esce prima, e i campi `lette`, `scartate` e `dispositivi_rimossi` **non ci sono affatto** — non valgono zero, mancano. Chi li cerca crede che la funzione sia rotta:
+
+```json
+{ "ok": true, "accodate": { "ricordi": 0, "inviti": 0 }, "inviate": 0 }
+```
 
 ```json
 { "ok": true, "accodate": { "ricordi": 0, "inviti": 0 },
@@ -66,14 +100,28 @@ La funzione risponde con un riepilogo, e **i numeri vanno letti insieme**:
 
 | Cosa vedi | Cosa significa |
 |---|---|
-| `lette: 0` | la coda era vuota — normale la maggior parte delle ore |
+| nessun campo `lette` | la coda era vuota — normale la maggior parte delle ore |
 | `scartate` > 0 | qualcosa **non doveva** partire: consenso spento, coppia sciolta, o nessun dispositivo. Il motivo è in `notifica_in_coda.motivo_scarto` |
 | `inviate` < `lette` − `scartate` | qualche invio è fallito e **resta in coda**: `ultimo_errore` dice perché, `da_inviare_il` quando si riproverà |
 | `dispositivi_rimossi` > 0 | qualcuno ha disinstallato o revocato il permesso: il token è stato tolto, ed è il comportamento giusto |
 
 ⚠️ **`scartate` non è un errore e non va «sistemato».** È la colonna che dimostra di non aver spedito promozioni a chi non le voleva: se un domani servisse provarlo, è lì che si guarda.
 
+### Quando invece risponde 401 — e sono due 401 diversi
+
+🔑 **Il corpo dice quale dei due cancelli ti ha fermato.** Senza questa distinzione si cerca nel posto sbagliato: il primo caso non nomina nemmeno il segreto.
+
+| Risposta | Chi ti ha fermato | Cosa manca |
+|---|---|---|
+| `{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}` | la piattaforma, **prima** della funzione | l'header `apikey` |
+| `{"errore":"non autorizzato"}` | il codice della funzione | `x-cron-secret` assente **o** sbagliato |
+| `{"errore":"configurazione incompleta"}` (500) | la funzione | il segreto non è impostato sul progetto |
+
+⚠️ **I due casi di `{"errore":"non autorizzato"}` sono indistinguibili di proposito**: chi prova non deve imparare se il segreto esiste. Se sei tu a essere bloccato, confronta il digest come al passo 3 — è l'unico modo di sapere quale dei due è.
+
 ## Le due cose che restano fuori da questo documento
 
 - 🔴 **La capability *Push Notifications* sull'App ID e la chiave APNs su EAS.** Senza, su iOS non arriva niente. Richiedono l'account Apple Developer, che il progetto non ha ancora.
-- ⚠️ **Una prova vera su un telefono.** In Expo Go il token si ottiene, ma il comportamento non è quello della build finale: è la stessa decisione sul prebuild ferma da **B-20**.
+- ⚠️ **Una prova nella build finale.** In Expo Go il token si ottiene e la notifica **arriva davvero**, ma il comportamento non è identico a quello della build firmata: è la stessa decisione sul prebuild ferma da **B-20**.
+
+✅ **E una cosa che questo documento dava per impossibile e non lo è** (verificato il 2026-09-14): su **iPhone in Expo Go le notifiche push arrivano**, senza account Apple Developer. La rimozione del push da Expo Go nella SDK 53 riguarda **solo Android** — `node_modules/expo-notifications/src/warnOfExpoGoPushUsage.ts` lancia un errore se `Platform.OS === 'android'` e su iOS si limita a un avviso in console. Il token viene emesso contro il certificato APNs di Expo Go, e APNs ha restituito ricevuta `ok`. 🔑 *Serve per provare la catena, non per pubblicare*: la capability sull'App ID resta necessaria per la build tua.
