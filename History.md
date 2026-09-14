@@ -3216,7 +3216,9 @@ La voce ha viaggiato in cima alle liste come **«progettazione, non configurazio
 - Il backlog §6 di questo file, stessa cosa.
 - ⚠️ **E una conseguenza nuova, trovata per la stessa strada**: coi muri della `0042` un revisore **senza «Insieme»** trova mappa, liste e creatura **chiuse**, e il diritto lo scrive **solo il webhook** (`0041`). Va deciso se l'account demo nasce abbonato — e non è una domanda di documentazione, è una cosa che il revisore vede.
 
-### B-66 — Il commento dichiara che il recesso decade, e le frasi che lo farebbero decadere non ci sono (2026-09-14, APERTO)
+### B-66 — Il commento dichiara che il recesso decade, e le frasi che lo farebbero decadere non ci sono (2026-09-14, ⟳ TESTO SCRITTO il 2026-09-15, in attesa di validazione)
+
+> ⟳ **Aggiornamento del 2026-09-15.** Su richiesta esplicita dell'utente le due frasi sono state **scritte** e messe **sopra il pulsante**, e il paywall linka anche informativa e cookie policy — il terzo aggancio di D-121, che mancava proprio dove si paga. 🔑 **Scritte non è validate**: resta da decidere, e non da questo file, se basti il testo sopra il pulsante o serva una **casella da spuntare**, che è la variante più prudente. ⚠️ *Il difetto originale — il commento che dava l'obbligo per soddisfatto — era già stato corretto il 2026-09-14, ed è la metà che contava di più: una lacuna nota si chiude, una dichiarata chiusa no.*
 
 **Trovato** rileggendo `app/paywall.tsx` per stabilire lo stato reale della riga *«Schermata d'acquisto»* del threat model §4-ter. 🔑 *Non da un test, e nessun test potrebbe trovarlo*: il codice fa esattamente ciò che dice di fare — è **ciò che dice** a non corrispondere all'obbligo che nomina.
 
