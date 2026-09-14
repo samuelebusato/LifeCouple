@@ -4,6 +4,10 @@ Architettura completa, con **trade-off** e **alternative scartate col loro costo
 
 > **Stato al 2026-08-12**: architettura **progettata, non implementata**. Nessun componente esiste. Ciò che segue è il disegno da cui partirà il codice, non una descrizione di ciò che c'è.
 
+> ⟳ **Stato al 2026-09-14 (2)**: la riga qui sopra resta com'era scritta, e **non descrive più il sistema**. Le migrazioni sono arrivate alla `0042`, le Edge Function sono **tre**, le notifiche push sono state ricevute su un telefono vero e la catena dei pagamenti esiste per intero.
+>
+> 🔑 **Questo documento è stato allineato al codice il 2026-09-14**, dopo due giornate in cui erano nati due sottosistemi interi — notifiche e pagamenti — che qui non comparivano. ⚠️ *È la stessa forma di difetto che il progetto insegue da settimane: una frase vera quando è stata scritta, resa falsa da un lavoro fatto altrove. Ma questa non poteva essere intercettata da nessun controllo — **un documento che tace su un componente compila, passa i test e non fallisce niente**.*
+
 ---
 
 ## 1. Componenti e responsabilità
@@ -19,6 +23,10 @@ Architettura completa, con **trade-off** e **alternative scartate col loro costo
 | **Invio sigillato** | Il congegno di **tre** giochi su quattro (quiz, telepatia, disegno): invio segreto di entrambi → **rivelazione solo quando entrambi hanno inviato**. Il confronto avviene in una **funzione Postgres**, mai nel client. ⚠️ «Obbligo o verità» **non lo usa** (D-86): la carta la devono leggere tutti e due, quindi non c'è nessun segreto da proteggere | Database |
 | **Creatura — stato** | Punti di crescita, stadio derivato, umore. **Non sa come viene disegnata** | Database + app |
 | **Creatura — disegno** | Riceve `stadio` e `umore`, restituisce il visivo. **Non sa da dove vengono** | App |
+| **Coda delle notifiche** | Raccoglie ciò che va notificato nel momento in cui accade, e conserva l'esito di ogni invio. ⚠️ **Nessun client la legge e nessuno la scrive** (§4.3-bis) | Database (`0038`, `0039`) |
+| **Edge Function** (tre) | L'unica logica che gira **fuori** dal database e **fuori** dal telefono, perché serve la chiave `service_role` (§4.3-ter) | Supabase, regione UE |
+| **Diritto a «Insieme»** | Chi ha pagato e fino a quando, e la sua **proiezione sulla coppia**. 🔑 **È il cancello delle funzioni a pagamento**, e lo legge il database — mai l'app (§4.3-quater) | Database (`0041`) |
+| **RevenueCat** (SDK + pannello) | Acquisti, ricevute, listino, ripristino, stato dell'abbonamento. ⚠️ **Non decide niente**: ciò che sa serve a *disegnare la schermata* | Telefono + fornitore, **Stati Uniti** |
 
 > **Il confine fra questi due ultimi componenti è una decisione di architettura, non un dettaglio di implementazione** (D-09). È ciò che rende sostituibile il disegno senza toccare la logica: si parte con `react-native-svg` + Reanimated e si arriva, quando ha senso, a file **Lottie** consegnati da un illustratore — stessa interfaccia, renderer diverso. Se la logica di crescita conoscesse le forme, la sostituzione costerebbe quanto rifare la funzione.
 >
@@ -28,11 +36,13 @@ Non esiste un backend applicativo scritto da noi. L'app parla direttamente con S
 
 **Trade-off dichiarato**: senza un livello server nostro, ogni regola di autorizzazione che dimentichiamo di scrivere come policy RLS **non esiste** — non c'è un secondo strato che la recuperi. In cambio si eliminano un servizio da scrivere, da deployare e da mantenere (V1) e il suo costo (V2). Contropartita accettata: le policy RLS diventano l'artefatto più critico del progetto e vanno testate come tale (§7).
 
+> ⟳ **Dal 2026-09-14 la prima frase ha tre eccezioni, non zero**: `cancella-account`, `invia-notifiche` e `abbonamento-webhook`. Resta vero ciò che conta — **nessuna di esse sta fra l'app e i dati della coppia**, che continuano a passare per la RLS — ma sono codice nostro che gira con la `service_role`, e per **due di esse il chiamante non è una persona**. Perché esistano solo loro, e perché quel confine sia il posto giusto dove fermarsi, è in §4.3-ter.
+
 ---
 
 ## 2. Confini di fiducia
 
-Sono **quattro** dal 2026-09-14, e il secondo è quello che rende questa app diversa da un'app qualsiasi.
+Sono **cinque** dal 2026-09-14, e il secondo è quello che rende questa app diversa da un'app qualsiasi.
 
 | # | Confine | Da cosa a cosa |
 |---|---|---|
@@ -40,8 +50,11 @@ Sono **quattro** dal 2026-09-14, e il secondo è quello che rende questa app div
 | **TB-2** | **Partner ↔ partner** | I due membri della coppia **non sono la stessa entità di fiducia**. Condividono contenuti ma non identità |
 | **TB-3** | Coppia ↔ coppia | I dati di una coppia non devono essere raggiungibili da un'altra |
 | **TB-4** | Sistema ↔ servizio push (**fuori dall'UE**) | ⟳ **Aggiunto il 2026-09-14 con D-129.** Il testo di una notifica lascia la nostra infrastruttura e passa da **Expo**, poi da **Apple (APNs)** o **Google (FCM)**, negli Stati Uniti |
+| **TB-5** | Sistema ↔ diritto a pagamento (**fuori dall'UE**) | ⟳ **Aggiunto il 2026-09-14 con D-133.** Chi paga è il telefono, che resta ostile per definizione: il diritto lo scrive **solo** il webhook, e l'identificativo dell'utente arriva a **RevenueCat**, negli Stati Uniti |
 
 > 🔑 **TB-4 non esisteva perché fino al 2026-09-13 nessun contenuto della coppia usciva dall'UE**, e il registro art. 30 lo dichiarava. Le notifiche l'hanno creato: il ricordo «N anni fa» porta con sé **il titolo dell'evento**. ⚠️ *È l'unico contenuto che esce* — fotografie, note, diario, posizione e account no — e **chi spegne le notifiche non fa uscire niente**, il che rende il confine attraversabile solo per scelta. La conseguenza sul testo delle notifiche è in `threat-model.md` §4-bis, non qui: è una decisione di sicurezza, non di struttura.
+
+> 🔑 **TB-5 non è «i pagamenti», ed è una cosa molto più stretta.** Il denaro non passa da noi in nessun momento — incassa Apple, RevenueCat normalizza, noi scriviamo **un booleano** — quindi questo confine non protegge un pagamento: protegge *chi può accendere quel booleano*. ⚠️ *È la ragione per cui la sua tabella nel threat model (§4-ter) è più corta di quanto la parola «pagamenti» faccia temere, e per cui ciò che esce dall'UE è un identificativo, non un dato di pagamento.*
 
 > ⚠️ **TB-2 è il confine caratteristico di questo prodotto, ed è quello che le app di coppia trattano peggio.** L'assunzione implicita di quasi tutte è *"sono una coppia, quindi si fidano"*. È vera finché è vera. L'architettura non deve dipendere da quell'assunzione: deve funzionare correttamente **anche quando smette di essere vera**, senza migrazioni d'emergenza su dati che nel frattempo sono diventati contesi.
 
@@ -57,6 +70,7 @@ Sono **quattro** dal 2026-09-14, e il secondo è quello che rende questa app div
 | **Regione UE** obbligatoria | Dati personali di residenti UE, e un trasferimento extra-UE aprirebbe un capitolo (clausole contrattuali tipo) sproporzionato al progetto | Regione USA: nessun vantaggio, costo di conformità reale |
 | **Mappa: inserimento manuale** | Vedi `History.md` D-05 | Check-in automatico: più comodo, ma trasforma l'app in un tracker di persona |
 | **Foto compresse lato client** | È l'unica funzione a costo non limitato (V2) | Caricamento dell'originale: qualità migliore, ma satura il piano gratuito in mesi |
+| **RevenueCat** (`react-native-purchases`) per gli acquisti — **dal 2026-09-14, D-133** | Validazione delle ricevute, rinnovi, ripristino, stato normalizzato e webhook: è la parte che costa di più da tenere in piedi, e **nessuna di quelle cose è il prodotto** | **`react-native-iap`**: nessun fornitore in mezzo e nessun identificativo fuori dall'UE, ma **validazione delle ricevute e webhook da scrivere e mantenere in proprio**. ⚠️ *La conseguenza pesa più della scelta*: è un **modulo nativo**, quindi da qui in poi Expo Go non basta e serve una development build — ed è lo stesso gesto che sbloccava le altre tre cose che lo aspettavano |
 
 ### 3-bis. Strato di sviluppo e UI (deciso il 2026-08-12)
 
@@ -95,7 +109,7 @@ La tabella qui sopra è **la decisione del 2026-08-12**, presa prima di scrivere
 | **Moti** (API dichiarativa sopra Reanimated) | **Mai installato.** Si usa **Reanimated 4 direttamente**, più uno strato di movimento nostro | Moti risolve *«scrivere un'animazione in una prop»*. Il problema vero, emerso costruendo, era un altro: **far muovere tutta l'app allo stesso modo**. Una prop dichiarativa non impedisce a due schermate di usare due molle diverse; un file di token sì. Vedi D-53 |
 | **TanStack Query** | **Mai installato.** I dati stanno in hook nostri (`lib/eventi.ts`, `lib/luoghi.ts`, `lib/preferiti.ts`, `lib/evento-dettaglio.ts`) | Non è stata una scelta: è successo. Ogni hook è nato per una schermata, e quando si è visto che facevano tutti la stessa cosa, funzionavano già. **È un debito, non un merito** — vedi §7.5 |
 | **FlashList** | **Mai installata.** Si usa `FlatList` | Non è mai servita. Le liste vere hanno le decine di elementi, non le migliaia; l'unica lunga — la striscia dei giorni, 730 celle — regge benissimo con `getItemLayout`, che le dà le posizioni **senza misurare** (ed è ciò che ha chiuso B-06) |
-| **`supabase gen types typescript`** | Usato, ma `lib/database.types.ts` ha **blocchi scritti a mano** per le migrazioni 0011→0016 | Debito noto e primo punto del PUNTO DI RIPRESA in `History.md`. Ogni migrazione nuova va aggiunta a mano finché non si rigenera |
+| **`supabase gen types typescript`** | ⟳ **Rigenerato il 2026-09-14, e il debito è chiuso.** Fino a quel giorno `lib/database.types.ts` aveva **blocchi scritti a mano**, dalla `0011` in poi | 🔑 *Rigenerandolo è emerso un difetto in `lib/partita.ts`, un file **non toccato**, che compilava solo perché i tipi a mano dicevano una cosa diversa dallo schema vero.* ⚠️ **È la prova del debito**: un tipo scritto a mano non descrive il database, lo **contraddice in silenzio** — e finché lo contraddice, il compilatore dà ragione alla copia sbagliata |
 
 **Lo strato di movimento** che ha preso il posto di Moti (D-53, 2026-08-27):
 
@@ -177,6 +191,12 @@ erDiagram
 | `creatura` | `coppia_id` (chiave), `punti`, `creata_il` | ⚠️ **Nessun `autore_id`**: è l'unico oggetto senza autore, ed è il motivo per cui allo scioglimento si cancella invece di essere revocata (D-16) |
 | `stadio_soglia` | `stadio`, `punti_minimi` | Lo **stadio si deriva dai punti**, non si salva. Tabella e non costante nel codice: le soglie si tarano senza migrazione. **Tre righe dal 2026-09-06** — `0 / 250 / 1200` (D-104, `0033`); erano sei, tarate quando D-09 prevedeva ~5-6 stadi, e tre di quelle non potevano più corrispondere a niente dopo D-96. ⚠️ I due numeri nuovi sono una **stima dichiarata** su un'ipotesi di ~130 punti/mese, scritta nella migrazione apposta per essere confrontata coi dati d'uso |
 | `punti_evento` | `coppia_id`, `tipo`, `riferimento_id`, `punti`, `creato_il` | ⚠️ **Vincolo unico su (coppia, tipo, riferimento)**: è la guardia che impedisce di fabbricare punti togliendo e rimettendo lo stesso elemento (D-15) |
+
+**Diritto a pagamento** (D-124, D-133 — dal 2026-09-14)
+
+| Tabella | Colonne | Nota |
+|---|---|---|
+| `abbonamento` | `utente_id` (chiave), `attivo`, `prodotto`, `scade_il`, `evento_id`, `evento_il`, `aggiornato_il` | **Migrazione `0041`.** 🔑 **La chiave è l'UTENTE, non la coppia** (D-124): l'abbonamento è *di una persona* e le sopravvive — la domanda è la stessa che D-16 ha sciolto per la creatura, **con risposta opposta perché opposto è l'oggetto**. ⚠️ Come `profilo_utente`, **non pende dalla coppia**: per questo non compare nel diagramma qui sopra. 🔴 **Una sola policy, ed è di lettura** (§4.3-quater). `evento_id` ed `evento_il` non sono contabilità: sono **l'idempotenza e l'ordine** degli eventi del webhook |
 
 **Giochi** (D-12, D-19)
 
@@ -278,22 +298,54 @@ Tre tabelle e una funzione periodica. ⚠️ **Nessuna di esse è scrivibile o l
 
 ⚠️ **Conseguenza da conoscere**: il trigger accoda **in tempo reale**, ma la coda non si svuota da sola. Serve un lavoro pianificato che chiami la Edge Function; senza, una persona può accendere le notifiche e non riceverne nessuna.
 
-### 4.3-ter Le due Edge Function, e perché esistono solo loro
+### 4.3-ter Le tre Edge Function, e perché esistono solo loro
 
-Sono gli unici due pezzi di logica che girano **fuori** dal database e **fuori** dal telefono, e hanno la stessa giustificazione: servono la chiave `service_role`, che non può stare in un client.
+Sono gli unici tre pezzi di logica che girano **fuori** dal database e **fuori** dal telefono, e hanno la stessa giustificazione: servono la chiave `service_role`, che non può stare in un client.
 
 | Funzione | Perché non può stare altrove | Chi la chiama |
 |---|---|---|
 | `cancella-account` (2026-08-31) | eliminare una riga da `auth.users` richiede privilegi che nessun utente ha su sé stesso | l'utente, da Impostazioni — `verify_jwt` |
 | `invia-notifiche` (2026-09-14) | legge i token di una persona **diversa** da chi scatena l'evento: il partner che segna un posto non può, e non deve, leggere i dispositivi dell'altro (TB-2) | un orologio — **non** una persona |
+| `abbonamento-webhook` (2026-09-14) | è **l'unica scrittura possibile** su `abbonamento`: al client quella tabella è vietata, ed è il punto della `0041`. Il diritto entra nel sistema solo **server-to-server** | **RevenueCat** — né una persona né un orologio |
 
 🔴 **`invia-notifiche` è la prima cosa del progetto che non nasce da un gesto di un utente**, e questo cambia come si autentica. Il JWT che la piattaforma verifica è quello di *un utente qualunque*: non basta, perché far girare la funzione a comando significherebbe **poter spedire notifiche a terzi**. Serve un segreto dedicato, `NOTIFICHE_CRON_SECRET`, confrontato a tempo costante.
 
 ⚠️ **Deliberatamente NON la chiave `service_role` per il chiamante**: chi pianifica il lavoro non ha motivo di possedere la chiave che può fare tutto. Se trapela il segreto si spediscono notifiche di troppo; se trapelasse la `service_role` si perde il database — due incidenti di gravità incomparabile, e costa una riga tenerli separati. *Alternativa scartata*: riusare la `service_role` come segreto del cron; costo: un solo furto per perdere tutto.
 
+> 🔴 **E la terza ha dovuto spegnere il cancello della piattaforma, il che merita una riga.** Le Edge Function nascono con `verify_jwt` attivo, che pretende un JWT valido **prima** che il codice parta; RevenueCat manda solo l'header col nostro segreto — che non è un JWT — e non può aggiungere un `apikey`. Quindi è deployata con `--no-verify-jwt`, e **l'autenticazione se la fa da sé**. ⚠️ *Senza quel flag il webhook non arriverebbe mai, e nel pannello si vedrebbe un `401` che sembra colpa del segreto*: il guasto verrebbe cercato nel posto sbagliato.
+>
+> 🔑 **Le due funzioni senza persona si autenticano nello stesso modo, ed è voluto**: un segreto dedicato, confrontato a tempo costante, con risposta identica per segreto assente ed errato. *Un secondo schema avrebbe significato un secondo modo di sbagliarlo.*
+
 🔑 **Il consenso si verifica quando si spedisce, non quando si accoda.** Filtrare in fase di accodamento sarebbe più efficiente e spedirebbe a chi nel frattempo ha detto di no: il consenso vale nel momento in cui si tratta il dato, e il trattamento **è l'invio**. Fra i due momenti possono passare ore.
 
 ⚠️ **«Scartata» non è «inviata», e una colonna le tiene distinte.** Segnare come inviata una notifica soppressa uscirebbe dalla coda lo stesso, ma renderebbe la tabella bugiarda sul dato che conta: se un domani servisse dimostrare di non aver mandato solleciti promozionali a chi non li voleva, `motivo_scarto` **è** la prova.
+
+### 4.3-quater Il diritto a pagamento e il confine del piano gratuito (`0041`, `0042` — D-133, D-135)
+
+Una tabella, una funzione e due trigger. ⚠️ **Nessuno dei quattro pezzi sta nell'app**, ed è tutto il punto.
+
+| Pezzo | Cosa fa | Chi lo tocca |
+|---|---|---|
+| `abbonamento` | chi ha pagato, quale prodotto, fino a quando, e l'ultimo evento visto | 🔴 **Una policy sola, di lettura, e solo sulla propria riga.** Scrive esclusivamente `abbonamento-webhook` con la `service_role`. ⚠️ *Il partner non la legge*: sapere se e quando l'altro paga non serve a nessuna schermata — è TB-2 applicato al denaro |
+| `coppia_ha_insieme(cid)` | la **proiezione** sulla coppia: *«esiste un membro attivo con un diritto valido?»* | chiunque sia autenticato, ma **solo sulla propria coppia** |
+| `foto_entro_il_piano()` | nel piano gratuito: una foto per evento, e nessuna foto sciolta | trigger `before insert` su `foto` |
+| `partita_entro_il_piano()` | nel piano gratuito: una partita al giorno **per coppia** | trigger `before insert` su `partita` |
+
+🔑 **Il verso della scrittura è una decisione, ed è D-124**: il diritto sta **sull'utente che ha pagato** e si proietta sulla coppia in lettura, mai il contrario. ⚠️ *Su `coppia` sarebbe più semplice e sbagliato*: sciogliendo sparirebbe **anche a chi ha pagato**, per un periodo già pagato.
+
+🔑 **La proiezione è calcolata a ogni chiamata, mai memorizzata.** *Alternativa scartata*: una colonna `ha_insieme` su `coppia`, più veloce e leggibile senza funzione. **Costo**: resterebbe accesa dopo che chi pagava è uscito, **in silenzio e senza che nessun errore compaia** — una copia diverge dal suo originale al primo scioglimento. ✅ *È anche l'asserzione che giustifica l'intera forma della migrazione*: con l'abbonato **uscito**, la funzione torna `false` per chi resta.
+
+⚠️ **E la funzione ha un cancello prima del proprio lavoro.** Essendo `security definer`, senza `e_membro_attivo(cid)` in testa direbbe a chiunque se **una coppia qualunque** è abbonata: un oracolo su dati altrui, cioè TB-3 aperto da una funzione di comodità.
+
+**Perché i limiti stanno nel database e non nell'interfaccia.** 🔑 *Un limite disegnato e non imposto è una porta chiusa con un cartello*: l'app può nascondere il bottone «aggiungi un'altra foto», **chi parla direttamente all'API non vede nessun bottone**. È la stessa lezione del tetto foto (D-22) e di `assegna_punti` (D-15), e la ragione per cui questo progetto non ha un backend proprio: l'autorizzazione vive nel database.
+
+✅ **Mappa, liste e creatura non hanno nessun trigger, e non è una dimenticanza.** Non sono limiti di quantità: sono **schermate**. Si chiudono nell'app, e ciò che il database già garantisce (RLS per coppia) resta identico. 🔑 *Mettere un muro sulla **lettura** dei propri luoghi renderebbe illeggibili dati già inseriti da chi ha smesso di pagare — e quello, a differenza del resto, è tenere in ostaggio i ricordi di qualcuno.*
+
+✅ **Nessun limite tocca cancellazione, lettura ed esportazione**: sono un obbligo (artt. 15 e 20 GDPR), non una voce di listino.
+
+🔴 **Il quarto pezzo sta nell'app, ed è quello che si dimentica: un rifiuto deve diventare un'offerta.** I due trigger rifiutano con un messaggio, e senza `eRifiutoDelPiano` l'app lo mostrerebbe in un riquadro rosso come un guasto — *«Con il piano gratuito ogni evento tiene una foto»* sembrerebbe un difetto invece che il listino. ⚠️ **Riconosce la frase, non un codice**, perché PostgREST non propaga `errcode` al client: se un domani i messaggi della `0042` cambiano, quella funzione va cambiata **con loro**. È un accoppiamento dichiarato (§7.7), ed è il motivo per cui tutte e tre le frasi contengono «piano gratuito», scritto apposta.
+
+> **Dove sta il muro nell'interfaccia** (D-135, `components/muro.tsx` — mappa, liste, home): **il muro non nasconde, mostra e spiega.** Una scheda che sparisce dalla barra fa pensare a un guasto; una che c'è e dice perché è chiusa vende. Per la stessa ragione **la barra in basso resta identica** per chi paga e per chi no: stessa app, porte diverse. ⚠️ *Sulla home la creatura non sparisce, si spegne*: la sagoma mostra cosa manca senza togliere niente che si avesse.
 
 ### 4.4 Perché il ciclo mestruale non è nello schema, e non è un'incoerenza
 
@@ -328,10 +380,12 @@ D-11 impone di prevedere **subito** creatura e giochi anche se si implementano p
 
 ## 5. Flussi di dati
 
-1. **Appaiamento** — `—` **da decidere** (codice di invito, link, email). È il primo attraversamento di TB-2 e determina lo schema: finché non è deciso, le policy RLS non si possono scrivere. È la voce più bloccante del backlog.
+1. **Appaiamento** — ⟳ **deciso il 2026-08-12 con D-14**, e non è più la voce bloccante che questa riga dichiarava: **link condiviso**, token **monouso** e a scadenza breve di cui si salva **l'impronta e non il valore** (`invito.token_hash`, §4.1), più la **conferma esplicita di chi ha invitato** (`conferma_invito`) prima che il legame sia effettivo. 🔑 *Le prime tre riducono la probabilità; è la conferma a interrompere l'ingresso di chi apre un link inoltrato.* Resta il primo attraversamento di TB-2, e la sua superficie è in `threat-model.md` §4.
 2. **Foto**: scatto o scelta dalla galleria → **compressione sul telefono** → caricamento nello storage → riga di metadati nel database con `autore_id` e `coppia_id`. Il file non passa mai da un nostro server, perché non ne esiste uno.
 3. **Luogo**: l'utente cerca o tocca un punto sulla mappa → si salva **coordinata e nota**, mai una posizione rilevata dal dispositivo (D-05).
-4. **Cancellazione account**: obbligatoria in-app per Apple. Ordine deliberato — **prima i file nello storage, poi le righe indice**, perché l'ordine inverso lascia file orfani che nessuna query trova più. È lo stesso errore già trovato e corretto su HeleoX (`Rule/catena-cancellazione.md`), e va **verificato end-to-end**, non assunto.
+4. **Cancellazione account**: obbligatoria in-app per Apple. Ordine deliberato — **prima i file nello storage, poi le righe indice**, perché l'ordine inverso lascia file orfani che nessuna query trova più. È lo stesso errore già trovato e corretto su HeleoX (`Rule/catena-cancellazione.md`), e va **verificato end-to-end**, non assunto. 🔴 *Al 2026-09-14 la funzione esiste dal 2026-08-31 e quella prova non è ancora stata fatta.*
+5. **Notifica push** (dal 2026-09-14) — un gesto della coppia, o un anniversario che cade oggi → un **trigger** scrive in `notifica_in_coda` **dentro la stessa transazione** → un orologio chiama `invia-notifiche` → la funzione verifica il consenso **in quel momento**, compone il testo nella **lingua del dispositivo** e lo consegna a Expo → Apple o Google → il telefono. ⚠️ **Fra il trigger e il servizio push c'è una tabella, non una chiamata** (§4.3-bis): è ciò che impedisce a un servizio irraggiungibile di far fallire *«segno questo posto come visitato»*.
+6. **Acquisto e diritto** (dal 2026-09-14) — l'utente compra dal paywall → incassa **Apple** → RevenueCat normalizza e chiama `abbonamento-webhook` → la funzione scrive `abbonamento` con la `service_role`. 🔑 **Il telefono non partecipa a questo flusso, e non è un dettaglio**: l'unico verso in cui il diritto entra nel sistema è server-to-server. L'app **scopre** di averlo rileggendo il database — `useInsieme()` riprova sei volte in ~9 secondi, perché il webhook è asincrono e per qualche secondo l'SDK sa una cosa che il database non sa ancora. ⚠️ *Si è scelto di aspettare il database invece di fidarsi dell'SDK «solo per quei secondi»: una scorciatoia temporanea in un cancello di sicurezza è una scorciatoia permanente il giorno dopo.*
 
 ---
 
@@ -339,7 +393,7 @@ D-11 impone di prevedere **subito** creatura e giochi anche se si implementano p
 
 | Cosa non c'è | Perché | Quando si riconsidera |
 |---|---|---|
-| Backend applicativo proprio | Nessuna logica che debba girare in un posto fidato: sono quattro CRUD | Se nasce logica che il client non può eseguire (pagamenti, moderazione) |
+| Backend applicativo proprio | Nessuna logica che debba girare in un posto fidato: sono quattro CRUD | ⟳ **La condizione si è avverata il 2026-09-14**: i pagamenti *sono* logica che il client non può eseguire. La risposta non è stata un backend ma **tre Edge Function** (§4.3-ter) — la porzione minima che deve stare in un posto fidato, e niente di più |
 | Cifratura end-to-end delle foto | Costo di complessità alto (gestione chiavi fra due dispositivi, recupero dopo cambio telefono) sproporzionato a V1 | Se il prodotto smette di essere un esperimento — è **il primo upgrade di sicurezza** da fare |
 | Piano a pagamento del backend | Il gratuito basta all'inizio (V2) | Al superamento del tetto foto |
 | Monitoraggio e allarmi | Nessun utente, nessun ricavo | Ai primi utenti reali fuori dalla cerchia |
@@ -356,6 +410,8 @@ D-11 impone di prevedere **subito** creatura e giochi anche se si implementano p
 | Google Play | 25 $ una tantum |
 
 **Ricorrente in fase di sviluppo e primi utenti: ~99 €/anno.**
+
+> ⟳ **Due correzioni del 2026-09-14.** (1) **Google Play (25 $ una tantum) esce dal percorso**: con **D-132** la distribuzione parte da iPhone soltanto, quindi quella voce tornerà solo se tornerà Android — e con essa Play Billing, FCM e le icone adattive. (2) **RevenueCat si aggiunge come fornitore, e il suo costo qui è `—`**: la soglia del suo piano gratuito non è stata verificata in questo repo, e **non si stima**. ⚠️ *Va letta e scritta qui prima di pubblicare*: un costo ricorrente ignoto è esattamente ciò che V2 vieta.
 
 ⚠️ **Due soglie fanno passare Supabase al piano Pro (25 $/mese, ~300 €/anno), e vale la pena conoscerle prima di incontrarle:**
 
@@ -377,6 +433,9 @@ L'utente ha deciso di implementare **la creatura per ultima**. Sequenza che ne d
 1. **Le policy RLS sono un punto di guasto singolo.** Senza un secondo strato applicativo, una policy sbagliata è un'esposizione diretta. → **Test avversariali obbligatori**: due coppie di prova, e la verifica esplicita che l'utente A non legga nulla della coppia B, e che un ex-membro non legga i contenuti dell'altro. È verifica *contro la realtà*, non "la query sembra giusta" (`regole-sviluppo-sicuro.md` principio 4).
 2. **Portabilità**: auth, dati e file su un solo fornitore. Migrare significa riscrivere l'autorizzazione, non solo spostare righe.
 3. **Nessuna moderazione dei contenuti.** Un'app che ospita foto private caricate da utenti terzi ha, prima o poi, un problema di contenuti. Oggi non esiste alcun meccanismo: è un gap **dichiarato**, non risolto.
-4. **Il tetto di spazio foto non è fissato** (`—`). Finché non lo è, il costo massimo del progetto è ignoto — cioè V2 non è verificabile.
+4. ~~**Il tetto di spazio foto non è fissato** (`—`).~~ ⟳ **Chiuso, e lo era già dal 2026-08-12**: **1 GB per coppia** (D-22), imposto dal contatore `coppia.byte_foto_usati` e non solo mostrato. ⚠️ *Questa riga è rimasta a «—» per un mese dopo che il numero esisteva*: il costo massimo del progetto era calcolabile, e il documento diceva di no.
 5. **Lo stato del server è in hook scritti a mano**, non in una libreria di data-fetching (§3-ter). Ogni hook rifà a modo suo caricamento, errore, ricarica e invalidazione: da qui vengono B-09, B-10 e B-13 — tre difetti con la **stessa forma**, *due copie dello stesso stato di cui una non viene aggiornata*. La regola che li tiene a bada — «se una schermata legge dati che un'altra può scrivere, deve rileggere al focus» — è **disciplina, non struttura**: vale finché qualcuno se la ricorda. È il debito con la probabilità più alta di produrre il prossimo difetto.
 6. **La sezione «Commenti» è tornata dopo essere stata tolta nella stessa giornata** (D-56 → D-57). Non è un debito di codice ma di **nomi**: si chiamava «Parole», e un nome che non dice cosa fa una cosa fa prendere decisioni sbagliate su di essa. Vale come promemoria per ogni etichetta futura.
+7. **Il confine del piano gratuito è tenuto insieme da tre frasi in italiano** (dal 2026-09-14). `eRifiutoDelPiano` riconosce il **messaggio** dei trigger della `0042`, non un codice d'errore, perché PostgREST non propaga `errcode` al client. ⚠️ **Cambiare il testo di un'eccezione nel database è quindi un cambiamento di interfaccia, e non lo sembra**: chi lo facesse vedrebbe l'app mostrare un riquadro rosso al posto del paywall, e non avrebbe rotto nessun test. Il presidio è che tutte e tre le frasi contengono «piano gratuito».
+8. **Il nome dell'entitlement vive in due posti che nessun controllo confronta**: la costante `ENTITLEMENT` in `lib/acquisti.ts` e il pannello RevenueCat. 🔑 *Se divergono, l'app non concede mai niente **e non lo dice***: il paywall si chiude con un successo apparente e il diritto resta spento — un guasto che sembra un problema di pagamento e non lo è.
+9. **Il rischio del debito n. 8 si è già manifestato dentro il suo runbook**: `docs/pagamenti.md` §2.3 dice di associare i prodotti all'entitlement `insieme`, mentre §2.2 dichiara `lifecouple_pro` — il nome scelto il 2026-09-14. ⚠️ *È un documento che qualcuno seguirà alla lettera con le credenziali in mano*, ed è lì che il nome sbagliato diventa una configurazione sbagliata.
