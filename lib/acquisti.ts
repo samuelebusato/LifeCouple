@@ -80,6 +80,37 @@ async function configura(utenteId: string | null): Promise<boolean> {
     console.warn('[acquisti] EXPO_PUBLIC_REVENUECAT_KEY_IOS non impostata: SDK non configurato');
     return false;
   }
+  // 🔴 **La guardia che impedisce di vendere nel negozio di prova.**
+  //
+  // Una chiave `test_…` manda gli acquisti al **Test Store** di RevenueCat:
+  // utilissima adesso, perché permette di provare la catena intera *prima* che
+  // i prodotti su App Store Connect esistano. ⚠️ **In una build che raggiunge
+  // una persona sarebbe un guasto silenzioso e costoso**: l'app «venderebbe»
+  // senza che nessuno incassi, e il diritto verrebbe concesso a chi non ha
+  // pagato niente.
+  //
+  // 🔑 **Il discriminante è `__DEV__`, e non è un dettaglio**: una development
+  // build lo ha `true`, una build di TestFlight o di produzione `false`. Così
+  // la chiave di prova continua a funzionare esattamente dove serve, e smette
+  // di funzionare esattamente dove farebbe danno — senza che nessuno debba
+  // ricordarsi di cambiarla.
+  //
+  // ⚠️ **Il modo di fallire è scelto**: non si configura affatto, quindi il
+  // paywall dice «non disponibile» invece di vendere. Chi ha già «Insieme» non
+  // perde nulla, perché il diritto vive nel database e non in questo SDK.
+  //
+  // ⚠️ **E una cosa che questa guardia non può fare: accorgersene prima del
+  // build.** La chiave di produzione arriva dai secret di EAS, non dal
+  // repository — nessun controllo committabile può leggerla. Questo è il punto
+  // più a monte in cui il problema è ancora osservabile.
+  if (E_TEST_STORE && !__DEV__) {
+    console.error(
+      '[acquisti] chiave Test Store in una build non di sviluppo: SDK NON configurato, ' +
+        'e «Insieme» non è acquistabile. La build di produzione vuole la chiave appl_…'
+    );
+    return false;
+  }
+
   if (configurato) return true;
 
   try {
