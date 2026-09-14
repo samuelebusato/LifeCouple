@@ -69,14 +69,31 @@ type Dispositivo = { id: string; utente_id: string; token: string; lingua: Lingu
 //    lo legge chiunque abbia il telefono in mano senza sbloccarlo. Per questo
 //    non si nomina mai la persona — «il tuo partner» sarebbe piu' caldo e
 //    direbbe a un terzo con chi si sta scrivendo — e il ricordo mostra il
-//    titolo dell'evento e non la sua nota. Il nome del LUOGO invece c'e', ed e'
-//    una scelta che va confermata in `threat-model.md` §3 (TB-2): senza,
-//    la notifica non dice niente di utile; con, un terzo vede dove siete stati.
+//    titolo dell'evento e non la sua nota.
+//
+// 🔑 **E le due notifiche di servizio NON si comportano allo stesso modo**
+//    (decisione dell'utente, 2026-09-14). La distinzione non e' di stile: e' di
+//    quanto vale l'informazione per un terzo che guarda il telefono.
+//
+//    - `luogo_del_partner` racconta un posto segnato **adesso**, cioe' dove
+//      siete stati di recente. 🔴 **Il nome NON compare**: per saperlo si apre
+//      l'app. Il costo e' un tocco in piu'; il guadagno e' che un telefono
+//      appoggiato su un tavolo non dice a nessuno dove siete appena stati.
+//    - `ricordi` parla di un evento di **anni fa**. Il titolo compare, perche'
+//      un ricordo vecchio non rivela i vostri movimenti — e senza titolo quella
+//      notifica non avrebbe nessun contenuto.
+//
+// ⚠️ **La stessa regola vale per il `data` allegato, non solo per il testo.**
+//    Il payload viaggia da Expo e da Apple/Google esattamente come il corpo:
+//    togliere il nome dalla schermata di blocco e spedirlo nei metadati sarebbe
+//    una mitigazione solo apparente. Per questo `DATI_DA_INVIARE` e' un elenco
+//    esplicito e non uno `...dati` — cosi' un campo aggiunto un domani alla coda
+//    non finisce fuori per distrazione.
 // -----------------------------------------------------------------------------
 const TESTI: Record<Tipo, Record<Lingua, (d: Record<string, unknown>) => { titolo: string; corpo: string }>> = {
   luogo_del_partner: {
-    it: (d) => ({ titolo: 'Un posto in più', corpo: `«${d.luogo}» è ora fra i posti che avete visitato.` }),
-    en: (d) => ({ titolo: 'One more place', corpo: `“${d.luogo}” is now among the places you’ve visited.` }),
+    it: () => ({ titolo: 'Un posto in più', corpo: 'Apri l’app per scoprire qual è.' }),
+    en: () => ({ titolo: 'One more place', corpo: 'Open the app to see which one.' }),
   },
   ricordi: {
     it: (d) => ({
@@ -92,6 +109,21 @@ const TESTI: Record<Tipo, Record<Lingua, (d: Record<string, unknown>) => { titol
     it: () => ({ titolo: 'Dove andiamo?', corpo: 'È da un po’ che non aggiungete un posto nuovo.' }),
     en: () => ({ titolo: 'Where to next?', corpo: 'It’s been a while since you added a new place.' }),
   },
+};
+
+/**
+ * Cosa si allega alla notifica, tipo per tipo. **Elenco esplicito, mai `...dati`.**
+ *
+ * 🔑 Serve all'app per aprire la schermata giusta quando si tocca la notifica,
+ * e per questo bastano gli identificativi. ⚠️ `luogo` (il nome) sta nella coda
+ * — che vive in UE — e **non entra qui**: se comparisse nel payload uscirebbe
+ * dall'Unione insieme al resto, e la scelta di toglierlo dalla schermata di
+ * blocco sarebbe cosmetica.
+ */
+const DATI_DA_INVIARE: Record<Tipo, (d: Record<string, unknown>) => Record<string, unknown>> = {
+  luogo_del_partner: (d) => ({ luogo_id: d.luogo_id }),
+  ricordi: (d) => ({ evento_id: d.evento_id }),
+  inviti_a_tornare: () => ({}),
 };
 
 /** I default della 0038, ripetuti qui perche' la riga dei consensi puo' non
@@ -242,7 +274,7 @@ Deno.serve(async (req) => {
         title: titolo,
         body: corpo,
         sound: null, // ricordi e cortesie, non allarmi (D-128)
-        data: { tipo: n.tipo, ...n.dati },
+        data: { tipo: n.tipo, ...DATI_DA_INVIARE[n.tipo](n.dati ?? {}) },
       });
       origine.push({ notifica: n, dispositivo: d });
     }

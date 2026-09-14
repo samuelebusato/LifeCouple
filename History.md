@@ -649,11 +649,22 @@ Fino a ieri il registro dei trattamenti diceva, a ragione: *«nessun contenuto d
 
 **Cosa NON esce, e continua a non uscire**: fotografie, note, contenuto del diario, posizione, account. E chi spegne le notifiche non fa uscire niente — la coda scarta prima di spedire, quindi nessun testo raggiunge Expo.
 
-#### Il testo compare sulla schermata di blocco — una domanda aperta per l'utente
+#### Il testo compare sulla schermata di blocco — e le due notifiche di servizio NON si comportano allo stesso modo
 
 Per questo non si nomina **mai** la persona («il tuo partner» direbbe a un terzo con chi si sta scrivendo) e il ricordo mostra il titolo dell'evento e non la sua nota.
 
-🔴 **Ma il nome del luogo c'è**, ed è una scelta che va confermata in `threat-model.md` §3 (TB-2), non decisa in un file di libreria: *senza, la notifica non dice niente di utile; con, un terzo che prende in mano il telefono vede dove siete stati.* È la stessa classe di domanda dei widget, arrivata prima.
+✅ **Deciso dall'utente il 2026-09-14**, dopo che la questione era stata posta come domanda aperta:
+
+| Notifica | Sulla schermata di blocco |
+|---|---|
+| `luogo_del_partner` — posto segnato **adesso** | 🔴 **il nome NON compare**: *«Un posto in più — apri l'app per scoprire qual è»* |
+| `ricordi` — evento di **anni fa** | ✅ il titolo compare: senza, la notifica non avrebbe nessun contenuto |
+
+🔑 **La distinzione non è di stile, è di quanto vale l'informazione per un terzo.** Un posto segnato oggi dice **dove siete stati di recente** — che è esattamente ciò da cui TB-2 protegge; un evento di anni fa non rivela nessun movimento. *Le alternative erano trattarle uguali in un verso (tutto visibile, comodo e indiscreto) o nell'altro (niente visibile, e allora il ricordo diventa una notifica vuota che costringe ad aprire l'app per leggere due parole).*
+
+⚠️ **E la stessa regola vale per il `data` allegato, non solo per il testo.** Il payload viaggia da Expo e da Apple/Google come il corpo: togliere il nome dalla schermata di blocco e spedirlo nei metadati sarebbe stata una mitigazione **solo apparente**. Per questo `DATI_DA_INVIARE` è un elenco esplicito e non uno `...dati` — così un campo aggiunto un domani alla coda non esce per distrazione.
+
+⟳ **Conseguenza sui documenti, corretta nello stesso giro**: fuori dall'UE non va più il nome del luogo ma **il titolo dell'evento** dei ricordi. Informativa §5 e registro A10 dicono ora questo, che è una frase diversa e non una sfumatura.
 
 #### Cosa manca, e sono gesti che richiedono credenziali
 
@@ -4073,9 +4084,9 @@ Il lato app era fatto (**D-128**), l'invio no. ✅ **Ora c'è anche quello** (**
 
 ⚠️ **Fino ad allora la frase del 2026-09-10 resta vera**: *una persona può accendere le notifiche e non riceverne nessuna.* Cambia solo il motivo — non più «il codice non c'è» ma «non è stato acceso».
 
-⬜ **Due cose note e rimandate**, scritte perché non si riscoprano da sole:
-- **Il giorno di «N anni fa» si calcola in UTC.** Nessun fuso orario è memorizzato, né della coppia né della persona: chi vive molto a est o a ovest può ricevere il ricordo il giorno prima o dopo rispetto al proprio calendario. Correggerlo vuol dire una colonna `fuso` che oggi nessuna schermata sa chiedere.
-- **Il nome del luogo compare sulla schermata di blocco.** Va confermato in `threat-model.md` §3 (TB-2) — vedi D-129.
+⬜ **Una cosa nota e rimandata**, scritta perché non si riscopra da sola: **il giorno di «N anni fa» si calcola in UTC.** Nessun fuso orario è memorizzato, né della coppia né della persona: chi vive molto a est o a ovest può ricevere il ricordo il giorno prima o dopo rispetto al proprio calendario. Correggerlo vuol dire una colonna `fuso` che oggi nessuna schermata sa chiedere.
+
+✅ **Chiusa invece la domanda sulla schermata di blocco** (2026-09-14): il posto appena segnato non si nomina, il ricordo di anni fa sì. Vedi D-129.
 
 ### La lista «Film» è nascosta: cosa serve per riaccenderla — dal 2026-09-10
 
