@@ -28,6 +28,22 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-14 — B-62 smette di essere un ragionamento, e le notifiche trovano l'invio
+
+**Chiesto dall'utente**: chiudere B-62, che era il bloccante più vecchio, e poi costruire l'invio delle notifiche — *«abbiamo già detto in precedenza quando devono comparire»*, quindi D-128 e D-122 restano la specifica e non si ridiscutono.
+
+✅ **B-62 provato** (§4). Otto asserzioni nuove in `tests/rls.avversariali.mjs`, con **file veri** nel bucket: due JPEG da 631 byte, uno per autore, nella stessa cartella. 🔑 **La riga che rende valido tutto il blocco è quella che sembra inutile**: *prima* della rottura si verifica che F2 firmi anche la foto di F1. Senza, un caricamento fallito avrebbe dato verde a tutte le asserzioni «non deve firmare» — il test sarebbe passato mentre non guardava niente, che è esattamente il difetto da cui B-62 è nato.
+
+✅ **L'invio delle notifiche** (**D-129**): migrazione `0039` — coda `notifica_in_coda`, trigger su `luogo`, `accoda_ricordi()`, `accoda_inviti_a_tornare()`, e la colonna `lingua` su `dispositivo` che mancava e non si vedeva. Edge Function [`invia-notifiche`](supabase/functions/invia-notifiche/index.ts). Runbook in [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md).
+
+🔴 **Un contenuto della coppia esce dall'UE da oggi**, e i documenti lo dicevano al contrario. Corretti nello stesso giro: informativa §3/§4/§5 (inglese ufficiale e documento di lavoro italiano), registro art. 30 con il trattamento nuovo **A10** e le due righe di Parte C, tolte dalle parentesi. Rigenerati i **tre** derivati (`npm run genera:legale`), verde `npm run test:legale`. ⚠️ **Le pagine della landing sono cambiate e NON sono state caricate**: finché non si fa, online resta una versione diversa da quella resa nell'app.
+
+✅ **Le prove RLS chieste dalla 0038 passano** (dispositivo invisibile al partner, non modificabile, non cancellabile, consenso promozionale spento alla nascita). 🔴 **Quattro nuove falliscono dicendo «0039 non applicata»**, e devono: diventano verdi quando la migrazione viene eseguita.
+
+⟳ **L'utente riferisce di aver percorso a mano i controlli sul telefono, con esito positivo.** Registrato come passata complessiva e non come spunta voce per voce — vedi il PUNTO DI RIPRESA.
+
+⚠️ **Due guasti di ambiente, non di codice**: `node_modules` era indietro rispetto a `package.json` (tre pacchetti dichiarati e non installati) e `.expo/types/router.d.ts` era fermo al 7 settembre. Sistemati entrambi; ✅ `npx tsc --noEmit` esce **0**.
+
 ### 2026-09-10 (5) — Le notifiche push: metà costruita, e la metà che manca è dichiarata
 
 **Chieste dall'utente**: tre notifiche — quando il partner segna un posto, «dov'eravate N anni fa», e un invito periodico a inserire nuovi viaggi. Disegno e vincoli in **D-128**.
@@ -584,6 +600,64 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-129 — L'invio delle notifiche: una coda, non una chiamata (2026-09-14)
+
+D-128 aveva deciso **quali** notifiche esistono e **quando** devono comparire. Mancava tutto il resto: *«oggi gli interruttori accendono qualcosa che non parte»*. Qui c'è ciò che le fa partire — migrazione `0039`, Edge Function [`invia-notifiche`](supabase/functions/invia-notifiche/index.ts), e il runbook [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md).
+
+#### La scelta strutturale: fra il trigger e Expo c'è una tabella
+
+Il backlog lo chiedeva per nome: il trigger su `luogo` **non** deve chiamare la rete. L'alternativa scartata era la più ovvia — un trigger Postgres che chiama direttamente il servizio push.
+
+🔴 **Perché è sbagliata**: legherebbe la riuscita di *«segno questo posto come visitato»* alla raggiungibilità di un servizio americano. Un dato della coppia andrebbe perso per colpa di una cortesia. ⚠️ *E si perderebbe nel modo peggiore: in modo intermittente, solo quando la rete è lenta, cioè irriproducibile.*
+
+**Scelta la outbox**: il trigger scrive una riga in `notifica_in_coda` — l'unica cosa che sa fare bene e in transazione — e un lavoro periodico la svuota. I vantaggi non sono solo di disaccoppiamento, e sono tre:
+
+1. un invio fallito si **ritenta** con attesa crescente, invece di sparire;
+2. il **consenso si verifica al momento dell'invio**, non a quello dell'evento;
+3. lo scioglimento avvenuto **fra** l'evento e l'invio fa tacere la notifica — che è precisamente ciò che D-128 aveva deciso, e che con la chiamata diretta sarebbe stato impossibile.
+
+#### Il consenso si guarda quando si spedisce, e non è un dettaglio di implementazione
+
+Se una persona spegne `luogo_del_partner` **dopo** che il partner ha segnato un posto ma **prima** che il lavoro giri, quella notifica non deve partire.
+
+🔑 *Il consenso vale nel momento in cui si tratta il dato, e il trattamento qui è l'invio — non l'accodamento.* Accodare è solo prepararsi a chiederselo. Filtrare in fase di accodamento sarebbe stato più efficiente e avrebbe spedito a qualcuno che nel frattempo aveva detto di no.
+
+#### «Scartata» non è «inviata», e tenerle separate è la prova
+
+Una notifica si scarta quando al momento dell'invio il consenso non c'era più, la coppia si era sciolta, o la persona non ha nessun dispositivo. Segnarla come inviata sarebbe stato comodo — esce dalla coda lo stesso.
+
+⚠️ **Renderebbe la tabella bugiarda proprio sul dato che conta.** Se un domani si dovesse dimostrare di non aver mandato solleciti promozionali a chi non li voleva, `scartata_il` + `motivo_scarto` **sono** la prova, e un `inviata_il` valorizzato direbbe il contrario. C'è un `check` che impedisce a entrambe di essere valorizzate insieme.
+
+#### La lingua mancava, e non si vedeva
+
+Il testo della notifica lo compone il **server**, perché quando arriva l'app non è in esecuzione. Ma la lingua viveva solo nel telefono (`lib/i18n.ts` legge il locale di sistema): il server avrebbe scritto **in inglese a tutti**, e la cosa si sarebbe scoperta ricevendo la prima notifica — cioè dopo la pubblicazione.
+
+🔑 **La colonna sta su `dispositivo`, non sulla persona**: un token è un'installazione su un telefono, e il locale è una proprietà di quel telefono. La stessa persona con due telefoni impostati diversamente riceve ciascuno nella sua lingua, e viene gratis da dove si mette la colonna.
+
+#### Un segreto dedicato, non la chiave che può fare tutto
+
+Il JWT che Supabase verifica di suo è quello di *un utente qualunque*: non basta, perché far girare il lavoro a comando significherebbe poter spedire notifiche a terzi. Serve `NOTIFICHE_CRON_SECRET`.
+
+⚠️ **Deliberatamente non la `service_role`**, che pure sarebbe bastata: chi pianifica il lavoro non ha motivo di possedere la chiave che può fare tutto. *Se trapela il segreto si spediscono notifiche di troppo; se trapelasse la `service_role` si perde il database.* Sono due incidenti di gravità incomparabile, e costa una riga tenerli separati.
+
+#### 🔴 La conseguenza legale, che è la parte meno tecnica e la più seria
+
+Fino a ieri il registro dei trattamenti diceva, a ragione: *«nessun contenuto degli utenti esce dall'UE»*. La notifica «il partner ha segnato un posto» **porta con sé il nome del luogo**, che è contenuto della coppia, e lo fa passare da Expo e poi da Apple o Google.
+
+⚠️ *Quella frase era corretta quando è stata scritta ed è stata resa falsa da una funzione aggiunta altrove* — **la stessa forma di B-60 e di B-62**, la terza volta in sei giorni. Corretti quindi, nello stesso giro: informativa §3/§4/§5 (inglese ufficiale **e** documento di lavoro italiano), registro art. 30 con un trattamento nuovo **A10**, e le due righe di Parte C, che il 2026-09-10 erano state scritte fra parentesi con la regola *«si tolgono nello stesso giro in cui parte la prima notifica, non dopo»*.
+
+**Cosa NON esce, e continua a non uscire**: fotografie, note, contenuto del diario, posizione, account. E chi spegne le notifiche non fa uscire niente — la coda scarta prima di spedire, quindi nessun testo raggiunge Expo.
+
+#### Il testo compare sulla schermata di blocco — una domanda aperta per l'utente
+
+Per questo non si nomina **mai** la persona («il tuo partner» direbbe a un terzo con chi si sta scrivendo) e il ricordo mostra il titolo dell'evento e non la sua nota.
+
+🔴 **Ma il nome del luogo c'è**, ed è una scelta che va confermata in `threat-model.md` §3 (TB-2), non decisa in un file di libreria: *senza, la notifica non dice niente di utile; con, un terzo che prende in mano il telefono vede dove siete stati.* È la stessa classe di domanda dei widget, arrivata prima.
+
+#### Cosa manca, e sono gesti che richiedono credenziali
+
+⬜ Applicare la `0039` · pubblicare la funzione · impostare il segreto · pianificare l'esecuzione. Tutto in [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md). 🔴 Più la capability **Push Notifications** sull'App ID e la chiave **APNs**, che aspettano l'account Apple Developer.
 
 ### D-128 — Le tre notifiche push, e le tre cose che non fanno (2026-09-10)
 
@@ -2901,7 +2975,7 @@ GET /a/b/c-non-esiste
 🔑 **I link della stessa pagina erano già assoluti** (`/privacy-policy.html`, `/`) — li avevo scritti così **per la ragione giusta**, senza applicarla ai font che stavano venti righe più su. Ora lo sono tutti, e il perché è scritto nel commento in testa al file invece che solo qui.
 
 ✅ **Verificato dopo il deploy**, sullo stesso indirizzo che l'aveva fatto fallire: `/a/b/c-non-esiste` carica `/fonts/...`, `document.fonts.check('700 32px Fraunces')` risponde `true`.
-### B-62 — Dopo lo scioglimento nessuno dei due può più aprire le fotografie, e i documenti promettono il contrario (2026-09-10)
+### B-62 — Dopo lo scioglimento nessuno dei due può più aprire le fotografie, e i documenti promettono il contrario (2026-09-10, CHIUSO E VERIFICATO il 2026-09-14)
 
 **Trovato** mentre si decideva D-124 §4 — cioè scrivendo la regola *«non si cancella mai niente per fare spazio»* e andando a verificare **come** il tetto è imposto. Il difetto non c'entrava con la domanda: è uscito dalla verifica.
 
@@ -2945,9 +3019,26 @@ Il criterio nuovo **ricalca parola per parola** quello che `foto_cancella` già 
 
 🔑 **Non allarga niente a nessuno**: il criterio è l'autore **della riga**, non la cartella. Dopo lo scioglimento ciascuno vede le proprie foto e non quelle dell'altro — non esiste un caso in cui questa modifica dia a un ex-partner qualcosa che prima non aveva.
 
-#### Come va verificata, e non lo è ancora
+#### ✅ Verificata il 2026-09-14 — e la prova è differenziale, non letterale
 
-🔴 **Applicata non vuol dire verificata, e al 2026-09-10 non lo è.** La prova non è deducibile, va eseguita: su una coppia di prova **sciolta**, l'autore deve ottenere un URL firmato per una propria fotografia e **non** ottenerlo per una dell'altro. Il posto è [`tests/rls.avversariali.mjs`](tests/rls.avversariali.mjs), che quel confine già lo esercita sulle tabelle e non sullo storage. ⚠️ *Finché quel controllo non esiste, la correzione è ragionata e non provata — e questo difetto è nato proprio da un confine che nessun test guardava.*
+La prova è in [`tests/rls.avversariali.mjs`](tests/rls.avversariali.mjs), blocco *«B-62 — lo storage dopo lo scioglimento»*. Otto asserzioni, tutte verdi al primo giro reale contro il progetto.
+
+**Cosa fa, e perché carica file veri invece di riusare la riga finta del blocco sopra**: `chiave_storage` è soltanto testo, e una riga che punta a un file inesistente supera ogni controllo sulle tabelle senza toccare **una sola policy di `storage.objects`**. Il difetto viveva nello storage, quindi il test ci mette dentro due JPEG veri di 631 byte, uno per autore, nella stessa cartella `<coppia_id>/`.
+
+🔑 **La misura PRIMA della rottura non è un di più: è portante.** `createSignedUrl` fallisce sia quando la policy nega sia quando il file non c'è, e da fuori i due casi si somigliano. Se non si fosse visto il file firmabile *finché la coppia era viva*, un caricamento andato male avrebbe dato **verde a tutte le asserzioni «non deve firmare»** — cioè il test sarebbe passato proprio mentre non guardava niente. ⚠️ *È la stessa forma del `PASS D-04` che misurava le righe invece dei file, cioè del difetto che ha generato B-62.*
+
+**E il risultato ha una forma che va saputa leggere.** Le tre asserzioni negative riportano `Object not found`, non «permesso negato»: lo storage **non distingue** «non c'è» da «non puoi», ed è voluto — altrimenti il messaggio sarebbe un oracolo sull'esistenza dei file altrui. La prova che si tratta di un diniego è **differenziale**, e sta nelle righe adiacenti:
+
+| Nello stesso istante, sullo stesso oggetto `<cid>/b62-di-f1.jpg` | Esito |
+|---|---|
+| F1 (autore) chiede la firma | ✅ ottenuta, e il download restituisce 631 byte |
+| F2 (ex-partner) chiede la firma | 🔴 `Object not found` |
+
+*Un file assente non si comporterebbe così con due identità diverse.* Il commento nel test lo dice a chiare lettere, perché chi un giorno leggesse `Object not found` e concludesse che il test è rotto toglierebbe l'unica asserzione che tiene fermo D-04.
+
+✅ **Coperto anche il verso opposto**: cancellata la riga, il file non si firma più — il trigger `foto_pulisci_storage` della 0009 se l'è portato via. È il **primo pezzo di catena di cancellazione misurato** invece che dichiarato, e vale come principio di prova per la tabella vuota di [`docs/legal/catena-cancellazione.md`](docs/legal/catena-cancellazione.md).
+
+⬜ **Cosa resta scoperto, dichiarato in fondo alla suite**: un file **orfano** (oggetto senza riga `foto`) non è cancellabile da un client, perché `foto_cancella` guarda la riga e la riga non c'è. Lo lascia solo un test morto a metà, e si toglie dal dashboard.
 
 ### B-61 — Un permesso pericoloso chiesto per niente (2026-09-09, CORRETTO)
 
@@ -3964,26 +4055,35 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
-### 🔴 Le notifiche push: manca tutto l'invio — dal 2026-09-10
+### ⟳ Le notifiche push: il codice c'è tutto, mancano quattro gesti — aggiornato il 2026-09-14
 
-Il lato app è fatto (**D-128**), l'invio no. ⚠️ *Oggi una persona può accendere le notifiche e non riceverne nessuna*: l'interfaccia promette una cosa che non accade, ed è il difetto da chiudere per primo se la funzione resta in programma.
+Il lato app era fatto (**D-128**), l'invio no. ✅ **Ora c'è anche quello** (**D-129**): migrazione `0039` (coda, trigger, funzioni periodiche, lingua sul dispositivo), Edge Function [`invia-notifiche`](supabase/functions/invia-notifiche/index.ts), e le prove RLS in `tests/rls.avversariali.mjs`.
 
-| Pezzo | Nota |
+| Pezzo | Stato |
 |---|---|
-| Edge Function di invio | verso l'API push di Expo. Serve `service_role`: i token di una persona non sono leggibili da chi scatena l'evento (0038) |
-| Trigger «il partner ha segnato un posto» | ⚠️ **non** dal trigger Postgres direttamente: legherebbe la scrittura di un luogo alla raggiungibilità della rete |
-| Lavoro pianificato «N anni fa» | `pg_cron` o Edge Function schedulata. 🔴 **Dopo lo scioglimento non parte per nessuno** (D-128) |
-| Lavoro pianificato «inviti a tornare» | solo per chi ha `inviti_a_tornare = true` |
-| Capability **Push Notifications** sull'App ID | e la chiave **APNs** su EAS |
-| Prove RLS avversariali | elencate in fondo alla `0038`, da far fallire prima di crederci |
+| Edge Function di invio | ✅ scritta — svuota la coda, verifica il consenso **al momento dell'invio**, rimuove i token `DeviceNotRegistered` |
+| Trigger «il partner ha segnato un posto» | ✅ scritto — accoda in `notifica_in_coda`, **non** chiama la rete dal trigger |
+| Lavoro pianificato «N anni fa» | ✅ `accoda_ricordi()`, solo coppie **attive** (D-128) |
+| Lavoro pianificato «inviti a tornare» | ✅ `accoda_inviti_a_tornare()`, solo per chi ha `inviti_a_tornare = true` |
+| Prove RLS avversariali | ✅ le quattro chieste dalla 0038 **passano**; le quattro nuove della 0039 falliscono dicendo *«0039 non applicata»*, ed è corretto così |
+| Informativa e registro art. 30 | ✅ aggiornati nello stesso giro (vedi D-129) |
+| 🔴 **Applicare la `0039`** | manca — e finché manca, niente parte |
+| 🔴 **Pubblicare la funzione, impostare il segreto, pianificare il cron** | manca — [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md) |
+| 🔴 Capability **Push Notifications** sull'App ID + chiave **APNs** su EAS | manca, e aspetta l'account Apple Developer |
 
-🔴 **E prima che la funzione arrivi a un utente vero**: informativa §4 e §5 e registro art. 30 devono nominare **Expo** (servizio push, USA) e **Apple/Google** (APNs/FCM). Oggi non lo fanno, perché non c'è ancora nessun invio — ma il giorno in cui parte, tacerlo sarebbe un destinatario non dichiarato.
+⚠️ **Fino ad allora la frase del 2026-09-10 resta vera**: *una persona può accendere le notifiche e non riceverne nessuna.* Cambia solo il motivo — non più «il codice non c'è» ma «non è stato acceso».
+
+⬜ **Due cose note e rimandate**, scritte perché non si riscoprano da sole:
+- **Il giorno di «N anni fa» si calcola in UTC.** Nessun fuso orario è memorizzato, né della coppia né della persona: chi vive molto a est o a ovest può ricevere il ricordo il giorno prima o dopo rispetto al proprio calendario. Correggerlo vuol dire una colonna `fuso` che oggi nessuna schermata sa chiedere.
+- **Il nome del luogo compare sulla schermata di blocco.** Va confermato in `threat-model.md` §3 (TB-2) — vedi D-129.
 
 ### La lista «Film» è nascosta: cosa serve per riaccenderla — dal 2026-09-10
 
 Spenta con `LISTA_FILM_NASCOSTA` (**D-127**) finché il nodo delle locandine non è sciolto. Riaccenderla è **una costante**, non un lavoro — ma prima va chiusa una di queste:
 
-1. **Licenza TMDB commerciale** — 149 $/mese, cioè 50-70 coppie abbonate l'anno solo per l'API.
+> ⏸️ **Aggiornamento 2026-09-14 — si è in attesa di una risposta da TMDB**, e l'utente conferma che la lista resta spenta nel frattempo. ⚠️ *Questo cambia lo stato della voce, non la sua sostanza*: finora era ferma perché nessuno aveva scelto fra le tre strade, ora è ferma perché la prima ha una domanda in sospeso fuori dal nostro controllo. 🔑 **La differenza conta per chi riprende**: non c'è niente da decidere oggi, c'è da aspettare — e se la risposta tardasse o fosse negativa, le strade 2 e 3 sono ancora tutte e due aperte.
+
+1. **Licenza TMDB commerciale** — 149 $/mese, cioè 50-70 coppie abbonate l'anno solo per l'API. ⏸️ *Risposta attesa dal 2026-09-14.*
 2. **TheTVDB** — gratuita sotto i 50.000 $/anno di ricavi con attribuzione linkata. 🔴 Fallì il 2026-09-05 perché non si riusciva a creare l'account (**D-99**), non per la licenza: **va semplicemente riprovata**. Il lavoro di migrazione è descritto lì, inclusa la trappola del `POST /login` con token mensile.
 3. **La foto della coppia al posto della locandina** — 🔑 l'unica che chiude *entrambe* le colonne del rischio: nessun contratto con un fornitore **e** nessuna opera altrui. Per un diario condiviso si può argomentare che sia anche prodotto migliore.
 
@@ -4390,6 +4490,22 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-14 — B-62 è PROVATO, le notifiche hanno l'invio, e la lista dei controlli sul telefono è stata percorsa dall'utente.**
+>
+> ✅ **B-62 chiuso e verificato.** La `0037` era applicata dal 2026-09-10 e non provata; ora ci sono otto asserzioni in `tests/rls.avversariali.mjs` che caricano **file veri** nel bucket e misurano il confine dopo lo scioglimento. Tutte verdi al primo giro reale. 🔑 *La prova è differenziale — sullo stesso oggetto, nello stesso istante, F1 ottiene la firma e F2 riceve `Object not found`* — e il perché è scritto sia nel test sia in §4, perché `Object not found` sembra un test rotto e non lo è.
+>
+> ✅ **Le notifiche push hanno l'invio** (**D-129**): migrazione `0039` (coda, trigger, funzioni periodiche, lingua sul dispositivo), Edge Function `invia-notifiche`, runbook in [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md). Aggiornati nello stesso giro informativa e registro art. 30, perché **da oggi un contenuto della coppia esce dall'UE** — il nome del luogo dentro la notifica. *Era la terza dichiarazione resa falsa da una funzione aggiunta altrove in sei giorni, dopo B-60 e B-62.*
+>
+> 🔴 **Ma non parte ancora niente, e il motivo è cambiato.** Non più «il codice non c'è» ma «non è stato acceso»: mancano quattro gesti che richiedono credenziali — applicare la `0039`, pubblicare la funzione, impostare `NOTIFICHE_CRON_SECRET`, pianificare il cron. ⚠️ **`npm run test:rls` oggi è ROSSO con quattro FAIL**, e devono esserlo: dicono *«0039 non applicata»*. Applicata la migrazione, devono diventare verdi — è il modo di accorgersi che la migrazione è passata davvero.
+>
+> ⟳ **I controlli sul telefono: l'utente li ha percorsi a mano il 2026-09-14 e riferisce che «sembra funzionare tutto».** È la prima volta che quella lista viene esercitata su hardware da quando si è formata, ed è una notizia buona — ma va registrata per quello che è: **una passata complessiva con esito positivo, non una spunta voce per voce**. 🔑 *Quindi non si riscrive la lista come chiusa*: chi riprende sa che nulla è saltato all'occhio, e che i singoli casi delicati restano da guardare con intenzione se un difetto affiorasse.
+>
+> ⬜ **E tre voci di quella lista NON possono essere state coperte, per costruzione**, quindi restano aperte comunque: la **posizione condivisa** (D-100) vuole **due telefoni**; la **valutazione sullo store** (D-122) è inerte fuori da una development build; **B-50** distingue il dito dal bottone solo su iOS. Nessuna delle tre è un dubbio sull'utente: sono cose che un telefono solo, in Expo Go, non può mostrare.
+>
+> ⏸️ **La lista «Film» resta spenta ed è giusto così**: si aspetta la risposta di TMDB. Non c'è niente da decidere, c'è da aspettare.
+>
+> ⚠️ **Una cosa trovata lavorando e sistemata**: su questo dispositivo `node_modules` era indietro rispetto a `package.json` — `expo-notifications`, `expo-device` ed `expo-store-review` erano dichiarati e **non installati**, quindi `tsc` falliva su tre import. Risolto con `npm install`. E i quattro errori residui su `/legale/privacy` venivano da `.expo/types/router.d.ts` fermo al 7 settembre: è **gitignorato**, si rigenera avviando il dev server, e non era un difetto del codice. ✅ Dopo entrambi, **`tsc` esce 0 senza output**.
 
 > **Nota del 2026-09-10 (5) — le notifiche push sono a METÀ, e la metà che manca è quella che le fa funzionare.**
 >
