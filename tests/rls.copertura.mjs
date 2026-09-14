@@ -171,6 +171,54 @@ for (const [t, ragione] of Object.entries(SENZA_POLICY_DI_PROPOSITO)) {
   );
 }
 
+// 3-bis. Le chiavi esterne verso auth.users.
+//
+// 🔴 **Aggiunto il 2026-09-14 (3), dopo che la prova di cancellazione ha
+//    trovato un account impossibile da cancellare.**
+//
+// La `0026` riscrive per regola ogni chiave esterna verso `auth.users`:
+// `on delete cascade` dove la colonna e' NOT NULL, `set null` dove e' nullable.
+// E' una passata generica e non un elenco a mano — la scelta giusta.
+//
+// ⚠️ **Ma una passata vale per le tabelle che esistono quando gira.** La `0027`
+//    e la `0028` sono nate dopo, dichiarando la chiave senza azione, e da quel
+//    giorno cancellare un account falliva con «Database error deleting user».
+//    Nessun test se ne accorgeva: l'unico modo era cancellarne uno davvero.
+//
+// 🔑 Da qui in avanti una chiave dichiarata senza `on delete` fa fallire il
+//    controllo, e il difetto non puo' ripetersi in silenzio.
+const ULTIMA_PASSATA = '0044'; // la migrazione che riesegue la riscrittura
+
+const senzaAzione = [];
+for (const f of file) {
+  if (f.slice(0, 4) <= ULTIMA_PASSATA) continue; // coperta dalla passata
+  readFileSync(new URL(f, CARTELLA), 'utf8')
+    .split('\n')
+    .forEach((riga, i) => {
+      const pulita = riga.split('--')[0];
+      if (!/references\s+auth\.users/i.test(pulita)) return;
+      if (pulita.includes('%I')) return; // e' l'SQL dinamico della passata
+      if (/on\s+delete/i.test(pulita.split(/references/i)[1] ?? '')) return;
+      const col = pulita.trim().match(/^(?:add column if not exists\s+)?([a-z_0-9]+)/i);
+      senzaAzione.push([f, i + 1, col?.[1] ?? '?']);
+    });
+}
+
+if (senzaAzione.length === 0) {
+  esito(`chiavi verso auth.users dopo la ${ULTIMA_PASSATA}`, true, 'nessuna senza «on delete»');
+} else {
+  for (const [f, n, col] of senzaAzione) {
+    esito(
+      `${f}:${n} — ${col} verso auth.users`,
+      false,
+      'dichiarata senza «on delete»: cancellare un account fallira con «Database error ' +
+        'deleting user». NOT NULL vuole «cascade», nullable vuole «set null»'
+    );
+  }
+}
+
+console.log('');
+
 // 4. Una policy su una tabella mai creata e quasi sempre un nome sbagliato.
 for (const [p, t, f] of policyOrfane) {
   esito(`policy ${p} su ${t}`, false, `${t} non e creata da nessuna migrazione (${f})`);
@@ -184,7 +232,10 @@ console.log(`- **cosa c'e' davvero nel database**: qui si legge cio' che le migr
 - **se una policy sia GIUSTA**: qui si conta che esista. Che dica la cosa giusta
   lo misura tests/rls.avversariali.mjs, chiamando l'API col token dell'attaccante.
 - **le policy su storage.objects** (le foto): vivono fuori dallo schema public e
-  hanno la loro prova in rls.avversariali (B-62, otto asserzioni su file veri).`);
+  hanno la loro prova in rls.avversariali (B-62, otto asserzioni su file veri)
+- **le chiavi verso auth.users dichiarate PRIMA della ${ULTIMA_PASSATA}**: le
+  riscrive la passata dinamica, quindi cio' che dice il CREATE TABLE non conta.
+  Qui si guardano solo quelle nate dopo, che nessuna passata raggiungera'.`);
 
 console.log(
   `\n${

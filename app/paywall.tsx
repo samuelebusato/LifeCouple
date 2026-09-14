@@ -419,6 +419,30 @@ export default function Paywall() {
                 {t.abbonamento.condizioni}
               </Text>
 
+              {/* 🔴 **Il terzo aggancio ai documenti legali** (D-121, B-66).
+                  Gli altri due sono la registrazione e le Impostazioni; questo
+                  mancava, ed è quello che conta di più: è la schermata in cui
+                  si paga. ⚠️ *Sono collegamenti, non caselle da spuntare* —
+                  stessa forma di `registrati.tsx`, e per la stessa ragione:
+                  la base giuridica è l'esecuzione del contratto (art. 6.1.b).
+                  🔑 La rotta sta in `(pubbliche)`, ma `GuardiaSessione`
+                  rimanda indietro solo chi NON ha sessione: da qui, che è
+                  dentro l'app, si apre. */}
+              <View className="mt-1 flex-row flex-wrap justify-center gap-x-5">
+                <Text
+                  className="text-xs text-muted-foreground underline"
+                  onPress={() => router.push('/legale/privacy')}
+                >
+                  {t.legale.privacyTitolo}
+                </Text>
+                <Text
+                  className="text-xs text-muted-foreground underline"
+                  onPress={() => router.push('/legale/cookie')}
+                >
+                  {t.legale.cookieTitolo}
+                </Text>
+              </View>
+
               <Premibile onPress={compra} scala={0.98} disabled={inCorso || !scelto}>
                 <View
                   className="mt-2 items-center justify-center rounded-full py-4"

@@ -19,7 +19,8 @@
     "test:abbonamento": "node tests/abbonamento.mjs",
     "test:webhook": "node tests/webhook-abbonamento.mjs",
     "test:confine": "node tests/confine.mjs",
-    "test:copertura": "node tests/rls.copertura.mjs"
+    "test:copertura": "node tests/rls.copertura.mjs",
+    "test:cancellazione": "node tests/cancellazione.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",

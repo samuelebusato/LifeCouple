@@ -1,0 +1,6 @@
+{
+  "NSCalendarsUsageDescription": "LifeCouple reads your calendar only when you choose to import something, and it imports only the entries you tick.",
+  "NSCalendarsFullAccessUsageDescription": "LifeCouple reads your calendar only when you choose to import something, and it imports only the entries you tick.",
+  "NSLocationWhenInUseUsageDescription": "LifeCouple uses your location to centre the map where you are and, if you turn sharing on yourself, to show your partner where you are right now. It does not follow you when the app is closed and keeps no history of your movements.",
+  "NSPhotoLibraryUsageDescription": "LifeCouple accesses your photos only for the ones you choose to add to your memories."
+}

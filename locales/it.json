@@ -1,0 +1,6 @@
+{
+  "NSCalendarsUsageDescription": "LifeCouple legge il tuo calendario solo quando scegli di importare qualcosa, e importa unicamente le voci che spunti tu.",
+  "NSCalendarsFullAccessUsageDescription": "LifeCouple legge il tuo calendario solo quando scegli di importare qualcosa, e importa unicamente le voci che spunti tu.",
+  "NSLocationWhenInUseUsageDescription": "LifeCouple usa la posizione per centrare la mappa dove sei e, se sei tu ad accendere la condivisione, per mostrare al tuo partner dove ti trovi adesso. Non ti segue quando l'app è chiusa e non conserva nessuno storico dei tuoi spostamenti.",
+  "NSPhotoLibraryUsageDescription": "LifeCouple accede alle foto solo per quelle che scegli tu di aggiungere ai vostri ricordi."
+}

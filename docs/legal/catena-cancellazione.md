@@ -101,9 +101,19 @@ Nessuna cancellazione reale è mai stata eseguita. **La schermata che dice «fat
 
 ### Esito della prova
 
+**Eseguita il 2026-09-14**, con `npm run test:cancellazione` ([`tests/cancellazione.mjs`](../../tests/cancellazione.mjs)), su una coppia di prova creata apposta. 🔴 **Al primo giro la cancellazione NON ha funzionato**: due difetti sovrapposti, entrambi corretti — vedi `History.md` **B-68**.
+
 | | Prima | Dopo |
 |---|---|---|
-| *(da compilare)* | — | — |
+| `auth.users` | l'account esiste e accede | 🔑 **accesso rifiutato** — *Invalid login credentials* |
+| Contenuti (`foto`, `evento`, `luogo`, `elemento_lista`) | 3 foto · 3 eventi · 2 luoghi · 1 voce | **0** su tutte e quattro |
+| Bucket `foto` | 3 oggetti, URL firmato rilasciato | 🔑 **0 oggetti**, contati in `storage.objects` con la `service_role` |
+| Coppia del partner | attiva | sciolta |
+| Contenuti del partner | 1 luogo suo | **conserva il suo** (D-04) |
+
+🔑 **La riga che conta è la terza, ed è quella che il test da solo non poteva fare**: lo storage non distingue «non c'è» da «non puoi» (B-03), quindi il rifiuto ricevuto dal partner non sarebbe stato una prova. Il conteggio diretto su `storage.objects` lo è: **zero righe**.
+
+✅ **E il divieto della `0025` regge ancora** — verificato nello stesso giro, senza toccare dati: una `delete` diretta su una lista di partenza continua a essere rifiutata con `lista-predefinita`. *Era la metà facile da dimenticare dopo una correzione come quella di B-68: una guardia allentata troppo non fallisce nessun test.*
 
 ---
 
@@ -114,7 +124,7 @@ Nessuna cancellazione reale è mai stata eseguita. **La schermata che dice «fat
 | Edge Function `cancella-account` | ✅ **deployata il 2026-08-31** — `status ACTIVE`, `verify_jwt true` |
 | Versione | **1** — ⚠️ era la **prima** volta: prima di oggi sul progetto non esisteva **nessuna** Edge Function, contrariamente a quanto risultava scritto |
 | Variabili d'ambiente | Nessun secret da impostare: `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` sono iniettate dalla piattaforma |
-| Prova end-to-end | 🔴 **mai eseguita** |
+| Prova end-to-end | ✅ **eseguita il 2026-09-14** — e ha trovato due difetti che la rendevano impossibile (**B-68**). Ripetibile con `npm run test:cancellazione` |
 
 ## Collegamenti
 
