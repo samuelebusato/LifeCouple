@@ -1,7 +1,10 @@
 -- =============================================================================
 -- LifeCouple — 0042: il confine gratis/a pagamento, IMPOSTO (D-135)
 --
--- 🔴 NON ANCORA APPLICATA. Va letta prima di eseguirla.
+-- ✅ APPLICATA il 2026-09-14. (Questa riga ha detto «NON ANCORA APPLICATA»
+--    fino al 2026-09-14 (3).) La prova che e' passata e' arrivata da un test
+--    che misura altro: le coppie di prova di tests/rls.avversariali.mjs hanno
+--    cominciato a sbattere contro questi due trigger — cioe' erano vivi.
 --
 -- ## Perche' questi limiti stanno qui e non nell'interfaccia
 --

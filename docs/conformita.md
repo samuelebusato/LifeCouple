@@ -127,7 +127,9 @@ Ognuno riceve dati personali, va **nominato nell'informativa e nel registro**, e
 | **Supabase** | tutto: account, contenuti, foto | ✅ **`eu-central-1` (Francoforte) — verificato il 2026-08-31** con `supabase projects list`. Il backlog aperto dal 2026-08-12 è chiuso: **nessun trasferimento verso paese terzo**, niente clausole contrattuali standard da adottare per lui. ⬜ Resta da accettare e archiviare il **DPA art. 28** |
 | **Google Places** | testo delle ricerche, luoghi | trasferimento USA |
 | **TMDB** | ricerche film | trasferimento USA + 🔴 licenza non commerciale (vedi `pubblicazione.md` §1.2) |
-| **Apple / Google** | dati di pagamento | e RevenueCat, se adottato |
+| **Apple / Google** | dati di pagamento | trasferimento USA. ⚠️ *Il denaro non passa da noi: incassa lo store* |
+| **RevenueCat** | l'identificativo dell'utente e i dati d'acquisto | ⟳ **adottato il 2026-09-14** (D-133) — questa riga diceva *«se adottato»* fino al 2026-09-14 (3). Trasferimento USA; ✅ nominato nell'informativa §3/§4/§5 e nel registro art. 30 · 🔴 **DPA art. 28 da accettare e archiviare** |
+| **Expo** (notifiche push) | il **testo** della notifica, e con esso un contenuto della coppia | ⟳ **dal 2026-09-14** (D-129): è il primo contenuto che esce dall'UE, e chi tiene spente le notifiche non ne fa uscire nessuno · 🔴 **DPA art. 28 da accettare e archiviare** |
 
 ---
 

@@ -1,7 +1,11 @@
 -- =============================================================================
 -- LifeCouple — 0041: il diritto a pagamento — sull'utente, proiettato sulla coppia
 --
--- 🔴 NON ANCORA APPLICATA. Va letta prima di eseguirla.
+-- ✅ APPLICATA il 2026-09-14. (Questa riga ha detto «NON ANCORA APPLICATA»
+--    fino al 2026-09-14 (3), a migrazione gia' viva da ore.) La prova che e'
+--    passata non e' un messaggio di successo: e' che le coppie di prova di
+--    tests/rls.avversariali.mjs ottengono «Insieme» SOLO passando dal webhook,
+--    perche' nessun client riesce a scrivere questa tabella.
 --
 -- Prepara lo schema per D-133 (RevenueCat). ⚠️ Non introduce nessuna funzione
 -- a pagamento e non concede niente a nessuno: crea il posto dove il diritto
@@ -117,5 +121,7 @@ grant execute on function public.coppia_ha_insieme(uuid) to authenticated;
 -- ⚠️ I punti 1, 2 e 6 non sono provabili finche' nessuno puo' scrivere la
 --    tabella. Servira' la service_role, che NON entra in questo repo: la parte
 --    che il client puo' esercitare si prova qui, il resto si prova dal
---    dashboard o dalla Edge Function quando esistera'. Dichiarato, non taciuto.
+--    dashboard o dalla Edge Function, che dal 2026-09-14 esiste:
+--    tests/webhook-abbonamento.mjs percorre proprio quella strada. Dichiarato,
+--    non taciuto.
 -- =============================================================================

@@ -84,7 +84,9 @@ Ogni prodotto vuole anche: nome visibile, descrizione, e **una schermata di ante
 
 ⚠️ **Il nome del prodotto NON e' cablato nel codice**, ed e' voluto: l'app legge le Offerings da RevenueCat, quindi i `product_id` si cambiano dal pannello senza toccare l'app. L'unico identificativo condiviso e' l'entitlement.
 
-**2.3 Prodotti e offering** — associa i due product ID all'entitlement `insieme`, e mettili in un offering `default` con due package, `$rc_monthly` e `$rc_annual`.
+**2.3 Prodotti e offering** — associa i due product ID all'entitlement **`lifecouple_pro`**, e mettili in un offering `default` con due package, `$rc_monthly` e `$rc_annual`.
+
+> ⚠️ **Questa riga ha detto `insieme` fino al 2026-09-14 (3)**, cioè il nome vecchio, mentre §2.2 due paragrafi sopra dichiarava già `lifecouple_pro`. 🔑 *Un runbook che si contraddice al suo interno è peggio di uno incompleto*: chi lo segue con le credenziali in mano configura il nome sbagliato, e il guasto che ne esce — l'app che non concede mai niente **senza dirlo** — sembra un problema di pagamenti e non lo è.
 
 **2.4 Chiavi** — serve la **public SDK key** per iOS (`appl_…`). ✅ *È pubblica per costruzione, va nel bundle dell'app e non è un segreto.* ⚠️ Non confonderla con la **secret key** dell'API v2, che non deve entrare nel repo e qui **non serve**.
 
@@ -174,7 +176,9 @@ select public.coppia_ha_insieme('<id della coppia>');
 
 ## Cosa resta fuori da questo documento
 
-- 🔴 **L'SDK nell'app e la schermata del listino**, che richiedono il **prebuild** — `react-native-purchases` è un modulo nativo e in Expo Go non esiste (**D-133**).
-- 🔴 **Le due frasi legali prima del pulsante che paga**: consenso espresso e presa d'atto della perdita del recesso. Senza, la decadenza **non opera** e restano quattordici giorni esercitabili.
-- 🔴 **Informativa, registro art. 30 e accordo art. 28 per RevenueCat**, da aggiornare **nello stesso giro** in cui l'SDK entra. ⚠️ *Il threat model §4-ter lo prevede in anticipo apposta*: è la terza volta che una funzione nuova rende falsa l'informativa pubblicata, dopo B-60 e le notifiche del 2026-09-14.
-- ⬜ **Avvisare chi cancella l'account che l'abbonamento NON si cancella con esso**, e come disdire dalle impostazioni del telefono. Altrimenti continua a pagare per un account che non esiste.
+> ⟳ **Rivisto il 2026-09-14 (3)**: tre delle quattro voci qui sotto sono state fatte **nel pomeriggio dello stesso giorno in cui questo documento è nato**, e continuavano a essere elencate come mancanti.
+
+- ✅ **L'SDK nell'app e la schermata del listino** — fatti il 2026-09-14: `react-native-purchases`, `lib/acquisti.ts`, `app/paywall.tsx`, i muri e il Customer Center. È servito il **prebuild**, come questa riga prevedeva (**D-133**), e la prima development build è su EAS.
+- 🔴 **Le due frasi legali prima del pulsante che paga**: consenso espresso e presa d'atto della perdita del recesso. **Restano l'unica voce aperta delle quattro**, ed è **B-66**: ⚠️ *il paywall porta le informazioni che pretende Apple — rinnovo, come disdire, prezzo alla scadenza — e un commento nel codice dichiara che bastino a far decadere il recesso.* Non bastano. Senza, restano quattordici giorni esercitabili su ogni acquisto.
+- ⟳ **Informativa, registro art. 30 e accordo art. 28 per RevenueCat**: ✅ informativa (§3/§4/§5) e registro **fatti**, 🔴 **accordo art. 28 no** — e non solo per RevenueCat: nessuno dei terzi ne ha uno archiviato. ⚠️ *«Nello stesso giro» non è successo*: l'SDK è entrato prima, i documenti dopo, a lacuna già aperta — la quarta volta dopo B-60, B-62 e le notifiche.
+- ✅ **Avvisare chi cancella l'account che l'abbonamento NON si cancella con esso** — fatto: l'avviso compare nel momento della cancellazione e dice come disdire dalle impostazioni del telefono.
