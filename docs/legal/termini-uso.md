@@ -89,9 +89,10 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 
 ## 8. L'abbonamento «Insieme»
 
-- **Prezzo**: **€4,99 al mese** oppure **€34,99 all'anno**. I prezzi indicati negli store al momento dell'acquisto sono quelli che fanno fede, IVA inclusa.
+- **Prezzo**: **€7,99 al mese** oppure **€39,99 all'anno**. I prezzi indicati negli store al momento dell'acquisto sono quelli che fanno fede, IVA inclusa.
 - 🔑 **Un solo pagamento, valete in due.** L'abbonamento è **della coppia**: lo store lo intesta però alla persona che paga, perché non esiste un abbonamento intestato a due account.
-- **Rinnovo automatico** alla scadenza, salvo disdetta. La disdetta si effettua **dalle impostazioni del tuo telefono** (App Store o Google Play), non dall'applicazione: noi non possiamo disdire al posto tuo.
+- **Una settimana gratis, la prima volta.** Un abbonamento nuovo comincia con **sette giorni senza costi**. Se disdici prima della fine di quei sette giorni **non paghi nulla**; se non lo fai, l'abbonamento parte da solo al prezzo indicato sopra e si rinnova da lì. ⚠️ Il periodo gratuito è offerto **una volta per persona e per gruppo di abbonamento**, per regola dello store e non nostra: chi l'ha già usato — anche tramite l'In Famiglia — si abbona al prezzo pieno. Se il periodo gratuito sia disponibile o no te lo dice l'applicazione **prima** che tu confermi, perché è lo store a concederlo.
+- **Rinnovo automatico** alla scadenza, salvo disdetta. La disdetta si effettua **dalle impostazioni del tuo telefono** (App Store o Google Play), non dall'applicazione: noi non possiamo disdire al posto tuo. Per non pagare il periodo successivo — compreso il primo dopo una settimana gratuita — la disdetta deve avvenire **almeno 24 ore prima** della fine del periodo in corso, come gli store richiedono.
 - **Momento della disdetta**: se disdici, il servizio resta disponibile **fino alla fine del periodo già pagato**, e non oltre.
 - **Ripristino acquisti**: se cambi o reinstalli, puoi ripristinare l'abbonamento dall'applicazione.
 - ⚠️ **[DA VERIFICARE] Chi è il venditore verso di te.** Apple e Google agiscono da rivenditori nella UE, e questo determina **chi emette il documento fiscale e a chi si chiede il rimborso**. Va verificato sui contratti di programma, non assunto: cambia il testo di questa clausola e gli obblighi fiscali dell'impresa ([`conformita.md`](../conformita.md) §7).

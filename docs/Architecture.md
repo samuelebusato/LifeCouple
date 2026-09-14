@@ -32,13 +32,16 @@ Non esiste un backend applicativo scritto da noi. L'app parla direttamente con S
 
 ## 2. Confini di fiducia
 
-Sono **tre**, e il secondo è quello che rende questa app diversa da un'app qualsiasi.
+Sono **quattro** dal 2026-09-14, e il secondo è quello che rende questa app diversa da un'app qualsiasi.
 
 | # | Confine | Da cosa a cosa |
 |---|---|---|
 | **TB-1** | Utente ↔ backend | Il telefono è ostile per definizione: chiunque può parlare all'API con un token valido e chiedere righe non sue |
 | **TB-2** | **Partner ↔ partner** | I due membri della coppia **non sono la stessa entità di fiducia**. Condividono contenuti ma non identità |
 | **TB-3** | Coppia ↔ coppia | I dati di una coppia non devono essere raggiungibili da un'altra |
+| **TB-4** | Sistema ↔ servizio push (**fuori dall'UE**) | ⟳ **Aggiunto il 2026-09-14 con D-129.** Il testo di una notifica lascia la nostra infrastruttura e passa da **Expo**, poi da **Apple (APNs)** o **Google (FCM)**, negli Stati Uniti |
+
+> 🔑 **TB-4 non esisteva perché fino al 2026-09-13 nessun contenuto della coppia usciva dall'UE**, e il registro art. 30 lo dichiarava. Le notifiche l'hanno creato: il ricordo «N anni fa» porta con sé **il titolo dell'evento**. ⚠️ *È l'unico contenuto che esce* — fotografie, note, diario, posizione e account no — e **chi spegne le notifiche non fa uscire niente**, il che rende il confine attraversabile solo per scelta. La conseguenza sul testo delle notifiche è in `threat-model.md` §4-bis, non qui: è una decisione di sicurezza, non di struttura.
 
 > ⚠️ **TB-2 è il confine caratteristico di questo prodotto, ed è quello che le app di coppia trattano peggio.** L'assunzione implicita di quasi tutte è *"sono una coppia, quindi si fidano"*. È vera finché è vera. L'architettura non deve dipendere da quell'assunzione: deve funzionare correttamente **anche quando smette di essere vera**, senza migrazioni d'emergenza su dati che nel frattempo sono diventati contesi.
 
@@ -252,12 +255,45 @@ Sono l'unica logica che **non** può stare nell'app, perché il client è ostile
 0-bis. **`rivela_telepatia(partita_id, round)`** (0020) — è la funzione che questo elenco prometteva. Restituisce **niente** finché manca una delle due scelte: non «la tua sì e la sua no», niente — rispondere a metà direbbe *quando* l'altro ha scelto, e in un gioco in cui si sceglie al buio anche quello è un'informazione di troppo.
 
 1. **`rivela_partita(partita_id)`** — verifica che **entrambi** abbiano inviato, poi confronta e scrive `partita_risultato`. Finché uno solo ha inviato, non restituisce nulla. È ciò che rende il sigillo reale invece che grafico (D-12).
-2. **`assegna_punti(coppia_id, tipo, riferimento_id)`** — inserisce in `punti_evento` rispettando il vincolo unico e incrementa `creatura.punti`. Chiamata da trigger sulla **transizione**, mai sull'inserimento (D-15). Le tre strade e il loro valore (**D-104**, 2026-09-06): `desiderato → visitato` per un luogo **20**, `desiderato → fatto` per una voce di lista **10**, `→ conclusa` per una partita **5** (migrazione `0033`).
+2. **`assegna_punti(coppia_id, tipo, riferimento_id)`** — inserisce in `punti_evento` rispettando il vincolo unico e incrementa `creatura.punti`. ⟳ **Chiamata da trigger sulla transizione e — dal 2026-09-14 — anche sull'inserimento di un luogo già `visitato`** (`0040`, **B-64**). 🔑 *Questa riga diceva «mai sull'inserimento», ed era la descrizione esatta del difetto*: un posto può nascere già visitato (lo crea `collegaPosto` quando l'elemento a cui si aggancia è già fatto), e per quella via i 20 punti non arrivavano mai. La regola vera non era «solo la transizione» ma **«una volta sola per riferimento»**, ed è il vincolo unico a garantirla — non il tipo di trigger. Le tre strade e il loro valore (**D-104**, 2026-09-06): `desiderato → visitato` per un luogo **20**, `desiderato → fatto` per una voce di lista **10**, `→ conclusa` per una partita **5** (migrazione `0033`).
    - 🔑 **Il rapporto 1:2:4 è una dichiarazione, non una taratura**: luoghi e voci di lista sono scarsi per natura, le partite no. A punti pari la creatura direbbe *«abbiamo giocato molto»* invece di *«abbiamo chiuso il cerchio fra intenzione e realtà»*, che è il cuore di D-15. La scala dice da sé che **la realtà batte l'app**.
    - ⚠️ **La stessa chiave unica produce due comportamenti opposti, e va capito perché**: ri-spuntare un elemento di lista **non** dà punti (stesso `riferimento_id`), rigiocare **sì** (partita nuova, id nuovo). Non è un'incoerenza — rigiocare è un gesto in più, ri-spuntare no.
    - ⚠️ Una partita `abbandonata` non dà punti: il punto premia la chiusura del cerchio, non il tempo passato nell'app.
 
 **Rischio accettato su `assegna_punti`**: cancellare del tutto un luogo e ricrearlo genera un nuovo riferimento, quindi nuovi punti. Non lo si impedisce: è un gioco **cooperativo senza classifica**, quindi l'unico effetto è ingannare sé stessi. Se un domani nascesse un confronto fra coppie, questa riga andrebbe rivista **prima**.
+
+### 4.3-bis La catena delle notifiche (0038 e 0039, D-128 e D-129)
+
+Tre tabelle e una funzione periodica. ⚠️ **Nessuna di esse è scrivibile o leggibile dal client nel modo in cui lo sono le altre**, ed è il punto.
+
+| Tabella | Cosa tiene | Accesso |
+|---|---|---|
+| `dispositivo` | token push, piattaforma, **`lingua`**, ultimo accesso | Solo il proprio (`utente_id = auth.uid()`), tutte e quattro le operazioni. ⚠️ **Il partner non lo vede**: è TB-2, non TB-3 — chi segna un posto non deve poter leggere i dispositivi dell'altro |
+| `preferenze_notifiche` | i tre consensi | Solo i propri. ⚠️ **Tre policy e non quattro**: manca `delete`, di proposito — l'app fa upsert e non cancella mai |
+| `notifica_in_coda` | destinatario, tipo, dati, `chiave_dedup`, esiti | 🔑 **RLS attiva e ZERO policy**: nessun client legge e nessuno scrive. L'unico che la tocca è il `service_role` |
+
+🔑 **Perché la `lingua` sta sul dispositivo e non sulla persona.** Il testo lo compone il **server**, perché quando la notifica arriva l'app non è in esecuzione. Senza quella colonna scriverebbe in inglese a tutti, e la cosa si scoprirebbe solo ricevendo la prima notifica — cioè dopo la pubblicazione. Sul dispositivo perché il locale è del telefono: la stessa persona con due telefoni impostati diversamente riceve ciascuno nella sua lingua.
+
+**Fra il trigger e il servizio push c'è una tabella, non una chiamata.** *Alternativa scartata*: un trigger Postgres che chiama Expo direttamente. Costo: legherebbe la riuscita di *«segno questo posto come visitato»* alla raggiungibilità di un servizio americano — un dato della coppia andrebbe perso per colpa di una cortesia, ⚠️ *e si perderebbe nel modo peggiore, a intermittenza, solo quando la rete è lenta*.
+
+⚠️ **Conseguenza da conoscere**: il trigger accoda **in tempo reale**, ma la coda non si svuota da sola. Serve un lavoro pianificato che chiami la Edge Function; senza, una persona può accendere le notifiche e non riceverne nessuna.
+
+### 4.3-ter Le due Edge Function, e perché esistono solo loro
+
+Sono gli unici due pezzi di logica che girano **fuori** dal database e **fuori** dal telefono, e hanno la stessa giustificazione: servono la chiave `service_role`, che non può stare in un client.
+
+| Funzione | Perché non può stare altrove | Chi la chiama |
+|---|---|---|
+| `cancella-account` (2026-08-31) | eliminare una riga da `auth.users` richiede privilegi che nessun utente ha su sé stesso | l'utente, da Impostazioni — `verify_jwt` |
+| `invia-notifiche` (2026-09-14) | legge i token di una persona **diversa** da chi scatena l'evento: il partner che segna un posto non può, e non deve, leggere i dispositivi dell'altro (TB-2) | un orologio — **non** una persona |
+
+🔴 **`invia-notifiche` è la prima cosa del progetto che non nasce da un gesto di un utente**, e questo cambia come si autentica. Il JWT che la piattaforma verifica è quello di *un utente qualunque*: non basta, perché far girare la funzione a comando significherebbe **poter spedire notifiche a terzi**. Serve un segreto dedicato, `NOTIFICHE_CRON_SECRET`, confrontato a tempo costante.
+
+⚠️ **Deliberatamente NON la chiave `service_role` per il chiamante**: chi pianifica il lavoro non ha motivo di possedere la chiave che può fare tutto. Se trapela il segreto si spediscono notifiche di troppo; se trapelasse la `service_role` si perde il database — due incidenti di gravità incomparabile, e costa una riga tenerli separati. *Alternativa scartata*: riusare la `service_role` come segreto del cron; costo: un solo furto per perdere tutto.
+
+🔑 **Il consenso si verifica quando si spedisce, non quando si accoda.** Filtrare in fase di accodamento sarebbe più efficiente e spedirebbe a chi nel frattempo ha detto di no: il consenso vale nel momento in cui si tratta il dato, e il trattamento **è l'invio**. Fra i due momenti possono passare ore.
+
+⚠️ **«Scartata» non è «inviata», e una colonna le tiene distinte.** Segnare come inviata una notifica soppressa uscirebbe dalla coda lo stesso, ma renderebbe la tabella bugiarda sul dato che conta: se un domani servisse dimostrare di non aver mandato solleciti promozionali a chi non li voleva, `motivo_scarto` **è** la prova.
 
 ### 4.4 Perché il ciclo mestruale non è nello schema, e non è un'incoerenza
 

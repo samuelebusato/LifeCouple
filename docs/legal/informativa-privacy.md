@@ -87,6 +87,7 @@ I dati **non sono venduti né ceduti**. Sono trattati da fornitori nominati **re
 | **Google (Places)** | Il testo delle ricerche di luoghi e i luoghi selezionati | Stati Uniti — vedi §5 |
 | **TMDB** *(The Movie Database)* | Il testo delle ricerche di film | Stati Uniti — vedi §5 |
 | **Expo** *(servizio di notifiche push)* | Il token del tuo dispositivo e il testo della notifica, solo quando una notifica ti viene effettivamente inviata | Stati Uniti — vedi §5 |
+| **RevenueCat** *(gestione degli abbonamenti)* | Il tuo identificativo utente e i dati dei tuoi acquisti — mai i tuoi contenuti, le tue fotografie o il tuo indirizzo email | Stati Uniti — vedi §5 |
 | **Apple** e **Google** | Dati relativi agli acquisti e agli abbonamenti e — tramite APNs e FCM — il testo delle notifiche consegnate al tuo telefono | Vedi §5 |
 
 ⚠️ **Non utilizziamo strumenti di analisi del comportamento, pubblicità o profilazione**, né di terze parti né propri.
@@ -101,7 +102,7 @@ Verso gli Stati Uniti viaggiano tre cose. Sono elencate una per una perché un e
 
 1. **Le ricerche di luoghi e film.** Questi servizi ricevono unicamente **il testo che digiti nella ricerca** — non i tuoi contenuti, non le tue fotografie, non il tuo account.
 2. **Le notifiche push, e solo se le accendi.** Il testo della notifica e il token del tuo dispositivo passano da **Expo** e poi da **Apple (APNs)** o **Google (FCM)** per raggiungere il tuo telefono. ⚠️ Una sola di esse porta con sé un tuo contenuto: il **ricordo di un anniversario**, che include il **titolo dell'evento** a cui si riferisce. La notifica che ti avvisa che il partner ha segnato un posto nuovo come visitato **non nomina il posto** di proposito — lo si apre nell'app — perché quella mostrerebbe dove siete stati da poco a chiunque guardi il telefono bloccato. Le notifiche non contengono mai fotografie, note, il contenuto del tuo diario o la tua posizione. Se preferisci che non viaggi nulla, le notifiche si spengono dalle impostazioni — e allora non viene inviato niente.
-3. **Acquisti e abbonamenti**, gestiti da Apple e Google.
+3. **Acquisti e abbonamenti.** Il pagamento lo gestisce **Apple** (e, se l'app verrà pubblicata lì, Google): noi non vediamo mai la tua carta, le tue coordinate bancarie o il tuo indirizzo di fatturazione, e nessun dato di pagamento è conservato nei nostri sistemi. Fra loro e noi sta **RevenueCat**, che normalizza le ricevute e avvisa i nostri server quando un abbonamento comincia, si rinnova o finisce: riceve **il tuo identificativo utente** e i dati dell'acquisto — non i tuoi contenuti, non le tue fotografie, non il tuo indirizzo email.
 
 Il trasferimento avviene sulla base di **clausole contrattuali standard approvate dalla Commissione europea** o di meccanismi equivalenti, quale l'adesione al **Data Privacy Framework** ove applicabile.
 

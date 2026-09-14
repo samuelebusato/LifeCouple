@@ -136,14 +136,20 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 
 `monetizzazione.md` §1 decide che **il pagamento è a coppia**. Ma un abbonamento è intestato a un **Apple ID** o a un **account Google**: non esiste un abbonamento intestato a due. Uno paga, e il diritto va **esteso all'altro** — cosa che il telefono di chi non ha pagato non può fare, perché non ha ricevute da mostrare.
 
+> 🔴 **Questa sezione è stata corretta il 2026-09-14: prescriveva l'opposto di ciò che è stato deciso.** Il testo sotto è del 2026-08-29 e diceva di scrivere il diritto «sulla riga della **coppia**, non dell'utente». **D-124 (2026-09-10) ha deciso il contrario**, e la domanda che questa sezione lasciava aperta non è più aperta.
+
+**La decisione, da D-124:** *l'abbonamento resta a chi l'ha pagato* — quindi **il diritto si scrive sull'utente e si proietta sulla coppia, mai il contrario**.
+
+🔑 **Il perché è lo scioglimento, ed è il motivo per cui il verso conta.** Se il diritto stesse su `coppia`, sciogliendo sparirebbe **per entrambi** — anche per chi ha pagato, e per un periodo che ha già pagato. Scritto sull'utente, chi ha pagato lo porta con sé (anche in una coppia futura) e l'altro semplicemente smette di vederne l'effetto. È lo stesso genere di domanda che **D-16** aveva già sciolto per la creatura, e la risposta qui è diversa perché diverso è l'oggetto: la creatura è **della coppia** e non sopravvive; l'abbonamento è **di una persona** e la sopravvive.
+
 **Serve, in quest'ordine:**
-1. il **webhook** dello store (o del servizio che li normalizza) verso il backend;
-2. una **Edge Function** che scrive il diritto sulla riga della **coppia**, non dell'utente;
-3. una colonna su `coppia` e le policy RLS che la leggono.
+1. il **webhook** di RevenueCat (**D-133**) verso il backend;
+2. una **Edge Function** che scrive il diritto sulla riga dell'**utente** che ha pagato;
+3. la proiezione sulla coppia in **lettura**: «questa coppia ha Insieme» significa *«almeno un membro attivo ha il diritto»*, calcolato, non memorizzato.
 
-✅ **Non è una migrazione di dati contesi**: nessun dato esistente cambia significato, si aggiunge una colonna. Si può costruire dopo — purché si sappia **prima** che l'abbonato è la coppia, perché è quello a decidere *dove* va scritto il diritto.
+✅ **Non è una migrazione di dati contesi**: nessun dato esistente cambia significato, si aggiunge una colonna.
 
-⚠️ **Da decidere prima di scrivere il codice**, e non è ovvio: cosa succede al diritto **quando la coppia si scioglie**? Chi ha pagato lo conserva? Lo perde chi non ha pagato? La risposta cambia la colonna — se sta su `coppia`, allo scioglimento sparisce per entrambi. È lo stesso genere di domanda che **D-16** ha già dovuto sciogliere per la creatura.
+⚠️ **Resta però una decisione di prodotto aperta, che D-124 non copre**: se chi ha pagato esce dalla coppia, l'altro perde «Insieme» **da un istante all'altro**. Va deciso se la perdita è immediata o se si accompagna — e questa domanda nasce *dal* verso scelto, non lo mette in discussione.
 
 ---
 

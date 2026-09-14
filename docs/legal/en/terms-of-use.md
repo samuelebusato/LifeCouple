@@ -72,9 +72,10 @@ LifeCouple is the private diary of **two people**: a shared calendar, places, ph
 
 ## 8. The "Insieme" subscription
 
-- **Price**: **€4.99 per month** or **€34.99 per year**. The prices shown in the stores at the time of purchase are the ones that apply, VAT included.
+- **Price**: **€7.99 per month** or **€39.99 per year**. The prices shown in the stores at the time of purchase are the ones that apply, VAT included.
 - **One payment, both of you covered.** The subscription belongs to **the couple**; the store, however, registers it to the person who pays, because a subscription cannot be held by two accounts.
-- **Automatic renewal** on expiry, unless cancelled. Cancellation is done **from your phone's settings** (App Store or Google Play), not from the app: we cannot cancel on your behalf.
+- **One free week, the first time.** A new subscription begins with **seven days at no cost**. If you cancel before the end of those seven days you are **charged nothing**; if you do not, the subscription starts automatically at the price above and renews from there. ⚠️ The free period is offered **once per person and per subscription group**, by the store's own rule and not by ours: someone who has already used it — including through Family Sharing — subscribes at the full price. Whether the free period is available at all is shown in the app **before** you confirm, because it is the store that grants it.
+- **Automatic renewal** on expiry, unless cancelled. Cancellation is done **from your phone's settings** (App Store or Google Play), not from the app: we cannot cancel on your behalf. To avoid being charged for the next period — including the first one after a free week — cancellation must happen **at least 24 hours before** the current period ends, as the stores require.
 - **When you cancel**, the service remains available **until the end of the period already paid for**, and no longer.
 - **Restoring purchases**: if you change or reinstall your phone, you can restore the subscription from within the app.
 - **[TO BE VERIFIED: who sells to you.]** Apple and Google act as resellers in the European Union, and this determines **who issues the tax document and who a refund is requested from**. It has to be confirmed against their programme agreements rather than assumed, and it changes the wording of this clause.

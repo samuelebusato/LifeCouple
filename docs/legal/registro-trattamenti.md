@@ -75,7 +75,7 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **Categorie di dati** | Stato e scadenza dell'abbonamento; dati contabili degli acquisti |
 | **Base giuridica** | Esecuzione del contratto (art. 6.1.b); obbligo legale (art. 6.1.c) per i dati fiscali |
 | **Conservazione** | Durata del rapporto; **10 anni** per i dati fiscali |
-| **Destinatari** | Apple, Google **[+ RevenueCat se adottato]** |
+| **Destinatari** | Apple, Google, **RevenueCat** (adottato il 2026-09-14, D-133) |
 | ⚠️ **Da verificare** | **Chi è il venditore verso l'utente finale.** Apple e Google agiscono da rivenditori nella UE: determina **chi versa l'IVA** e cambia gli obblighi fiscali dell'impresa |
 
 ### A6 — Registro delle azioni distruttive
@@ -177,7 +177,7 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **TMDB** | Ricerca di film | Solo il **testo digitato** nella ricerca | USA | 🔴 **[DA FARE]** — e serve licenza **commerciale**, vedi [`pubblicazione.md`](../pubblicazione.md) §1.2 |
 | **Apple** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
 | **Google Play** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
-| **[RevenueCat]** | Normalizzazione ricevute, webhook | Identificativo utente, stato abbonamento | USA | ⚠️ **[SE ADOTTATO]** |
+| **RevenueCat** | Normalizzazione ricevute, webhook | Identificativo utente, stato abbonamento | USA | ⚠️ **[SE ADOTTATO]** |
 | **Expo** | Servizio push: instrada le notifiche verso Apple e Google | Token del dispositivo, lingua del telefono, testo della notifica | USA | ⚠️ **[DA FARE]** — SCC / DPF |
 | **Apple (APNs) / Google (FCM)** | Consegna della notifica al telefono | Token del dispositivo, testo della notifica | Vedi §5 | Accordi di programma |
 
