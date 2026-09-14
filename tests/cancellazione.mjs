@@ -116,7 +116,7 @@ await A.c.from('luogo').insert([
 await A.c.from('elemento_lista').insert({ coppia_id: cid, tipo: 'voce', titolo: 'Voce di prova' });
 const { data: partita } = await A.c
   .from('partita')
-  .insert({ coppia_id: cid, gioco: 'quiz' })
+  .insert({ coppia_id: cid, gioco: 'quiz_preferenze' })
   .select('id')
   .single();
 if (partita) await A.c.from('partita').update({ stato: 'conclusa' }).eq('id', partita.id);

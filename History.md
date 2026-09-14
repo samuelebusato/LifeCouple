@@ -28,6 +28,26 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-14 (4) — La notte dei muri: la cancellazione non funzionava
+
+**Chiesto dall'utente**: una lista di sette cose, con la richiesta di lavorare bene e riferire alla fine.
+
+🔴 **B-68 — cancellare un account non funzionava, e la schermata diceva «fatto».** È il risultato che conta di tutta la serata, ed è arrivato **facendo** la prova che il protocollo prescriveva dal 2026-08-31 e che nessuno aveva mai eseguito. Due cause sovrapposte, nessuna visibile dall'app: chiavi esterne nate **dopo** la passata della `0026`, e il trigger della `0025` — *«le liste di partenza non si eliminano»* — che fermava anche la cascata dell'account. 🔑 *Due protezioni giuste che non si conoscevano, e vinceva la peggiore.* Migrazioni `0044` e `0045`, applicate; §4.
+
+✅ **La catena ora regge su tutti e cinque i controlli**, bucket compreso: **zero oggetti** rimasti in `storage.objects`, contati direttamente. ⚠️ *Era la riga che il test da solo non poteva fare* — lo storage non distingue «non c'è» da «non puoi» (B-03). E il divieto della `0025` regge ancora, verificato senza toccare dati.
+
+✅ **L'account demo per il revisore esiste** (`tools/semina-demo.mjs`, rieseguibile): coppia appaiata, 4 eventi, 4 luoghi, 2 voci di lista, 4 foto, 1 partita conclusa. La password vive in `.env.demo.local`, gitignorato — 🔑 *generata in un file, che è la correzione di B-65 applicata a un altro posto.*
+
+✅ **I tre testi dei permessi sono bilingui** (`locales/it.json`, `locales/en.json`, `app.json`): chiude la metà scrivibile di **B-20**. ⚠️ *L'altra metà resta*: vederli su un telefono in inglese richiede una build nuova.
+
+✅ **Il paywall linka i documenti legali** — il terzo aggancio previsto da D-121, che mancava proprio sulla schermata dove si paga. ⬜ *Le due frasi del recesso restano a B-66*: quelle le scrive l'avvocato.
+
+✅ **Le pagine legali sono online** — `lifecouple.heleox.it/privacy-policy.html` e `/cookie-policy.html`, HTTP 200, e la versione pubblicata nomina RevenueCat. Deploy coi tre comandi del runbook, invalidazione CloudFront compresa.
+
+✅ **Tre migrazioni applicate** con `supabase db query`, una alla volta. 🔴 **E una cosa da sapere per sempre**: il remoto **non ha traccia** di nessuna migrazione precedente — sono state applicate a mano — quindi `supabase db push` le rieseguirebbe **tutte e 43**. Non si usa.
+
+⚠️ **Due pulizie NON fatte, e il perché conta più del fatto**: i due piani su livelli diversi (il pannello Apple non rispondeva, e su quella pagina ci sono **due pulsanti «Aggiungi alla verifica»**: non si tira a indovinare accanto a un pulsante che manda in revisione) e il rinomina del progetto RevenueCat doppione (il salvataggio non attecchisce — 🔑 *il sospetto è il banner «Your email address is not yet confirmed»*, che è lì da sempre).
+
 ### 2026-09-14 (3) — I documenti raggiungono il codice, e due frasi legali che non ci sono
 
 **Chiesto dall'utente**: allineare [`docs/Architecture.md`](docs/Architecture.md) e [`docs/threat-model.md`](docs/threat-model.md), rimasti indietro di due sottosistemi interi — le notifiche di ieri e i pagamenti di stamattina.
