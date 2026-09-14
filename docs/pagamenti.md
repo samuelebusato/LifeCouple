@@ -73,7 +73,11 @@ Ogni prodotto vuole anche: nome visibile, descrizione, e **una schermata di ante
 
 🔴 **E serve anche la In-App Purchase Key** (App Store Connect → *Users and Access → Integrations*). ⟳ **Corretto il 2026-09-14 (3): questa riga diceva «conviene caricare anche», ed era un eufemismo.** La documentazione di RevenueCat è esplicita — *«Make sure you have added **both** your App-Specific Shared Secret **and** your In-App Purchase Key… These are required for validating subscriptions **and fetching offerings/products**. Missing either of these credentials can prevent products and offerings from being fetched in your app.»*
 
-⚠️ **Quindi non è un comodo: senza una delle due, i prodotti non si recuperano affatto** — e il sintomo non nomina le credenziali, dice *«nessuno dei prodotti registrati su RevenueCat è stato recuperato da App Store Connect»*, che manda a cercare nei prodotti.
+⚠️ **Quindi non è un comodo** — e il sintomo non nomina le credenziali: dice *«nessuno dei prodotti registrati su RevenueCat è stato recuperato da App Store Connect»*, che manda a cercare nei prodotti.
+
+> ⟳ **Precisazione aggiunta poche ore dopo, guardando il pannello (2026-09-14 (3)) — e correggo me stesso.** La frase «servono entrambe» viene dalla pagina di troubleshooting, ma **il pannello di RevenueCat dice una cosa più precisa**: la *App-specific shared secret* è marcata **(Legacy)** e serve *«to validate transactions if your app is targeting iOS 15 or below, or is configured to use StoreKit 1»*. 🔑 **Con `react-native-purchases` 10.x si usa StoreKit 2, quindi la credenziale che conta è la In-App Purchase Key** — e la shared secret può restare vuota. ⚠️ *Verificato sul progetto reale: la shared secret **è** vuota, la IAP Key è caricata con Key ID e Issuer ID, e non è questo il motivo per cui i prodotti non si recuperavano.*
+
+⬜ **Resta invece davvero da caricare la App Store Connect API key** (`AuthKey_….p8`, sezione *App Store Connect API* della stessa scheda): senza, RevenueCat **non riesce a leggere lo stato dei prodotti** e nella tabella Products scrive *«Could not check»*. Non blocca il recupero dal telefono, ma toglie l'unico modo di vedere dal pannello se un prodotto è pronto — cioè proprio la diagnosi che serve quando succede quello che è successo.
 
 **2.2 Entitlement** — uno solo:
 
@@ -154,12 +158,33 @@ Capitato il 2026-09-14 (3) sulla prima development build. 🔑 **La cosa da sape
 
 ⚠️ **E «nessuno» esclude il refuso su un singolo identificativo**: se un solo ID non combaciasse, l'altro prodotto arriverebbe lo stesso. Un guasto che li prende tutti è **di account o di stato**, non di nome.
 
-L'ordine in cui conviene guardare, dal più probabile — è la checklist ufficiale di RevenueCat ristretta al nostro caso:
+### ✅ La prima volta che è successo, la causa è stata questa (2026-09-14 (3))
+
+**Nessuna delle due localizzazioni esisteva.** In App Store Connect:
+
+| Cosa | Stato trovato |
+|---|---|
+| Gruppo `Insieme` | 🔴 **zero localizzazioni** — la sezione *Localizzazione* del gruppo era vuota, col solo pulsante «Crea» |
+| `Insieme mensile` e `Insieme annuale` | 🔴 **zero localizzazioni** — nessun nome e nessuna descrizione da mostrare sull'App Store |
+| Disponibilità per paese | 🔴 da configurare («Configura la disponibilità») |
+| Stato risultante | 🟡 **«In preparazione per l'invio»** per entrambi, **non** «Pronto per l'invio» |
+
+🔑 **E lì si chiude il cerchio**: StoreKit serve solo i prodotti in `Pronto per l'invio` o `Approvato`. Finché il nome localizzato manca, il prodotto non raggiunge quello stato, quindi il telefono chiede due identificativi e **non riceve niente** — che è esattamente il messaggio dell'SDK.
+
+⚠️ **Le localizzazioni sono DUE cose distinte e si dimentica la prima**: quella del **gruppo** (il nome che l'utente vede fra gli abbonamenti nelle impostazioni del telefono) e quella di **ogni piano** (nome + descrizione sull'App Store). Riempirne una sola non basta.
+
+✅ **Quel che invece era già a posto**, e vale la pena saperlo per non rifare il giro: identificativi corretti in entrambi i pannelli, offering `default` con `$rc_monthly` e `$rc_annual` legati ai due prodotti giusti, entitlement `lifecouple_pro` attaccato a tutti e due, chiave `appl_…` giusta per la piattaforma, bundle ID coerente ovunque, In-App Purchase Key caricata.
+
+⚠️ **Una divergenza trovata di passaggio, da decidere**: i due abbonamenti stanno su **livelli diversi** (mensile = 1, annuale = 2), mentre §1 di questo documento prescrive **lo stesso livello per entrambi** — danno le stesse funzioni e cambiano solo la cadenza. Livelli diversi cambiano il comportamento di upgrade e downgrade.
+
+### L'ordine in cui guardare, se ricapita
+
+L'ordine dal più probabile — è la checklist ufficiale di RevenueCat ristretta al nostro caso:
 
 | # | Controllo | Perché proprio questo |
 |---|---|---|
-| 1 | **App-Specific Shared Secret** e **In-App Purchase Key** caricate entrambe su RevenueCat | 🔑 *Sono dichiarate necessarie **per recuperare i prodotti**, non solo per validare le ricevute* — e ne basta una mancante. Colpisce tutti i prodotti insieme, che è esattamente il sintomo |
-| 2 | **Stato dei prodotti** in ASC: `Ready to Submit` o `Approved` | ⚠️ In `Missing Metadata` non vengono serviti. *La causa più frequente sta nel **gruppo**, non nei piani: anche il gruppo di abbonamento vuole il suo nome localizzato, e finché manca tiene fermi tutti i piani che contiene* |
+| 1 | **In-App Purchase Key** caricata su RevenueCat, con Key ID e Issuer ID | ⚠️ *La shared secret è legacy (StoreKit 1) e con la 10.x può restare vuota* — vedi §2.1. Una credenziale mancante colpirebbe tutti i prodotti insieme, che è il sintomo, ma **non era questo** |
+| 2 | **Stato dei prodotti** in ASC: `Pronto per l'invio` o `Approvato` | 🔑 **È stata questa la causa la prima volta.** In `In preparazione per l'invio` non vengono serviti, e ciò che li teneva fermi erano le **localizzazioni mancanti** — quella del gruppo *e* quella di ogni piano, che sono due cose diverse |
 | 3 | **Bundle ID** uguale in tre posti: pannello RevenueCat, App Store Connect, `app.json` | ⚠️ Fa distinzione fra maiuscole e minuscole. Il nostro è `com.lifecouple.app` |
 | 4 | **Agreements, Tax and Banking** tutte e tre attive | Possono **scadere**, e la propagazione dopo la firma arriva a **24 ore** |
 | 5 | **Identificativi** dei prodotti, carattere per carattere | `com.lifecouple.app.insieme.mensile` e `.annuale` |
