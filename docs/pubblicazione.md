@@ -324,7 +324,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 
 | | Cosa | Chi |
 |---|---|---|
-| **B1** | 🔴 **Capire perché StoreKit non serve i prodotti**: l'app riceve l'offering da RevenueCat e non i prezzi. ⚠️ *Le due cause plausibili sono propagazione e un identificativo che non combacia, e nessuna delle due è stata verificata* | tu (pannelli), io leggo i sintomi |
+| **B1** | ✅ **RISOLTO il 2026-09-14 (3)**: nessuna delle due cause ipotizzate. Mancavano **le localizzazioni** (gruppo *e* piani) e la **disponibilità era 0 paesi** — un prodotto disponibile in nessun paese non è servibile da nessuna parte. Configurate entrambe, i prezzi arrivano | ✅ fatto |
 | **B2** | 🔴 **Un acquisto sandbox fino alla tabella**: `select` su `abbonamento` e `coppia_ha_insieme()` che si accende. 🔑 *Finché non succede, l'impianto è costruito e non dimostrato* | tu + io |
 | **B3** | ⚠️ **App Store Server Notifications su Sandbox *e* Production**. *Se il webhook è collegato solo a Production, niente di ciò che provi arriva mai al database — e sembra un difetto del codice* | tu |
 | **B4** | ✅ **FATTO il 2026-09-14 (3)**: con una chiave `test_…` l'SDK non si configura in una build non di sviluppo — il paywall dice «non disponibile» invece di vendere nel negozio di prova. ⬜ *Non se ne accorge prima del build: la chiave sta nei secret di EAS* | ✅ io |

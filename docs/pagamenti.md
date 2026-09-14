@@ -158,7 +158,15 @@ Capitato il 2026-09-14 (3) sulla prima development build. 🔑 **La cosa da sape
 
 ⚠️ **E «nessuno» esclude il refuso su un singolo identificativo**: se un solo ID non combaciasse, l'altro prodotto arriverebbe lo stesso. Un guasto che li prende tutti è **di account o di stato**, non di nome.
 
-### ✅ La prima volta che è successo, la causa è stata questa (2026-09-14 (3))
+### ✅ RISOLTO la sera stessa — i prezzi arrivano (2026-09-14 (3))
+
+Dopo localizzazioni, disponibilità e screenshot, il paywall sul telefono **mostra i prezzi**. 🔑 *Nessun altro intervento*: né la App Store Connect API key, né «Aggiungi alla verifica», né una submission.
+
+⚠️ **Cosa esattamente lo abbia sbloccato non è attribuibile con certezza**, perché sono state cambiate quattro cose insieme e nel frattempo è passato del tempo (la propagazione di Apple arriva a ore). 🔑 **Ma una delle quattro non poteva in nessun caso funzionare: la disponibilità era `0 paesi`.** Un prodotto disponibile in nessun paese non è servibile da nessuna parte — le localizzazioni mancanti erano il secondo candidato, e il resto è propagazione.
+
+⚠️ **E lo stato è rimasto «In preparazione per l'invio» anche dopo**: quindi — contro quanto dice la guida di RevenueCat — **StoreKit ha servito prodotti che non erano in «Pronto per l'invio»**. *È un fatto osservato su questo progetto, e vale più della regola scritta.*
+
+### La causa, riga per riga (2026-09-14 (3))
 
 **Nessuna delle due localizzazioni esisteva.** In App Store Connect:
 
