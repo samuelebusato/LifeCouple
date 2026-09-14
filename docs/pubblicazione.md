@@ -189,9 +189,13 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 
 **Serve un account di prova già appaiato**, con dentro dati veri — eventi, foto, luoghi, una partita conclusa — fornito nelle note per la revisione.
 
-> 🔴 **Al 2026-09-14 (3) non esiste ancora, ed è la voce del piano che più facilmente scivola in fondo.** ⚠️ *Non è configurazione: è progettazione* — una porta d'ingresso che aggira il codice email, cioè un pezzo di superficie d'attacco creato apposta. Va disegnata guardando `threat-model.md`, e il momento sbagliato per farlo è la sera prima della sottomissione. Corsia **A2** del piano in §7-ter.
+> 🔴 **Al 2026-09-14 (3) l'account demo non esiste ancora** — ma è molto meno lavoro di quanto questa sezione dichiarasse: serve **crearlo e riempirlo**, non progettare un modo di entrarci (vedi il riquadro sopra). Corsia **A2** del piano in §7-ter.
 
-🔴 **E qui c'è un ostacolo di codice, non di documentazione**: l'accesso è **via codice email**, e un revisore non può ricevere il nostro codice. Va deciso come farlo entrare — tipicamente un account demo con password fissa, esente dall'invio del codice. ⚠️ È una porta d'ingresso che aggira il meccanismo di autenticazione: va progettata guardando il threat model, non aggiunta di fretta la sera prima della sottomissione.
+~~🔴 **E qui c'è un ostacolo di codice, non di documentazione**: l'accesso è **via codice email**, e un revisore non può ricevere il nostro codice. Va deciso come farlo entrare — tipicamente un account demo con password fissa, esente dall'invio del codice. ⚠️ È una porta d'ingresso che aggira il meccanismo di autenticazione: va progettata guardando il threat model, non aggiunta di fretta la sera prima della sottomissione.~~
+
+> ✅ **Falso dal 2026-08-29, corretto il 2026-09-14 (3) — vedi B-67.** L'accesso **non è** via codice email: è **email e password** (`signInWithPassword` in `app/(pubbliche)/accedi.tsx`). 🔑 *E non è una coincidenza: **D-74** ha cambiato il meccanismo di accesso **proprio per questo motivo**, e quella decisione cita questa sezione come la ragione per cui la password esiste.* Il codice via email è rimasto solo per **recuperare** la password (`recupera.tsx`), e da solo non fa entrare da nessuna parte.
+>
+> ⚠️ **Quindi nessuna porta dedicata va progettata, e nessuna superficie d'attacco va aggiunta**: l'account demo è un account normale con la sua password, consegnata nelle note per la revisione. Quel che resta da fare è **contenuto**, non architettura — la corsia **A2** di §7-ter dice cosa.
 
 ---
 
@@ -309,7 +313,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | | Cosa | Chi | Dipende da |
 |---|---|---|---|
 | **A1** | 🔴 **Prova end-to-end della cancellazione** su un account di prova, col protocollo già scritto. *È fra i primi controlli di Apple: non è un rischio, è un esito* | io, **col tuo sì** — cancella davvero su infrastruttura vera | — |
-| **A2** | 🔴 **Account demo già appaiato per il revisore**, con dentro dati veri, e la **porta d'ingresso** che aggira il codice email. ⚠️ *È progettazione, non configurazione* | io progetto e costruisco, **tu approvi la porta** | il threat model |
+| **A2** | 🔴 **Account demo già appaiato per il revisore**, con dentro contenuti veri: eventi, foto, luoghi, una partita conclusa. ⟳ **Ridimensionata il 2026-09-14 (3)**: non serve nessuna porta dedicata — si entra con email e password (**D-74**), e questa riga diceva il contrario per errore mio, ereditato da §5 (**B-67**). ⚠️ **Ma c'è una conseguenza nuova da decidere**: coi muri della `0042` un revisore senza «Insieme» trova mappa, liste e creatura **chiuse**, e il diritto lo scrive **solo il webhook** | io costruisco, **tu decidi contenuti e diritto** | le foto da usare |
 | **A3** | 🔴 **Indirizzo e telefono del professionista (DSA)** — nel brain non esistono da nessuna parte | **solo tu** | — |
 | **A4** | 🔴 **I termini d'uso entrano nell'app**: oggi il generatore si rifiuta di costruirli perché portano segnaposto, quindi **non sono resi a nessuno**. 🔑 *Senza, il paywall vende senza contratto* | io | **A3** |
 | **A5** | 🔴 **B-66 — le due frasi del recesso** prima del pulsante, più il link ai documenti legali *dentro* il paywall | tu (o l'avvocato) decidi il testo, io lo monto. ⚠️ *Il commento che dichiara l'obbligo già soddisfatto lo correggo subito: è una riga e non richiede nessuno* | **A6**, o una formula tua |
@@ -323,7 +327,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | **B1** | 🔴 **Capire perché StoreKit non serve i prodotti**: l'app riceve l'offering da RevenueCat e non i prezzi. ⚠️ *Le due cause plausibili sono propagazione e un identificativo che non combacia, e nessuna delle due è stata verificata* | tu (pannelli), io leggo i sintomi |
 | **B2** | 🔴 **Un acquisto sandbox fino alla tabella**: `select` su `abbonamento` e `coppia_ha_insieme()` che si accende. 🔑 *Finché non succede, l'impianto è costruito e non dimostrato* | tu + io |
 | **B3** | ⚠️ **App Store Server Notifications su Sandbox *e* Production**. *Se il webhook è collegato solo a Production, niente di ciò che provi arriva mai al database — e sembra un difetto del codice* | tu |
-| **B4** | ⚠️ **Guardia sul prefisso della chiave**: niente impedisce oggi di pubblicare con la chiave `test_…`, e gli acquisti finirebbero al negozio di prova | io |
+| **B4** | ✅ **FATTO il 2026-09-14 (3)**: con una chiave `test_…` l'SDK non si configura in una build non di sviluppo — il paywall dice «non disponibile» invece di vendere nel negozio di prova. ⬜ *Non se ne accorge prima del build: la chiave sta nei secret di EAS* | ✅ io |
 
 ### Corsia C — Le notifiche: arrivano, ma non partono da sole
 

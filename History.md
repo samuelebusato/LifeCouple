@@ -56,7 +56,11 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ✅ **Corretto il commento di B-66** in `lib/i18n.ts`, che era la parte del difetto che non richiedeva un avvocato: ora dice che quelle frasi assolvono **l'obbligo di Apple** e nomina per esteso le due che mancano. 🔑 *Aggiunto anche sopra la stringa inglese, che dal 2026-09-10 è l'unico testo ufficiale (D-123): è lì che le frasi dovranno arrivare.* `tsc` esce 0.
 
-⚠️ **A parte quei due commenti, nessuna riga di codice dell'app è stata toccata**: per il resto la sessione ha cambiato documenti, intestazioni di migrazioni e un test nuovo. Quindi **la lista dei controlli sul telefono non si allunga**.
+✅ **B4 — la guardia sulla chiave del negozio di prova.** `lib/acquisti.ts` esportava `E_TEST_STORE` e **non lo usava**: una dichiarazione senza conseguenze. Ora, con una chiave `test_…`, l'SDK **non viene configurato affatto** in una build con `__DEV__ === false`. 🔑 *Il discriminante è `__DEV__` apposta*: la chiave di prova continua a funzionare nelle development build — dove serve, perché permette di provare la catena prima che i prodotti esistano su App Store Connect — e smette dove farebbe danno. ⚠️ **Il modo di fallire è scelto**: il paywall dice «non disponibile» invece di vendere in un negozio finto, e chi ha già «Insieme» non perde niente perché il diritto vive nel database. ⬜ *Resta scoperto*: non se ne accorge **prima** del build, perché la chiave di produzione sta nei secret di EAS e nessun controllo committabile può leggerla.
+
+🔴 **A2 — e qui il lavoro si è sciolto in mano: B-67.** Progettando la porta d'ingresso del revisore è emerso che **non serve nessuna porta**: si entra con email e password dal 2026-08-29, ed è **D-74**, presa *proprio per consegnare l'account al revisore*. Tre documenti chiedevano ancora di progettarla — ⚠️ **e uno dei tre l'avevo scritto io tre ore prima**, leggendo i documenti invece del codice nella stessa giornata in cui allineavo i documenti al codice. §4.
+
+⚠️ **A parte quei due commenti e la guardia di B4, nessuna riga di codice dell'app è stata toccata**: per il resto la sessione ha cambiato documenti, intestazioni di migrazioni e un test nuovo. Quindi **la lista dei controlli sul telefono non si allunga**.
 
 ### 2026-09-14 (2) — Le notifiche arrivano su un telefono vero, e la mascotte non prendeva punti
 
@@ -3167,6 +3171,31 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-67 — Il piano chiedeva di progettare una porta che D-74 aveva già costruito (2026-09-14, CORRETTO)
+
+**Trovato** cominciando a progettare l'account demo per il revisore — cioè **facendo** la cosa che il piano chiedeva. La prima domanda era *«come entra, se il codice arriva per email?»*, e la risposta è stata: **non arriva per email da due settimane**.
+
+#### Il fatto
+
+[`docs/pubblicazione.md`](docs/pubblicazione.md) §5 diceva: *«l'accesso è via codice email, e un revisore non può ricevere il nostro codice. Va deciso come farlo entrare… è una porta d'ingresso che aggira il meccanismo di autenticazione: va progettata guardando il threat model»*. La stessa frase stava nel backlog §6 di questo file.
+
+🔑 **Ma l'accesso è email e password dal 2026-08-29, ed è la D-74** — che cita **questa identica sezione** come la ragione per cui la password esiste: *«il revisore di Apple non può ricevere il nostro codice… a quell'account bisogna poter entrare»*. Il codice via email è rimasto solo per **recuperare** la password, e da solo non fa entrare da nessuna parte.
+
+⚠️ **Quindi il documento chiedeva di progettare la soluzione di un problema che una decisione di due settimane prima aveva già risolto — e la cui giustificazione era il documento stesso.** Il circolo si è chiuso senza che nessuna delle due estremità se ne accorgesse.
+
+#### Perché conta, e non è pedanteria
+
+La voce ha viaggiato in cima alle liste come **«progettazione, non configurazione»**: una porta che aggira l'autenticazione, da disegnare col threat model in mano. È il tipo di lavoro che si stima in giorni e si rimanda per timore. 🔑 *Quel che resta davvero è creare un account e riempirlo di contenuti* — un pomeriggio, e nessuna superficie d'attacco nuova.
+
+🔴 **E l'ho ripetuto io stesso poche ore prima**, scrivendo la corsia A2 del piano nuovo (§7-ter): *«la porta d'ingresso che aggira il codice email — è progettazione, non configurazione»*. ⚠️ **Ho letto i documenti invece del codice, nella stessa giornata in cui ho riallineato i documenti al codice.** *È la dimostrazione più netta che una dichiarazione stantia non fa danno quando è scritta: lo fa quando qualcuno la usa per decidere.*
+
+#### Le correzioni
+
+- §5 di `pubblicazione.md`: il paragrafo barrato resta, col riquadro che dice cosa è vero e da quando.
+- §7-ter, corsia **A2**: riscritta a ciò che è — contenuto, non architettura.
+- Il backlog §6 di questo file, stessa cosa.
+- ⚠️ **E una conseguenza nuova, trovata per la stessa strada**: coi muri della `0042` un revisore **senza «Insieme»** trova mappa, liste e creatura **chiuse**, e il diritto lo scrive **solo il webhook** (`0041`). Va deciso se l'account demo nasce abbonato — e non è una domanda di documentazione, è una cosa che il revisore vede.
+
 ### B-66 — Il commento dichiara che il recesso decade, e le frasi che lo farebbero decadere non ci sono (2026-09-14, APERTO)
 
 **Trovato** rileggendo `app/paywall.tsx` per stabilire lo stato reale della riga *«Schermata d'acquisto»* del threat model §4-ter. 🔑 *Non da un test, e nessun test potrebbe trovarlo*: il codice fa esattamente ciò che dice di fare — è **ciò che dice** a non corrispondere all'obbligo che nomina.
@@ -4779,7 +4808,7 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 - [ ] **`eas.json`** (profili development / preview / production) e **variabili come secret su EAS**. ⚠️ Il `.env` non è versionato: è esattamente ciò che il 2026-08-29 ha lasciato la chiave TMDB su un dispositivo solo.
 - [ ] **Primo build di sviluppo** → si provano finalmente i **tre testi dei permessi** (B-20, mai visti da nessuno) e si chiude il **backlog 11-quater**: sono scritti solo in italiano mentre l'app è bilingue (D-18).
 - [ ] **Pagamenti**: libreria (`expo-in-app-purchases` è abbandonata — restano `react-native-iap` o RevenueCat), schermata del listino, **«Ripristina acquisti»**, prodotti configurati sui due store, accordi **Paid Apps** con dati bancari e fiscali. ⚠️ Cancellare l'account **non** cancella l'abbonamento: va detto all'utente nel momento in cui cancella.
-- [ ] 🔴 **Account demo già appaiato per il revisore.** D-25 dice che senza partner l'app non fa niente, e il revisore è **una persona sola**: aprirebbe l'app, non avrebbe nessuno da invitare, e la segnalerebbe come non funzionante. ⚠️ E l'accesso è **via codice email**, che un revisore non può ricevere: serve una porta d'ingresso dedicata, da progettare guardando il threat model e non la sera prima della sottomissione.
+- [ ] 🔴 **Account demo già appaiato per il revisore.** D-25 dice che senza partner l'app non fa niente, e il revisore è **una persona sola**: aprirebbe l'app, non avrebbe nessuno da invitare, e la segnalerebbe come non funzionante. ⟳ ~~E l'accesso è **via codice email**, che un revisore non può ricevere: serve una porta d'ingresso dedicata.~~ **Falso dal 2026-08-29** — si entra con email e password, ed è **D-74**, presa proprio per questo (**B-67**). Resta da **creare e riempire** l'account, non da progettare come entrarci. ⚠️ **Una conseguenza nuova**: coi muri della `0042` un revisore senza «Insieme» trova mappa, liste e creatura chiuse, e il diritto lo scrive **solo il webhook** — va deciso se il demo nasce abbonato.
 - [ ] **Documenti privacy** adattati dai modelli in `Rule/` e **pubblicati a un URL** (ci sono già `fr-busato` e `heleox-landing` per ospitarli), più **App Privacy** e **Data safety** compilate da `threat-model.md` §1.
 - [ ] **Controlli sul nome** (EUIPO cl. 9 e 42, disponibilità sui due store, dominio, handle) — già in elenco dal 2026-08-12. ⚠️ Da fare **prima** degli screenshot in due lingue, non dopo.
 
