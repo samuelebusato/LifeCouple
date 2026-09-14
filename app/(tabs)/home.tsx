@@ -11,6 +11,8 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { CreaturaCasa } from '@/components/creatura-casa';
+import { MuroCreatura } from '@/components/muro';
+import { useInsieme } from '@/lib/acquisti';
 import { Emblema } from '@/components/emblema';
 import { Insieme } from '@/components/insieme';
 import { ServePartner } from '@/components/serve-partner';
@@ -126,6 +128,8 @@ function Riquadro({
 }
 
 export default function Home() {
+  // Il cancello: legge il DATABASE (coppia_ha_insieme, 0041), mai l'SDK.
+  const { insieme } = useInsieme();
   const router = useRouter();
   const { coppiaId, completa, insiemeDal, errore, loading, ricarica } = useCoppia();
   const { c } = useTema();
@@ -220,7 +224,10 @@ export default function Home() {
                 non è una cosa da leggere, è una cosa che sta lì — e ha già un
                 movimento suo, il respiro, che una comparsa a molla
                 disturberebbe entrando. */}
-            <CreaturaCasa coppiaId={coppiaId} />
+            {/* ⚠️ La creatura e' a pagamento da D-135. Chi non ha «Insieme»
+                vede la sagoma spenta con l'invito — scelta dell'utente: mostra
+                cosa manca senza togliere niente che avesse. */}
+            {insieme ? <CreaturaCasa coppiaId={coppiaId} /> : <MuroCreatura />}
 
 
             <View className="w-full flex-row flex-wrap">

@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Muro } from '@/components/muro';
+import { useInsieme } from '@/lib/acquisti';
 import Riani, {
   Extrapolation,
   interpolate,
@@ -60,6 +62,8 @@ import { t } from '@/lib/i18n';
  * fondo, dove stanno tutte le azioni di questa schermata.
  */
 export default function Liste() {
+  // Il cancello: legge il DATABASE (coppia_ha_insieme, 0041), mai l'SDK.
+  const { insieme, loading: insiemeCaricamento } = useInsieme();
   const router = useRouter();
   const { c } = useTema();
   const { width, height } = useWindowDimensions();
@@ -218,6 +222,17 @@ export default function Liste() {
     // Dopo una cancellazione l'indice può puntare oltre la fine del mazzo.
     setScelto((i) => Math.max(0, i - 1));
     chiudi();
+  }
+
+  if (!insiemeCaricamento && !insieme) {
+    return (
+      <View className="flex-1">
+        <Fondo />
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <Muro nota={t.abbonamento.muroListe} />
+        </SafeAreaView>
+      </View>
+    );
   }
 
   return (

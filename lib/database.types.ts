@@ -10,15 +10,40 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
-      // ⚠️ SCRITTO A MANO, non generato — migrazione 0011 (cartelle della
-      // galleria). Il resto di questo file viene dallo schema reale: questo
-      // blocco va **sostituito rigenerando i tipi** appena la 0011 e' applicata,
-      // altrimenti resta l'unico punto in cui i tipi dicono ciò che crediamo
-      // invece di ciò che è. Vale anche per `foto.cartella_id` più sotto.
+      abbonamento: {
+        Row: {
+          aggiornato_il: string
+          attivo: boolean
+          evento_id: string | null
+          evento_il: string | null
+          prodotto: string | null
+          scade_il: string | null
+          utente_id: string
+        }
+        Insert: {
+          aggiornato_il?: string
+          attivo?: boolean
+          evento_id?: string | null
+          evento_il?: string | null
+          prodotto?: string | null
+          scade_il?: string | null
+          utente_id: string
+        }
+        Update: {
+          aggiornato_il?: string
+          attivo?: boolean
+          evento_id?: string | null
+          evento_il?: string | null
+          prodotto?: string | null
+          scade_il?: string | null
+          utente_id?: string
+        }
+        Relationships: []
+      }
       cartella: {
         Row: {
           autore_id: string
@@ -77,6 +102,13 @@ export type Database = {
           testo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "commento_coppia_id_fkey"
+            columns: ["coppia_id"]
+            isOneToOne: false
+            referencedRelation: "coppia"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "commento_evento_id_fkey"
             columns: ["evento_id"]
@@ -139,8 +171,36 @@ export type Database = {
           },
         ]
       }
-      // ⚠️ `partita_id`, `autore_id` e `tipo` (0028) SCRITTI A MANO — da
-      // sostituire rigenerando i tipi.
+      dispositivo: {
+        Row: {
+          creato_il: string
+          id: string
+          lingua: string
+          piattaforma: string
+          token: string
+          utente_id: string
+          visto_il: string
+        }
+        Insert: {
+          creato_il?: string
+          id?: string
+          lingua?: string
+          piattaforma: string
+          token: string
+          utente_id: string
+          visto_il?: string
+        }
+        Update: {
+          creato_il?: string
+          id?: string
+          lingua?: string
+          piattaforma?: string
+          token?: string
+          utente_id?: string
+          visto_il?: string
+        }
+        Relationships: []
+      }
       domanda: {
         Row: {
           autore_id: string | null
@@ -183,10 +243,15 @@ export type Database = {
             referencedRelation: "coppia"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "domanda_partita_id_fkey"
+            columns: ["partita_id"]
+            isOneToOne: false
+            referencedRelation: "partita"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      // ⚠️ `luogo_id` (0012), `google_place_id`/`foto_google` (0013) SCRITTI A
-      // MANO — da sostituire rigenerando i tipi.
       elemento_lista: {
         Row: {
           autore_id: string
@@ -248,75 +313,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "elemento_lista_luogo_id_fkey"
-            columns: ["luogo_id"]
-            isOneToOne: false
-            referencedRelation: "luogo"
-            referencedColumns: ["id"]
-          },
-          // ⚠️ SCRITTO A MANO (0022) — da sostituire rigenerando i tipi.
-          {
             foreignKeyName: "elemento_lista_lista_id_fkey"
             columns: ["lista_id"]
             isOneToOne: false
             referencedRelation: "lista"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      // ⚠️ TABELLA SCRITTA A MANO (0022) — da sostituire rigenerando i tipi.
-      // Verificata contro la migrazione, non generata dallo schema vero: e' il
-      // debito gia' dichiarato nel PUNTO DI RIPRESA, e questa e' l'ennesima
-      // tabella che lo rende un po' piu' caro.
-      // ⚠️ `chiave` SCRITTA A MANO (0035) — da sostituire rigenerando i tipi.
-      lista: {
-        Row: {
-          autore_id: string
-          chiave: string | null
-          coppia_id: string
-          creata_il: string
-          id: string
-          nome: string
-          pastello: string
-          predefinita: boolean
-          tipo: string
-        }
-        Insert: {
-          autore_id?: string
-          chiave?: string | null
-          coppia_id: string
-          creata_il?: string
-          id?: string
-          nome: string
-          pastello?: string
-          predefinita?: boolean
-          tipo?: string
-        }
-        Update: {
-          autore_id?: string
-          chiave?: string | null
-          coppia_id?: string
-          creata_il?: string
-          id?: string
-          nome?: string
-          pastello?: string
-          predefinita?: boolean
-          tipo?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "lista_coppia_id_fkey"
-            columns: ["coppia_id"]
+            foreignKeyName: "elemento_lista_luogo_id_fkey"
+            columns: ["luogo_id"]
             isOneToOne: false
-            referencedRelation: "coppia"
+            referencedRelation: "luogo"
             referencedColumns: ["id"]
           },
         ]
       }
-      // ⚠️ `elemento_id` SCRITTO A MANO (0012) — da sostituire rigenerando i tipi.
       evento: {
         Row: {
           autore_id: string
+          categoria: string | null
           coppia_id: string
           creato_il: string
           elemento_id: string | null
@@ -324,7 +339,6 @@ export type Database = {
           id: string
           inizio: string
           luogo_id: string | null
-          categoria: string | null
           nota: string | null
           origine_esterna: string | null
           speciale: string | null
@@ -334,6 +348,7 @@ export type Database = {
         }
         Insert: {
           autore_id?: string
+          categoria?: string | null
           coppia_id: string
           creato_il?: string
           elemento_id?: string | null
@@ -341,7 +356,6 @@ export type Database = {
           id?: string
           inizio: string
           luogo_id?: string | null
-          categoria?: string | null
           nota?: string | null
           origine_esterna?: string | null
           speciale?: string | null
@@ -351,6 +365,7 @@ export type Database = {
         }
         Update: {
           autore_id?: string
+          categoria?: string | null
           coppia_id?: string
           creato_il?: string
           elemento_id?: string | null
@@ -358,7 +373,6 @@ export type Database = {
           id?: string
           inizio?: string
           luogo_id?: string | null
-          categoria?: string | null
           nota?: string | null
           origine_esterna?: string | null
           speciale?: string | null
@@ -381,10 +395,6 @@ export type Database = {
             referencedRelation: "elemento_lista"
             referencedColumns: ["id"]
           },
-          // ⚠️ SCRITTA A MANO (0024) — mancava, ed è il motivo per cui
-          // `luogo.select('*, evento(id)')` non compilava: senza la relazione
-          // dichiarata, PostgREST-types non sa che i due sono collegati. La
-          // colonna `luogo_id` c'era da 0008; la **relazione** no.
           {
             foreignKeyName: "evento_luogo_id_fkey"
             columns: ["luogo_id"]
@@ -399,10 +409,10 @@ export type Database = {
           autore_id: string
           byte: number
           cartella_id: string | null
-          elemento_id: string | null
           chiave_storage: string
           coppia_id: string
           creato_il: string
+          elemento_id: string | null
           evento_id: string | null
           id: string
           luogo_id: string | null
@@ -412,10 +422,10 @@ export type Database = {
           autore_id?: string
           byte: number
           cartella_id?: string | null
-          elemento_id?: string | null
           chiave_storage: string
           coppia_id: string
           creato_il?: string
+          elemento_id?: string | null
           evento_id?: string | null
           id?: string
           luogo_id?: string | null
@@ -425,11 +435,11 @@ export type Database = {
           autore_id?: string
           byte?: number
           cartella_id?: string | null
-          elemento_id?: string | null
           chiave_storage?: string
           coppia_id?: string
-          evento_id?: string | null
           creato_il?: string
+          elemento_id?: string | null
+          evento_id?: string | null
           id?: string
           luogo_id?: string | null
           scattata_il?: string | null
@@ -447,6 +457,20 @@ export type Database = {
             columns: ["coppia_id"]
             isOneToOne: false
             referencedRelation: "coppia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_elemento_id_fkey"
+            columns: ["elemento_id"]
+            isOneToOne: false
+            referencedRelation: "elemento_lista"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "evento"
             referencedColumns: ["id"]
           },
           {
@@ -547,6 +571,50 @@ export type Database = {
           },
         ]
       }
+      lista: {
+        Row: {
+          autore_id: string
+          chiave: string | null
+          coppia_id: string
+          creata_il: string
+          id: string
+          nome: string
+          pastello: string
+          predefinita: boolean
+          tipo: string
+        }
+        Insert: {
+          autore_id?: string
+          chiave?: string | null
+          coppia_id: string
+          creata_il?: string
+          id?: string
+          nome: string
+          pastello?: string
+          predefinita?: boolean
+          tipo?: string
+        }
+        Update: {
+          autore_id?: string
+          chiave?: string | null
+          coppia_id?: string
+          creata_il?: string
+          id?: string
+          nome?: string
+          pastello?: string
+          predefinita?: boolean
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lista_coppia_id_fkey"
+            columns: ["coppia_id"]
+            isOneToOne: false
+            referencedRelation: "coppia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       luogo: {
         Row: {
           autore_id: string
@@ -623,16 +691,115 @@ export type Database = {
           },
         ]
       }
-      // ⚠️ SCRITTO A MANO — migrazione 0020 (le partite dei giochi). Come il
-      // blocco `cartella` più sopra, questo va **sostituito rigenerando i tipi**
-      // (`supabase gen types`) appena si ha in mano una chiave segreta: finché
-      // resta scritto a mano dice ciò che crediamo, non ciò che è.
-      //
-      // Le colonne aggiunte sono però state **verificate contro il database
-      // vero** il 2026-08-28, una per una, con una `select` mirata attraverso
-      // l'API REST — non copiate dalla migrazione e sperate.
-      // ⚠️ SCRITTE A MANO — migrazione 0020. Vale la stessa avvertenza del
-      // blocco `partita` qui sotto: da rigenerare.
+      notifica_in_coda: {
+        Row: {
+          chiave_dedup: string
+          coppia_id: string | null
+          creata_il: string
+          da_inviare_il: string
+          dati: Json
+          destinatario_id: string
+          id: string
+          inviata_il: string | null
+          motivo_scarto: string | null
+          scartata_il: string | null
+          tentativi: number
+          tipo: string
+          ultimo_errore: string | null
+        }
+        Insert: {
+          chiave_dedup: string
+          coppia_id?: string | null
+          creata_il?: string
+          da_inviare_il?: string
+          dati?: Json
+          destinatario_id: string
+          id?: string
+          inviata_il?: string | null
+          motivo_scarto?: string | null
+          scartata_il?: string | null
+          tentativi?: number
+          tipo: string
+          ultimo_errore?: string | null
+        }
+        Update: {
+          chiave_dedup?: string
+          coppia_id?: string | null
+          creata_il?: string
+          da_inviare_il?: string
+          dati?: Json
+          destinatario_id?: string
+          id?: string
+          inviata_il?: string | null
+          motivo_scarto?: string | null
+          scartata_il?: string | null
+          tentativi?: number
+          tipo?: string
+          ultimo_errore?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifica_in_coda_coppia_id_fkey"
+            columns: ["coppia_id"]
+            isOneToOne: false
+            referencedRelation: "coppia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partita: {
+        Row: {
+          conclusa_il: string | null
+          coppia_id: string
+          creata_da: string
+          creata_il: string
+          gioco: string
+          id: string
+          modo: string
+          punti: number
+          round_corrente: number
+          round_totali: number
+          stato: string
+          turno_di: string | null
+        }
+        Insert: {
+          conclusa_il?: string | null
+          coppia_id: string
+          creata_da?: string
+          creata_il?: string
+          gioco: string
+          id?: string
+          modo?: string
+          punti?: number
+          round_corrente?: number
+          round_totali?: number
+          stato?: string
+          turno_di?: string | null
+        }
+        Update: {
+          conclusa_il?: string | null
+          coppia_id?: string
+          creata_da?: string
+          creata_il?: string
+          gioco?: string
+          id?: string
+          modo?: string
+          punti?: number
+          round_corrente?: number
+          round_totali?: number
+          stato?: string
+          turno_di?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partita_coppia_id_fkey"
+            columns: ["coppia_id"]
+            isOneToOne: false
+            referencedRelation: "coppia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partita_pronto: {
         Row: {
           partita_id: string
@@ -649,7 +816,44 @@ export type Database = {
           pronto_il?: string
           utente_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "partita_pronto_partita_id_fkey"
+            columns: ["partita_id"]
+            isOneToOne: false
+            referencedRelation: "partita"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partita_risultato: {
+        Row: {
+          esito: Json
+          partita_id: string
+          punti_assegnati: number
+          rivelato_il: string
+        }
+        Insert: {
+          esito: Json
+          partita_id: string
+          punti_assegnati?: number
+          rivelato_il?: string
+        }
+        Update: {
+          esito?: Json
+          partita_id?: string
+          punti_assegnati?: number
+          rivelato_il?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partita_risultato_partita_id_fkey"
+            columns: ["partita_id"]
+            isOneToOne: true
+            referencedRelation: "partita"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partita_round: {
         Row: {
@@ -688,96 +892,44 @@ export type Database = {
           partita_id?: string
           punti?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "partita_round_partita_id_fkey"
+            columns: ["partita_id"]
+            isOneToOne: false
+            referencedRelation: "partita"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      // ⚠️ SCRITTO A MANO, non generato — migrazione 0027 («continua» a due).
-      // Stesso debito dichiarato in `docs/Architecture.md` per le 0011→0016:
-      // finche' i tipi non si rigenerano con `supabase gen types typescript`,
-      // questo blocco dice cio' che **crediamo** ci sia nello schema, non cio'
-      // che c'e'. Va sostituito alla prima rigenerazione.
-      round_pronto: {
+      posizione_membro: {
         Row: {
-          pronto_il: string
-          round_id: string
+          aggiornata_il: string
+          coppia_id: string
+          lat: number
+          lon: number
+          precisione: number | null
           utente_id: string
         }
         Insert: {
-          pronto_il?: string
-          round_id: string
-          utente_id?: string
-        }
-        Update: {
-          pronto_il?: string
-          round_id?: string
-          utente_id?: string
-        }
-        Relationships: []
-      }
-      round_segreto: {
-        Row: {
-          chiave: string
-          creato_il: string
-          round_id: string
-        }
-        Insert: {
-          chiave: string
-          creato_il?: string
-          round_id: string
-        }
-        Update: {
-          chiave?: string
-          creato_il?: string
-          round_id?: string
-        }
-        Relationships: []
-      }
-      // ⚠️ `modo` (0028) SCRITTO A MANO — da sostituire rigenerando i tipi.
-      partita: {
-        Row: {
-          conclusa_il: string | null
+          aggiornata_il?: string
           coppia_id: string
-          creata_da: string
-          creata_il: string
-          gioco: string
-          id: string
-          modo: string
-          punti: number
-          round_corrente: number
-          round_totali: number
-          stato: string
-          turno_di: string | null
-        }
-        Insert: {
-          conclusa_il?: string | null
-          coppia_id: string
-          creata_da?: string
-          creata_il?: string
-          gioco: string
-          id?: string
-          modo?: string
-          punti?: number
-          round_corrente?: number
-          round_totali?: number
-          stato?: string
-          turno_di?: string | null
+          lat: number
+          lon: number
+          precisione?: number | null
+          utente_id: string
         }
         Update: {
-          conclusa_il?: string | null
+          aggiornata_il?: string
           coppia_id?: string
-          creata_da?: string
-          creata_il?: string
-          gioco?: string
-          id?: string
-          punti?: number
-          round_corrente?: number
-          round_totali?: number
-          stato?: string
-          modo?: string
-          turno_di?: string | null
+          lat?: number
+          lon?: number
+          precisione?: number | null
+          utente_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "partita_coppia_id_fkey"
+            foreignKeyName: "posizione_membro_coppia_id_fkey"
             columns: ["coppia_id"]
             isOneToOne: false
             referencedRelation: "coppia"
@@ -785,34 +937,85 @@ export type Database = {
           },
         ]
       }
-      partita_risultato: {
+      preferenze_notifiche: {
         Row: {
-          esito: Json
-          partita_id: string
-          punti_assegnati: number
-          rivelato_il: string
+          aggiornate_il: string
+          inviti_a_tornare: boolean
+          luogo_del_partner: boolean
+          ricordi: boolean
+          utente_id: string
         }
         Insert: {
-          esito: Json
-          partita_id: string
-          punti_assegnati?: number
-          rivelato_il?: string
+          aggiornate_il?: string
+          inviti_a_tornare?: boolean
+          luogo_del_partner?: boolean
+          ricordi?: boolean
+          utente_id: string
         }
         Update: {
-          esito?: Json
-          partita_id?: string
-          punti_assegnati?: number
-          rivelato_il?: string
+          aggiornate_il?: string
+          inviti_a_tornare?: boolean
+          luogo_del_partner?: boolean
+          ricordi?: boolean
+          utente_id?: string
+        }
+        Relationships: []
+      }
+      profilo_coppia: {
+        Row: {
+          aggiornato_il: string
+          conosciuto_da: string | null
+          consenso_il: string
+          convivenza: string | null
+          coppia_id: string
+          fascia_eta: string | null
+          interesse: string | null
+        }
+        Insert: {
+          aggiornato_il?: string
+          conosciuto_da?: string | null
+          consenso_il?: string
+          convivenza?: string | null
+          coppia_id: string
+          fascia_eta?: string | null
+          interesse?: string | null
+        }
+        Update: {
+          aggiornato_il?: string
+          conosciuto_da?: string | null
+          consenso_il?: string
+          convivenza?: string | null
+          coppia_id?: string
+          fascia_eta?: string | null
+          interesse?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "partita_risultato_partita_id_fkey"
-            columns: ["partita_id"]
+            foreignKeyName: "profilo_coppia_coppia_id_fkey"
+            columns: ["coppia_id"]
             isOneToOne: true
-            referencedRelation: "partita"
+            referencedRelation: "coppia"
             referencedColumns: ["id"]
           },
         ]
+      }
+      profilo_utente: {
+        Row: {
+          aggiornato_il: string
+          data_nascita: string | null
+          utente_id: string
+        }
+        Insert: {
+          aggiornato_il?: string
+          data_nascita?: string | null
+          utente_id: string
+        }
+        Update: {
+          aggiornato_il?: string
+          data_nascita?: string | null
+          utente_id?: string
+        }
+        Relationships: []
       }
       punti_evento: {
         Row: {
@@ -929,6 +1132,58 @@ export type Database = {
           },
         ]
       }
+      round_pronto: {
+        Row: {
+          pronto_il: string
+          round_id: string
+          utente_id: string
+        }
+        Insert: {
+          pronto_il?: string
+          round_id: string
+          utente_id?: string
+        }
+        Update: {
+          pronto_il?: string
+          round_id?: string
+          utente_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_pronto_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "partita_round"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      round_segreto: {
+        Row: {
+          chiave: string
+          creato_il: string
+          round_id: string
+        }
+        Insert: {
+          chiave: string
+          creato_il?: string
+          round_id: string
+        }
+        Update: {
+          chiave?: string
+          creato_il?: string
+          round_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_segreto_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: true
+            referencedRelation: "partita_round"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stadio_soglia: {
         Row: {
           punti_minimi: number
@@ -944,241 +1199,53 @@ export type Database = {
         }
         Relationships: []
       }
-      // ⚠️ SCRITTO A MANO — migrazione 0029 (il questionario di profilo).
-      // Da rigenerare con gli altri: finché è scritto a mano dice ciò che
-      // crediamo ci sia nello schema, non ciò che c'è.
-      profilo_coppia: {
-        Row: {
-          coppia_id: string
-          conosciuto_da: string | null
-          fascia_eta: string | null
-          convivenza: string | null
-          interesse: string | null
-          consenso_il: string
-          aggiornato_il: string
-        }
-        Insert: {
-          coppia_id: string
-          conosciuto_da?: string | null
-          fascia_eta?: string | null
-          convivenza?: string | null
-          interesse?: string | null
-          consenso_il?: string
-          aggiornato_il?: string
-        }
-        Update: {
-          coppia_id?: string
-          conosciuto_da?: string | null
-          fascia_eta?: string | null
-          convivenza?: string | null
-          interesse?: string | null
-          consenso_il?: string
-          aggiornato_il?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profilo_coppia_coppia_id_fkey"
-            columns: ["coppia_id"]
-            isOneToOne: true
-            referencedRelation: "coppia"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      // ⚠️ SCRITTO A MANO — migrazione 0031 (la posizione condivisa, D-100).
-      // Da rigenerare con gli altri alla prima `supabase gen types typescript`.
-      // ⚠️ SCRITTE A MANO — migrazione 0038 (le notifiche push).
-      // Da rigenerare con le altre alla prima `supabase gen types typescript`,
-      // che è possibile solo DOPO aver applicato la 0038: finché non lo è, il
-      // generatore non sa che queste tabelle esistono.
-      dispositivo: {
-        Row: {
-          id: string
-          utente_id: string
-          token: string
-          piattaforma: string
-          // ⚠️ Aggiunta dalla 0039: la lingua in cui scrivere a QUESTO telefono.
-          // Il testo delle notifiche lo compone il server, che altrimenti non
-          // avrebbe modo di saperla.
-          lingua: string
-          creato_il: string
-          visto_il: string
-        }
-        Insert: {
-          id?: string
-          utente_id: string
-          token: string
-          piattaforma: string
-          lingua?: string
-          creato_il?: string
-          visto_il?: string
-        }
-        Update: {
-          id?: string
-          utente_id?: string
-          token?: string
-          piattaforma?: string
-          lingua?: string
-          creato_il?: string
-          visto_il?: string
-        }
-        Relationships: []
-      }
-      // ⚠️ SCRITTA A MANO — migrazione 0039 (la coda di invio).
-      //
-      // 🔴 **Nessun client la legge, mai**: ha la RLS attiva e zero policy, e da
-      // qui una select tornerebbe sempre `[]` — non un errore. Il tipo esiste
-      // perché la tabella esiste, non perché l'app debba usarla: se ti trovi a
-      // scrivere una query su questa tabella dall'app, la risposta è che va
-      // fatta nella Edge Function `invia-notifiche`.
-      notifica_in_coda: {
-        Row: {
-          id: string
-          destinatario_id: string
-          tipo: string
-          coppia_id: string | null
-          dati: Json
-          chiave_dedup: string
-          creata_il: string
-          da_inviare_il: string
-          inviata_il: string | null
-          scartata_il: string | null
-          motivo_scarto: string | null
-          tentativi: number
-          ultimo_errore: string | null
-        }
-        Insert: {
-          id?: string
-          destinatario_id: string
-          tipo: string
-          coppia_id?: string | null
-          dati?: Json
-          chiave_dedup: string
-          creata_il?: string
-          da_inviare_il?: string
-          inviata_il?: string | null
-          scartata_il?: string | null
-          motivo_scarto?: string | null
-          tentativi?: number
-          ultimo_errore?: string | null
-        }
-        Update: {
-          id?: string
-          destinatario_id?: string
-          tipo?: string
-          coppia_id?: string | null
-          dati?: Json
-          chiave_dedup?: string
-          creata_il?: string
-          da_inviare_il?: string
-          inviata_il?: string | null
-          scartata_il?: string | null
-          motivo_scarto?: string | null
-          tentativi?: number
-          ultimo_errore?: string | null
-        }
-        Relationships: []
-      }
-      preferenze_notifiche: {
-        Row: {
-          utente_id: string
-          luogo_del_partner: boolean
-          ricordi: boolean
-          inviti_a_tornare: boolean
-          aggiornate_il: string
-        }
-        Insert: {
-          utente_id: string
-          luogo_del_partner?: boolean
-          ricordi?: boolean
-          inviti_a_tornare?: boolean
-          aggiornate_il?: string
-        }
-        Update: {
-          utente_id?: string
-          luogo_del_partner?: boolean
-          ricordi?: boolean
-          inviti_a_tornare?: boolean
-          aggiornate_il?: string
-        }
-        Relationships: []
-      }
-      posizione_membro: {
-        Row: {
-          utente_id: string
-          coppia_id: string
-          lat: number
-          lon: number
-          precisione: number | null
-          aggiornata_il: string
-        }
-        Insert: {
-          utente_id: string
-          coppia_id: string
-          lat: number
-          lon: number
-          precisione?: number | null
-          aggiornata_il?: string
-        }
-        Update: {
-          utente_id?: string
-          coppia_id?: string
-          lat?: number
-          lon?: number
-          precisione?: number | null
-          aggiornata_il?: string
-        }
-        Relationships: []
-      }
-      // ⚠️ SCRITTO A MANO — migrazione 0032 (la data di nascita).
-      // Da rigenerare con gli altri alla prima `supabase gen types typescript`.
-      profilo_utente: {
-        Row: {
-          utente_id: string
-          data_nascita: string | null
-          aggiornato_il: string
-        }
-        Insert: {
-          utente_id: string
-          data_nascita?: string | null
-          aggiornato_il?: string
-        }
-        Update: {
-          utente_id?: string
-          data_nascita?: string | null
-          aggiornato_il?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      // ⚠️ SCRITTE A MANO — migrazione 0020. Le tre firme sono state provate
-      // contro il database vero il 2026-08-28: chiamandole via `/rest/v1/rpc`
-      // hanno risposto con le **nostre** eccezioni («partita inesistente»,
-      // «round inesistente», «partita non tua»), che è la prova che esistono e
-      // che i parametri sono quelli giusti — una firma sbagliata avrebbe dato
-      // 404 sulla funzione, non un errore del suo corpo.
-      segna_pronto: {
-        Args: { p_partita: string }
-        Returns: Database['public']['Tables']['partita']['Row']
+      accoda_inviti_a_tornare: {
+        Args: { p_giorni_inattivita?: number }
+        Returns: number
       }
-      chiudi_round: {
-        Args: { p_round: string; p_esito: string; p_punti: number; p_chiave?: string | null }
-        Returns: Database['public']['Tables']['partita']['Row']
-      }
-      rivela_telepatia: {
-        Args: { p_partita: string; p_round: number }
-        Returns: { utente_id: string; scelta: string }[]
-      }
+      accoda_ricordi: { Args: never; Returns: number }
+      aggiorna_ristoranti_visitati: { Args: never; Returns: number }
       apri_invito: { Args: { p_token: string }; Returns: string }
       assegna_punti: {
         Args: { cid: string; n: number; rif: string; tipo_evento: string }
         Returns: undefined
       }
+      cancella_profilo_coppia: { Args: never; Returns: undefined }
+      chiudi_round: {
+        Args: {
+          p_chiave?: string
+          p_esito: string
+          p_punti: number
+          p_round: string
+        }
+        Returns: {
+          conclusa_il: string | null
+          coppia_id: string
+          creata_da: string
+          creata_il: string
+          gioco: string
+          id: string
+          modo: string
+          punti: number
+          round_corrente: number
+          round_totali: number
+          stato: string
+          turno_di: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "partita"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       conferma_invito: { Args: { p_invito_id: string }; Returns: string }
+      coppia_ha_insieme: { Args: { cid: string }; Returns: boolean }
       crea_coppia: { Args: never; Returns: string }
       crea_invito: { Args: never; Returns: string }
       e_membro_attivo: { Args: { cid: string }; Returns: boolean }
@@ -1188,26 +1255,48 @@ export type Database = {
         Returns: undefined
       }
       n_membri_attivi: { Args: { cid: string }; Returns: number }
-      // ⚠️ Blocco scritto a mano (0015), come quelli di 0011/0012/0013: questo
-      // file va rigenerato dallo schema reale, ed e' in coda al PUNTO DI
-      // RIPRESA. Finche' non lo si fa, ogni funzione nuova va aggiunta qui o il
-      // client non la vede.
-      aggiorna_ristoranti_visitati: { Args: never; Returns: number }
+      prepara_cancellazione_account: { Args: never; Returns: undefined }
       revoca_invito: { Args: { p_invito_id: string }; Returns: undefined }
-      sciogli_coppia: { Args: never; Returns: undefined }
-      // ⚠️ SCRITTE A MANO — migrazione 0029 (il questionario di profilo).
-      // Stessa avvertenza dei blocchi qui sopra: vanno via tutte insieme alla
-      // prima rigenerazione con `supabase gen types typescript`.
+      rivela_telepatia: {
+        Args: { p_partita: string; p_round: number }
+        Returns: {
+          scelta: string
+          utente_id: string
+        }[]
+      }
       salva_profilo_coppia: {
         Args: {
-          p_conosciuto_da?: string | null
-          p_fascia_eta?: string | null
-          p_convivenza?: string | null
-          p_interesse?: string | null
+          p_conosciuto_da?: string
+          p_convivenza?: string
+          p_fascia_eta?: string
+          p_interesse?: string
         }
         Returns: undefined
       }
-      cancella_profilo_coppia: { Args: never; Returns: undefined }
+      sciogli_coppia: { Args: never; Returns: undefined }
+      segna_pronto: {
+        Args: { p_partita: string }
+        Returns: {
+          conclusa_il: string | null
+          coppia_id: string
+          creata_da: string
+          creata_il: string
+          gioco: string
+          id: string
+          modo: string
+          punti: number
+          round_corrente: number
+          round_totali: number
+          stato: string
+          turno_di: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "partita"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
@@ -1226,12 +1315,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1255,11 +1344,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1280,11 +1369,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1305,11 +1394,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1322,11 +1411,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

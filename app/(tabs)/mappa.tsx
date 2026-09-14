@@ -10,6 +10,8 @@ import { Alert,
 import { useFocusEffect, useRouter } from 'expo-router';
 import Riani, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Muro } from '@/components/muro';
+import { useInsieme } from '@/lib/acquisti';
 import * as Location from 'expo-location';
 import { MapPin, Trash2, UtensilsCrossed, LocateFixed, LocateOff } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
@@ -138,6 +140,8 @@ type Toccato =
   | { tipo: 'ristorante'; ristorante: RistoranteSuMappa };
 
 export default function Mappa() {
+  // Il cancello: legge il DATABASE (coppia_ha_insieme, 0041), mai l'SDK.
+  const { insieme, loading: insiemeCaricamento } = useInsieme();
   const router = useRouter();
   const { coppiaId } = useCoppia();
 
@@ -533,6 +537,19 @@ export default function Mappa() {
     setDettagli(null);
     router.push({ pathname: '/evento/[id]', params: { id } });
   };
+
+  // 🔑 Il muro chiude la SCHERMATA, non i dati: i luoghi restano dove sono
+  // e tornano visibili appena c'e' «Insieme» (D-135, 0042).
+  if (!insiemeCaricamento && !insieme) {
+    return (
+      <View className="flex-1">
+        <Fondo />
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <Muro nota={t.abbonamento.muroMappa} />
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1">

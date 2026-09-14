@@ -40,7 +40,9 @@ import {
 } from '@/lib/cartelle';
 import { useTema } from '@/lib/tema';
 import { chiediConferma } from '@/lib/conferma';
+import { useRouter } from 'expo-router';
 import { t } from '@/lib/i18n';
+import { eRifiutoDelPiano } from '@/lib/acquisti';
 
 type Scatto = {
   id: string;
@@ -68,6 +70,7 @@ type Scatto = {
  *   un indirizzo pubblico da poter girare per sbaglio.
  */
 export default function Galleria() {
+  const router = useRouter();
   const { session } = useAuth();
   const { coppiaId, ricarica: ricaricaCoppia } = useCoppia();
   const { c } = useTema();
@@ -145,7 +148,12 @@ export default function Galleria() {
     }
     const r = await caricaFoto(esito.coppiaId, scelta.immagini, { cartellaId: dentro?.id ?? null });
     setAttesa(false);
-    if (r.errore) setErrore(r.errore);
+    if (r.errore) {
+      // ⚠️ Nel piano gratuito le foto sciolte non esistono: si aggiungono a un
+      // evento (0042). Il rifiuto porta al paywall, non a un riquadro rosso.
+      if (eRifiutoDelPiano(r.errore)) router.push('/paywall');
+      else setErrore(r.errore);
+    }
     await ricarica();
   }
 

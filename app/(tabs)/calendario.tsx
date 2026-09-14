@@ -74,6 +74,7 @@ import {
   type Vista,
 } from '@/lib/date';
 import { lingua, t } from '@/lib/i18n';
+import { eRifiutoDelPiano } from '@/lib/acquisti';
 
 const VISTE: Vista[] = ['giorni', 'mese', 'anno', 'diario'];
 
@@ -663,6 +664,12 @@ export default function Calendario() {
       setCaricamento(null);
       if (esito.errore) {
         setAttesa(false);
+        // 🔑 Il limite del piano non e' un guasto: e' un'offerta. Mostrare la
+        // frase del database in un riquadro d'errore la fa sembrare un bug.
+        if (eRifiutoDelPiano(esito.errore)) {
+          router.push('/paywall');
+          return;
+        }
         return setErroreForm(esito.errore);
       }
     }

@@ -38,6 +38,12 @@ async function utente(email) {
     throw new Error(
       `nessuna sessione per ${email}: "Confirm email" e' probabilmente ancora attivo nel dashboard`
     );
+  // 🔴 Dalla 0042 il piano gratuito impone «una foto per evento» e «una
+  // partita al giorno». Questo file misura le RLS, non il listino: si concede
+  // «Insieme» a ogni utente di prova, cosi' nessuna asserzione fallisce per un
+  // motivo che non e' il suo. Passa dal webhook vero, perche' nessun client
+  // puo' scrivere `abbonamento` (0041) — ed e' il punto di quella migrazione.
+  await concediInsieme(data.user?.id ?? data.session?.user?.id ?? '');
   return c;
 }
 
@@ -71,6 +77,47 @@ async function membriAttivi(client, cid) {
     .eq('coppia_id', cid)
     .is('uscito_il', null);
   return data?.length ?? 0;
+}
+
+/**
+ * **Concede «Insieme» a un utente, passando dal webhook vero.**
+ *
+ * 🔴 Serve da quando la `0042` impone il piano gratuito: una delle coppie di
+ * prova sbatte contro «una partita al giorno» e l'asserzione fallisce **per un
+ * motivo che non e' il suo** — questo file misura le RLS, non il listino.
+ *
+ * 🔑 Si passa dal webhook e non da una scrittura diretta perche' nessun client
+ * puo' scrivere `abbonamento` (0041), ed e' il punto di quella migrazione.
+ *
+ * ⚠️ Richiede `.env.segreto.local`, che e' gitignorato e vive solo sulla
+ * macchina che ha impostato il segreto. Dove manca, si dichiara e si va avanti:
+ * le asserzioni sulle partite falliranno con un messaggio che lo dice, invece
+ * di far credere a un guasto delle policy.
+ */
+async function concediInsieme(utenteId) {
+  let segreto;
+  try {
+    segreto = readFileSync(new URL('../.env.segreto.local', import.meta.url), 'utf8')
+      .split('=')[1]
+      .trim();
+  } catch {
+    return false;
+  }
+  const r = await fetch(`${URL_SB}/functions/v1/abbonamento-webhook`, {
+    method: 'POST',
+    headers: { authorization: segreto, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      event: {
+        type: 'INITIAL_PURCHASE',
+        id: `rls-${Date.now()}`,
+        app_user_id: utenteId,
+        event_timestamp_ms: Date.now(),
+        product_id: 'com.lifecouple.app.insieme.annuale',
+        expiration_at_ms: Date.now() + 3600_000,
+      },
+    }),
+  });
+  return r.ok;
 }
 
 let falliti = 0;
@@ -243,12 +290,25 @@ let luogoId;
     `vive: ${(vive ?? []).length}`
   );
 
+  // 🔴 Dalla 0042 il piano gratuito concede UNA partita al giorno per coppia.
+  // Questo file misura le RLS, non il listino: si concede «Insieme» a A1
+  // passando dal webhook vero, cosi' il limite non falsa le asserzioni.
   const { data: partita, error } = await a1
     .from('partita')
     .insert({ coppia_id: coppiaA, gioco: 'telepatia' })
     .select()
     .single();
-  esito('A1 crea una partita nella propria coppia', !error, error?.message);
+  esito(
+    'A1 crea una partita nella propria coppia',
+    !error,
+    error?.message
+      ? `${error.message} (se nomina il piano gratuito: manca .env.segreto.local)`
+      : ''
+  );
+  if (!partita) {
+    esito('...senza partita le asserzioni seguenti non misurano niente', false, 'interrotto');
+    process.exit(1);
+  }
 
   const { error: eSig } = await a1
     .from('invio_sigillato')
@@ -757,12 +817,25 @@ let luogoId;
   // 🔑 E' l'unica riga di questo blocco che protegge da una sanzione e non da un
   // ex: `inviti_a_tornare` e' marketing, e un default acceso sarebbe un consenso
   // presunto — che non e' un consenso (D-128).
-  await n1.from('preferenze_notifiche').delete().eq('utente_id', idN1); // riesecuzione pulita
-  const { error: ePref } = await n1.from('preferenze_notifiche').insert({ utente_id: idN1 });
-  const { data: prefN1 } = await n1
+  // 🔴 **La `delete` qui sopra non puliva niente, e taceva.** `preferenze_notifiche`
+  //    ha policy di select, insert e update e **nessuna di delete** — ed e'
+  //    corretto cosi': l'app fa upsert e non cancella mai i consensi. Ma una
+  //    delete negata dalla RLS non fallisce: tocca zero righe e torna senza
+  //    errore, quindi al SECONDO giro la insert sbatteva sulla chiave primaria
+  //    e l'asserzione falliva per un motivo che non era il suo.
+  //
+  // 🔑 Serve un utente **vergine**, perche' cio' che si misura e' il DEFAULT
+  //    della colonna: su una riga che esiste gia' non c'e' nessun default da
+  //    osservare. Un utente nuovo per giro e' l'unico modo che il client ha.
+  const vergine = await utente(`rls-pref-${Date.now()}@example.com`);
+  const idVergine = (await vergine.auth.getUser()).data.user?.id ?? '';
+  const { error: ePref } = await vergine
+    .from('preferenze_notifiche')
+    .insert({ utente_id: idVergine });
+  const { data: prefN1 } = await vergine
     .from('preferenze_notifiche')
     .select('luogo_del_partner, ricordi, inviti_a_tornare')
-    .eq('utente_id', idN1)
+    .eq('utente_id', idVergine)
     .maybeSingle();
   esito('0038: la riga dei consensi si crea', !ePref, ePref?.message);
   esito(

@@ -1,6 +1,8 @@
 import * as React from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { eRifiutoDelPiano } from '@/lib/acquisti';
 import { useAuth } from '@/lib/auth';
 import { segnalaMomento } from '@/lib/valutazione';
 import type { CodiceGioco, ModoGioco } from '@/lib/giochi';
@@ -155,6 +157,7 @@ async function daRimpiazzare(viva: Partita, modo: ModoGioco, io: string | null):
 }
 
 export function usePartita(gioco: CodiceGioco) {
+  const router = useRouter();
   const { session } = useAuth();
   const io = session?.user.id ?? null;
 
@@ -265,6 +268,18 @@ export function usePartita(gioco: CodiceGioco) {
         .single();
 
       if (creata.error) {
+        // 🔴 **Prima di tutto: era il limite del piano?** (0042, D-135)
+        //
+        // ⚠️ Senza questo controllo il rifiuto finirebbe nel ramo sotto, che
+        // cerca «la partita dell'altro telefono», non la troverebbe, e
+        // stamperebbe la frase del database come errore tecnico. Chi ha finito
+        // la partita gratuita del giorno leggerebbe un messaggio che sembra un
+        // guasto invece di un'offerta.
+        if (eRifiutoDelPiano(creata.error.message)) {
+          setCaricando(false);
+          router.push('/paywall');
+          return;
+        }
         // Ha vinto l'altro telefono: la sua partita c'è già.
         const seconda = await supabase
           .from('partita')
@@ -280,7 +295,7 @@ export function usePartita(gioco: CodiceGioco) {
       }
       setCaricando(false);
     },
-    [gioco, rileggi, io]
+    [gioco, rileggi, io, router]
   );
 
   /**
@@ -475,7 +490,11 @@ export function usePartita(gioco: CodiceGioco) {
         p_round: roundId,
         p_esito: esito,
         p_punti: punti,
-        p_chiave: chiave ?? null,
+        // ⚠️ Si omette invece di passare `null`: `p_chiave` ha `default null`
+        // nella 0020, quindi i due sono equivalenti — ma la firma generata la
+        // dichiara opzionale, non nullabile. Compilava solo perche' i tipi
+        // erano scritti a mano e dicevano una cosa diversa dallo schema vero.
+        p_chiave: chiave,
       });
       if (error) return setErrore(error.message);
       if (data) setPartita(data as Partita);
