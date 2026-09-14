@@ -177,6 +177,25 @@ Capitato il 2026-09-14 (3) sulla prima development build. 🔑 **La cosa da sape
 
 ⚠️ **Una divergenza trovata di passaggio, da decidere**: i due abbonamenti stanno su **livelli diversi** (mensile = 1, annuale = 2), mentre §1 di questo documento prescrive **lo stesso livello per entrambi** — danno le stesse funzioni e cambiano solo la cadenza. Livelli diversi cambiano il comportamento di upgrade e downgrade.
 
+#### Cosa è stato configurato il 2026-09-14 (3), e con quali testi
+
+Fatto dall'agente nel pannello, letto e confermato a schermo:
+
+| Dove | Cosa |
+|---|---|
+| Gruppo `Insieme` | localizzazioni **Italiano** e **Inglese (Stati Uniti)**, nome visualizzato `Insieme`, nome dell'app `LifeCouple` |
+| `Insieme mensile` | 🇮🇹 *Insieme mensile* — «Mappa, liste, Philippe, foto e giochi.» · 🇬🇧 *Insieme Monthly* — «Map, lists, Philippe, photos and games.» |
+| `Insieme annuale` | 🇮🇹 *Insieme annuale* — stessa descrizione · 🇬🇧 *Insieme Yearly* — stessa descrizione |
+| Disponibilità | **175 paesi** su entrambi (era **0**) |
+
+🔑 **Perché tutti i paesi e non la sola Italia**: il revisore di Apple lavora da uno storefront che non è il nostro, e un prodotto non disponibile lì non lo vedrebbe. *Si restringe quando si vuole, in un minuto.*
+
+⚠️ **Sull'annuale ci sono DUE disponibilità, e ne è stata configurata una sola**: il *pagamento anticipato di 1 anno*, che è **D-134**. La seconda — *fatturazione mensile con impegno di 12 mesi* — è deliberatamente lasciata vuota: è un'altra offerta commerciale, non decisa.
+
+⚠️ **I testi delle descrizioni sono vincolati a D-135 e non sono pubblicità**: dicono *mappa, liste, Philippe, foto e giochi* perché sono esattamente le cose che il piano a pagamento concede. 🔑 *Non dicono «foto senza limiti»*, che sarebbe falso: il tetto di 1 GB (D-22) vale per tutti — è lo stesso motivo per cui tre voci erano state scartate dal paywall.
+
+🔴 **E cosa NON è bastato**: dopo tutto questo lo stato resta **«In preparazione per l'invio»**. Ciò che manca è lo **screenshot in *Informazioni per la verifica***, l'unico campo obbligatorio ancora vuoto — e non è una cosa che un agente possa produrre: è un'immagine dell'app che mostra la schermata d'acquisto. ⚠️ *Se dopo averlo caricato lo stato non passa a «Pronto per l'invio», resta il banner di Apple: il primo gruppo di abbonamenti va inviato insieme a una versione dell'app.*
+
 ### L'ordine in cui guardare, se ricapita
 
 L'ordine dal più probabile — è la checklist ufficiale di RevenueCat ristretta al nostro caso:
