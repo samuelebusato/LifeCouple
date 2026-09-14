@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.lifecouple.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.lifecouple.app",
@@ -90,6 +93,12 @@
         "projectId": "322f00d8-59ff-4ae6-9572-255e22124291"
       }
     },
-    "owner": "samududjhdnss-team"
+    "owner": "samududjhdnss-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/322f00d8-59ff-4ae6-9572-255e22124291"
+    }
   }
 }
