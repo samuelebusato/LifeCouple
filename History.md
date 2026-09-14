@@ -4347,6 +4347,18 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 ## 5. Rischi accettati esplicitamente
 
+### 🔴 La In-App Purchase Key esposta in chat non viene revocata (2026-09-14)
+
+**La decisione è dell'utente**, presa dopo che il rischio era stato posto per iscritto tre volte nella stessa giornata — l'ultima in cima a un elenco di priorità, con la nota *«è l'unica voce che peggiora col tempo»*. Va qui perché una scelta del genere, riletta fra sei mesi, deve risultare **valutata e presa**, non dimenticata.
+
+**Il fatto**: durante la sessione del 2026-09-14 la chiave `SubscriptionKey_T3HLB536G3` — una **In-App Purchase Key** di App Store Connect — è transitata in chat. Non è stata revocata.
+
+**Il rischio, in chiaro**: quella chiave firma richieste verso StoreKit per conto del titolare. Chi la possiede può interrogare e manipolare lo stato degli abbonamenti dal lato Apple. ⚠️ *Non tocca il database*: il diritto a «Insieme» lo scrive **solo** `abbonamento-webhook` con la `service_role` (`0041`), quindi la chiave **non concede «Insieme» a nessuno** — ed è la ragione per cui il danno è limitato invece che totale.
+
+**Cosa lo contiene, e cosa no.** ✅ Il perimetro è la sola superficie StoreKit, e il cancello del prodotto sta altrove. ✅ La chiave è **sostituibile in qualsiasi momento** senza toccare il codice: si revoca, se ne genera una nuova e si carica su RevenueCat. ❌ Niente la limita nel frattempo: non ha scadenza e non è vincolata a un indirizzo.
+
+**Come si chiude**: i quattro passi sono scritti e costano cinque minuti — App Store Connect → *Users and Access → Integrations*, revoca, nuova chiave, caricamento su RevenueCat. 🔑 *Il costo di chiuderlo non cambia col tempo; il rischio sì*, perché una chiave esposta resta esposta e non se ne accorge nessuno finché non serve. ⚠️ **Da riconsiderare prima della pubblicazione**, quando gli abbonamenti diventano veri e la superficie smette di essere teorica.
+
 ### 🔴 I documenti legali sono in inglese soltanto, su un prodotto venduto anche in Italia (2026-09-09)
 
 **La decisione è dell'utente** (**D-121**), presa **dopo** che il rischio è stato posto esplicitamente e riformulato una seconda volta per essere sicuri di aver capito. Va qui perché è esattamente il tipo di scelta che chi la rilegge fra sei mesi deve trovare **già valutata**, non da scoprire.
@@ -4440,7 +4452,7 @@ Il lato app era fatto (**D-128**), l'invio no. ✅ **Ora c'è anche quello** (**
 | **Applicare la `0039`** | ✅ applicata il 2026-09-14 — le quattro asserzioni che dicevano *«0039 non applicata»* ora passano |
 | **Pubblicare la funzione** | ✅ `ACTIVE`, version 2, `verify_jwt: true` |
 | **Impostare il segreto** | ✅ — ma la prima volta era una stringa pubblicata: vedi **B-65** |
-| 🔴 **Pianificare il cron** | manca — è l'unico gesto rimasto, e senza di esso niente parte da solo — [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md) §4 |
+| ✅ **Pianificare il cron** | ⟳ **fatto il 2026-09-14 (3), riferito dall'utente e non verificato dall'agente.** 🔑 *La prova che vale non è il pannello ma la coda che si svuota*: la funzione risponde `"ok": true`, e a coda vuota i campi `lette`/`scartate` **mancano** invece di valere zero |
 | 🔴 Capability **Push Notifications** sull'App ID + chiave **APNs** su EAS | manca, e aspetta l'account Apple Developer |
 
 ⚠️ **La frase del 2026-09-10 resta vera, e il motivo è cambiato di nuovo**: *una persona può accendere le notifiche e non riceverne nessuna* — non più perché il codice non c'è né perché non è acceso, ma perché **nessun orologio chiama la funzione**. Il trigger accoda subito; la coda aspetta.
@@ -4885,7 +4897,9 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 >
 > 🔑 **E da stasera esiste un posto solo dove guardare per sapere cosa fare**: [`docs/pubblicazione.md`](docs/pubblicazione.md) **§7-ter** — cinque corsie, ogni voce con **chi può farla**, e in fondo l'ordine dei prossimi giorni. *Le voci qui sotto sono le stesse, ma lì sono organizzate invece che elencate.*
 >
-> ⬜ **Resta invariato dalle note precedenti**: il **cron non è pianificato** (senza, niente parte da solo); la **chiave APNs** non è stata creata; **una chiave privata finita in chat va revocata** e sostituita su RevenueCat; le **pagine legali della landing** non sono caricate; telefono e indirizzo **DSA** vanno chiesti; il commento della funzione nel database dice ancora **«B-63»**; la lista **Film** aspetta TMDB.
+> ⟳ **Cosa è cambiato a fine giornata, per decisione dell'utente**: ✅ **il cron è stato pianificato** — riferito da lui, non verificato dall'agente, e la prova che vale è la coda che si svuota; 🔴 **la chiave esposta NON si revoca**, ed è ora un **rischio accettato per iscritto** (§5); ⏸️ **l'avvocato è rimandato** a un secondo momento.
+>
+> ⬜ **Resta invariato dalle note precedenti**: la **chiave APNs** non è stata creata; le **pagine legali della landing** non sono caricate; telefono e indirizzo **DSA** vanno ancora decisi; il commento della funzione nel database dice ancora **«B-63»**; la lista **Film** aspetta TMDB.
 
 > **Nota del 2026-09-14 (2) — le notifiche arrivano su un telefono vero, manca solo l'orologio. E la mascotte ha smesso di perdere punti.**
 >

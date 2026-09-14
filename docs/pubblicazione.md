@@ -317,7 +317,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | **A3** | 🔴 **Indirizzo e telefono del professionista (DSA)** — nel brain non esistono da nessuna parte | **solo tu** | — |
 | **A4** | 🔴 **I termini d'uso entrano nell'app**: oggi il generatore si rifiuta di costruirli perché portano segnaposto, quindi **non sono resi a nessuno**. 🔑 *Senza, il paywall vende senza contratto* | io | **A3** |
 | **A5** | 🔴 **B-66 — le due frasi del recesso** prima del pulsante, più il link ai documenti legali *dentro* il paywall | tu (o l'avvocato) decidi il testo, io lo monto. ⚠️ *Il commento che dichiara l'obbligo già soddisfatto lo correggo subito: è una riga e non richiede nessuno* | **A6**, o una formula tua |
-| **A6** | 🔴 **Revisione di un avvocato** prima del lancio commerciale. ⚠️ *Può imporre una DPIA e cambiare la nomina del DPO* (`conformita.md` §9) | **solo tu**, e ha una coda: va avviata presto | — |
+| **A6** | ⏸️ **Rimandata a un secondo momento** — decisione dell'utente del 2026-09-14 (3). ⚠️ *Resta bloccante sulla pubblicazione e resta la coda più lunga*: può imporre una DPIA e cambiare la nomina del DPO (`conformita.md` §9), e due lavori la aspettano — la traduzione dei documenti (§5 di `History.md`) e le due frasi di **B-66** | **solo tu** | — |
 | **A7** | 🔴 **Accordi art. 28** da accettare e archiviare: Supabase, Expo, Apple, Google, RevenueCat | **solo tu** | — |
 
 ### Corsia B — L'acquisto vero: l'unico anello mai percorso
@@ -333,8 +333,8 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 
 | | Cosa | Chi |
 |---|---|---|
-| **C1** | 🔴 **Revocare la chiave privata finita in chat** e sostituirla su RevenueCat. ⚠️ *È l'unica voce dell'intero piano che peggiora col tempo* | **solo tu** |
-| **C2** | 🔴 **Pianificare il cron** — [`deploy-notifiche.md`](deploy-notifiche.md) §4. *Il trigger accoda in tempo reale; la coda resta ferma finché nessuno chiama la funzione* | tu |
+| **C1** | ⏸️ **Non si revoca** — decisione dell'utente del 2026-09-14 (3), registrata come **rischio accettato** in `History.md` §5 col suo perimetro: la chiave tocca la superficie StoreKit, non il diritto, che lo scrive solo il webhook. ⚠️ *Da riconsiderare prima della pubblicazione* | — |
+| **C2** | ✅ **FATTO il 2026-09-14 (3)** — riferito dall'utente, **non verificato dall'agente**. 🔑 *La prova che vale non è il pannello ma la coda che si svuota*: `"ok": true`, e a coda vuota i campi `lette`/`scartate` mancano invece di valere zero | ✅ tu |
 | **C3** | 🔴 **Chiave APNs** (l'unica operazione che la API key non copre): serve alla build firmata | tu |
 | **C4** | ⚠️ **Il `comment on function` che dice ancora «B-63»** nel database | io, una riga |
 
