@@ -120,7 +120,15 @@ I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno
 
 ## 6. I terzi — la parte più sottovalutata
 
-Ognuno riceve dati personali, va **nominato nell'informativa e nel registro**, e vuole un accordo di trattamento firmato.
+Ognuno riceve dati personali, va **nominato nell'informativa e nel registro**, e vuole un accordo di trattamento (art. 28).
+
+> ⟳ **Precisato il 2026-09-15, perché la formulazione precedente sbagliava bersaglio.** Dire *«nessun accordo art. 28 accettato»* era impreciso: per **Apple** l'accordo vive dentro l'*Apple Developer Program License Agreement* già firmato, e per **Google** dentro i *Data Processing Terms* delle API. Per **Supabase**, **Expo** e **RevenueCat** le condizioni sul trattamento fanno parte dei termini di servizio che si accettano usando il prodotto.
+
+> 🔑 **Quel che manca davvero non è l'accordo: è la COPIA ARCHIVIATA.** L'art. 5(2) chiede di poter *dimostrare* la conformità, e una clausola che vive dentro i termini di qualcun altro non si esibisce: serve un PDF in una cartella. ⚠️ *È una differenza che cambia il lavoro da fare* — non si tratta di negoziare cinque contratti, ma di scaricarne le copie.
+
+> **Da fare, uno per fornitore:** scaricare il DPA di **Supabase** dal pannello (sezione legale dell'organizzazione); conservare copia del **Developer Program License Agreement** di Apple; accettare e salvare i **Data Processing Terms** di Google per il progetto API; chiedere copia del DPA a **Expo** e a **RevenueCat**.
+
+> ⚠️ **E la conseguenza sull'informativa, corretta lo stesso giorno**: §4 diceva che i fornitori sono *«nominati»* responsabili — una parola che promette un atto formale nostro. Ora dice che ciascuno **agisce** come responsabile ed **è vincolato** dalle condizioni del proprio contratto, che è esattamente ciò che è vero oggi. 🔑 *L'archiviazione è un obbligo di accountability interno: non doveva stare in un documento rivolto agli utenti, e infatti non ci sta più.*
 
 | Terzo | Cosa riceve | Nota |
 |---|---|---|

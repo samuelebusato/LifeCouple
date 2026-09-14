@@ -177,7 +177,7 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **TMDB** | Ricerca di film | Solo il **testo digitato** nella ricerca | USA | 🔴 **[DA FARE]** — e serve licenza **commerciale**, vedi [`pubblicazione.md`](../pubblicazione.md) §1.2 |
 | **Apple** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
 | **Google Play** | Distribuzione e pagamenti | Dati dell'acquisto | — | Accordi di programma |
-| **RevenueCat** | Normalizzazione ricevute, webhook | Identificativo utente, stato abbonamento | USA | ⚠️ **[SE ADOTTATO]** |
+| **RevenueCat** | Normalizzazione ricevute, webhook | Identificativo utente, stato abbonamento | USA | ⚠️ **copia da chiedere e archiviare** — adottato il 2026-09-14 (D-133), non più «se adottato» |
 | **Expo** | Servizio push: instrada le notifiche verso Apple e Google | Token del dispositivo, lingua del telefono, testo della notifica | USA | ⚠️ **[DA FARE]** — SCC / DPF |
 | **Apple (APNs) / Google (FCM)** | Consegna della notifica al telefono | Token del dispositivo, testo della notifica | Vedi §5 | Accordi di programma |
 
@@ -219,7 +219,7 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **[DA DECIDERE] Conservazione a termine** | Non esiste. Lo scioglimento revoca ma non cancella: i dati restano finché l'account esiste. È una **decisione di prodotto**, e va presa **prima** di scrivere un termine nell'informativa — dichiararlo senza applicarlo sarebbe falso |
 | **[DA VERIFICARE] Retention dei backup** | Va letta nel pannello Supabase; il numero finisce nell'informativa §7 |
 | ✅ **Email per l'esercizio dei diritti** | **Chiusa il 2026-09-10**: `info@heleox.it` |
-| **[DA FARE] Accordi art. 28** | Supabase, Google, TMDB — da accettare e archiviare |
+| ⟳ **[DA FARE] Accordi art. 28 — precisato il 2026-09-15** | 🔑 *Non mancano gli accordi: manca la **copia archiviata***. Per **Apple** e **Google** le clausole vivono dentro contratti già firmati (Developer Program License Agreement, Data Processing Terms delle API); per **Supabase**, **Expo** e **RevenueCat** dentro i termini di servizio accettati usando il prodotto. ⚠️ L'art. 5(2) chiede di poter **dimostrare**, e una clausola dentro i termini di qualcun altro non si esibisce: serve un PDF in cartella. Da prendere: DPA Supabase dal pannello · copia del DPLA Apple · Data Processing Terms Google · copia a richiesta da Expo e RevenueCat |
 | 🔴 **[DA VALUTARE con un professionista]** | Un'app che registra l'esistenza di una relazione fra due persone può, per certi utenti, rivelare l'**orientamento sessuale** — categoria art. 9 **dedotta dalla struttura del prodotto**, non richiesta all'utente. Non si risolve togliendo una funzione. Se la valutazione conferma il rischio, cambiano: la nomina del DPO, l'eventuale necessità di una **DPIA** (art. 35), e il testo dell'informativa. Vedi [`conformita.md`](../conformita.md) §9 |
 
 **Revisione**: a ogni modifica sostanziale del prodotto, e comunque prima della pubblicazione sugli store.

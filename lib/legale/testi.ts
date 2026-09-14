@@ -80,7 +80,7 @@ Some features let you write free text (reviews, notes, and — when the feature 
 
 ## 4. Who we share data with
 
-Data is **never sold or traded**. It is processed by suppliers appointed as processors under Article 28 GDPR:
+Data is **never sold or traded**. It is processed on our behalf by the suppliers listed below. Each of them acts as a **processor under Article 28 GDPR** and is bound by the data processing terms of its own contract with us:
 
 | Supplier | What it receives | Location |
 |---|---|---|

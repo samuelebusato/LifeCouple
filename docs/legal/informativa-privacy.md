@@ -79,7 +79,7 @@ Alcune funzioni permettono di scrivere testo libero (recensioni, note, e — qua
 
 ## 4. A chi comunichiamo i dati
 
-I dati **non sono venduti né ceduti**. Sono trattati da fornitori nominati **responsabili del trattamento ex art. 28 GDPR**:
+I dati **non sono venduti né ceduti**. Sono trattati per nostro conto dai fornitori elencati qui sotto. Ciascuno agisce come **responsabile del trattamento ai sensi dell'art. 28 GDPR** ed è vincolato dalle condizioni sul trattamento dei dati del proprio contratto con noi:
 
 | Fornitore | Cosa riceve | Collocazione |
 |---|---|---|
