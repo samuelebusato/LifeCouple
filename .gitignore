@@ -88,3 +88,6 @@ infra/.terraform/
 # ✅ infra/.terraform.lock.hcl INVECE va committato -- e' il file che fissa
 # le versioni dei provider, e serve proprio perche' un altro dispositivo
 # faccia `init` con le stesse identiche versioni.
+
+# artefatti di Python (tools/)
+__pycache__/
