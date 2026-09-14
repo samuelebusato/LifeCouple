@@ -194,7 +194,15 @@ Fatto dall'agente nel pannello, letto e confermato a schermo:
 
 ⚠️ **I testi delle descrizioni sono vincolati a D-135 e non sono pubblicità**: dicono *mappa, liste, Philippe, foto e giochi* perché sono esattamente le cose che il piano a pagamento concede. 🔑 *Non dicono «foto senza limiti»*, che sarebbe falso: il tetto di 1 GB (D-22) vale per tutti — è lo stesso motivo per cui tre voci erano state scartate dal paywall.
 
-🔴 **E cosa NON è bastato**: dopo tutto questo lo stato resta **«In preparazione per l'invio»**. Ciò che manca è lo **screenshot in *Informazioni per la verifica***, l'unico campo obbligatorio ancora vuoto — e non è una cosa che un agente possa produrre: è un'immagine dell'app che mostra la schermata d'acquisto. ⚠️ *Se dopo averlo caricato lo stato non passa a «Pronto per l'invio», resta il banner di Apple: il primo gruppo di abbonamenti va inviato insieme a una versione dell'app.*
+✅ **E lo screenshot di verifica è stato caricato su entrambi i piani** (stessa sera). ⚠️ **Due cose imparate caricandolo, che valgono per la prossima volta:**
+- 🔴 **Apple rifiuta le misure sbagliate**, con il messaggio *«le dimensioni di uno o più screenshot non sono corrette»*. L'immagine passata da **WhatsApp era 736×1600** — ricompressa e ridimensionata — e viene respinta. *Serve lo screenshot originale del telefono, o un ridimensionamento a una misura valida*: qui è stato portato a **1290×2796** (iPhone 15 Pro Max) e accettato.
+- 🔑 **Il campo si salva da sé**: dopo l'upload non serve premere «Salva», e il file sopravvive al ricaricamento della pagina.
+
+⬜ *Quello caricato è un segnaposto*: mostra il paywall col messaggio «non riusciamo a caricare i prezzi» e la barra di debug. **Va sostituito con uno pulito prima della revisione** — il campo resta modificabile fino alla submission.
+
+🔴 **E nemmeno questo è bastato.** Con localizzazioni, disponibilità, prezzo e screenshot a posto, entrambi i piani restano **«In preparazione per l'invio»**, e l'unico comando rimasto è **«Aggiungi alla verifica»**. Il banner di Apple dice il perché: *«il tuo primo gruppo di abbonamenti dev'essere inviato con una nuova versione dell'app»*.
+
+⚠️ **Quindi il primo abbonamento di un'app ha una dipendenza che nessuna checklist di configurazione nomina: la prima submission dell'app.** Se dopo «Aggiungi alla verifica» lo stato passa a «Pronto per l'invio», StoreKit dovrebbe servire i prodotti; se non passa, il recupero dei prezzi resta bloccato fino a che la versione 1.0 non viene inviata — *e allora l'ordine di tutto il piano di pubblicazione cambia, perché provare l'acquisto smette di essere un prerequisito della submission e ne diventa una conseguenza.*
 
 ### L'ordine in cui guardare, se ricapita
 
