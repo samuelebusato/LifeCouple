@@ -30,15 +30,23 @@ import { useAuth } from '@/lib/auth';
  *   Le linee guida Apple lo dicono esplicitamente, ed è anche il motivo per cui
  *   l'evento `accesso` da solo non basta mai: chi accede la prima volta non ha
  *   ancora visto niente da valutare.
- * - **Momenti buoni accumulati** — la domanda arriva dopo che è successo
- *   qualcosa di piacevole *più volte*, non alla prima partita.
- * - **Distanza fra un tentativo e l'altro** — sette giorni, che è anche la
- *   cadenza «una volta a settimana» richiesta: settimanale è il **massimo**,
- *   non un obbligo.
- * - **Tetto annuale a tre** — rispecchia la quota del sistema operativo. ⚠️ *Il
- *   nostro contatore conta i nostri tentativi, non i pop-up davvero mostrati:
- *   quelli non sono osservabili.* È un'approssimazione dichiarata, ed è la
- *   migliore possibile.
+ * - **Momenti piacevoli dall'ultima comparsa** — ⟳ **cambiato il 2026-09-14
+ *   su richiesta dell'utente.** Le **prime tre** comparse arrivano a *ogni*
+ *   momento piacevole; dopo di esse ne servono **tre** per ciascuna. Prima la
+ *   regola era «tre momenti e poi basta», con la pausa settimanale a fare da
+ *   freno vero.
+ * - ~~Distanza fra un tentativo e l'altro~~ — **rimossa** lo stesso giorno:
+ *   sette giorni contraddicevano «a ogni momento piacevole», perché due
+ *   partite finite nello stesso pomeriggio avrebbero dato un solo tentativo.
+ * - **Tetto annuale a dodici** — alzato da tre. ⚠️ *Il nostro contatore conta i
+ *   nostri tentativi, non i pop-up davvero mostrati: quelli non sono
+ *   osservabili.* È un'approssimazione dichiarata, ed è la migliore possibile.
+ *
+ * 🔴 **La conseguenza da conoscere, e che nessuna soglia può cambiare**: iOS ne
+ * concede comunque **tre l'anno** e ignora il resto in silenzio. Chiedere più
+ * spesso non produce più pop-up — sposta soltanto *su quali momenti* si
+ * spendono i tre che il sistema concede. Con la regola nuova quei tre cadranno
+ * quasi certamente sui primi tre momenti piacevoli dopo il terzo giorno.
  *
  * ## Due posti dove non si chiede mai
  *
@@ -56,14 +64,30 @@ import { useAuth } from '@/lib/auth';
 /** Gli eventi che possono aprire la domanda. Sono i cinque chiesti dall'utente. */
 export type Momento = 'partita' | 'evoluzione' | 'accesso' | 'luogo' | 'settimanale';
 
-/** Quanti momenti piacevoli servono prima del primo tentativo. */
-const SOGLIA_MOMENTI = 3;
+/**
+ * Le prime comparse arrivano a **ogni** momento piacevole; dopo di esse ne
+ * serve uno ogni `MOMENTI_FRA_COMPARSE` (decisione dell'utente, 2026-09-14).
+ *
+ * 🔑 **Si contano le comparse di sempre, non quelle dell'anno.** `tentativi`
+ * viene potato a 365 giorni perché il tetto annuale possa riaprirsi; questo
+ * contatore no. Altrimenti la fase generosa tornerebbe ogni anno, mentre
+ * «le prime tre» vuol dire le prime tre e basta.
+ */
+const COMPARSE_SUBITO = 3;
+/** Poi: un tentativo ogni tanti momenti piacevoli **dall'ultima comparsa**. */
+const MOMENTI_FRA_COMPARSE = 3;
 /** Da quanti giorni dev'essere in giro l'utente. */
 const GIORNI_ETA_MINIMA = 3;
-/** Distanza minima fra due tentativi: è anche la cadenza «settimanale». */
-const GIORNI_FRA_TENTATIVI = 7;
-/** Tetto annuale, allineato alla quota di iOS. */
-const TENTATIVI_PER_ANNO = 3;
+/**
+ * Tetto annuale **nostro**, alzato da 3 a 12 il 2026-09-14.
+ *
+ * ⚠️ Non è il limite vero: iOS ne concede **tre** e ignora in silenzio il
+ * resto. Serviva alzarlo perché a 3 le prime tre comparse esaurivano la quota
+ * e la regola «poi ogni tre momenti» **non sarebbe mai scattata** nel primo
+ * anno — codice morto travestito da politica. Resta come rete di sicurezza
+ * contro un difetto che facesse contare male i momenti, non come freno atteso.
+ */
+const TENTATIVI_PER_ANNO = 12;
 
 const GIORNO = 24 * 60 * 60 * 1000;
 
@@ -87,25 +111,66 @@ const CONTA_COME_MOMENTO: Record<Momento, boolean> = {
 type Stato = {
   /** Prima volta che questo dispositivo ha visto questo utente. */
   visto: string;
-  /** Quanti momenti piacevoli ha accumulato. */
+  /** Quanti momenti piacevoli ha accumulato **in tutto**. Non si azzera mai. */
   momenti: number;
-  /** Date ISO dei tentativi fatti, dal più vecchio. */
+  /** Date ISO dei tentativi fatti, dal più vecchio. Potate a 365 giorni. */
   tentativi: string[];
+  /**
+   * Quante volte si è chiesto, **da sempre**: decide se siamo ancora nella
+   * fase generosa. Volutamente non potato, a differenza di `tentativi`.
+   */
+  comparseTotali: number;
+  /**
+   * Quanto valeva `momenti` all'ultima comparsa.
+   *
+   * 🔑 **È il campo che fa funzionare la regola nuova.** Prima il confronto era
+   * `momenti >= soglia` su un contatore cumulativo: superata la soglia una
+   * volta, restava superata per sempre, e a trattenere il pop-up era solo la
+   * pausa di sette giorni. Tolta quella pausa, quel confronto avrebbe chiesto
+   * a **ogni** momento piacevole per sempre — anche nella fase in cui ne devono
+   * servire tre. I momenti si contano quindi **da qui in avanti**, non dall'inizio.
+   */
+  momentiAllUltimaComparsa: number;
 };
 
 const chiave = (utenteId: string) => `lifecouple.valutazione.${utenteId}`;
 
-const vuoto = (): Stato => ({ visto: new Date().toISOString(), momenti: 0, tentativi: [] });
+const vuoto = (): Stato => ({
+  visto: new Date().toISOString(),
+  momenti: 0,
+  tentativi: [],
+  comparseTotali: 0,
+  momentiAllUltimaComparsa: 0,
+});
 
 async function leggi(utenteId: string): Promise<Stato> {
   try {
     const grezzo = await AsyncStorage.getItem(chiave(utenteId));
     if (!grezzo) return vuoto();
     const v = JSON.parse(grezzo) as Partial<Stato>;
+    const tentativi = Array.isArray(v.tentativi)
+      ? v.tentativi.filter((t) => typeof t === 'string')
+      : [];
     return {
       visto: typeof v.visto === 'string' ? v.visto : new Date().toISOString(),
       momenti: typeof v.momenti === 'number' && v.momenti >= 0 ? v.momenti : 0,
-      tentativi: Array.isArray(v.tentativi) ? v.tentativi.filter((t) => typeof t === 'string') : [],
+      tentativi,
+      // ⚠️ **Chi ha già lo stato salvato non ha questi due campi**, e la scelta
+      // dei ripieghi non è neutra. `comparseTotali` si deduce dai tentativi
+      // ancora in memoria: è una sottostima se qualcuno ne aveva di più vecchi
+      // di un anno, e sbaglia quindi verso la fase generosa — che è il verso
+      // innocuo. `momentiAllUltimaComparsa` riparte da 0, quindi al primo
+      // momento piacevole chi aveva già accumulato riceve subito il pop-up.
+      // *Accettabile perché la politica nuova è comunque generosa, e perché
+      // l'alternativa — dedurlo — significherebbe inventare un numero.*
+      comparseTotali:
+        typeof v.comparseTotali === 'number' && v.comparseTotali >= 0
+          ? v.comparseTotali
+          : tentativi.length,
+      momentiAllUltimaComparsa:
+        typeof v.momentiAllUltimaComparsa === 'number' && v.momentiAllUltimaComparsa >= 0
+          ? v.momentiAllUltimaComparsa
+          : 0,
     };
   } catch {
     // Memoria locale che non risponde: si riparte da zero. Il valore prudente
@@ -157,8 +222,16 @@ export function vaChiesto(
   }
 
   const momenti = stato.momenti + (CONTA_COME_MOMENTO[momento] ? 1 : 0);
-  if (momenti < SOGLIA_MOMENTI) {
-    return { chiedere: false, perche: `${momenti} momenti buoni su ${SOGLIA_MOMENTI}` };
+
+  // Quanti momenti piacevoli sono passati **dall'ultima comparsa**, e quanti
+  // ne servono adesso: uno solo finché le comparse sono poche, poi tre.
+  const daUltima = momenti - stato.momentiAllUltimaComparsa;
+  const servono = stato.comparseTotali < COMPARSE_SUBITO ? 1 : MOMENTI_FRA_COMPARSE;
+  if (daUltima < servono) {
+    return {
+      chiedere: false,
+      perche: `${daUltima} momenti dall'ultima comparsa, ne servono ${servono}`,
+    };
   }
 
   const recenti = tentativiRecenti(stato.tentativi);
@@ -166,15 +239,10 @@ export function vaChiesto(
     return { chiedere: false, perche: `gia' ${recenti.length} tentativi in 365 giorni` };
   }
 
-  const ultimo = recenti[recenti.length - 1];
-  if (ultimo) {
-    const giorni = Math.floor((ora - Date.parse(ultimo)) / GIORNO);
-    if (!Number.isFinite(giorni) || giorni < GIORNI_FRA_TENTATIVI) {
-      return { chiedere: false, perche: `ultimo tentativo ${giorni} giorni fa` };
-    }
-  }
-
-  return { chiedere: true, perche: `${momenti} momenti, ${recenti.length} tentativi quest'anno` };
+  return {
+    chiedere: true,
+    perche: `${daUltima} momenti dall'ultima, ${stato.comparseTotali} comparse in tutto`,
+  };
 }
 
 /** Vero solo dove il pop-up riguarderebbe davvero questa app. */
@@ -236,6 +304,11 @@ export async function segnalaMomento(
     await scrivi(utenteId, {
       ...aggiornato,
       tentativi: [...aggiornato.tentativi, new Date().toISOString()],
+      // 🔑 Da qui riparte il conteggio dei momenti: `aggiornato.momenti`
+      // comprende già quello appena segnalato, quindi la prossima comparsa
+      // vorrà momenti **successivi** a questo e non lo riconterà.
+      comparseTotali: aggiornato.comparseTotali + 1,
+      momentiAllUltimaComparsa: aggiornato.momenti,
     });
     return { chiesto: true, perche: giudizio.perche };
   } catch {
@@ -287,9 +360,9 @@ export function useMomentiDiSessione(): void {
 
 /** Esposte per i test: le soglie non si ricopiano a mano da un'altra parte. */
 export const SOGLIE = {
-  SOGLIA_MOMENTI,
+  COMPARSE_SUBITO,
+  MOMENTI_FRA_COMPARSE,
   GIORNI_ETA_MINIMA,
-  GIORNI_FRA_TENTATIVI,
   TENTATIVI_PER_ANNO,
   CONTA_COME_MOMENTO,
 };

@@ -42,6 +42,8 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ⟳ **L'utente riferisce di aver percorso a mano i controlli sul telefono, con esito positivo.** Registrato come passata complessiva e non come spunta voce per voce — vedi il PUNTO DI RIPRESA.
 
+✅ **Due decisioni di prodotto chiuse a fine giornata**, entrambe dell'utente: il **testo delle notifiche** (il posto appena segnato non si nomina, il ricordo di anni fa sì — D-129) e la **cadenza del pop-up di valutazione** (**D-130**: subito e spesso all'inizio, poi a intervalli). La seconda ha richiesto di togliere la pausa settimanale e alzare il tetto annuale, perché altrimenti la sua seconda metà sarebbe stata codice morto.
+
 ⚠️ **Due guasti di ambiente, non di codice**: `node_modules` era indietro rispetto a `package.json` (tre pacchetti dichiarati e non installati) e `.expo/types/router.d.ts` era fermo al 7 settembre. Sistemati entrambi; ✅ `npx tsc --noEmit` esce **0**.
 
 ### 2026-09-10 (5) — Le notifiche push: metà costruita, e la metà che manca è dichiarata
@@ -600,6 +602,41 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-130 — La valutazione si chiede subito e spesso, poi a intervalli (2026-09-14)
+
+**Chiesto dall'utente**: il pop-up esce a **ogni** momento piacevole per le **prime tre** comparse, poi **ogni tre** momenti accumulati. Sostituisce la politica di D-122, che chiedeva dopo tre momenti e poi non più di una volta a settimana.
+
+#### Due cancelli si sono dovuti toccare, e non erano nella richiesta
+
+| Cancello | Prima | Ora | Perché |
+|---|---|---|---|
+| Distanza fra tentativi | 7 giorni | **rimossa** | contraddiceva «a ogni momento piacevole»: due partite finite nello stesso pomeriggio avrebbero dato un solo tentativo |
+| Tetto annuale nostro | 3 | **12** | a 3, le prime tre comparse esaurivano la quota e la regola «poi ogni tre momenti» **non sarebbe mai scattata** nel primo anno |
+
+🔑 **Il secondo è il più istruttivo**: la regola nuova sarebbe stata *scritta e inerte*. Non un difetto che si manifesta — codice morto travestito da politica, che si sarebbe scoperto solo chiedendosi mesi dopo perché il pop-up non tornava più. ⚠️ *Le due metà della richiesta erano incompatibili con una costante che nessuno aveva nominato.*
+
+#### 🔴 La cosa che nessuna soglia può cambiare
+
+**iOS concede tre pop-up l'anno e ignora in silenzio il resto.** Alzare il nostro tetto a 12 non produce 12 pop-up: sposta soltanto **su quali momenti** si spendono i tre che il sistema concede. Con questa politica cadranno quasi certamente sui primi tre momenti piacevoli dopo il terzo giorno.
+
+*Il tetto nostro resta come rete di sicurezza contro un difetto che facesse contare male i momenti, non come freno atteso* — e va detto, perché una costante che non frena più niente ma resta nel codice è il tipo di cosa che qualcuno un giorno legge come una promessa.
+
+#### La trappola che ha richiesto un campo nuovo
+
+`momenti` è un contatore **cumulativo che non si azzera mai**. La vecchia condizione era `momenti >= 3`: superata una volta, restava vera per sempre, e a trattenere il pop-up era in realtà **la pausa settimanale**.
+
+⚠️ **Togliendo la pausa, quella condizione avrebbe chiesto a ogni singolo momento piacevole per sempre** — anche nella fase in cui ne devono servire tre — bruciando il tetto annuale in pochi giorni. *La regola nuova sarebbe stata implementata al contrario di come suona, e i test vecchi sarebbero rimasti verdi* perché misuravano `momenti >= SOGLIA`.
+
+Da qui `momentiAllUltimaComparsa`: i momenti si contano **dall'ultima comparsa**, non dall'inizio. Con `comparseTotali` — volutamente **non** potato a 365 giorni, a differenza di `tentativi` — che decide se siamo ancora nella fase generosa. *«Le prime tre» vuol dire le prime tre e basta, non le prime tre di ogni anno.*
+
+✅ **Il test di regressione esiste ed è il cuore del blocco nuovo**: uno stato con `momenti: 999` appena dopo una comparsa **non** deve chiedere. Con il confronto vecchio passerebbe. 17/17 verdi.
+
+#### Cosa NON è cambiato
+
+Restano l'età minima di tre giorni — non si chiede a chi ha installato oggi, ed è linea guida Apple — e la regola per cui **aprire l'app non conta come momento piacevole**: senza, basterebbe riavviare tre volte per ottenere il pop-up al primo giorno utile.
+
+⬜ E resta la nota di D-122: in Expo Go non si chiede di proposito, quindi **niente di tutto questo è osservabile** finché non c'è una development build.
 
 ### D-129 — L'invio delle notifiche: una coda, non una chiamata (2026-09-14)
 
