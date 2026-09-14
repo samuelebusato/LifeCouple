@@ -27,6 +27,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
+import { lingua } from '@/lib/i18n';
 
 /** I tre tipi, con gli stessi nomi delle colonne di `preferenze_notifiche`. */
 export type TipoNotifica = 'luogo_del_partner' | 'ricordi' | 'inviti_a_tornare';
@@ -115,11 +116,19 @@ export async function registraDispositivo(): Promise<EsitoRegistrazione> {
   // unicità sta sul token (0038), quindi è quello il conflitto da risolvere —
   // e riassegnare `utente_id` è esattamente il comportamento giusto quando un
   // telefono passa di mano.
+  // 🔑 `lingua` viaggia insieme al token, e non è un dettaglio: il testo delle
+  // notifiche lo compone il **server**, perché quando arrivano l'app non è in
+  // esecuzione. Senza questa colonna scriverebbe in inglese a tutti, e la cosa
+  // si scoprirebbe solo ricevendo la prima notifica — cioè dopo la
+  // pubblicazione. Sta sul dispositivo perché il locale è del telefono: la
+  // stessa persona con due telefoni impostati diversamente riceve ciascuno
+  // nella sua lingua (0039).
   const { error } = await supabase.from('dispositivo').upsert(
     {
       utente_id: utente,
       token,
       piattaforma: Platform.OS === 'ios' ? 'ios' : 'android',
+      lingua,
       visto_il: new Date().toISOString(),
     },
     { onConflict: 'token' }

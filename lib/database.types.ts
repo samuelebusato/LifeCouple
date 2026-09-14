@@ -997,6 +997,10 @@ export type Database = {
           utente_id: string
           token: string
           piattaforma: string
+          // ⚠️ Aggiunta dalla 0039: la lingua in cui scrivere a QUESTO telefono.
+          // Il testo delle notifiche lo compone il server, che altrimenti non
+          // avrebbe modo di saperla.
+          lingua: string
           creato_il: string
           visto_il: string
         }
@@ -1005,6 +1009,7 @@ export type Database = {
           utente_id: string
           token: string
           piattaforma: string
+          lingua?: string
           creato_il?: string
           visto_il?: string
         }
@@ -1013,8 +1018,64 @@ export type Database = {
           utente_id?: string
           token?: string
           piattaforma?: string
+          lingua?: string
           creato_il?: string
           visto_il?: string
+        }
+        Relationships: []
+      }
+      // ⚠️ SCRITTA A MANO — migrazione 0039 (la coda di invio).
+      //
+      // 🔴 **Nessun client la legge, mai**: ha la RLS attiva e zero policy, e da
+      // qui una select tornerebbe sempre `[]` — non un errore. Il tipo esiste
+      // perché la tabella esiste, non perché l'app debba usarla: se ti trovi a
+      // scrivere una query su questa tabella dall'app, la risposta è che va
+      // fatta nella Edge Function `invia-notifiche`.
+      notifica_in_coda: {
+        Row: {
+          id: string
+          destinatario_id: string
+          tipo: string
+          coppia_id: string | null
+          dati: Json
+          chiave_dedup: string
+          creata_il: string
+          da_inviare_il: string
+          inviata_il: string | null
+          scartata_il: string | null
+          motivo_scarto: string | null
+          tentativi: number
+          ultimo_errore: string | null
+        }
+        Insert: {
+          id?: string
+          destinatario_id: string
+          tipo: string
+          coppia_id?: string | null
+          dati?: Json
+          chiave_dedup: string
+          creata_il?: string
+          da_inviare_il?: string
+          inviata_il?: string | null
+          scartata_il?: string | null
+          motivo_scarto?: string | null
+          tentativi?: number
+          ultimo_errore?: string | null
+        }
+        Update: {
+          id?: string
+          destinatario_id?: string
+          tipo?: string
+          coppia_id?: string | null
+          dati?: Json
+          chiave_dedup?: string
+          creata_il?: string
+          da_inviare_il?: string
+          inviata_il?: string | null
+          scartata_il?: string | null
+          motivo_scarto?: string | null
+          tentativi?: number
+          ultimo_errore?: string | null
         }
         Relationships: []
       }

@@ -1,7 +1,12 @@
 -- =============================================================================
 -- LifeCouple — 0038: le notifiche push — dispositivi e consensi
 --
--- 🔴 NON ANCORA APPLICATA. Va letta prima di eseguirla.
+-- ✅ APPLICATA il 2026-09-10 dall'utente, e VERIFICATA il 2026-09-14: le quattro
+--    prove chieste in fondo a questo file sono in `tests/rls.avversariali.mjs`
+--    e passano. (L'intestazione ha detto «non ancora applicata» per quattro
+--    giorni dopo che lo era: ⚠️ *un file di migrazione non sa di essere stato
+--    eseguito, e nessuno script se ne accorge* — lo stato vero sta nel database
+--    e, di riflesso, nel PUNTO DI RIPRESA di `History.md`.)
 --
 -- ## Cosa introduce, e cosa NON introduce
 --
