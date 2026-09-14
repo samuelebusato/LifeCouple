@@ -313,7 +313,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | | Cosa | Chi | Dipende da |
 |---|---|---|---|
 | **A1** | ✅ **FATTA il 2026-09-14 (3)**, e non era una formalità: la cancellazione **non funzionava** — due difetti sovrapposti (**B-68**), corretti dalle migrazioni `0044` e `0045`, applicate. Ora la catena regge su tutti e cinque i controlli, **bucket compreso** | ✅ io | — |
-| **A2** | 🔴 **Account demo già appaiato per il revisore**, con dentro contenuti veri: eventi, foto, luoghi, una partita conclusa. ⟳ **Ridimensionata il 2026-09-14 (3)**: non serve nessuna porta dedicata — si entra con email e password (**D-74**), e questa riga diceva il contrario per errore mio, ereditato da §5 (**B-67**). ⚠️ **Ma c'è una conseguenza nuova da decidere**: coi muri della `0042` un revisore senza «Insieme» trova mappa, liste e creatura **chiuse**, e il diritto lo scrive **solo il webhook** | io costruisco, **tu decidi contenuti e diritto** | le foto da usare |
+| **A2** | ✅ **FATTO il 2026-09-15**: `tools/semina-demo.mjs` crea la coppia appaiata e la riempie — 4 eventi, 4 luoghi, 2 voci, 4 foto, 1 partita conclusa. Credenziali in `.env.demo.local`, note per Apple stampate dallo script. ⬜ *Le foto sono segnaposto di 1 px*: per una demo migliore caricane di vere dall'app | ✅ io | — |
 | **A3** | 🔴 **Indirizzo e telefono del professionista (DSA)** — nel brain non esistono da nessuna parte | **solo tu** | — |
 | **A4** | 🔴 **I termini d'uso entrano nell'app**: oggi il generatore si rifiuta di costruirli perché portano segnaposto, quindi **non sono resi a nessuno**. 🔑 *Senza, il paywall vende senza contratto* | io | **A3** |
 | **A5** | 🔴 **B-66 — le due frasi del recesso** prima del pulsante, più il link ai documenti legali *dentro* il paywall | tu (o l'avvocato) decidi il testo, io lo monto. ⚠️ *Il commento che dichiara l'obbligo già soddisfatto lo correggo subito: è una riga e non richiede nessuno* | **A6**, o una formula tua |
@@ -346,14 +346,14 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | **D2** | ⚠️ **Registrare l'esito** di `test:abbonamento`, `test:webhook`, `test:confine`. 🔑 *Un test il cui esito non è scritto da nessuna parte è un ricordo, non una prova* | io |
 | **D3** | ⚠️ **I punti di partite ed elementi di lista**, che hanno la stessa forma di B-64 e nessuna misura | io |
 | **D4** | 🔴 **La lista dei controlli sul telefono, voce per voce.** *Il 2026-09-14 è stata percorsa una volta con esito positivo: è una passata complessiva, non una spunta* | tu col telefono, io la preparo |
-| **D5** | 🔴 **I tre testi dei permessi** (B-20), mai visti da nessuno e **solo in italiano** su un'app bilingue. *La development build è la prima occasione* | io, appena la build è sul telefono |
+| **D5** | ✅ **FATTO il 2026-09-15**: `locales/it.json` e `locales/en.json`, agganciati da `app.json`. ⬜ *Vederli richiede una build nuova* — la parte scrivibile di B-20 è chiusa | ✅ io |
 
 ### Corsia E — La confezione: ultima, e dipende dalle altre
 
 | | Cosa | Chi | Dipende da |
 |---|---|---|---|
 | **E1** | **Controlli sul nome** — EUIPO classi 9 e 42, disponibilità, handle. ⚠️ *Prima degli screenshot, o si rifanno* | tu | — |
-| **E2** | 🔴 **Pagine legali della landing online**: sono cambiate due volte il 2026-09-14 e non sono state caricate. *L'URL pubblico è obbligatorio* | io preparo, tu confermi il deploy | A4 |
+| **E2** | ✅ **FATTO il 2026-09-15**: `privacy-policy.html` e `cookie-policy.html` sono online su CloudFront, HTTP 200 verificato, e la versione pubblicata nomina RevenueCat | ✅ io | — |
 | **E3** | **Screenshot** | io + tu | E1, D5 |
 | **E4** | **App Privacy** compilata da `threat-model.md` §1. ⚠️ *Da rifare dopo i due sottosistemi del 2026-09-14*: notifiche e RevenueCat hanno cambiato l'elenco dei destinatari | io | — |
 | **E5** | **TestFlight**, poi invio | tu | tutto |
