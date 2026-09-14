@@ -14,7 +14,8 @@
     "test:creatura": "node tests/creatura.mjs",
     "test:legale": "node tools/genera-legale.mjs --check",
     "genera:legale": "node tools/genera-legale.mjs",
-    "test:valutazione": "node tests/valutazione.mjs"
+    "test:valutazione": "node tests/valutazione.mjs",
+    "test:punti": "node tests/punti.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
