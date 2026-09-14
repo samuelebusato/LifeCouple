@@ -366,15 +366,30 @@ const it = {
     // cioè dichiarava soddisfatto un obbligo diverso da quello che assolve. La
     // decadenza del diritto di recesso (art. 59.1.o Codice del Consumo) chiede
     // altre due cose: il **consenso espresso** all'esecuzione immediata e la
-    // **presa d'atto** di perderlo. Non ci sono — né qui né nel paywall, che
-    // per giunta non linka nessun documento legale. Finché è così restano
-    // quattordici giorni esercitabili su ogni acquisto.
+    // **presa d'atto** di perderlo. ⟳ **Dal 2026-09-15 ci sono**, ed è la chiave
+    // `recesso` qui sotto; e il paywall linka anche i documenti legali. ⚠️ *Il
+    // testo aspetta la revisione dell'avvocato*: finché non arriva, la decadenza
+    // è scritta ma non validata da chi risponde professionalmente.
     //
-    // ⚠️ Sono testo legale vincolante su una schermata che incassa: le scrive
-    // l'avvocato, non questo file. Ciò che si può fare qui è non darle per
-    // fatte — *una lacuna nota si chiude, una dichiarata chiusa no.*
+    // ⚠️ Restano testo legale vincolante su una schermata che incassa: sono
+    // state scritte il 2026-09-15 **su richiesta esplicita dell'utente**, dopo
+    // che il rischio era stato posto due volte. 🔑 *Scritte non è validate*:
+    // vanno in cima alle cose da far leggere all'avvocato.
     condizioni:
       'Rinnovo automatico. Disdici quando vuoi dalle impostazioni del telefono, almeno 24 ore prima. Durante la prova non paghi nulla.',
+    // 🔴 **Le due frasi che fanno decadere il recesso** (B-66, art. 59.1.o
+    // Codice del Consumo). Sono DUE cose distinte e servono entrambe: la
+    // **richiesta espressa** che l'esecuzione cominci subito, e la **presa
+    // d'atto** di perdere il recesso quando comincia.
+    //
+    // ⚠️ **In attesa della revisione dell'avvocato.** Scritte il 2026-09-15 su
+    // richiesta esplicita dell'utente, dopo che il rischio era stato posto due
+    // volte. 🔑 *L'atto espresso qui e' il tocco sul pulsante*, e il testo dice
+    // che cosa significa toccarlo: e' la forma piu' diffusa, ma una **casella da
+    // spuntare** e' la variante piu' prudente — e la scelta fra le due e' di chi
+    // risponde professionalmente, non di questo file.
+    recesso:
+      'Toccando il pulsante chiedi espressamente di far cominciare subito il tuo abbonamento. Prendi atto che, una volta cominciato, perdi il diritto di recesso.',
     avvisoCancellazione:
       'Cancellare l\u2019account non disdice l\u2019abbonamento: quello si gestisce dalle impostazioni del telefono, e va disdetto separatamente.',
   },
@@ -1300,6 +1315,11 @@ const en: Dizionario = {
     // è questa la stringa che le porta, e l'italiana è la traduzione di cortesia.
     condizioni:
       'Renews automatically. Cancel any time in your phone settings, at least 24 hours before. During the trial you pay nothing.',
+    // 🔴 **B-66 — e questa e' la versione che conta**: dal 2026-09-10 (D-123)
+    // l'inglese e' l'unico testo ufficiale, quindi e' questa la formula che
+    // l'avvocato deve leggere per prima. L'italiana e' la traduzione di cortesia.
+    recesso:
+      'By tapping the button you expressly request that your subscription starts immediately. You acknowledge that, once it has started, you lose your right of withdrawal.',
     avvisoCancellazione:
       'Deleting your account does not cancel your subscription: that is managed in your phone settings, and must be cancelled separately.',
   },

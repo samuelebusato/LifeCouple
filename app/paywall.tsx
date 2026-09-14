@@ -419,6 +419,18 @@ export default function Paywall() {
                 {t.abbonamento.condizioni}
               </Text>
 
+              {/* 🔴 **Le due frasi che fanno decadere il recesso** (B-66, art.
+                  59.1.o Codice del Consumo): la richiesta espressa che
+                  l'esecuzione cominci subito, e la presa d'atto di perderlo.
+                  ⚠️ *Stanno SOPRA il pulsante e non sotto, ed è la metà che si
+                  sbaglia*: una presa d'atto letta dopo aver pagato non è una
+                  presa d'atto. 🔑 L'atto espresso è il tocco sul pulsante, e
+                  questo testo dice cosa significa toccarlo. In attesa della
+                  revisione dell'avvocato. */}
+              <Text className="px-2 pt-1 text-center text-xs leading-relaxed text-muted-foreground">
+                {t.abbonamento.recesso}
+              </Text>
+
               {/* 🔴 **Il terzo aggancio ai documenti legali** (D-121, B-66).
                   Gli altri due sono la registrazione e le Impostazioni; questo
                   mancava, ed è quello che conta di più: è la schermata in cui
