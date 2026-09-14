@@ -287,6 +287,84 @@ const it = {
     cancellaNonRiuscita:
       'Non siamo riusciti a eliminare l’account, e non abbiamo cancellato niente a metà. Riprova fra poco.',
   },
+  abbonamento: {
+    sezione: 'Insieme',
+    nota: 'Un solo abbonamento, vale per tutti e due.',
+    attivo: 'Avete Insieme.',
+    nonAttivo: 'Non avete ancora Insieme.',
+    passa: 'Passa a Insieme',
+    gestisci: 'Gestisci l\u2019abbonamento',
+    ripristina: 'Ripristina acquisti',
+    ripristinato: 'Fatto. Se c\u2019era un acquisto da recuperare, ora \u00e8 tornato.',
+    nonDisponibile: 'Gli acquisti non sono disponibili qui.',
+    arrivoInCorso: 'Grazie. Stiamo registrando l\u2019acquisto: pu\u00f2 volerci qualche secondo.',
+    // \u26a0\ufe0f Obbligo, non cortesia: cancellare l'account NON disdice
+    // l'abbonamento, che vive sullo store. Senza questa riga una persona
+    // continuerebbe a pagare per un account che non esiste piu'.
+    // --- Il paywall -------------------------------------------------------
+    titolo: 'Vivete tutto,\nsenza limiti',
+    sottotitolo: 'Un abbonamento, per tutti e due.',
+    /**
+     * ⚠️ Frasi brevi di proposito: cinque righe che vanno a capo diventano
+     * dieci, e un paywall lungo si scorre invece di leggerlo. Stanno fra 28 e
+     * 31 caratteri, cosi' l'elenco scende con passo regolare.
+     *
+     * 🔑 **Dicono cosa si guadagna, non come si chiama la funzione.** «La
+     * vostra mappa» nominava la voce di menu; «Dove siete stati, su una mappa»
+     * dice cosa resta in mano.
+     *
+     * 🔴 **E tre promesse sono state scartate perche' FALSE**, non perche'
+     * brutte — chi paga le verifica in un tocco:
+     *   - «Philippe cresce, sera dopo sera» → nessun punto scatta col passare
+     *     del tempo: arrivano da luogo visitato (+20), voce spuntata (+10) e
+     *     partita conclusa (+5). Una coppia che apre l'app due sere senza fare
+     *     niente non vedrebbe muovere nulla.
+     *   - «Nessuna foto da lasciare fuori» → l'abbonamento toglie il limite
+     *     PER EVENTO, non il tetto di 1 GB, che la galleria dichiara per
+     *     iscritto («1 GB per voi due»).
+     *   - «Tutte le foto che avete fatto» → il passato promette uno sblocco
+     *     retroattivo che non avviene: gli eventi vecchi restano con la loro
+     *     unica foto.
+     *
+     * ⚠️ E non si nomina il cinema: la lista Film e' spenta (D-127, si aspetta
+     * TMDB). Promettere «film» oggi e' vendere una schermata che non si apre.
+     */
+    incluso: [
+      'Dove siete stati, su una mappa',
+      'I ristoranti e i viaggi da fare',
+      'Philippe, che cresce con voi',
+      'Tutte le foto di quella sera',
+      'Giocare finché ne avete voglia',
+    ],
+    // --- I muri sulle schermate -------------------------------------------
+    muroTitolo: 'Fa parte di Insieme',
+    muroMappa: 'La mappa dei posti dove siete stati vi aspetta qui.',
+    muroListe: 'Film, ristoranti, viaggi: le cose che volete fare, in un posto solo.',
+    muroCreatura: 'Philippe cresce con voi, quando avete Insieme.',
+    scopri: 'Scopri Insieme',
+    poi: 'poi {prezzo}',
+    piuScelto: 'Il piu scelto',
+    riprova: 'Riprova',
+    mensile: 'Ogni mese',
+    annuale: 'Ogni anno',
+    risparmio: 'Risparmi il {sconto}%',
+    alMese: '{prezzo} al mese',
+    provaGiorni: '{giorni} giorni gratis',
+    inizia: 'Comincia la settimana gratis',
+    acquista: 'Passa a Insieme',
+    continuaSenza: 'Continua senza, per ora',
+    caricamento: 'Un attimo\u2026',
+    nessunaOfferta:
+      'Non riusciamo a caricare i prezzi in questo momento. Riprova fra poco.',
+    annullato: 'Nessun problema. Trovi Insieme quando vuoi, nelle impostazioni.',
+    // \u26a0\ufe0f Obbligo, non stile: Apple e il Codice del Consumo pretendono
+    // che PRIMA del pulsante si legga durata, prezzo alla scadenza e come
+    // disdire. Senza queste frasi la decadenza del recesso non opera.
+    condizioni:
+      'Rinnovo automatico. Disdici quando vuoi dalle impostazioni del telefono, almeno 24 ore prima. Durante la prova non paghi nulla.',
+    avvisoCancellazione:
+      'Cancellare l\u2019account non disdice l\u2019abbonamento: quello si gestisce dalle impostazioni del telefono, e va disdetto separatamente.',
+  },
   notifiche: {
     sezione: 'Notifiche',
     nota: 'Scegli cosa vuoi che ti arrivi. Puoi cambiare idea quando vuoi.',
@@ -1162,6 +1240,52 @@ const en: Dizionario = {
     cancellaInCorso: 'Deleting…',
     cancellaNonRiuscita:
       'We could not delete the account, and we did not delete anything halfway. Please try again shortly.',
+  },
+  abbonamento: {
+    sezione: 'Insieme',
+    nota: 'One subscription, it works for both of you.',
+    attivo: 'You have Insieme.',
+    nonAttivo: 'You don\u2019t have Insieme yet.',
+    passa: 'Get Insieme',
+    gestisci: 'Manage subscription',
+    ripristina: 'Restore purchases',
+    ripristinato: 'Done. If there was a purchase to recover, it is back now.',
+    nonDisponibile: 'Purchases are not available here.',
+    arrivoInCorso: 'Thank you. We are recording the purchase: this can take a few seconds.',
+    // --- Paywall ----------------------------------------------------------
+    titolo: 'Live it all,\nwithout limits',
+    sottotitolo: 'One subscription, for both of you.',
+    incluso: [
+      'Where you have been, on a map',
+      'The restaurants and the trips',
+      'Philippe, who grows with you',
+      'Every photo from that evening',
+      'Play as long as you feel like',
+    ],
+    // --- The walls --------------------------------------------------------
+    muroTitolo: 'Part of Insieme',
+    muroMappa: 'The map of the places you have been is waiting here.',
+    muroListe: 'Films, restaurants, trips: what you want to do, in one place.',
+    muroCreatura: 'Philippe grows with you, when you have Insieme.',
+    scopri: 'Discover Insieme',
+    poi: 'then {prezzo}',
+    piuScelto: 'Most popular',
+    riprova: 'Try again',
+    mensile: 'Monthly',
+    annuale: 'Yearly',
+    risparmio: 'Save {sconto}%',
+    alMese: '{prezzo} per month',
+    provaGiorni: '{giorni} days free',
+    inizia: 'Start the free week',
+    acquista: 'Get Insieme',
+    continuaSenza: 'Continue without, for now',
+    caricamento: 'One moment\u2026',
+    nessunaOfferta: 'We cannot load the prices right now. Please try again shortly.',
+    annullato: 'No problem. You can find Insieme any time, in Settings.',
+    condizioni:
+      'Renews automatically. Cancel any time in your phone settings, at least 24 hours before. During the trial you pay nothing.',
+    avvisoCancellazione:
+      'Deleting your account does not cancel your subscription: that is managed in your phone settings, and must be cancelled separately.',
   },
   notifiche: {
     sezione: 'Notifications',

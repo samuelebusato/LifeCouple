@@ -24,6 +24,12 @@ import {
   type TipoNotifica,
 } from '@/lib/notifiche';
 import { t } from '@/lib/i18n';
+import {
+  useInsieme,
+  apriPaywall,
+  apriGestioneAbbonamento,
+  ripristinaAcquisti,
+} from '@/lib/acquisti';
 
 /**
  * **Impostazioni**: invito, scioglimento, cancellazione dell'account, uscita.
@@ -126,6 +132,41 @@ export default function Impostazioni() {
    * che esista qualcosa da notificare, è il modo più efficace di perdere la
    * possibilità di chiederlo quando serve. Qui la persona sta già leggendo
    * cosa riceverà. */
+  /* --- Insieme (l'abbonamento) ----------------------------------------
+   * 🔑 `useInsieme` legge il DATABASE, non l'SDK: e' il cancello vero
+   * (0041 + docs/threat-model.md §4-ter). Cio' che RevenueCat sa serve solo
+   * a decidere quale pulsante disegnare.
+   */
+  const { insieme, ricarica: ricaricaInsieme } = useInsieme();
+  const [esitoInsieme, setEsitoInsieme] = React.useState<string | null>(null);
+  const [inCorso, setInCorso] = React.useState(false);
+
+  async function passaAInsieme() {
+    setEsitoInsieme(null);
+    setInCorso(true);
+    const esito = await apriPaywall();
+    if (esito.stato === 'comprato' || esito.stato === 'ripristinato') {
+      // ⚠️ Il webhook e' asincrono: per qualche secondo l'SDK sa e il database
+      // no. Si insiste su di lui invece di fidarsi dell'SDK — una scorciatoia
+      // in un cancello di sicurezza e' permanente il giorno dopo.
+      setEsitoInsieme(t.abbonamento.arrivoInCorso);
+      const arrivato = await ricaricaInsieme({ insistendo: true });
+      if (arrivato) setEsitoInsieme(null);
+    } else if (esito.stato === 'non-disponibile') {
+      setEsitoInsieme(t.abbonamento.nonDisponibile);
+    }
+    setInCorso(false);
+  }
+
+  async function ripristina() {
+    setEsitoInsieme(null);
+    setInCorso(true);
+    const r = await ripristinaAcquisti();
+    setEsitoInsieme(r.ok ? t.abbonamento.ripristinato : t.abbonamento.nonDisponibile);
+    if (r.ok) await ricaricaInsieme({ insistendo: true });
+    setInCorso(false);
+  }
+
   const { preferenze, cambia } = usePreferenzeNotifiche();
   const [esitoNotifiche, setEsitoNotifiche] = React.useState<string | null>(null);
 
@@ -447,6 +488,45 @@ export default function Impostazioni() {
           {/* Il secondo dei due punti d'ingresso richiesti: la registrazione li
               mostra una volta sola, qui restano **permanenti**. È anche l'unico
               posto in cui li ritrova chi ha creato l'account mesi fa. */}
+          {/* --- Insieme --------------------------------------------------- */}
+          {/* ⚠️ Lo stato mostrato viene dal DATABASE. Se un domani qualcuno lo
+              sostituisse con `customerInfo.entitlements.active`, il prodotto
+              diventerebbe gratis per chiunque sappia ricompilare l'app — e
+              nessuna schermata cambierebbe aspetto. */}
+          <View className="gap-2">
+            <Sezione titolo={t.abbonamento.sezione} />
+            <Text className="text-sm text-muted-foreground">
+              {insieme ? t.abbonamento.attivo : t.abbonamento.nota}
+            </Text>
+
+            {!insieme && (
+              <Button variant="ghost" disabled={inCorso} onPress={passaAInsieme}>
+                <Text>{t.abbonamento.passa}</Text>
+              </Button>
+            )}
+
+            {/* Il Customer Center di RevenueCat: disdetta, cambio piano,
+                rimborso. ⚠️ Apple pretende che un'app con abbonamenti dica
+                come disdire — questo lo fa senza costruirlo noi. */}
+            {insieme && (
+              <Button
+                variant="ghost"
+                disabled={inCorso}
+                onPress={async () => setEsitoInsieme(await apriGestioneAbbonamento())}
+              >
+                <Text>{t.abbonamento.gestisci}</Text>
+              </Button>
+            )}
+
+            {/* 🔴 Obbligatorio per la revisione Apple: chi cambia telefono o
+                reinstalla deve poter riavere cio' che ha pagato. */}
+            <Button variant="ghost" disabled={inCorso} onPress={ripristina}>
+              <Text>{t.abbonamento.ripristina}</Text>
+            </Button>
+
+            {!!esitoInsieme && <Text className="text-sm text-foreground">{esitoInsieme}</Text>}
+          </View>
+
           <View className="gap-2">
             <Sezione titolo={t.legale.sezione} />
             <Button variant="ghost" onPress={() => router.push('/legale/privacy')}>
@@ -482,6 +562,15 @@ export default function Impostazioni() {
                 {t.impostazioni.cancellaTitolo}
               </Text>
               <Text className="text-sm text-muted-foreground">{t.impostazioni.cancellaNota}</Text>
+              {/* 🔴 Obbligo, non cortesia: cancellare l'account NON disdice
+                  l'abbonamento, che vive sullo store e che noi non possiamo
+                  annullare al posto suo. Senza questa riga una persona
+                  continuerebbe a pagare per un account che non esiste piu'. */}
+              {insieme && (
+                <Text className="text-sm text-muted-foreground">
+                  {t.abbonamento.avvisoCancellazione}
+                </Text>
+              )}
               <Button
                 variant="outline"
                 onPress={() => {

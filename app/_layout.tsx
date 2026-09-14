@@ -13,6 +13,7 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { useMomentiDiSessione } from '@/lib/valutazione';
+import { ProvederAcquisti } from '@/lib/acquisti';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -90,6 +91,10 @@ export default function RootLayout() {
       <AuthProvider>
         <GuardiaSessione />
         <MomentiDiValutazione />
+        {/* Tiene l'identita' di RevenueCat allineata a quella di Supabase.
+            Sta qui per la stessa ragione degli altri due: non disegna niente,
+            vive per un effetto, e deve montarsi una volta sola. */}
+        <ProvederAcquisti />
         <Stack
           screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}
         />

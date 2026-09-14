@@ -12,7 +12,11 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useCoppia } from '@/lib/coppia';
 import { useInvito } from '@/lib/invito';
-import { useIngressoRimandato } from '@/lib/preferenze';
+import {
+  useIngressoRimandato,
+  paywallIngressoGiaVisto,
+  segnaPaywallIngressoVisto,
+} from '@/lib/preferenze';
 import { t } from '@/lib/i18n';
 
 type Fase = 'scelta' | 'invita' | 'unisci' | 'attesa-conferma';
@@ -31,9 +35,56 @@ export default function Onboarding() {
   const [attesa, setAttesa] = React.useState(false);
   const [tokenIncollato, setTokenIncollato] = React.useState('');
 
+  /**
+   * **L'unica uscita dall'onboarding.**
+   *
+   * Prima le tre strade facevano `router.replace('/home')` ciascuna per conto
+   * suo. Ora passano di qui, perche' la regola sul paywall e' una sola e
+   * tenerla in tre punti significa che prima o poi due diranno cose diverse.
+   *
+   * 🔑 **Il paywall si mostra UNA volta per persona su questo telefono.**
+   * L'onboarding si puo' riattraversare — chi rimanda la scelta e poi riceve
+   * un invito ci ripassa — e vederlo due volte in dieci minuti e' il modo piu'
+   * rapido di farsi disinstallare.
+   *
+   * ⚠️ E non si mostra a chi ha gia' «Insieme»: capita a chi reinstalla, o al
+   * partner di chi ha pagato. Vendergli cio' che ha gia' e' il difetto
+   * peggiore di questa schermata, perche' fa dubitare dell'acquisto fatto.
+   *
+   * ⚠️ **`push` dopo `replace`, e con un tick di distanza**: il paywall e' una
+   * schermata che si CHIUDE, quindi deve stare *sopra* la casa e non al suo
+   * posto — altrimenti chiuderlo non avrebbe dove tornare. Il tick lascia
+   * finire il `replace` prima di impilarci sopra.
+   */
+  const vaiAllApp = React.useCallback(async () => {
+    const utenteId = session?.user?.id;
+    const daMostrare = !(await paywallIngressoGiaVisto(utenteId));
+
+    router.replace('/home');
+    if (!daMostrare) return;
+    await segnaPaywallIngressoVisto(utenteId);
+
+    // Chi ha gia' il diritto non vede niente. Se la domanda fallisce si tace:
+    // un paywall in meno non fa danno, uno di troppo a un abbonato si'.
+    const { data: riga } = await supabase
+      .from('membro_coppia')
+      .select('coppia_id')
+      .is('uscito_il', null)
+      .limit(1)
+      .maybeSingle();
+    if (riga?.coppia_id) {
+      const { data: haInsieme, error } = await supabase.rpc('coppia_ha_insieme', {
+        cid: riga.coppia_id,
+      });
+      if (error || haInsieme === true) return;
+    }
+
+    setTimeout(() => router.push('/paywall'), 0);
+  }, [router, session?.user?.id]);
+
   const invito = useInvito(fase === 'invita', async () => {
     await ricarica();
-    router.replace('/home');
+    await vaiAllApp();
   });
 
   function estraiToken(s: string) {
@@ -58,7 +109,7 @@ export default function Onboarding() {
   /** Entra da solo: lo spazio esiste gia', il partner si invita quando si vuole (D-25). */
   async function entraComunque() {
     await ricarica();
-    router.replace('/home');
+    await vaiAllApp();
   }
 
   /**
@@ -69,7 +120,7 @@ export default function Onboarding() {
    */
   async function rimandaLaScelta() {
     await rimanda();
-    router.replace('/home');
+    await vaiAllApp();
   }
 
   async function apriInvito() {

@@ -1,0 +1,308 @@
+// =============================================================================
+// acquisti — «Insieme»: il paywall, il Customer Center, e il diritto
+//
+// 🔑 **La riga che regge tutto il file, e va letta prima del codice: questo
+//    modulo NON decide se una funzione è concessa.** Lo decide il database,
+//    con `coppia_ha_insieme()` (0041), scritto solo dalla Edge Function
+//    `abbonamento-webhook`. Ciò che l'SDK di RevenueCat sa serve a **disegnare
+//    la schermata**: a sapere se mostrare il paywall, non a sbloccare.
+//
+// ⚠️ Non è prudenza eccessiva, è il threat model di questo progetto
+//    (docs/threat-model.md §4-ter, scritto prima del codice): il telefono è
+//    ostile per definizione (TB-1), e un'app modificata che dichiara di avere
+//    il diritto non deve ottenere niente. Se un domani qualcuno sostituisse
+//    una lettura del database con `customerInfo.entitlements.active`, il
+//    prodotto diventerebbe gratis per chiunque sappia ricompilare — e nessuna
+//    schermata cambierebbe aspetto.
+//
+// ## Perché l'App User ID è l'id di Supabase
+//
+// È ciò che permette al webhook di sapere **a chi** intestare il diritto: il
+// suo `app_user_id` è la chiave primaria di `abbonamento`. ⚠️ Non è un
+// segreto e non è una prova — un client modificato può dichiararne un altro —
+// e infatti la difesa non è nasconderlo: è che il diritto **che conta** venga
+// letto dalla riga dell'utente **autenticato**, non da quella che il client
+// nomina.
+//
+// ## Cosa succede in Expo Go
+//
+// Dalla 10.x l'SDK ha una «Preview API Mode»: non esplode, restituisce dati
+// finti, e gli acquisti veri non avvengono. Quindi si può sviluppare, ma
+// **provare un acquisto richiede una development build** — è la stessa
+// decisione sul prebuild ferma da B-20 e sciolta da D-133.
+// =============================================================================
+
+import * as React from 'react';
+import { Platform } from 'react-native';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
+import { useCoppia } from '@/lib/coppia';
+
+/**
+ * L'entitlement configurato su RevenueCat (decisione dell'utente, 2026-09-14).
+ *
+ * ⚠️ **Questo nome deve combaciare, carattere per carattere, con quello nel
+ * pannello RevenueCat.** Nessun controllo confronta i due: se divergono l'app
+ * non concede mai niente e non lo dice — il paywall si chiuderebbe con un
+ * successo apparente e il diritto resterebbe spento.
+ */
+export const ENTITLEMENT = 'lifecouple_pro';
+
+const CHIAVE = process.env.EXPO_PUBLIC_REVENUECAT_KEY_IOS ?? '';
+
+/**
+ * ⚠️ Una chiave con prefisso `test_` è una **Test Store key**: gli acquisti
+ * vanno al negozio di prova di RevenueCat, non all'App Store. Utilissima
+ * adesso — permette di provare tutto **prima** che i prodotti su App Store
+ * Connect esistano — ma un'app con questa chiave **non va mai inviata allo
+ * store**. La build di produzione vuole la chiave `appl_…`.
+ */
+export const E_TEST_STORE = CHIAVE.startsWith('test_');
+
+// -----------------------------------------------------------------------------
+// Configurazione
+// -----------------------------------------------------------------------------
+
+let configurato = false;
+
+/**
+ * Configura l'SDK una volta sola. Idempotente di proposito: viene chiamata da
+ * un componente che può rimontare, e configurare due volte è un errore che
+ * l'SDK segnala in modo poco chiaro.
+ */
+async function configura(utenteId: string | null): Promise<boolean> {
+  // D-132: la distribuzione parte da iPhone soltanto. Su web non esiste
+  // nessuno store, e chiamare l'SDK lì fallirebbe senza che serva a niente.
+  if (Platform.OS !== 'ios') return false;
+  if (!CHIAVE) {
+    console.warn('[acquisti] EXPO_PUBLIC_REVENUECAT_KEY_IOS non impostata: SDK non configurato');
+    return false;
+  }
+  if (configurato) return true;
+
+  try {
+    if (__DEV__) await Purchases.setLogLevel(LOG_LEVEL.WARN);
+    Purchases.configure({ apiKey: CHIAVE, appUserID: utenteId ?? null });
+    configurato = true;
+    return true;
+  } catch (e) {
+    // ⚠️ Non si rilancia: un guasto qui non deve impedire di usare l'app. Il
+    // peggio che può succedere è che «Insieme» non sia acquistabile — e chi
+    // già lo ha continua ad averlo, perché il diritto vive nel database e non
+    // in questo SDK.
+    console.warn('[acquisti] configure fallita:', String(e));
+    return false;
+  }
+}
+
+/**
+ * Tiene l'identità di RevenueCat allineata a quella di Supabase.
+ *
+ * 🔑 **Va montato una volta sola, alla radice** — come `MomentiDiValutazione`:
+ * è un componente che non disegna niente e vive per un effetto.
+ */
+export function ProvederAcquisti(): null {
+  const { session } = useAuth();
+  const utenteId = session?.user?.id ?? null;
+  const ultimoId = React.useRef<string | null | undefined>(undefined);
+
+  React.useEffect(() => {
+    let vivo = true;
+    (async () => {
+      if (!(await configura(utenteId))) return;
+      if (!vivo || ultimoId.current === utenteId) return;
+
+      try {
+        // Al primo giro `configure` ha già ricevuto l'id: si evita un logIn
+        // superfluo, che creerebbe un alias inutile lato RevenueCat.
+        if (ultimoId.current !== undefined) {
+          if (utenteId) await Purchases.logIn(utenteId);
+          else await Purchases.logOut();
+        }
+        ultimoId.current = utenteId;
+      } catch (e) {
+        console.warn('[acquisti] allineamento identità fallito:', String(e));
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [utenteId]);
+
+  return null;
+}
+
+// -----------------------------------------------------------------------------
+// Il diritto — letto dal database, non dall'SDK
+// -----------------------------------------------------------------------------
+
+/**
+ * **Il cancello.** Vero se la coppia ha «Insieme», secondo il database.
+ *
+ * ⚠️ Dopo un acquisto riuscito c'è una finestra di **qualche secondo** in cui
+ * l'SDK sa e il database non ancora: il webhook di RevenueCat è asincrono.
+ * `ricarica({ insistendo: true })` copre proprio quella finestra, ed è ciò che
+ * il paywall chiama quando si chiude con successo.
+ *
+ * 🔑 Si è scelto di aspettare il database invece di fidarsi dell'SDK «solo per
+ * quei secondi»: una scorciatoia temporanea in un cancello di sicurezza è una
+ * scorciatoia permanente il giorno dopo.
+ */
+export function useInsieme() {
+  const { coppiaId } = useCoppia();
+  const [insieme, setInsieme] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+
+  const ricarica = React.useCallback(
+    async (opzioni?: { insistendo?: boolean }) => {
+      if (!coppiaId) {
+        setInsieme(false);
+        setLoading(false);
+        return false;
+      }
+      // Sei tentativi in ~9 secondi: è la finestra tipica fra l'acquisto e
+      // l'arrivo del webhook. Se non basta, il diritto comparirà comunque al
+      // prossimo avvio — non si perde, arriva tardi.
+      const tentativi = opzioni?.insistendo ? 6 : 1;
+      for (let i = 0; i < tentativi; i++) {
+        const { data, error } = await supabase.rpc('coppia_ha_insieme', { cid: coppiaId });
+        if (!error && data === true) {
+          setInsieme(true);
+          setLoading(false);
+          return true;
+        }
+        if (i === 0 && !opzioni?.insistendo) setInsieme(data === true);
+        if (i < tentativi - 1) await new Promise((s) => setTimeout(s, 1500));
+      }
+      setLoading(false);
+      return false;
+    },
+    [coppiaId]
+  );
+
+  React.useEffect(() => {
+    void ricarica();
+  }, [ricarica]);
+
+  return { insieme, loading, ricarica };
+}
+
+// -----------------------------------------------------------------------------
+// Le tre azioni
+// -----------------------------------------------------------------------------
+
+export type EsitoPaywall =
+  | { stato: 'comprato' }
+  | { stato: 'ripristinato' }
+  | { stato: 'annullato' }
+  | { stato: 'non-disponibile'; motivo: string };
+
+/**
+ * Mostra il paywall costruito su RevenueCat.
+ *
+ * 🔑 **Il paywall lo disegna RevenueCat, non noi**, ed è una scelta: cambiare
+ * prezzi, testi e forma non richiede una nuova versione sullo store. *Il costo
+ * è che il suo aspetto non vive nel repo* — chi cerca «dov'è la schermata del
+ * listino» non la trova, ed è il motivo per cui questa riga è qui.
+ */
+export async function apriPaywall(): Promise<EsitoPaywall> {
+  if (Platform.OS !== 'ios' || !configurato) {
+    return { stato: 'non-disponibile', motivo: 'SDK non configurato su questa piattaforma' };
+  }
+  try {
+    const esito = await RevenueCatUI.presentPaywall({ displayCloseButton: true });
+    switch (esito) {
+      case PAYWALL_RESULT.PURCHASED:
+        return { stato: 'comprato' };
+      case PAYWALL_RESULT.RESTORED:
+        return { stato: 'ripristinato' };
+      case PAYWALL_RESULT.CANCELLED:
+        return { stato: 'annullato' };
+      default:
+        // NOT_PRESENTED ed ERROR: l'utente non ha visto niente. ⚠️ Vanno
+        // distinti da «annullato», altrimenti si racconta che ha detto di no
+        // una persona a cui non è stato chiesto nulla.
+        return { stato: 'non-disponibile', motivo: String(esito) };
+    }
+  } catch (e) {
+    return { stato: 'non-disponibile', motivo: String(e) };
+  }
+}
+
+/**
+ * Il Customer Center di RevenueCat: disdetta, cambio piano, richiesta di
+ * rimborso, storico. ⚠️ **Non è un lusso**: Apple pretende che un'app con
+ * abbonamenti dica come disdire, e questo lo fa senza che dobbiamo costruirlo.
+ */
+export async function apriGestioneAbbonamento(): Promise<string | null> {
+  if (Platform.OS !== 'ios' || !configurato) return 'non disponibile qui';
+  try {
+    await RevenueCatUI.presentCustomerCenter();
+    return null;
+  } catch (e) {
+    return String(e);
+  }
+}
+
+/**
+ * «Ripristina acquisti». ⚠️ **Obbligatorio per la revisione Apple**: chi
+ * cambia telefono, o reinstalla, deve poter riavere ciò che ha pagato senza
+ * ricomprarlo.
+ */
+export async function ripristinaAcquisti(): Promise<{ ok: boolean; motivo?: string }> {
+  if (Platform.OS !== 'ios' || !configurato) return { ok: false, motivo: 'non disponibile qui' };
+  try {
+    await Purchases.restorePurchases();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, motivo: String(e) };
+  }
+}
+
+/**
+ * Lo stato che l'SDK conosce. ⚠️ **Per disegnare, mai per concedere.** Serve a
+ * decidere se mostrare il pulsante «Passa a Insieme» o quello «Gestisci
+ * l'abbonamento», non a sbloccare una funzione.
+ */
+export async function statoSecondoLoStore(): Promise<{
+  attivo: boolean;
+  scadenza: string | null;
+  gestibileQui: boolean;
+}> {
+  const vuoto = { attivo: false, scadenza: null, gestibileQui: false };
+  if (Platform.OS !== 'ios' || !configurato) return vuoto;
+  try {
+    const info = await Purchases.getCustomerInfo();
+    const e = info.entitlements.active[ENTITLEMENT];
+    return {
+      attivo: !!e,
+      scadenza: e?.expirationDate ?? null,
+      // Vero solo se l'abbonamento è stato comprato su QUESTO account dello
+      // store: è chi può disdire. L'altro membro della coppia beneficia del
+      // diritto ma non lo gestisce.
+      gestibileQui: !!e?.willRenew || !!e?.expirationDate,
+    };
+  } catch {
+    return vuoto;
+  }
+}
+
+/**
+ * **Il rifiuto viene dal piano gratuito?**
+ *
+ * I limiti della `0042` sono imposti dal database e arrivano al client come
+ * messaggi d'errore. 🔑 *Senza questa funzione l'app li mostrerebbe come
+ * guasti* — «Con il piano gratuito ogni evento tiene una foto» in un riquadro
+ * rosso sembra un errore dell'app, non un'offerta. Chi la usa deve mandare al
+ * paywall, non stampare la frase.
+ *
+ * ⚠️ Riconosce la frase e non un codice, perché PostgREST non propaga
+ * `errcode` al client: arriva solo il testo. Se un domani i messaggi della
+ * `0042` cambiano, questa funzione va cambiata con loro — ed è il motivo per
+ * cui tutte e tre le frasi contengono «piano gratuito», scritto apposta.
+ */
+export function eRifiutoDelPiano(messaggio?: string | null): boolean {
+  return /piano gratuito/i.test(messaggio ?? '');
+}
