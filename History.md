@@ -28,6 +28,26 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-14 (2) — Le notifiche arrivano su un telefono vero, e la mascotte non prendeva punti
+
+**Chiesto dall'utente**: accendere le notifiche e provarle sull'iPhone. Poi, a metà: *«ho visitato un posto nuovo ma la mascotte non ha preso punti, come mai?»* — che ha aperto **B-64**. E infine le icone dell'app (**D-131**).
+
+✅ **Le notifiche arrivano davvero, e senza account Apple Developer.** Cinque ricevute sull'iPhone in Expo Go: due di prova e le **tre reali** coi testi esatti della Edge Function. 🔑 **Questo smentisce una riga del PUNTO DI RIPRESA del 2026-09-10**, che dava le notifiche iOS per non osservabili senza development build: la rimozione del push da Expo Go nella SDK 53 riguarda **solo Android** — `warnOfExpoGoPushUsage.ts` lancia un errore se `Platform.OS === 'android'` e su iOS si limita a un avviso. La development build serve per la build firmata, non per provare la catena.
+
+✅ **Il trigger delle notifiche è provato**, e finora non lo era: `History.md` lo dichiarava non osservabile da un client, ed è vero. Con una coppia di prova a due membri, un luogo creato già visitato, e la Edge Function chiamata subito dopo: dal client `select` sulla coda torna `[]`, la funzione ne legge **2**. 🔑 *Le due righe insieme sono la prova*: `[]` significava «non lo vedo», non «non c'è» — il caso B-03, finalmente misurato dal lato giusto. `scartate: 1` è corretto, non un guasto: il partner di prova non ha dispositivi.
+
+✅ **Tre gesti su quattro erano già fatti**, e i documenti dicevano il contrario: `0039` applicata, funzione `ACTIVE`, segreto impostato. Lo stato del server era avanti rispetto al runbook. 🔴 **Resta il cron**, e finché manca nulla parte da solo: il trigger accoda in tempo reale, ma la riga resta in coda finché qualcuno non chiama la funzione.
+
+🔴 **B-65 — il segreto del cron era una stringa pubblicata.** Impostato da `cmd.exe` con la sintassi bash del runbook, valeva alla lettera `$(openssl rand -hex 32)`: ventiquattro caratteri scritti nel repository. Sostituito e verificato col digest. §4.
+
+🔴 **B-64 — i punti non arrivavano mai a un posto nato già visitato.** Riferito dall'utente, riprodotto con un test nuovo scritto *prima* della correzione, corretto dalla `0040`, che recupera anche i punti passati. §4.
+
+✅ **Il runbook delle notifiche corretto in quattro punti** ([`docs/deploy-notifiche.md`](docs/deploy-notifiche.md)), tutti trovati provandolo: l'header `apikey` mancante — senza il quale la funzione **non parte nemmeno**, e il messaggio d'errore non nomina il segreto; il segreto da generare in un file invece che sulla riga di comando; le **due** forme della risposta (a coda vuota i campi `lette`/`scartate` non valgono zero, **mancano**); e una tabella per distinguere i tre 401/500.
+
+✅ **Le icone dell'app** (**D-131**): sei file rigenerati dall'emblema con [`tools/genera-icone.py`](tools/genera-icone.py), e `adaptiveIcon.backgroundColor` portato dall'azzurrino del template all'accento. Chiude una voce bloccante aperta dal 2026-09-10. Tolti i quattro `react-logo*.png`, verificato prima che non li usasse nessuno.
+
+⚠️ **Due modifiche temporanee sono state fatte e rimosse**: un `console.log` del token in `lib/notifiche.ts` (per leggerlo dal log di Metro invece di farlo trascrivere) e uno scavalco della politica di valutazione in `app/impostazioni.tsx`, per vedere il dialogo nativo. 🔑 *Lo scavalco è stato messo nella schermata e non in `lib/valutazione.ts`*: quel file decide consensi e quote, e per una dimostrazione non vale la pena toccarlo. `tsc` esce 0 dopo la rimozione.
+
 ### 2026-09-14 — B-62 smette di essere un ragionamento, e le notifiche trovano l'invio
 
 **Chiesto dall'utente**: chiudere B-62, che era il bloccante più vecchio, e poi costruire l'invio delle notifiche — *«abbiamo già detto in precedenza quando devono comparire»*, quindi D-128 e D-122 restano la specifica e non si ridiscutono.
@@ -602,6 +622,26 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-131 — L'icona dell'app è il cuore dell'onboarding (2026-09-14)
+
+**Chiesto dall'utente**, che ha anche fissato il perimetro: la stessa immagine vale per **l'app, le notifiche e la distribuzione**. Chiude la voce bloccante aperta il 2026-09-10 — `icon.png`, `favicon.png` e le tre Android erano ancora il chevron blu del template Expo.
+
+L'immagine è l'**emblema** di [`components/emblema.tsx`](components/emblema.tsx): i due cuori intrecciati che si vedono in `benvenuto.tsx`, `onboarding.tsx` e `home.tsx`. Nessun disegno nuovo — la firma esisteva già, ed era l'unica cosa che l'app avesse sempre mostrato di sé.
+
+#### Tre scelte tecniche, e perché ciascuna
+
+| Scelta | Perché |
+|---|---|
+| **Tessera piena, emblema bianco** — non line-art rosa su trasparente | un tratto sottile su fondo trasparente sparisce sulla schermata di casa, chiara o scura che sia. È la stessa ragione già scritta dentro `landing/immagini/favicon.svg` |
+| **`icon.png` opaca e con gli angoli vivi** | iOS rifiuta il canale alfa, e la maschera degli angoli la applica il sistema: arrotondarla alla fonte darebbe un bordo doppio. Salvata in `RGB`, non `RGBA` |
+| **Su Android l'arte sta al 46% della tela**, non al 66% della zona sicura | la maschera adattiva ritaglia e il parallasse muove il primo piano sul fondo: riempire la zona sicura fino al bordo fa toccare il taglio quando l'icona si inclina |
+
+🔴 **E una cosa che sarebbe passata inosservata fino alla prima build**: `adaptiveIcon.backgroundColor` valeva ancora `#E6F4FE`, l'azzurrino del template. Un emblema **bianco** su quello sarebbe stato quasi invisibile, e non c'è modo di accorgersene lavorando — su Android l'icona adattiva non si vede mai in sviluppo. Portato sull'accento.
+
+🔑 **I tracciati non sono stati ricopiati**: [`tools/genera-icone.py`](tools/genera-icone.py) li **importa** da `tools/genera-favicon.py`, che li porta già srotolati in cubiche di Bézier. Quel file avverte in testa che la sua copia dell'emblema va tenuta allineata a mano; farne una terza avrebbe moltiplicato proprio il problema che dichiara. La fonte resta `components/emblema.tsx`.
+
+⚠️ **Non si vedono in Expo Go**, dove l'icona mostrata è quella di Expo Go. È il motivo per cui la lacuna è sopravvissuta un mese: lavorando non appare mai.
 
 ### D-130 — La valutazione si chiede subito e spesso, poi a intervalli (2026-09-14)
 
@@ -3001,6 +3041,74 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-65 — Il segreto del cron è stato impostato alla lettera, ed era una stringa pubblicata (2026-09-14)
+
+**Trovato** perché l'utente ha incollato in chat il comando che aveva eseguito, e il prompt diceva `C:\...\LifeCouple>` — cioè **cmd.exe**, non bash.
+
+#### Il fatto
+
+[`docs/deploy-notifiche.md`](docs/deploy-notifiche.md) §3 prescriveva di generare il segreto con una sostituzione di comando `$(openssl rand -hex 32)` sulla riga di comando. `cmd.exe` non conosce quella sintassi: `openssl` non è mai stato eseguito, e il segreto è diventato **la stringa stessa**, alla lettera — ventiquattro caratteri, per giunta **scritti nel runbook**, cioè nel repository.
+
+🔴 *Non un segreto debole: un segreto pubblicato.* Con quello, più la chiave publishable che sta dentro l'app, chiunque poteva far girare `invia-notifiche` a comando, forzare l'accodamento e svuotare la coda addosso agli utenti — esattamente ciò che il commento della funzione dichiara di voler impedire.
+
+⚠️ **E `secrets set` ha risposto `Finished` identico nei due casi.** Nessun messaggio, nessun codice d'uscita diverso: il comando riuscito e quello mangiato dalla shell sono indistinguibili dall'esito.
+
+#### Come è stato verificato — l'oracolo è stato validato prima di usarlo
+
+L'API dei segreti restituisce per ogni voce **64 caratteri**, compreso `SUPABASE_URL` il cui valore vero ne ha 40: è uno sha256, non il valore. Prima di accusare la shell si è verificato che l'oracolo dicesse il vero, su un segreto di cui si conosceva il valore:
+
+    sha256("https://<progetto>.supabase.co")  ==  digest restituito per SUPABASE_URL   →   SI
+
+Solo allora si sono provati i candidati, e lo sha256 della stringa letterale ha corrisposto al digest di `NOTIFICHE_CRON_SECRET`. 🔑 *La conferma non è stata un ragionamento sulla sintassi di cmd: è stato un confronto di hash.*
+
+#### Le correzioni
+
+- Segreto **sostituito** con 32 byte casuali, e la sostituzione **verificata ricalcolando il digest** — non sul messaggio `Finished`.
+- Il runbook ora genera il valore **in un file** (`--env-file`): non dipende dalla shell e non finisce nella cronologia dei comandi. La verifica del digest è diventata un passo della procedura, non un consiglio.
+- ⚠️ Il file si chiama `.env.segreto.local` e non `.segreto.env`: `.gitignore` copre `.env*.local` e **non** il secondo. Verificato con `git check-ignore` — un rimedio che rendesse il segreto committabile sarebbe peggiore del male.
+
+### B-64 — I punti non arrivano mai a un posto che nasce già visitato (2026-09-14)
+
+**Riferito dall'utente**, non trovato da un test: *«ho visitato un posto nuovo (l'evento era già stato segnato) ma la mascotte non ha preso punti»*. La parentesi era la diagnosi.
+
+#### Il fatto
+
+I 20 punti di un luogo li assegnava **un solo trigger**, `luogo_transizione` della `0001`, che è un `before update of stato` e premia la condizione `old.stato = 'desiderato' and new.stato = 'visitato'`.
+
+Ma un posto può **nascere** già visitato: `collegaPosto` in [`lib/preferiti.ts`](lib/preferiti.ts) crea la riga con `stato: 'visitato'` quando l'elemento a cui si aggancia è **già segnato come fatto**. Allora non c'è nessun UPDATE — c'è un INSERT, e un trigger `before update` non lo vede.
+
+🔑 **Il difetto non sta in nessuno dei due pezzi.** Il client è corretto: il posto *è* visitato, e scriverlo è giusto. Il trigger è corretto per ciò che sorveglia. È il loro incontro a lasciare un buco, e non si trova leggendo l'uno o l'altro — solo misurando il risultato.
+
+#### Perché è sopravvissuto
+
+[`tests/creatura.mjs`](tests/creatura.mjs) prova `derivaStadio`: la funzione che, dati N punti, dice **quale creatura guardi**. È provata bene — ma *traduce* i punti. **Nessun test verificava che i punti arrivassero.** Il difetto viveva precisamente nella parte non misurata.
+
+⚠️ **E si presentava come niente**: la mappa giusta, la lista giusta, solo un numero che non saliva. Nessun errore, nessun log, nessuno schermo rotto.
+
+#### Come è stato verificato
+
+[`tests/punti.mjs`](tests/punti.mjs), nuovo, contro il database reale — **scritto prima della correzione e guardato fallire**:
+
+    FAIL  B-64: un posto creato gia visitato vale 20 punti — prima=0 dopo=0 (atteso 20)
+    FAIL  B-64: ...e ha una data di visita, non null — visitato_il=null
+    PASS  un posto creato come desiderato non vale niente finche non e visitato
+    PASS  la transizione desiderato -> visitato vale 20 punti (regressione 0001)
+    PASS  togliere e rimettere la spunta NON fabbrica punti
+
+🔑 **I tre PASS valgono quanto i due FAIL**: dicono che il test non è rotto, che la via normale funziona, e che la guardia anti-fabbricazione tiene. Senza di essi due righe rosse non distinguerebbero un difetto misurato da un test scritto male — che è lo stesso vizio da cui è nato B-62.
+
+✅ **Il secondo FAIL è un difetto in più, non previsto e trovato dal test**: quei posti non avevano nemmeno `visitato_il`. Risultavano visitati «mai», e nessuna schermata avrebbe saputo dire quando.
+
+#### La correzione
+
+[`0040`](supabase/migrations/0040_punti_al_posto_nato_visitato.sql), applicata dall'utente il 2026-09-14: un trigger `before insert` che premia `stato = 'visitato'` e riempie `visitato_il`, il **recupero retroattivo** dei punti mai assegnati, e le date mancanti. Dopo, `npm run test:punti` è 5/5, e i numeri mostrano il recupero avvenuto (`prima=40`).
+
+⚠️ **Si è corretto il database e non il client, di proposito.** Cambiare `collegaPosto` avrebbe sistemato *un chiamante* lasciando la regola dove non era; il commento di `lib/luoghi.ts` dichiarava già la regola giusta — *«i punti li assegna un trigger sul database, non il client»* — e questa migrazione la rende vera anche per la via dell'insert.
+
+✅ **Il doppio conteggio è impossibile per costruzione, non per attenzione**: `assegna_punti` scrive prima in `punti_evento`, che ha `unique (coppia_id, tipo, riferimento_id)`, e incrementa la creatura **solo se quella riga è entrata**. È la guardia della D-15, e il recupero retroattivo usa `returning` proprio per contare solo le righe davvero inserite.
+
+🔑 **Un contrasto da tenere a mente**: i trigger delle notifiche della `0039` coprono **insert e update**; quello dei punti della `0001` copriva solo l'update. Stesso evento, due trigger, uno completo e uno no — il codice più recente aveva già imparato la lezione che il più vecchio non conosceva.
+
 ### B-63 — La pagina 404 perde i propri font a ogni indirizzo annidato (2026-09-10)
 
 **Trovato** aggiungendo la favicon, ragionando su dove puntassero i percorsi — e **poi provato**, che è la parte che conta.
@@ -4115,11 +4223,15 @@ Il lato app era fatto (**D-128**), l'invio no. ✅ **Ora c'è anche quello** (**
 | Lavoro pianificato «inviti a tornare» | ✅ `accoda_inviti_a_tornare()`, solo per chi ha `inviti_a_tornare = true` |
 | Prove RLS avversariali | ✅ le quattro chieste dalla 0038 **passano**; le quattro nuove della 0039 falliscono dicendo *«0039 non applicata»*, ed è corretto così |
 | Informativa e registro art. 30 | ✅ aggiornati nello stesso giro (vedi D-129) |
-| 🔴 **Applicare la `0039`** | manca — e finché manca, niente parte |
-| 🔴 **Pubblicare la funzione, impostare il segreto, pianificare il cron** | manca — [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md) |
+| **Applicare la `0039`** | ✅ applicata il 2026-09-14 — le quattro asserzioni che dicevano *«0039 non applicata»* ora passano |
+| **Pubblicare la funzione** | ✅ `ACTIVE`, version 2, `verify_jwt: true` |
+| **Impostare il segreto** | ✅ — ma la prima volta era una stringa pubblicata: vedi **B-65** |
+| 🔴 **Pianificare il cron** | manca — è l'unico gesto rimasto, e senza di esso niente parte da solo — [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md) §4 |
 | 🔴 Capability **Push Notifications** sull'App ID + chiave **APNs** su EAS | manca, e aspetta l'account Apple Developer |
 
-⚠️ **Fino ad allora la frase del 2026-09-10 resta vera**: *una persona può accendere le notifiche e non riceverne nessuna.* Cambia solo il motivo — non più «il codice non c'è» ma «non è stato acceso».
+⚠️ **La frase del 2026-09-10 resta vera, e il motivo è cambiato di nuovo**: *una persona può accendere le notifiche e non riceverne nessuna* — non più perché il codice non c'è né perché non è acceso, ma perché **nessun orologio chiama la funzione**. Il trigger accoda subito; la coda aspetta.
+
+✅ **Provato end-to-end il 2026-09-14**: cinque notifiche ricevute su un iPhone in Expo Go, comprese le tre reali coi testi della funzione, e il trigger visto accodare (`lette: 2` mentre il client legge `[]`). 🔑 *La riga «prova vera su un telefono» del backlog non è più aperta per le notifiche* — resta aperta solo per la build firmata.
 
 ⬜ **Una cosa nota e rimandata**, scritta perché non si riscopra da sola: **il giorno di «N anni fa» si calcola in UTC.** Nessun fuso orario è memorizzato, né della coppia né della persona: chi vive molto a est o a ovest può ricevere il ricordo il giorno prima o dopo rispetto al proprio calendario. Correggerlo vuol dire una colonna `fuso` che oggi nessuna schermata sa chiedere.
 
@@ -4139,15 +4251,16 @@ Spenta con `LISTA_FILM_NASCOSTA` (**D-127**) finché il nodo delle locandine non
 
 🔑 **E la domanda di fondo resta comunque aperta, qualunque fornitore vinca**: la locandina è un'opera dello studio, che nessuno di loro possiede. Cambiare fornitore cambia quale contratto si rispetta, non i diritti sull'immagine — è la voce **«revisione dell'avvocato»**, e questa è la domanda concreta con cui andarci.
 
-### 🔴 Le icone dell'app sono ancora quelle di Expo — bloccante, aperto dal 2026-09-10
+### ✅ Le icone dell'app — FATTE il 2026-09-14 (D-131)
 
-`assets/images/icon.png` (1024×1024), `favicon.png` (48×48) e `android-icon-foreground.png` sono **il chevron blu del template Expo**, mai sostituiti — `icon.png` porta perfino le linee-guida di costruzione. Sono le icone che `app.json` dichiara per iOS, Android e per la build web.
+Erano **il chevron blu del template Expo**, mai sostituito, per iOS, Android e la build web: bloccante per la pubblicazione, non estetico. Ora sono l'**emblema** — i due cuori dell'onboarding — rigenerati da [`tools/genera-icone.py`](tools/genera-icone.py) in sei file: `icon.png`, `favicon.png`, i tre Android e `splash-icon.png`. Tolti anche i quattro `react-logo*.png`, dopo aver verificato che non li usasse nessuno.
 
-🔴 **È bloccante per la pubblicazione**, non estetico: un'app non passa la revisione con l'icona segnaposto del framework, e su Android l'icona adattiva è la prima cosa che si vede. ⚠️ *Ed è il tipo di lacuna che non si nota lavorando*: in Expo Go l'icona mostrata è quella di Expo Go comunque, quindi provando l'app non si vede mai il problema.
+Il perché delle scelte (tessera piena, opacità su iOS, 46% della tela su Android) sta in **D-131**.
 
-✅ **Il marchio da cui partire esiste già** ed è l'emblema di `components/emblema.tsx` — gli stessi due cuori ora usati per la favicon della landing (`landing/immagini/favicon.svg`, generabile in PNG con `tools/genera-favicon.py`). Servono le misure che gli store chiedono, non un'idea nuova.
+🔴 **Ma restano due cose prima che l'icona sia davvero a posto**, e nessuna delle due è il disegno:
 
-⬜ Da rifare insieme: `icon.png`, `adaptiveIcon.foregroundImage`, `android-icon-monochrome.png`, `splash-icon.png` e il `favicon.png` della build web. ⬜ Da togliere, già che si apre la cartella: `react-logo*.png` e `partial-react-logo.png`, residui del template che non usa nessuno.
+- ⬜ **Nessuno le ha ancora viste su un telefono.** In Expo Go l'icona mostrata è quella di Expo Go: la resa vera — la maschera di iOS, il ritaglio adattivo di Android, il parallasse — si vede solo in una development build o di store. Il provino generato le simula, ma è una simulazione.
+- ⬜ **La schermata di avvio non è stata guardata.** `splash-icon.png` è cambiato e `app.json` dichiara due fondi diversi, bianco e nero: vanno visti entrambi.
 ### Deploy della landing: automatizzarlo — aperto dal 2026-09-10
 
 Oggi la landing si aggiorna **a mano**: `aws s3 sync` più invalidazione, i comandi stanno in [`docs/deploy-landing.md`](docs/deploy-landing.md). ⚠️ *Il rischio non è la fatica, è la dimenticanza.* Un documento legale rigenerato nel repo e non caricato lascia online una versione **diversa da quella resa nell'app** — che è esattamente la prova documentale che D-121 e D-123 volevano evitare.
@@ -4462,8 +4575,11 @@ Se si costruisce la macchina *produci → indovina*, questa è di gran lunga la 
 
 ⚠️ **«Gratis da scaricare» non è «gratis» per gli store**: per Apple e Google conta se incassi. L'app è commerciale dal primo giorno, con gli accordi fiscali e la revisione più severa che ne seguono.
 
-**I due muri — non ritardi, esiti:**
-- [ ] 🔴 **Cancellazione dell'account dall'app.** Obbligatoria su Apple (un'app che crea account deve poterli cancellare **in-app**), dichiarata e servita anche via web su Google. **Non esiste**: `app/` ha 17 schermate e nessuna di impostazioni. E **non è una schermata**: eliminare da `auth.users` richiede `service_role`, quindi è la **prima Edge Function** del progetto — il repo non ne ha nessuna. ⚠️ Da progettare insieme allo **scioglimento** (D-04/D-21), che è un atto diverso e reversibile: chi preme «cancella account» credendo di sciogliere fa la cosa irreversibile al posto di quella che non lo è.
+**I due muri — non ritardi, esiti.** ⟳ **Ne è rimasto uno** (rilettura del 2026-09-14):
+- [x] ⟳ **Cancellazione dell'account dall'app — COSTRUITA, mai provata.** Obbligatoria su Apple (un'app che crea account deve poterli cancellare **in-app**), dichiarata e servita anche via web su Google. ✅ Esiste dal 2026-08-31: Edge Function [`cancella-account`](supabase/functions/cancella-account/index.ts) — `status ACTIVE`, `verify_jwt true` — invocata da `app/impostazioni.tsx`, nella sezione «Cose senza ritorno», tenuta distinta dallo **scioglimento** (D-04/D-21) perché chi preme «cancella account» credendo di sciogliere fa la cosa irreversibile al posto di quella che non lo è.
+  - [ ] 🔴 **Resta la prova end-to-end**, ed è l'unica cosa che ancora blocca: la tabella «Esito della prova» di [`docs/legal/catena-cancellazione.md`](docs/legal/catena-cancellazione.md) è **vuota**. ⚠️ *L'informativa §7 promette agli utenti una cancellazione «immediata e definitiva»: è la dichiarazione più impegnativa dell'intero corpo documentale, e l'unica che poggia su codice mai eseguito.* Il protocollo è scritto passo per passo — manca eseguirlo.
+
+> ⚠️ **Questa voce ha detto «non esiste» per due settimane dopo che esisteva.** Il codice è del 2026-08-31, la riga è stata corretta il 2026-09-14 rileggendo il backlog per rispondere a *«cosa manca per pubblicare?»*. 🔑 *È la stessa forma dei difetti di questi giorni — una frase vera quando è stata scritta e resa falsa da un lavoro fatto altrove* — con la differenza che qui nessun controllo poteva accorgersene: una casella non spuntata non fallisce nessun test.
 - [ ] 🔴 **Licenza TMDB — ancora aperta.** Gratuita per uso **non commerciale**; con gli abbonamenti l'uso è commerciale dal primo giorno, quindi resta un **blocco alla pubblicazione**. Il 2026-09-05 si era deciso di passare a **TheTVDB** (**D-99**) — gratuito sotto i 50.000 $/anno di ricavi — e il codice era stato scritto; ⚠️ **ritirato in giornata perché TheTVDB ha problemi con la creazione di nuovi account** e la chiave non era ottenibile. La ricerca completa e le alternative scartate restano in **D-99**: se un domani gli account si sbloccano, il lavoro è descritto e non va rifatto. **Le mosse rimaste, in ordine:**
   1. 🔑 **Scrivere a TMDB** — è ora la mossa principale e costa una mail. Lo staff ha dichiarato nei forum di star preparando *«una nuova offerta pensata per le app piccole»*, e il caso di LifeCouple è esattamente quello dei tanti indie che se ne lamentano: ricavi di pochi euro al mese contro 149 $.
   2. **Riprovare TheTVDB** quando la registrazione funziona.
@@ -4502,7 +4618,7 @@ I sei documenti di [`docs/legal/`](docs/legal/) esistono e sono coerenti fra lor
 - [x] ⟳ **Versione inglese di informativa e cookie policy** — **scritte il 2026-09-09** in [`docs/legal/en/`](docs/legal/en/), e sono quelle che l'app mostra: **D-121** ha deciso che il testo legale è **solo** in inglese. 🔴 **Si è capovolto il problema, non risolto**: ora è la versione *italiana* a non essere resa a nessuno, su un prodotto venduto in Italia. Il rischio è in §5, ed è accettato consapevolmente dall'utente.
   - [x] ✅ **Versione inglese dei termini d'uso** — **scritta il 2026-09-10** (**D-123**), senza aspettare le quattro decisioni: porta i `[TO BE DECIDED]` tradotti, ed è il generatore a impedire che venga resa. *Scriverla prima costa poco e rende visibile quanto manca; aspettare avrebbe lasciato il set ufficiale incompleto senza che si vedesse.*
   - [x] ⟳ **La divergenza fra le due lingue è chiusa il 2026-09-10 — nel verso opposto** (**D-123**). Non si riportano in pari due testi ufficiali: **l'inglese è l'unico ufficiale**, e i tre documenti italiani *user-facing* sono marcati in testa **«DOCUMENTO DI LAVORO — non è il testo ufficiale»**, con la regola di conflitto scritta dentro. 🔑 *La prova che due testi ufficiali non restano allineati è arrivata in un giorno solo: l'email decisa il 2026-09-09 era già nell'inglese e ancora `[DA DECIDERE]` in quattro documenti italiani.* I tre documenti **interni** restano in italiano di proposito, perché si esibiscono al Garante.
-- [ ] ⚠️ **Accordi art. 28** con Supabase, Google e TMDB: da accettare e archiviare.
+- [ ] ⚠️ **Accordi art. 28** con Supabase, Google e TMDB: da accettare e archiviare. ⟳ **Dal 2026-09-14 l'elenco è più lungo**: le notifiche push aggiungono **Expo** e, dietro di lui, **Apple (APNs)** e **Google (FCM)**. 🔑 *Non è un dettaglio di forma*: è il motivo per cui il registro art. 30 ha dovuto smettere di dire «nessun contenuto degli utenti esce dall'UE» — il titolo dell'evento dei ricordi esce, e chi lo tratta va nominato.
 
 **Le quattro decisioni che i termini aspettavano** — ✅ **tutte chiuse il 2026-09-10** (**D-124**). Non erano di testo, ed è il motivo per cui hanno tenuto fermo il documento per un giorno intero:
 - [x] ✅ **L'abbonamento resta a chi l'ha pagato.** ⬜ *Lascia dietro un vincolo di costruzione*: il diritto va scritto **sull'utente** e proiettato sulla coppia, mai il contrario. Da rispettare quando si costruiranno i pagamenti.
@@ -4538,6 +4654,26 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-14 (2) — le notifiche arrivano su un telefono vero, manca solo l'orologio. E la mascotte ha smesso di perdere punti.**
+>
+> ✅ **Cinque notifiche ricevute su un iPhone**, in Expo Go, comprese le **tre reali** coi testi esatti della Edge Function. 🔴 **Questo corregge una riga delle note precedenti**: le notifiche iOS **sono** osservabili senza development build — la rimozione del push da Expo Go nella SDK 53 riguarda **solo Android**, e su iOS `expo-notifications` si limita a un avviso in console. Chi riprende non deve più rimandare quella prova.
+>
+> ✅ **Tre gesti su quattro sono fatti**: `0039` applicata, funzione `ACTIVE` con `verify_jwt`, segreto impostato. 🔴 **Manca il cron, e senza di esso niente parte da solo**: il trigger accoda in tempo reale — provato — ma la coda resta ferma finché qualcuno non chiama la funzione. Procedura passo per passo in [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md) §4.
+>
+> 🔑 **Se il cron risponde 401, il corpo dice quale cancello ti ha fermato**, e sono due: `UNAUTHORIZED_NO_AUTH_HEADER` è la piattaforma e significa `apikey` mancante; `{"errore":"non autorizzato"}` è la funzione e significa segreto sbagliato o assente. Il runbook lo dice, da oggi.
+>
+> ✅ **B-64 chiuso** (`0040`, applicata): i posti nati già `visitato` non ricevevano i 20 punti, perché il trigger della `0001` è un `before update`. Corretto nel database e non nel client, coi punti passati **recuperati**. `npm run test:punti` è nuovo ed è 5/5.
+>
+> ⚠️ **Il commento della funzione nel database dice ancora «B-63»**: la `0040` è stata applicata prima di accorgersi che quel numero era già della pagina 404. Il file dice B-64; una riga di `comment on function` allinea il database, ed è l'unica divergenza nota.
+>
+> 🔴 **B-65 — il segreto del cron era pubblico per qualche ora.** Impostato da cmd.exe, valeva la stringa del runbook alla lettera. Sostituito e verificato col digest. ⚠️ *Chi rifà quel passo usi `--env-file` come dice ora §3*, e verifichi il digest: `Finished` non distingue i due casi.
+>
+> ✅ **Le icone dell'app sono l'emblema** (**D-131**), e la voce bloccante del 2026-09-10 è chiusa. ⚠️ *Non si vedono in Expo Go*: per guardarle davvero serve una build.
+>
+> ⬜ **Cosa NON è cambiato e resta valido dalle note precedenti**: le pagine legali della landing sono ancora da caricare; telefono e indirizzo DSA vanno chiesti; la prova end-to-end della catena di cancellazione è ancora vuota; gli accordi art. 28 e la revisione dell'avvocato restano aperti; «N anni fa» si calcola in UTC; la lista Film aspetta TMDB.
+>
+> ⚠️ **E una lacuna di misura che questa giornata ha reso evidente**: `tests/punti.mjs` copre i punti dei **luoghi**. Quelli delle partite (`0033`) e degli elementi di lista hanno la stessa forma — un trigger su una transizione — e **nessuna misura diretta**. B-64 era in quella zona, e la zona non è stata svuotata: è stata ridotta.
 
 > **Nota del 2026-09-14 — B-62 è PROVATO, le notifiche hanno l'invio, e la lista dei controlli sul telefono è stata percorsa dall'utente.**
 >
