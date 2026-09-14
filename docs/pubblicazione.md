@@ -34,7 +34,9 @@ Non è un elenco di buoni propositi: è cosa c'è e cosa non c'è nel repo, cont
 
 ## 1. I due blocchi che non sono ritardi ma muri
 
-### 1.1 🔴 La cancellazione dell'account non esiste, ed è un rifiuto automatico
+### 1.1 ⟳ La cancellazione dell'account — costruita il 2026-08-31, **mai provata**
+
+> ⟳ **Aggiornato il 2026-09-14 (3).** Il titolo diceva *«non esiste»* e ha continuato a dirlo per due settimane dopo che esisteva: la Edge Function [`cancella-account`](../supabase/functions/cancella-account/index.ts) è del 2026-08-31, `ACTIVE`, invocata da Impostazioni. 🔴 **Ma il muro non è caduto: si è spostato.** Quel che manca è la **prova end-to-end** — la tabella «Esito della prova» in [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) è vuota. ⚠️ *L'informativa §7 promette agli utenti una cancellazione «immediata e definitiva»: è la dichiarazione più impegnativa dell'intero corpo documentale, ed è l'unica che poggia su codice mai eseguito.* Tutto ciò che segue resta valido come racconto del perché la voce esiste.
 
 Apple richiede che un'app che permette di **creare** un account permetta di **cancellarlo dall'app** — non per email, non dal sito. LifeCouple crea account. È fra i primi controlli del revisore, quindi non è un rischio: è un esito.
 
@@ -54,6 +56,8 @@ Con gli abbonamenti attivi l'uso è **commerciale dal primo giorno**, indipenden
 - togliere le locandine (**D-69**) dal prodotto pubblicato.
 
 ⚠️ Fino al 2026-08-29 questo era registrato come *debito da verificare prima di attivare il listino*. Con la decisione di lanciare già a pagamento **è diventato un blocco alla pubblicazione**, e va risolto prima della sottomissione, non dopo.
+
+> ✅ **Tolto dal percorso il 2026-09-10 con D-127**, e la distinzione conta: **non è risolto, è tolto**. Con la lista Film spenta l'app non chiama TMDB e non disegna locandine, quindi non c'è uso commerciale da licenziare. 🔴 **Riaccendere quella lista rimette il muro esattamente dov'era** — e le tre mosse per abbatterlo davvero (scrivere a TMDB, riprovare TheTVDB, togliere le locandine da fonte esterna) restano scritte nel backlog di `History.md` §6.
 
 ---
 
@@ -87,7 +91,13 @@ Con gli abbonamenti attivi l'uso è **commerciale dal primo giorno**, indipenden
 
 ⚠️ Costi e regole **da riverificare all'iscrizione**.
 
-### 2.3 🔴 Il test chiuso di Google è il vero prezzo di questa strada
+### 2.3 ~~🔴 Il test chiuso di Google è il vero prezzo di questa strada~~ — **non si paga più** (D-132)
+
+> 🔑 **Caduta il 2026-09-14 con D-132: si pubblica da iPhone soltanto.** Questo requisito era di **Google**, e con esso cadono i **12 tester per 14 giorni** più i 7 di revisione — cioè **la coda più lunga dell'intero piano**, e l'unica che nessun lavoro poteva comprimere. ⚠️ *Il costo della scelta è dichiarato altrove* (in Italia Android ha la quota maggiore): qui conta che il cammino critico non esista più.
+>
+> ⚠️ **Ma una cosa che questa sezione diceva resta vera, e va salvata prima di archiviarla**: D-25 stabilisce che **l'app da soli non è collaudabile**. I 12 tester erano il requisito di Google *e* l'unico modo di collaudare il prodotto. Tolto il requisito, **il bisogno resta** — semplicemente non ha più una scadenza imposta da fuori, il che lo rende più facile da rimandare e non meno necessario.
+
+L'analisi sotto resta come racconto della strada non più percorsa.
 
 Vale per gli account personali **creati dopo il 13 novembre 2023**. Prima di poter pubblicare in produzione servono **almeno 12 tester**, iscritti **in modo continuativo per almeno 14 giorni** e **ancora attivi** al momento della richiesta; poi si chiede l'accesso alla produzione e Google risponde di norma entro sette giorni.
 
@@ -132,7 +142,11 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 
 ⚠️ **E una che riguarda proprio questa app**: cancellare l'account **non** cancella l'abbonamento. Va detto all'utente nel momento in cui cancella, con l'indicazione di come disdire dalle impostazioni del telefono — altrimenti continua a pagare per un account che non esiste più.
 
-### 3.2 🔴 L'abbonamento è della coppia, lo store vende a una persona
+### 3.2 ✅ L'abbonamento è della coppia, lo store vende a una persona — **costruito il 2026-09-14**
+
+> ✅ **Risolto** con la migrazione `0041` e la Edge Function `abbonamento-webhook`: il diritto si scrive **sull'utente che ha pagato** (D-124) e si proietta sulla coppia in lettura con `coppia_ha_insieme()`, calcolata a ogni chiamata e **mai memorizzata**. Il perché della forma è in [`Architecture.md`](Architecture.md) §4.3-quater, la superficie in [`threat-model.md`](threat-model.md) §4-ter.
+>
+> ⚠️ **Questa sezione prescriveva «una colonna su `coppia`», cioè l'opposto di ciò che è stato costruito** — ed è stata corretta il 2026-09-14: su `coppia` il diritto sparirebbe allo scioglimento **anche a chi ha pagato un periodo già pagato**.
 
 `monetizzazione.md` §1 decide che **il pagamento è a coppia**. Ma un abbonamento è intestato a un **Apple ID** o a un **account Google**: non esiste un abbonamento intestato a due. Uno paga, e il diritto va **esteso all'altro** — cosa che il telefono di chi non ha pagato non può fare, perché non ha ricevute da mostrare.
 
@@ -175,6 +189,8 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 
 **Serve un account di prova già appaiato**, con dentro dati veri — eventi, foto, luoghi, una partita conclusa — fornito nelle note per la revisione.
 
+> 🔴 **Al 2026-09-14 (3) non esiste ancora, ed è la voce del piano che più facilmente scivola in fondo.** ⚠️ *Non è configurazione: è progettazione* — una porta d'ingresso che aggira il codice email, cioè un pezzo di superficie d'attacco creato apposta. Va disegnata guardando `threat-model.md`, e il momento sbagliato per farlo è la sera prima della sottomissione. Corsia **A2** del piano in §7-ter.
+
 🔴 **E qui c'è un ostacolo di codice, non di documentazione**: l'accesso è **via codice email**, e un revisore non può ricevere il nostro codice. Va deciso come farlo entrare — tipicamente un account demo con password fissa, esente dall'invio del codice. ⚠️ È una porta d'ingresso che aggira il meccanismo di autenticazione: va progettata guardando il threat model, non aggiunta di fretta la sera prima della sottomissione.
 
 ---
@@ -204,7 +220,9 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 
 ---
 
-## 7-bis. Il piano operativo, aggiornato al 2026-09-10
+## 7-bis. ~~Il piano operativo, aggiornato al 2026-09-10~~ — **superato da §7-ter**
+
+> ⟳ **Superato il 2026-09-14 (3).** Era ancorato a una pubblicazione su **due** store: metà delle sue voci (i 12 tester, Play Billing, FCM, Data safety, l'account Play) sono cadute con **D-132**, e quattro delle sue «tre cose che hanno una coda dietro» sono state fatte fra il 10 e il 14 settembre. **Resta scritto** perché registra cosa si è chiuso e quando — il piano vivo è in **§7-ter**.
 
 > §7 dice **perché** l'ordine è quello. Questa sezione dice **cosa fare**, nello stato in cui il progetto si trova stasera. Le voci barrate qui sotto sono chiuse oggi.
 
@@ -278,6 +296,80 @@ npx eas build --profile development --platform ios
 
 ---
 
+## 7-ter. Il piano operativo, riorganizzato il 2026-09-14 (3)
+
+> §7 dice **perché** l'ordine è quello e resta valido. Questa sezione dice **cosa fare**, nello stato in cui il progetto si trova stasera, e **chi può farlo** — perché metà delle voci rimaste richiede credenziali che l'agente non ha e non deve avere.
+
+🔑 **Il cambiamento che vale più di ogni singola voce**: con **D-132** cade il test chiuso di Google, cioè **la coda più lunga del piano e l'unica che nessun lavoro poteva accelerare**. ⚠️ *Il collo di bottiglia non è più un'attesa: è lavoro nostro.* Non c'è più niente dietro cui aspettare — il che è insieme la buona e la cattiva notizia.
+
+Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie no, si avanza in parallelo.
+
+### Corsia A — I muri: senza, il revisore rifiuta o non si può vendere
+
+| | Cosa | Chi | Dipende da |
+|---|---|---|---|
+| **A1** | 🔴 **Prova end-to-end della cancellazione** su un account di prova, col protocollo già scritto. *È fra i primi controlli di Apple: non è un rischio, è un esito* | io, **col tuo sì** — cancella davvero su infrastruttura vera | — |
+| **A2** | 🔴 **Account demo già appaiato per il revisore**, con dentro dati veri, e la **porta d'ingresso** che aggira il codice email. ⚠️ *È progettazione, non configurazione* | io progetto e costruisco, **tu approvi la porta** | il threat model |
+| **A3** | 🔴 **Indirizzo e telefono del professionista (DSA)** — nel brain non esistono da nessuna parte | **solo tu** | — |
+| **A4** | 🔴 **I termini d'uso entrano nell'app**: oggi il generatore si rifiuta di costruirli perché portano segnaposto, quindi **non sono resi a nessuno**. 🔑 *Senza, il paywall vende senza contratto* | io | **A3** |
+| **A5** | 🔴 **B-66 — le due frasi del recesso** prima del pulsante, più il link ai documenti legali *dentro* il paywall | tu (o l'avvocato) decidi il testo, io lo monto. ⚠️ *Il commento che dichiara l'obbligo già soddisfatto lo correggo subito: è una riga e non richiede nessuno* | **A6**, o una formula tua |
+| **A6** | 🔴 **Revisione di un avvocato** prima del lancio commerciale. ⚠️ *Può imporre una DPIA e cambiare la nomina del DPO* (`conformita.md` §9) | **solo tu**, e ha una coda: va avviata presto | — |
+| **A7** | 🔴 **Accordi art. 28** da accettare e archiviare: Supabase, Expo, Apple, Google, RevenueCat | **solo tu** | — |
+
+### Corsia B — L'acquisto vero: l'unico anello mai percorso
+
+| | Cosa | Chi |
+|---|---|---|
+| **B1** | 🔴 **Capire perché StoreKit non serve i prodotti**: l'app riceve l'offering da RevenueCat e non i prezzi. ⚠️ *Le due cause plausibili sono propagazione e un identificativo che non combacia, e nessuna delle due è stata verificata* | tu (pannelli), io leggo i sintomi |
+| **B2** | 🔴 **Un acquisto sandbox fino alla tabella**: `select` su `abbonamento` e `coppia_ha_insieme()` che si accende. 🔑 *Finché non succede, l'impianto è costruito e non dimostrato* | tu + io |
+| **B3** | ⚠️ **App Store Server Notifications su Sandbox *e* Production**. *Se il webhook è collegato solo a Production, niente di ciò che provi arriva mai al database — e sembra un difetto del codice* | tu |
+| **B4** | ⚠️ **Guardia sul prefisso della chiave**: niente impedisce oggi di pubblicare con la chiave `test_…`, e gli acquisti finirebbero al negozio di prova | io |
+
+### Corsia C — Le notifiche: arrivano, ma non partono da sole
+
+| | Cosa | Chi |
+|---|---|---|
+| **C1** | 🔴 **Revocare la chiave privata finita in chat** e sostituirla su RevenueCat. ⚠️ *È l'unica voce dell'intero piano che peggiora col tempo* | **solo tu** |
+| **C2** | 🔴 **Pianificare il cron** — [`deploy-notifiche.md`](deploy-notifiche.md) §4. *Il trigger accoda in tempo reale; la coda resta ferma finché nessuno chiama la funzione* | tu |
+| **C3** | 🔴 **Chiave APNs** (l'unica operazione che la API key non copre): serve alla build firmata | tu |
+| **C4** | ⚠️ **Il `comment on function` che dice ancora «B-63»** nel database | io, una riga |
+
+### Corsia D — La verifica: la condizione di §9
+
+| | Cosa | Chi |
+|---|---|---|
+| **D1** | ✅ **FATTO il 2026-09-14 (3)** — `npm run test:copertura`: 30 tabelle, tutte con RLS, l'unica senza policy è dichiarata per nome. *Guardato fallire su quattro controprove.* ⚠️ Legge le migrazioni, non il catalogo | ✅ io |
+| **D2** | ⚠️ **Registrare l'esito** di `test:abbonamento`, `test:webhook`, `test:confine`. 🔑 *Un test il cui esito non è scritto da nessuna parte è un ricordo, non una prova* | io |
+| **D3** | ⚠️ **I punti di partite ed elementi di lista**, che hanno la stessa forma di B-64 e nessuna misura | io |
+| **D4** | 🔴 **La lista dei controlli sul telefono, voce per voce.** *Il 2026-09-14 è stata percorsa una volta con esito positivo: è una passata complessiva, non una spunta* | tu col telefono, io la preparo |
+| **D5** | 🔴 **I tre testi dei permessi** (B-20), mai visti da nessuno e **solo in italiano** su un'app bilingue. *La development build è la prima occasione* | io, appena la build è sul telefono |
+
+### Corsia E — La confezione: ultima, e dipende dalle altre
+
+| | Cosa | Chi | Dipende da |
+|---|---|---|---|
+| **E1** | **Controlli sul nome** — EUIPO classi 9 e 42, disponibilità, handle. ⚠️ *Prima degli screenshot, o si rifanno* | tu | — |
+| **E2** | 🔴 **Pagine legali della landing online**: sono cambiate due volte il 2026-09-14 e non sono state caricate. *L'URL pubblico è obbligatorio* | io preparo, tu confermi il deploy | A4 |
+| **E3** | **Screenshot** | io + tu | E1, D5 |
+| **E4** | **App Privacy** compilata da `threat-model.md` §1. ⚠️ *Da rifare dopo i due sottosistemi del 2026-09-14*: notifiche e RevenueCat hanno cambiato l'elenco dei destinatari | io | — |
+| **E5** | **TestFlight**, poi invio | tu | tutto |
+
+### L'ordine dei prossimi giorni
+
+1. **C1** — cinque minuti, e toglie un'esposizione reale. *Prima di tutto il resto.*
+2. **A1** e **D1** — il muro più vicino a cadere e l'unico buco di misura che rende invisibili i guasti futuri.
+3. **A3** e **A6** — sono tue e hanno una **coda**: chiederle tardi le fa costare settimane, non giorni.
+4. **B1 → B2** — finché l'acquisto vero non è percorso, i pagamenti sono costruiti e non dimostrati.
+5. **A2** — la voce che scivola sempre in fondo, e che fa rifiutare l'app.
+
+### Cosa NON è in questo piano, e perché
+
+- ⬜ **Android in ogni sua forma** (D-132). Torna solo se torna Android, e con esso i 12 tester.
+- ⏸️ **La lista Film e TMDB** (D-127): spenta. *Riaccenderla rimette il muro §1.2 esattamente dov'era.*
+- ⏸️ **Il ciclo mestruale** (D-07, P-02): dopo la prima pubblicazione, per non sommare gli errori in un lotto solo.
+
+---
+
 ## 8. Tempi
 
 ⚠️ **Sono stime, non misure**, e non vanno riportate in `Projects/elenco-progetti.md` come date: quel file vuole date vere.
@@ -304,7 +396,21 @@ npx eas build --profile development --platform ios
 | Accordi Paid Apps | ore di lavoro, **giorni di attesa** | invariato |
 | 🔴 **Licenza TMDB** | non contata | **attesa ignota** — è ora la sola coda fuori dal nostro controllo |
 
-**Da 2026-08-31 alla pubblicazione su entrambi gli store: 6–10 settimane.** Su **Apple** si può arrivare prima — il test chiuso riguarda solo Google, quindi **le due pubblicazioni possono sfasarsi**, ed è accettabile.
+~~**Da 2026-08-31 alla pubblicazione su entrambi gli store: 6–10 settimane.**~~ Su **Apple** si può arrivare prima — il test chiuso riguarda solo Google, quindi **le due pubblicazioni possono sfasarsi**, ed è accettabile.
+
+> 🔴 **Da ricalcolare, e qui NON si sostituisce con un numero (2026-09-14 (3)).** Quella stima era ancorata al **test chiuso di Google**, che con **D-132** non esiste più: la sua voce più grossa è sparita, quindi il totale non è «un po' meno» — **è un'altra cosa**, e scrivere un numero nuovo ora sarebbe una stima inventata su un piano riorganizzato lo stesso giorno (`CLAUDE.md` §6: non si riempie con una stima ciò che non si sa).
+>
+> **Da cosa dipende adesso**, che è l'informazione utile per decidere:
+>
+> | Voce | Natura |
+> |---|---|
+> | Corsie A, B, D del piano §7-ter | **lavoro nostro** — comprimibile lavorando di più |
+> | Revisione dell'avvocato (**A6**) | **coda esterna**, e si avvia chiedendo: è la prima da far partire |
+> | Dati DSA (**A3**) | dipende **solo da te**, e blocca i termini d'uso |
+> | La revisione di Apple | coda esterna, una sola, e non più due store sfasati |
+> | 🔴 **Quanta verifica si vuole fare prima** (§9) | **è una decisione, non una durata**: è la variabile che sposta di più il totale |
+>
+> 🔑 *L'ultima riga è quella che decide davvero.* Il resto sono giorni-uomo prevedibili; **quanto a fondo si collauda prima di pubblicare** è una scelta, e cambia il calendario più di tutte le altre voci messe insieme.
 
 🔑 **Il collo di bottiglia si è spostato, e in meglio.** Prima era un'**attesa passiva** (il D-U-N-S: nessun lavoro lo accelerava). Ora è **lavoro coordinabile** — trovare 12 tester — che per giunta produce due risultati insieme: soddisfa Google e collauda l'app, che senza due persone non è collaudabile affatto.
 
@@ -315,5 +421,7 @@ npx eas build --profile development --platform ios
 **L'app non è verificata.** Al 2026-08-29 sei difetti su sette dei giochi sono corretti e mai riprovati, e le Liste hanno decine di punti mai visti girare.
 
 La prima partita vera ha fatto uscire **sette difetti in un colpo** (B-30 → B-36), e non c'è ragione di credere che le Liste si comportino diversamente. Pubblicare prima di aver esaurito quelle sorprese significa scoprirle con le recensioni a una stella — e su un'app a pagamento, con le richieste di rimborso.
+
+> ⟳ **Stato al 2026-09-14 (3), e si è mosso in meglio.** I difetti dei giochi sono stati ripresi, l'app è stata percorsa **a mano su un iPhone** e non è saltato fuori niente; le notifiche sono arrivate davvero, i pagamenti hanno un impianto intero e le RLS hanno **89 asserzioni verdi**. ⚠️ **Ma la condizione non è caduta**: quella passata è stata *una* passata con esito positivo, **non una spunta voce per voce** — e tre cose non possono esserlo per costruzione (la posizione condivisa vuole due telefoni, B-50 distingue dito e bottone solo su iOS, i punti di partite e liste non hanno misura). La corsia **D** di §7-ter è la traduzione operativa di questa sezione.
 
 *Il piano qui sopra dice come si pubblica. Non dice che sia il momento di farlo.*
