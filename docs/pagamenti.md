@@ -71,7 +71,9 @@ Ogni prodotto vuole anche: nome visibile, descrizione, e **una schermata di ante
 
 **2.1 App** — Project → Apps → aggiungi **App Store**. Serve il bundle `com.lifecouple.app` e la **App-Specific Shared Secret**, che sta su App Store Connect in *App → General → App Information → App-Specific Shared Secret*. 🔑 *Senza quella RevenueCat non può validare le ricevute, ed è l'errore più comune del primo collegamento.*
 
-⬜ Conviene caricare anche la **In-App Purchase Key** (App Store Connect → Users and Access → Integrations): è ciò che permette a RevenueCat di leggere lo stato senza aspettare il telefono.
+🔴 **E serve anche la In-App Purchase Key** (App Store Connect → *Users and Access → Integrations*). ⟳ **Corretto il 2026-09-14 (3): questa riga diceva «conviene caricare anche», ed era un eufemismo.** La documentazione di RevenueCat è esplicita — *«Make sure you have added **both** your App-Specific Shared Secret **and** your In-App Purchase Key… These are required for validating subscriptions **and fetching offerings/products**. Missing either of these credentials can prevent products and offerings from being fetched in your app.»*
+
+⚠️ **Quindi non è un comodo: senza una delle due, i prodotti non si recuperano affatto** — e il sintomo non nomina le credenziali, dice *«nessuno dei prodotti registrati su RevenueCat è stato recuperato da App Store Connect»*, che manda a cercare nei prodotti.
 
 **2.2 Entitlement** — uno solo:
 
@@ -143,6 +145,29 @@ npx supabase functions deploy abbonamento-webhook --no-verify-jwt --project-ref 
 🔑 **«Nudo, senza `Bearer`»** perché la funzione confronta l'header per intero: qualunque prefisso lo fa fallire, e l'errore sarebbe un `401` indistinguibile da un segreto sbagliato.
 
 ⚠️ **Sandbox serve quanto Production**: gli acquisti di prova da TestFlight passano da lì, e se il webhook è collegato solo a Production **niente di ciò che provi arriva mai al database** — e sembrerebbe un difetto del codice.
+
+---
+
+## 🔴 Quando l'app dice «None of the products could be fetched»
+
+Capitato il 2026-09-14 (3) sulla prima development build. 🔑 **La cosa da sapere prima di cercare, perché sposta il posto in cui si guarda: quei prodotti li chiede il TELEFONO, non RevenueCat.** RevenueCat passa all'SDK solo la *lista di identificativi*; a interrogare l'App Store è **StoreKit sul dispositivo**. Nessuna modifica nel pannello RevenueCat può quindi far comparire un prodotto che App Store Connect non sta servendo.
+
+⚠️ **E «nessuno» esclude il refuso su un singolo identificativo**: se un solo ID non combaciasse, l'altro prodotto arriverebbe lo stesso. Un guasto che li prende tutti è **di account o di stato**, non di nome.
+
+L'ordine in cui conviene guardare, dal più probabile — è la checklist ufficiale di RevenueCat ristretta al nostro caso:
+
+| # | Controllo | Perché proprio questo |
+|---|---|---|
+| 1 | **App-Specific Shared Secret** e **In-App Purchase Key** caricate entrambe su RevenueCat | 🔑 *Sono dichiarate necessarie **per recuperare i prodotti**, non solo per validare le ricevute* — e ne basta una mancante. Colpisce tutti i prodotti insieme, che è esattamente il sintomo |
+| 2 | **Stato dei prodotti** in ASC: `Ready to Submit` o `Approved` | ⚠️ In `Missing Metadata` non vengono serviti. *La causa più frequente sta nel **gruppo**, non nei piani: anche il gruppo di abbonamento vuole il suo nome localizzato, e finché manca tiene fermi tutti i piani che contiene* |
+| 3 | **Bundle ID** uguale in tre posti: pannello RevenueCat, App Store Connect, `app.json` | ⚠️ Fa distinzione fra maiuscole e minuscole. Il nostro è `com.lifecouple.app` |
+| 4 | **Agreements, Tax and Banking** tutte e tre attive | Possono **scadere**, e la propagazione dopo la firma arriva a **24 ore** |
+| 5 | **Identificativi** dei prodotti, carattere per carattere | `com.lifecouple.app.insieme.mensile` e `.annuale` |
+| 6 | **Propagazione** | Prodotti nuovi: fino a **24 ore**. Se 1-5 quadrano, l'unica mossa giusta è **aspettare**, non toccare altro |
+
+⬜ **Due controlli della lista ufficiale non ci riguardano**: il file *StoreKit Configuration* di Xcode (qui non esiste — il prebuild avviene su EAS) e la chiave di piattaforma sbagliata (la nostra è `appl_…`, verificato).
+
+⚠️ **Per l'acquisto, non per il recupero**, serve anche essere autenticati con un **Apple Account sandbox** sul telefono — *Impostazioni → App Store → Sandbox Account*. Non serve per far comparire i prezzi.
 
 ---
 
