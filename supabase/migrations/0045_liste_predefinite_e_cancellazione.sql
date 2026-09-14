@@ -1,7 +1,8 @@
 -- =============================================================================
 -- LifeCouple — 0045: due protezioni si bloccavano a vicenda, e vinceva la peggiore
 --
--- 🔴 DA APPLICARE. È la correzione che fa funzionare la cancellazione account.
+-- ✅ APPLICATA il 2026-09-14 (4) con `supabase db query`. È la correzione che fa
+--    funzionare la cancellazione account, e `npm run test:cancellazione` la prova.
 --
 -- ## Come è saltato fuori
 --

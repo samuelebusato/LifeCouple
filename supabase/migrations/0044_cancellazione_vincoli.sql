@@ -1,7 +1,9 @@
 -- =============================================================================
 -- LifeCouple — 0044: la passata della 0026, rifatta sulle tabelle nate dopo
 --
--- 🔴 DA APPLICARE, ed e' una CORREZIONE DI DIFETTO, non una pulizia.
+-- ✅ APPLICATA il 2026-09-14 (4) con `supabase db query`, ed e' una CORREZIONE DI
+--    DIFETTO, non una pulizia. Verificata: zero chiavi verso auth.users senza
+--    azione di cancellazione.
 --
 -- ## Come e' saltato fuori
 --

@@ -1,7 +1,8 @@
 -- =============================================================================
 -- LifeCouple — 0043: il commento della 0040 dice «B-63», e il difetto e' B-64
 --
--- 🔴 DA APPLICARE. Una riga, e non cambia nessun comportamento.
+-- ✅ APPLICATA il 2026-09-14 (4) con `supabase db query`. Una riga, e non cambia
+--    nessun comportamento. Verificata: il commento comincia con «B-64:».
 --
 -- ## Perche' esiste una migrazione per un commento
 --
