@@ -28,6 +28,36 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-14 (3) — I documenti raggiungono il codice, e due frasi legali che non ci sono
+
+**Chiesto dall'utente**: allineare [`docs/Architecture.md`](docs/Architecture.md) e [`docs/threat-model.md`](docs/threat-model.md), rimasti indietro di due sottosistemi interi — le notifiche di ieri e i pagamenti di stamattina.
+
+✅ **Architecture.md allineato in 19 punti.** I due buchi attesi erano le due catene mancanti. Ma rileggendolo **contro il codice** ne sono emersi altri quattro che nessuno stava cercando, tutti della stessa forma — *una riga vera quando è stata scritta*: l'intestazione dichiarava ancora **«architettura progettata, non implementata; nessun componente esiste»**; §2 contava **quattro** confini di fiducia mentre il threat model ne aveva già cinque — 🔴 *i due documenti canonici si contraddicevano fra loro*; §5 dava l'appaiamento come *«da decidere, la voce più bloccante del backlog»* un mese dopo **D-14**; §7 teneva il tetto foto a `—` un mese dopo **D-22**.
+
+✅ **threat-model.md allineato in 32 punti**, e qui il problema era l'opposto: §4-ter è stato scritto **prima** del codice, e il codice è arrivato poche ore dopo. 🔑 **Undici mitigazioni su undici sono state costruite come la specifica diceva, e nessuna ha dovuto essere riscritta per adattarla a ciò che era stato fatto.** *È la misura più netta che si possa avere del perché il threat model si scriva prima.* ⚠️ Con l'unica eccezione che **la tabella stessa aveva previsto**: la riga su RevenueCat imponeva di aggiornare l'informativa *nello stesso giro* in cui entra l'SDK, e non è andata così — l'SDK prima, i documenti dopo. *Una previsione scritta non impedisce l'errore che descrive; lo rende riconoscibile subito.*
+
+✅ **Le mitigazioni «da fare» di §2, §3 e §4 riviste una per una** contro ciò che le misura, invece che con un giudizio complessivo. Cinque erano **verificate da tempo** e il documento non lo diceva; tre erano **parziali**, e dichiararlo cambia cosa si sa: manca il **limite di frequenza** sui caricamenti, `registro_azioni` riceve **solo lo scioglimento**, e la **notifica di scioglimento** a entrambi non è mai stata costruita.
+
+🔴 **B-66 — il commento dice che il recesso decade, e le frasi che lo farebbero decadere non ci sono.** Trovato rileggendo il paywall per compilare una riga della tabella. §4.
+
+🔴 **E un buco di misura che vale più di molte righe verdi**: *non esiste il test che fallisce se una tabella non ha policy RLS*. Le policy si provano tabella per tabella, quindi **una tabella nuova senza policy non fa fallire niente** — ⚠️ e le 89 asserzioni verdi rendono più facile credere di sì. È il punto 4 della lista di verifica scritta il 2026-08-12, l'unico dei quattro mai costruito.
+
+✅ **Quattro dichiarazioni stantie corrette fuori dai due documenti**: le intestazioni di `0041` e `0042` dicevano ancora **«NON ANCORA APPLICATA»** a migrazioni vive da ore; [`docs/pagamenti.md`](docs/pagamenti.md) §2.3 diceva di associare i prodotti all'entitlement `insieme` mentre §2.2, due paragrafi sopra, dichiara `lifecouple_pro` — 🔑 *un runbook che si contraddice al proprio interno, e che qualcuno segue con le credenziali in mano*; la sua sezione *«Cosa resta fuori»* elencava come mancanti tre cose su quattro fatte **lo stesso pomeriggio**; e [`docs/conformita.md`](docs/conformita.md) §6 teneva RevenueCat alla voce *«se adottato»*.
+
+✅ **E il piano di pubblicazione è stato riorganizzato** ([`docs/pubblicazione.md`](docs/pubblicazione.md) **§7-ter**), perché era il terzo documento a non aver assorbito la giornata: §7-bis era ancorato a una pubblicazione su **due** store. 🔑 **D-132 gli ha tolto sotto la voce più grossa** — il test chiuso di Google, 12 tester per 14 giorni più 7 di revisione, cioè *la coda più lunga del piano e l'unica che nessun lavoro poteva accelerare*. ⚠️ **Il collo di bottiglia non è più un'attesa: è lavoro nostro.** Il piano nuovo è in **cinque corsie** — i muri, l'acquisto vero, le notifiche, la verifica, la confezione — e ogni voce dice **chi può farla**, perché metà richiede credenziali che l'agente non ha e non deve avere.
+
+⚠️ **La stima «6–10 settimane» non è stata sostituita con un numero nuovo**, ed è deliberato: era ancorata al test chiuso di Google, quindi non è «un po' meno» — è un'altra cosa. §8 dice ora **da cosa dipende** il calendario invece di quanto dura, e dichiara la variabile che lo sposta più di tutte: 🔑 *quanta verifica si vuole fare prima di pubblicare è una **decisione**, non una durata.*
+
+✅ **E poi la sessione ha smesso di essere solo documentazione: è nato `tests/rls.copertura.mjs`** (`npm run test:copertura`), il **punto 4** della lista di verifica del 2026-08-12 — l'unico dei quattro mai costruito, e il buco che questa stessa giornata aveva messo in fila poche ore prima. 30 tabelle, tutte con RLS, una sola senza policy e **dichiarata per nome con la sua ragione**.
+
+🔑 **Legge le migrazioni e non il catalogo, ed è una scelta con un costo dichiarato**: con la chiave publishable `pg_policies` non è interrogabile — la stessa cosa che il 2026-09-02 aveva impedito di leggere `pg_publication_tables` — e la `service_role` in questo repo non entra. Quindi prova che **nessuna migrazione** introduca una tabella scoperta, **non** cosa c'è davvero nel database: una tabella creata a mano dal dashboard resterebbe invisibile, ed è scritto nel file. ✅ *In cambio gira senza credenziali e senza rete: è l'unico test del progetto che un hook pre-commit può eseguire su qualunque dispositivo.*
+
+✅ **Ed è stato guardato fallire prima di essere creduto**, su quattro controprove: una tabella senza RLS, una con RLS e zero policy, una policy aggiunta all'eccezione dichiarata — *che deve far fallire il test, perché la dichiarazione diventa falsa* — e una policy su una tabella mai creata. Poi la controprova è stata cancellata e il test è tornato verde.
+
+✅ **Corretto il commento di B-66** in `lib/i18n.ts`, che era la parte del difetto che non richiedeva un avvocato: ora dice che quelle frasi assolvono **l'obbligo di Apple** e nomina per esteso le due che mancano. 🔑 *Aggiunto anche sopra la stringa inglese, che dal 2026-09-10 è l'unico testo ufficiale (D-123): è lì che le frasi dovranno arrivare.* `tsc` esce 0.
+
+⚠️ **A parte quei due commenti, nessuna riga di codice dell'app è stata toccata**: per il resto la sessione ha cambiato documenti, intestazioni di migrazioni e un test nuovo. Quindi **la lista dei controlli sul telefono non si allunga**.
+
 ### 2026-09-14 (2) — Le notifiche arrivano su un telefono vero, e la mascotte non prendeva punti
 
 **Chiesto dall'utente**: accendere le notifiche e provarle sull'iPhone. Poi, a metà: *«ho visitato un posto nuovo ma la mascotte non ha preso punti, come mai?»* — che ha aperto **B-64**. E infine le icone dell'app (**D-131**).
@@ -3137,6 +3167,34 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 
 ## 4. Bug trovati e come sono stati verificati
 
+### B-66 — Il commento dichiara che il recesso decade, e le frasi che lo farebbero decadere non ci sono (2026-09-14, APERTO)
+
+**Trovato** rileggendo `app/paywall.tsx` per stabilire lo stato reale della riga *«Schermata d'acquisto»* del threat model §4-ter. 🔑 *Non da un test, e nessun test potrebbe trovarlo*: il codice fa esattamente ciò che dice di fare — è **ciò che dice** a non corrispondere all'obbligo che nomina.
+
+#### Il fatto
+
+In [`lib/i18n.ts`](lib/i18n.ts), sopra la stringa `abbonamento.condizioni`:
+
+    ⚠️ Obbligo, non stile: Apple e il Codice del Consumo pretendono che PRIMA
+    del pulsante si legga durata, prezzo alla scadenza e come disdire. Senza
+    queste frasi la decadenza del recesso non opera.
+
+E la stringa dice: *«Rinnovo automatico. Disdici quando vuoi dalle impostazioni del telefono, almeno 24 ore prima. Durante la prova non paghi nulla.»*
+
+🔑 **Il commento fonde due obblighi diversi, e la stringa ne soddisfa solo il primo.** Le informazioni su rinnovo, prezzo alla scadenza e disdetta le pretende **Apple**, e ci sono — per giunta nel posto giusto, sopra il pulsante e fuori dallo scorrimento. La **decadenza del diritto di recesso** (art. 59.1.o Codice del Consumo) chiede altre due cose: il **consenso espresso** all'esecuzione immediata del servizio e la **presa d'atto di perdere il recesso**. Nessuna delle due compare, e il paywall **non linka nessun documento legale** — il terzo aggancio previsto da D-121, che oggi esiste solo in registrazione e Impostazioni.
+
+⚠️ **Il danno del commento è maggiore del danno della mancanza.** Una lacuna nota vive nel backlog e prima o poi si chiude; un commento che dichiara l'obbligo **già soddisfatto** chiude la domanda a chi legge il codice — ed è scritto esattamente nel punto in cui qualcuno andrebbe a controllare. *È la stessa forma di B-60: una dichiarazione che il codice smentisce, dove nessuno pensa di verificarla.*
+
+#### Conseguenza, dichiarata
+
+Finché resta così, **la decadenza non opera: restano quattordici giorni di recesso esercitabili su ogni acquisto**, prova gratuita compresa. Non è un rischio teorico: è un diritto che l'utente può esercitare e a cui non avremmo nulla da opporre.
+
+#### Perché NON è stato corretto in questa sessione
+
+Le due frasi sono **testo legale vincolante**, su una schermata che incassa, in un prodotto il cui unico testo ufficiale è l'inglese (**D-123**). Scriverle di iniziativa significherebbe inventare una formula giuridica e renderla operativa. 🔑 *È lo stesso confine tenuto il 2026-08-31, quando non si è dichiarata una conservazione a termine che il sistema non applicava: un documento completo e falso è peggio di uno incompleto, perché da fuori sembra finito.* Sta in cima al blocco pagamenti del backlog §6 e passa dalla revisione dell'avvocato già prevista.
+
+⚠️ **E nel frattempo il commento resta a dire il falso.** Correggerlo è una riga e non richiede un avvocato: va fatto anche prima delle frasi, perché è il commento — non la mancanza — a impedire che qualcun altro se ne accorga.
+
 ### B-65 — Il segreto del cron è stato impostato alla lettera, ed era una stringa pubblicata (2026-09-14)
 
 **Trovato** perché l'utente ha incollato in chat il comando che aveva eseguito, e il prompt diceva `C:\...\LifeCouple>` — cioè **cmd.exe**, non bash.
@@ -4307,6 +4365,37 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
+### 🔴 I pagamenti: l'impianto c'è, mancano l'acquisto vero e due frasi — aggiunto il 2026-09-14 (3)
+
+| Pezzo | Stato |
+|---|---|
+| Schema del diritto (`0041`) e limiti del piano (`0042`) | ✅ **applicate** il 2026-09-14 |
+| Edge Function `abbonamento-webhook` | ✅ deployata con `--no-verify-jwt`, e **concede davvero**: le coppie di prova ottengono «Insieme» solo passando da lì |
+| SDK, paywall, muri, Customer Center | ✅ fatti (D-133, D-135) |
+| Avviso «cancellare l'account non disdice l'abbonamento» | ✅ fatto |
+| 🔴 **Le due frasi del Codice del Consumo prima del pulsante**, più il terzo aggancio ai documenti legali | **manca — B-66.** Finché manca, il recesso **non decade**. ⚠️ *Prima ancora, va corretto il commento che dichiara il contrario: è una riga e non richiede un avvocato* |
+| 🔴 **L'acquisto vero, mai percorso** | StoreKit non serve ancora i prodotti: la catena **acquisto → Apple → RevenueCat → webhook → diritto** non è mai stata attraversata da un capo all'altro. 🔑 *È l'unico anello che nessuna delle prove fatte sostituisce* |
+| 🔴 **Accordo art. 28** con RevenueCat — e con Expo, Apple, Google, Supabase | nessuno accettato né archiviato: i trasferimenti avvengono senza la base documentale che il registro dichiara |
+| ⚠️ **Guardia sul prefisso della chiave** | niente impedisce di pubblicare una build con la chiave `test_…`: gli acquisti finirebbero al **negozio di prova**, e il diritto verrebbe concesso a chi non ha pagato nulla |
+| ⚠️ **Il nome dell'entitlement vive in due posti** che nessun controllo confronta (`lib/acquisti.ts` e il pannello RevenueCat) | se divergono, l'app non concede mai niente **e non lo dice** |
+
+### 🔴 I buchi di misura, messi in fila il 2026-09-14 (3)
+
+Emersi allineando il threat model. Nessuno rompe qualcosa **oggi**; tutti rendono **invisibile** un guasto futuro.
+
+| Cosa manca | Perché conta |
+|---|---|
+| ✅ ~~Il test che fallisce se una tabella non ha policy RLS~~ | **costruito il 2026-09-14 (3)**: `tests/rls.copertura.mjs`. 🔑 *Chiude il caso che le asserzioni avversariali non potevano coprire per costruzione* — quelle misurano le tabelle a cui qualcuno ha pensato |
+| 🔴 **La prova end-to-end della catena di cancellazione** | il codice c'è dal 2026-08-31 e **nessuno ha mai cancellato un account di prova per controllare che non restino file**. È l'errore già trovato su HeleoX, e l'art. 17 lo rende una violazione **invisibile** |
+| ⚠️ **L'esito dei giri di `test:abbonamento`, `test:webhook`, `test:confine`** | le asserzioni esistono, ma **nessun documento registra un giro verde**. 🔑 *Un test il cui esito non è scritto da nessuna parte è un ricordo, non una prova* |
+| ⚠️ **I punti di partite ed elementi di lista** | stessa forma di **B-64**, e nessuna misura diretta: `test:punti` copre i **luoghi**. La zona è stata ridotta, non svuotata |
+
+### ⬜ Tre cose vere e non costruite, dichiarate il 2026-09-14 (3)
+
+- **Nessun limite di frequenza sui caricamenti.** Il tetto di 1 GB (D-22) esiste e si impone, ma niente impedisce di riempirlo in un'ora — ed è la riga «D» di TB-1.
+- **`registro_azioni` riceve solo lo scioglimento.** Alla domanda per cui la tabella esiste — *«non sono stato io a cancellarle»*, TB-2 categoria R — oggi non risponde. È accountability, art. 5(2).
+- **La notifica di scioglimento a entrambi non esiste.** I tre tipi della `0039` non la comprendono, quindi chi lo subisce se ne accorge **trovando l'app vuota**: esattamente ciò che quella mitigazione voleva evitare.
+
 ### ⟳ Le notifiche push: il codice c'è tutto, mancano quattro gesti — aggiornato il 2026-09-14
 
 Il lato app era fatto (**D-128**), l'invio no. ✅ **Ora c'è anche quello** (**D-129**): migrazione `0039` (coda, trigger, funzioni periodiche, lingua sul dispositivo), Edge Function [`invia-notifiche`](supabase/functions/invia-notifiche/index.ts), e le prove RLS in `tests/rls.avversariali.mjs`.
@@ -4750,6 +4839,24 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-14 (3) — i documenti dicono ciò che c'è, e la mezza giornata dei pagamenti ha finalmente una nota di ripresa.**
+>
+> 🔴 **Prima di tutto, ciò che qui mancava.** La seconda metà del 2026-09-14 ha costruito **l'intera catena dei pagamenti**, e questo punto di ripresa non la nominava: `0041` (il diritto, sull'utente e proiettato sulla coppia), `0042` (i limiti del piano gratuito imposti dal database), la Edge Function `abbonamento-webhook`, l'SDK, il **paywall**, i muri su mappa/liste/creatura, i rifiuti del database che portano al paywall invece che a un errore tecnico, e la prima **development build** su EAS. Quattro decisioni: **D-132** (solo iPhone), **D-133** (RevenueCat), **D-134** (€7,99 / €39,99), **D-135** (confine gratis/pagamento + prova di una settimana). ⚠️ *Chi avesse ripreso da qui avrebbe creduto che i pagamenti non esistessero.*
+>
+> ✅ **`0041` e `0042` sono applicate** — e le loro intestazioni non dicono più il contrario.
+>
+> 🔴 **L'anello mai provato è l'acquisto vero.** StoreKit non serve ancora i prodotti, quindi **nessun pagamento è mai arrivato fino alla tabella**. Tutto il resto della catena è costruito e, dove dichiarato, misurato: ma da un capo all'altro non è mai stata percorsa.
+>
+> 🔴 **B-66 — il paywall non fa decadere il recesso, e un commento nel codice dice di sì.** Restano quattordici giorni esercitabili su ogni acquisto. Le due frasi vogliono una formula legale, non una riga di codice; ⚠️ *ma il commento che dichiara l'obbligo soddisfatto va corretto subito, perché è lui a impedire che qualcun altro se ne accorga.*
+>
+> ✅ **I due documenti canonici sono allineati al codice** (19 + 32 modifiche). `Architecture.md` ha ora i **cinque** confini di fiducia, le **tre** Edge Function, §4.3-quater sul diritto e il piano gratuito, e sei flussi invece di quattro; `threat-model.md` porta per ogni mitigazione lo **stato reale col nome di ciò che la misura**, invece di un «da fare» scritto prima che il codice esistesse.
+>
+> ⚠️ **Due cose da sapere prima di fidarsi di una riga verde** (erano tre stamattina): la catena di cancellazione non è **mai** stata provata end-to-end; e l'esito dei giri di `test:abbonamento`, `test:webhook` e `test:confine` non è registrato da nessuna parte. ✅ *La terza è chiusa*: `npm run test:copertura` esiste. Tutte in §6.
+>
+> 🔑 **E da stasera esiste un posto solo dove guardare per sapere cosa fare**: [`docs/pubblicazione.md`](docs/pubblicazione.md) **§7-ter** — cinque corsie, ogni voce con **chi può farla**, e in fondo l'ordine dei prossimi giorni. *Le voci qui sotto sono le stesse, ma lì sono organizzate invece che elencate.*
+>
+> ⬜ **Resta invariato dalle note precedenti**: il **cron non è pianificato** (senza, niente parte da solo); la **chiave APNs** non è stata creata; **una chiave privata finita in chat va revocata** e sostituita su RevenueCat; le **pagine legali della landing** non sono caricate; telefono e indirizzo **DSA** vanno chiesti; il commento della funzione nel database dice ancora **«B-63»**; la lista **Film** aspetta TMDB.
 
 > **Nota del 2026-09-14 (2) — le notifiche arrivano su un telefono vero, manca solo l'orologio. E la mascotte ha smesso di perdere punti.**
 >
