@@ -498,6 +498,352 @@ let luogoId;
 }
 
 // =============================================================================
+// B-62 — LO STORAGE DOPO LO SCIOGLIMENTO (migrazione 0037)
+//
+// Il blocco qui sopra esercita il confine di D-04 sulle TABELLE, ed e' proprio
+// di li' che B-62 e' passato: la riga `foto` diceva gia' `e_membro_attivo(
+// coppia_id) or autore_id = auth.uid()`, il FILE no — `foto_leggi` (0009) si
+// fermava a `e_membro_attivo`, che dopo la rottura e' falsa per entrambi.
+// Il risultato era peggiore di una cancellazione: i metadati restavano visibili
+// e la fotografia non si apriva piu', mentre informativa §6 e termini §5
+// promettono che ciascuno conserva cio' di cui e' autore.
+//
+// 🔑 **Perche' qui si caricano file VERI invece di riusare la riga finta del
+//    blocco sopra**: `chiave_storage` e' soltanto testo, e una riga che punta a
+//    un file inesistente supera tutti i controlli sulle tabelle senza toccare
+//    una sola policy di `storage.objects`. Il difetto viveva nello storage —
+//    senza un oggetto vero nel bucket questo test non guarderebbe il posto in
+//    cui il difetto stava.
+//
+// ⚠️ **E per questo la misura PRIMA della rottura non e' un di piu': e' portante.**
+//    `createSignedUrl` fallisce sia quando la policy nega sia quando il file non
+//    c'e', e i due casi da fuori si somigliano. Se non si fosse visto il file
+//    firmabile finche' la coppia era viva, un caricamento andato male darebbe
+//    verde a tutte le asserzioni «non deve firmare»: il test passerebbe **proprio
+//    mentre non sta guardando niente**. E' la stessa forma del PASS D-04 che
+//    misurava la cosa sbagliata, ed e' il motivo per cui le due righe «prima
+//    della rottura» non vanno tolte perche' «sembrano ovvie».
+// =============================================================================
+{
+  // Un JPEG vero di 1x1 pixel, 631 byte. Il bucket accetta solo immagini
+  // (`allowed_mime_types`, 0009): un file inventato verrebbe rifiutato dal tipo
+  // dichiarato e non dalla policy — un altro modo di fallire per la ragione
+  // sbagliata.
+  const JPEG_1x1 = Buffer.from(
+    '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigD//2Q==',
+    'base64'
+  );
+
+  const f1 = await utente('rls-f1@example.com');
+  const f2 = await utente('rls-f2@example.com');
+
+  /** Chiedere l'URL firmato E' la prova: la firma la rilascia solo chi passa `foto_leggi`. */
+  const firma = async (c, chiave) => {
+    const { data, error } = await c.storage.from('foto').createSignedUrl(chiave, 60);
+    return { ok: !error && !!data?.signedUrl, url: data?.signedUrl ?? null, msg: error?.message ?? '' };
+  };
+
+  /**
+   * ⚠️ Un URL firmato che poi restituisce 404 sarebbe un PASS falso: la firma
+   * dice «avresti il permesso», non «il file c'e'». Si scarica davvero, e si
+   * contano i byte.
+   */
+  const byteScaricati = async (url) => {
+    if (!url) return 0;
+    const r = await fetch(url);
+    return r.ok ? (await r.arrayBuffer()).byteLength : 0;
+  };
+
+  // Campo pulito: al secondo giro si riparte da due persone libere. `coppiaDi`
+  // creera' quindi una coppia NUOVA, e le chiavi non collidono mai con quelle
+  // del giro precedente.
+  await f1.rpc('sciogli_coppia');
+  await f2.rpc('sciogli_coppia');
+
+  const cid = await coppiaDi(f1);
+  const { data: tokF } = await f1.rpc('crea_invito');
+  const { data: invF } = await f2.rpc('apri_invito', { p_token: tokF });
+  const { error: eConfF } = await f1.rpc('conferma_invito', { p_invito_id: invF });
+  esito('B-62: coppia di prova formata', !eConfF, eConfF?.message);
+
+  const chiaveF1 = `${cid}/b62-di-f1.jpg`;
+  const chiaveF2 = `${cid}/b62-di-f2.jpg`;
+
+  // --- i due file veri, stessa cartella, autori diversi -----------------------
+  const carica = async (c, chiave) => {
+    const { error } = await c.storage
+      .from('foto')
+      .upload(chiave, new Blob([JPEG_1x1], { type: 'image/jpeg' }), { contentType: 'image/jpeg' });
+    return error?.message ?? '';
+  };
+  const eUpF1 = await carica(f1, chiaveF1);
+  const eUpF2 = await carica(f2, chiaveF2);
+  esito('B-62: i due file sono nel bucket', !eUpF1 && !eUpF2, `${eUpF1} ${eUpF2}`.trim());
+
+  const { error: eRigaF1 } = await f1
+    .from('foto')
+    .insert({ coppia_id: cid, chiave_storage: chiaveF1, byte: JPEG_1x1.length });
+  const { error: eRigaF2 } = await f2
+    .from('foto')
+    .insert({ coppia_id: cid, chiave_storage: chiaveF2, byte: JPEG_1x1.length });
+  esito(
+    'B-62: le due righe `foto` esistono, una per autore',
+    !eRigaF1 && !eRigaF2,
+    `${eRigaF1?.message ?? ''} ${eRigaF2?.message ?? ''}`.trim()
+  );
+
+  // --- LA MISURA PORTANTE: finche' la coppia e' viva si firma tutto -----------
+  const primaPropria = await firma(f2, chiaveF2);
+  const primaAltrui = await firma(f2, chiaveF1);
+  esito('B-62 prima della rottura: F2 firma la propria foto', primaPropria.ok, primaPropria.msg);
+  esito(
+    'B-62 prima della rottura: F2 firma anche quella di F1 (coppia ancora attiva)',
+    primaAltrui.ok,
+    primaAltrui.msg
+  );
+  const bytePrima = await byteScaricati(primaPropria.url);
+  esito(
+    'B-62 prima della rottura: l URL firmato scarica byte veri',
+    bytePrima === JPEG_1x1.length,
+    `scaricati=${bytePrima} attesi=${JPEG_1x1.length}`
+  );
+
+  // --- la rottura -------------------------------------------------------------
+  const { error: eSciF } = await f1.rpc('sciogli_coppia');
+  esito('B-62: la coppia si scioglie', !eSciF, eSciF?.message);
+
+  // --- cio' che 0037 ha corretto ---------------------------------------------
+  const dopoPropriaF2 = await firma(f2, chiaveF2);
+  esito(
+    'B-62: dopo lo scioglimento l autore firma ANCORA la propria foto (0037)',
+    dopoPropriaF2.ok,
+    dopoPropriaF2.msg
+  );
+  const byteDopo = await byteScaricati(dopoPropriaF2.url);
+  esito(
+    'B-62: e la fotografia si apre davvero, non solo si firma',
+    byteDopo === JPEG_1x1.length,
+    `scaricati=${byteDopo} attesi=${JPEG_1x1.length}`
+  );
+  const dopoPropriaF1 = await firma(f1, chiaveF1);
+  esito(
+    'B-62: vale per entrambi, non solo per chi ha subito la rottura',
+    dopoPropriaF1.ok,
+    dopoPropriaF1.msg
+  );
+
+  // --- il confine che 0037 NON sposta -----------------------------------------
+  // 🔑 E' la meta' che rende accettabile la correzione: se cadesse, la 0037
+  // avrebbe dato a un ex qualcosa che prima non aveva — il danno esatto che D-04
+  // esiste per impedire, causato dalla toppa invece che dal difetto.
+  //
+  // ⚠️ **Il messaggio che si vede qui e' «Object not found», e NON e' un errore
+  //    del test.** Lo storage non distingue «non c'e'» da «non puoi»: e' voluto,
+  //    altrimenti il messaggio sarebbe un oracolo sull'esistenza dei file altrui.
+  //    La prova che si tratta davvero di un diniego e' **differenziale** e sta
+  //    nelle righe qui sopra: nello stesso istante, sullo stesso identico
+  //    oggetto, F1 ottiene la firma e F2 riceve «Object not found». Un file
+  //    assente non si comporterebbe cosi' con due identita' diverse.
+  //    *Chi un giorno leggesse questo messaggio e concludesse che il test e'
+  //    rotto toglierebbe l'unica asserzione che tiene fermo D-04.*
+  const dopoAltruiF2 = await firma(f2, chiaveF1);
+  esito(
+    'D-04: dopo lo scioglimento l ex NON firma la foto dell altro',
+    !dopoAltruiF2.ok,
+    dopoAltruiF2.ok ? 'URL firmato ottenuto!' : dopoAltruiF2.msg
+  );
+  const dopoAltruiF1 = await firma(f1, chiaveF2);
+  esito(
+    'D-04: e non lo fa nemmeno chi ha deciso la rottura',
+    !dopoAltruiF1.ok,
+    dopoAltruiF1.ok ? 'URL firmato ottenuto!' : dopoAltruiF1.msg
+  );
+
+  // --- pulizia, che e' anche un'asserzione ------------------------------------
+  // Cancellata la riga, il trigger `foto_pulisci_storage` (0009) porta via il
+  // file. E' il primo pezzo di catena di cancellazione MISURATO invece che
+  // dichiarato: `docs/legal/catena-cancellazione.md` promette che il file segue
+  // la riga, e finora nessuno l'aveva visto accadere.
+  await f1.from('foto').delete().eq('chiave_storage', chiaveF1);
+  await f2.from('foto').delete().eq('chiave_storage', chiaveF2);
+  const restaF1 = await firma(f1, chiaveF1);
+  esito(
+    'B-62: cancellata la riga, il file non si firma piu (il trigger 0009 lo ha tolto)',
+    !restaF1.ok,
+    restaF1.ok ? 'il file e ancora raggiungibile!' : restaF1.msg
+  );
+}
+
+
+// =============================================================================
+// NOTIFICHE — dispositivi, consensi e coda di invio (0038 + 0039)
+//
+// Le prime quattro prove erano scritte in fondo alla 0038, la quinta e la sesta
+// in fondo alla 0039, ed erano tutte da fare **fallire prima di crederci**.
+//
+// 🔑 La domanda avversariale qui non e' «la policy e' scritta giusta?» ma:
+//    **cosa puo' fare il partner con i dati tecnici dell'altro?** Un token e'
+//    un identificativo di dispositivo e `visto_il` direbbe quando ha usato il
+//    telefono l'ultima volta: e' il confine TB-2 applicato a un dato che sembra
+//    infrastruttura e non contenuto — cioe' il posto dove i confini si
+//    dimenticano piu' facilmente.
+//
+// ⚠️ **La trappola di B-23 domina questo blocco.** Un UPDATE o un DELETE che la
+//    RLS blocca non da' errore: riesce, toccando zero righe. Ogni assertione di
+//    scrittura qui si verifica quindi **rileggendo con gli occhi del
+//    proprietario**, mai fidandosi del fatto che la chiamata non sia esplosa.
+// =============================================================================
+{
+  const n1 = await utente('rls-n1@example.com');
+  const n2 = await utente('rls-n2@example.com');
+  const idN1 = (await n1.auth.getUser()).data.user.id;
+
+  // La 0039 aggiunge `lingua` a `dispositivo`: e' il modo piu' diretto di
+  // sapere se e' stata applicata. ⚠️ Senza questo controllo le prove che la
+  // riguardano fallirebbero con «column does not exist», cioe' un messaggio che
+  // sembra un difetto del codice e invece e' una migrazione da eseguire.
+  const { error: eLingua } = await n1.from('dispositivo').select('lingua').limit(1);
+  const ha0039 = !eLingua;
+  if (!ha0039) {
+    console.log(`\n⚠️  migrazione 0039 non applicata (${eLingua.message}) — le prove che la riguardano falliranno\n`);
+  }
+
+  await n1.rpc('sciogli_coppia');
+  await n2.rpc('sciogli_coppia');
+  const cidN = await coppiaDi(n1);
+  const { data: tokN } = await n1.rpc('crea_invito');
+  const { data: invN } = await n2.rpc('apri_invito', { p_token: tokN });
+  const { error: eConfN } = await n1.rpc('conferma_invito', { p_invito_id: invN });
+  esito('notifiche: coppia di prova formata', !eConfN, eConfN?.message);
+
+  // --- 1. Il dispositivo di N1, che N2 non deve vedere ------------------------
+  const tokenN1 = 'ExponentPushToken[rls-prova-n1]';
+  const { error: eDisp } = await n1.from('dispositivo').upsert(
+    { utente_id: idN1, token: tokenN1, piattaforma: 'ios', visto_il: new Date().toISOString() },
+    { onConflict: 'token' }
+  );
+  esito('0038: N1 registra il proprio dispositivo', !eDisp, eDisp?.message);
+
+  const { data: vistiDaN1 } = await n1.from('dispositivo').select('token').eq('token', tokenN1);
+  esito('0038: N1 vede il proprio dispositivo', (vistiDaN1?.length ?? 0) === 1);
+
+  const { data: vistiDaN2 } = await n2.from('dispositivo').select('token').eq('token', tokenN1);
+  esito(
+    '0038/TB-2: il PARTNER attivo non vede il dispositivo dell altro',
+    (vistiDaN2?.length ?? 0) === 0,
+    `visti=${vistiDaN2?.length}`
+  );
+
+  // --- 2. E non lo puo' toccare ----------------------------------------------
+  // ⚠️ Nessuna delle due chiamate qui sotto fallisce: la RLS le lascia passare
+  // a vuoto. La prova sta nella rilettura fatta da N1.
+  await n2.from('dispositivo').update({ piattaforma: 'android' }).eq('token', tokenN1);
+  const { data: dopoUpdate } = await n1.from('dispositivo').select('piattaforma').eq('token', tokenN1);
+  esito(
+    '0038: il partner non puo MODIFICARE il dispositivo dell altro (riletto dal proprietario)',
+    dopoUpdate?.[0]?.piattaforma === 'ios',
+    `piattaforma=${dopoUpdate?.[0]?.piattaforma}`
+  );
+
+  await n2.from('dispositivo').delete().eq('token', tokenN1);
+  const { data: dopoDelete } = await n1.from('dispositivo').select('token').eq('token', tokenN1);
+  esito(
+    '0038: il partner non puo CANCELLARE il dispositivo dell altro (riletto dal proprietario)',
+    (dopoDelete?.length ?? 0) === 1,
+    `rimaste=${dopoDelete?.length}`
+  );
+
+  // --- 3. Il consenso promozionale nasce SPENTO ------------------------------
+  // 🔑 E' l'unica riga di questo blocco che protegge da una sanzione e non da un
+  // ex: `inviti_a_tornare` e' marketing, e un default acceso sarebbe un consenso
+  // presunto — che non e' un consenso (D-128).
+  await n1.from('preferenze_notifiche').delete().eq('utente_id', idN1); // riesecuzione pulita
+  const { error: ePref } = await n1.from('preferenze_notifiche').insert({ utente_id: idN1 });
+  const { data: prefN1 } = await n1
+    .from('preferenze_notifiche')
+    .select('luogo_del_partner, ricordi, inviti_a_tornare')
+    .eq('utente_id', idN1)
+    .maybeSingle();
+  esito('0038: la riga dei consensi si crea', !ePref, ePref?.message);
+  esito(
+    '0038/D-128: appena creata, `inviti_a_tornare` e SPENTO e i due di servizio sono accesi',
+    prefN1?.inviti_a_tornare === false &&
+      prefN1?.luogo_del_partner === true &&
+      prefN1?.ricordi === true,
+    `inviti=${prefN1?.inviti_a_tornare} luogo=${prefN1?.luogo_del_partner} ricordi=${prefN1?.ricordi}`
+  );
+
+  const { data: prefViste } = await n2.from('preferenze_notifiche').select('utente_id').eq('utente_id', idN1);
+  esito(
+    '0038: il partner non vede i consensi dell altro',
+    (prefViste?.length ?? 0) === 0,
+    `visti=${prefViste?.length}`
+  );
+
+  // --- 4. La coda: nessuno la legge, e soprattutto nessuno ci SCRIVE ---------
+  // 🔴 La domanda che conta non e' «si legge?» ma «si puo' infilare dentro
+  //    qualcosa?». Se un client potesse inserire in coda, potrebbe far arrivare
+  //    al partner una notifica con il testo che vuole — una capacita' che il
+  //    prodotto non ha e non deve avere.
+  const { data: codaLetta, error: eCodaLetta } = await n2.from('notifica_in_coda').select('id');
+  esito(
+    '0039: nessun client legge la coda (RLS attiva, zero policy)',
+    ha0039 && (codaLetta?.length ?? 0) === 0 && !eCodaLetta,
+    ha0039 ? `lette=${codaLetta?.length} ${eCodaLetta?.message ?? ''}` : '0039 non applicata'
+  );
+
+  const { error: eCodaScritta } = await n2.from('notifica_in_coda').insert({
+    destinatario_id: idN1,
+    tipo: 'luogo_del_partner',
+    dati: { luogo: 'testo scelto da un avversario' },
+    chiave_dedup: `avversario:${Date.now()}`,
+  });
+  esito(
+    '0039: un client NON puo accodare una notifica a un altro utente',
+    ha0039 && !!eCodaScritta,
+    ha0039 ? (eCodaScritta?.message ?? 'insert riuscito!') : '0039 non applicata'
+  );
+
+  // --- 5. Le funzioni del lavoro periodico sono chiuse ai PERMESSI -----------
+  // ⚠️ Si controlla il codice 42501, non il fatto che la chiamata fallisca: e'
+  // la lezione di B-07. `accoda_inviti_a_tornare` fermata dalla guardia interna
+  // significherebbe che e' stata ESEGUITA — e quella funzione, chiamata a
+  // ripetizione, misura l'inattivita' altrui.
+  for (const [nome, args] of [
+    ['accoda_ricordi', {}],
+    ['accoda_inviti_a_tornare', { p_giorni_inattivita: 30 }],
+  ]) {
+    const { error } = await n1.rpc(nome, args);
+    esito(
+      `0039: un utente autenticato e fermato ai PERMESSI su ${nome}`,
+      ha0039 && error?.code === '42501',
+      ha0039
+        ? `atteso 42501, ricevuto ${error?.code ?? 'nessun errore'}: ${error?.message ?? ''}`
+        : '0039 non applicata'
+    );
+  }
+
+  // --- 6. Dopo lo scioglimento il confine regge ------------------------------
+  await n1.rpc('sciogli_coppia');
+  const { data: dopoRottura } = await n2.from('dispositivo').select('token').eq('token', tokenN1);
+  esito(
+    '0038: dopo lo scioglimento l ex non vede comunque il dispositivo dell altro',
+    (dopoRottura?.length ?? 0) === 0,
+    `visti=${dopoRottura?.length}`
+  );
+  const { data: suoAncora } = await n1.from('dispositivo').select('token').eq('token', tokenN1);
+  esito(
+    '0038: ...e il telefono resta di chi ce l ha (lo scioglimento non tocca i dispositivi)',
+    (suoAncora?.length ?? 0) === 1,
+    `viste=${suoAncora?.length}`
+  );
+
+  // Pulizia: il proprio dispositivo si toglie, ed e' un diritto non un'operazione
+  // di sistema (0038).
+  await n1.from('dispositivo').delete().eq('token', tokenN1);
+}
+
+// =============================================================================
 // PULIZIA — la mancanza che ha fatto fallire una migrazione (B-21)
 //
 // Questi test creano partite per provare il sigillo di D-12, e per due settimane
@@ -517,8 +863,21 @@ let luogoId;
 // =============================================================================
 // =============================================================================
 console.log('\n--- Dichiarati NON coperti (nessun gap silenzioso) ---');
-console.log('- file nello storage delle foto: la riga si cancella, il file no — non c e ancora storage');
+console.log(
+  '- file nello storage: dal 2026-09-14 COPERTO — il confine di B-62 (0037) e il trigger\n' +
+    '  che toglie il file insieme alla riga. Resta scoperto il file ORFANO (oggetto senza\n' +
+    '  riga `foto`): il client non puo cancellarlo, perche `foto_cancella` guarda la riga,\n' +
+    '  che non c e. Lo lascia solo un test morto a meta, e si toglie dal dashboard.'
+);
 console.log('- tetto cumulativo 1 GB: richiederebbe ~100 insert; verificata la sola guardia per-file');
+console.log(
+  '- che il trigger della 0039 abbia DAVVERO accodato una notifica: non e osservabile da\n' +
+    '  un client. La coda ha RLS attiva e zero policy, quindi una select torna sempre `[]`\n' +
+    '  — e `[]` significa sia "non c e" sia "non lo vedo" (B-03). Servirebbe la service_role,\n' +
+    '  che non entra in questo repo. Coperto invece il confine che conta: nessuno LEGGE la\n' +
+    '  coda e nessuno ci SCRIVE. Il funzionamento del trigger si prova dal dashboard, o\n' +
+    '  guardando arrivare la notifica su un telefono.'
+);
 console.log(
   '- conteggio dei membri DOPO lo scioglimento: dall esterno 0 significa sia "non ci sono"\n' +
     '  sia "non li vedo". Servirebbe la service_role, che non entra in questo repo.\n' +
