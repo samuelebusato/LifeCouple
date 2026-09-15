@@ -58,6 +58,7 @@ const LANDING = path.join(radice, 'landing');
 const DOCUMENTI = [
   { chiave: 'privacy', file: 'privacy-policy.md', pagina: 'privacy-policy.html' },
   { chiave: 'cookie', file: 'cookie-policy.md', pagina: 'cookie-policy.html' },
+  { chiave: 'termini', file: 'terms-of-use.md', pagina: 'terms-of-use.html' },
 ];
 
 /**
@@ -68,13 +69,33 @@ const DOCUMENTI = [
  * errore, e al prossimo giro qualcuno lo aggiunge a `DOCUMENTI` senza sapere
  * perché non c'era. Lo script li nomina a ogni esecuzione.
  */
-const NON_RESI = [
-  {
-    file: 'terms-of-use.md',
-    perche:
-      'bozza terms-1.1 (2026-09-15): restano DUE segnaposto, e sono DATI MANCANTI, non decisioni — telefono e indirizzo del professionista, obbligo DSA, vanno chiesti all\'utente. Nel momento in cui esistono, questo documento e\' pubblicabile e va spostato in DOCUMENTI. Chiusi il 2026-09-15: il venditore (Apple, Paid Applications Agreement), il confine gratis/a pagamento (riscritto contro 0042 — diceva il falso su quattro punti, uno dei quali era una promessa sulla creatura) e la forma di vendita, che NON e\' un segnaposto del testo ma una verifica fuori dal testo e vive in History.md e in pubblicazione.md A8. Restano dovute la revisione dell\'avvocato e quella conferma del commercialista.',
-  },
-];
+const NON_RESI = [];
+
+/**
+ * ⟳ **NON_RESI e' vuoto dal 2026-09-15 (7), e prima conteneva i termini d'uso.**
+ * La ragione scritta li' era: *«restano DUE segnaposto, e sono DATI MANCANTI —
+ * telefono e indirizzo del professionista, obbligo DSA»*. 🔑 Quei due dati **non
+ * sono ancora arrivati**: e' l'utente ad aver deciso di rendere il documento
+ * ugualmente, con i segnaposto in chiaro, e di sostituirli in un secondo
+ * momento (2026-09-15). ⚠️ *Per questo esiste la lista qui sotto*: il
+ * documento ora si costruisce, ma non si costruisce in silenzio.
+ */
+
+/**
+ * Segnaposto **tollerati**: il documento si costruisce lo stesso, ma vengono
+ * contati e stampati a ogni esecuzione.
+ *
+ * 🔑 **Perche' non bloccano, a differenza di quelli sotto.** I `[DA DECIDERE]`
+ * segnano una cosa che *nessuno ha ancora deciso*; questi segnano un dato che
+ * **e' deciso, esiste, e va solo trascritto** — e l'utente ha scelto
+ * consapevolmente di pubblicare prima di averlo (2026-09-15).
+ *
+ * ⚠️ **Ma il rischio vero non e' legale, e' dimenticarsene**: il documento e'
+ * pubblico e nessuno lo rilegge piu'. Per questo non basta che siano ammessi:
+ * vanno **nominati a ogni giro**, e per questo lo script termina con un
+ * riquadro che li elenca invece di un silenzioso «fatto».
+ */
+const DA_COMPLETARE = [/\[indirizzo\]/g, /\[numero di telefono\]/g];
 
 /** Segnaposto che non devono mai finire sotto gli occhi di un utente. */
 const SEGNAPOSTO = [
@@ -94,6 +115,7 @@ console.log('='.repeat(62));
 /* ---------- lettura e validazione ---------- */
 
 const letti = [];
+const incompleti = [];
 let problemi = 0;
 
 for (const d of DOCUMENTI) {
@@ -122,8 +144,16 @@ for (const d of DOCUMENTI) {
     continue;
   }
 
+  // ⚠️ `match` e non `test`: queste regex hanno il flag /g, e `test` con /g
+  //    porta `lastIndex` avanti fra una chiamata e l'altra — il secondo giro
+  //    sullo stesso documento direbbe di no. Un contatore che sbaglia per un
+  //    dettaglio di API e' peggio di nessun contatore.
+  const daCompletare = DA_COMPLETARE.flatMap((r) => testo.match(r) ?? []);
+  if (daCompletare.length) incompleti.push({ file: d.file, quanti: daCompletare.length });
+
   letti.push({ ...d, titolo: titolo.trim(), testo });
-  console.log(`   ✅ ${d.file} — «${titolo.trim()}», ${testo.split('\n').length} righe`);
+  console.log(`   ✅ ${d.file} — «${titolo.trim()}», ${testo.split('\n').length} righe` +
+      (daCompletare.length ? `  ⚠️ ${daCompletare.length} segnaposto da completare` : ''));
 }
 
 /* I non resi: nominati sempre, così il buco non è silenzioso. */
@@ -527,12 +557,40 @@ if (soloControllo) {
 
   if (!disallineati.length) {
     console.log(`\n✅ Derivati allineati ai documenti: lib/legale/testi.ts + ${pagineAttese.length} pagine della landing.\n`);
+    riepilogoDaCompletare();
     process.exit(0);
   }
   console.log('\n❌ Questi derivati non sono allineati a docs/legal/en/:');
   for (const d of disallineati) console.log(`   • ${d}`);
   console.log('\n   Rigenerali:  node tools/genera-legale.mjs\n');
   process.exit(1);
+}
+
+/**
+ * Il riquadro dei segnaposto da completare.
+ *
+ * 🔑 **Chiude lo script anche quando tutto e' andato bene, ed e' voluto**: un
+ * avviso stampato a meta' output, sopra tre righe verdi di successo, si legge
+ * una volta e poi diventa arredamento. L'ultima cosa che resta sul terminale
+ * e' l'unica che si rilegge davvero.
+ *
+ * ⚠️ **Non fa fallire lo script**: i due dati mancano per decisione dell'utente
+ * (2026-09-15), non per errore, e bloccare qui fermerebbe ogni commit finche'
+ * non arrivano. *Questo controllo non impedisce: ricorda.*
+ */
+function riepilogoDaCompletare() {
+  if (!incompleti.length) return;
+  const totale = incompleti.reduce((n, d) => n + d.quanti, 0);
+  console.log('━'.repeat(62));
+  console.log(`🔴  ${totale} SEGNAPOSTO ANCORA DA SOSTITUIRE, in ${incompleti.length} documento/i RESO/I`);
+  for (const d of incompleti) console.log(`      • ${d.file} — ${d.quanti}`);
+  console.log('');
+  console.log("   Questi documenti sono DENTRO L'APP e PUBBLICI sulla landing.");
+  console.log("   [indirizzo] e [numero di telefono] sono l'obbligo DSA:");
+  console.log("   vanno sostituiti prima di inviare l'app alla revisione.");
+  console.log('   Vedi: docs/pubblicazione.md — voce A3.');
+  console.log('━'.repeat(62));
+  console.log('');
 }
 
 fs.mkdirSync(path.dirname(USCITA), { recursive: true });
@@ -546,4 +604,4 @@ for (const p of pagineAttese) {
   fs.writeFileSync(p.percorso, p.contenuto, 'utf8');
   console.log(`✅ landing/${p.nome} ${prima === null ? 'creata' : 'aggiornata'} — ${p.contenuto.split('\n').length} righe.`);
 }
-console.log('');
+riepilogoDaCompletare();

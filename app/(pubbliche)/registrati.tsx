@@ -172,6 +172,24 @@ export default function Registrati() {
                 >
                   {t.legale.cookieTitolo}
                 </Text>
+                {/* ➳ **Il terzo link, dal 2026-09-15 — ed è questo il «punto di
+                    accettazione».** I termini d'uso si accettano **creando
+                    l'account**, e perché quella frase sia vera devono essere
+                    *conoscibili prima* di premere il pulsante: è esattamente
+                    ciò che §2 dei termini prescrive. ⚠️ *Fino a oggi il
+                    documento non entrava nell'app perché il generatore si
+                    rifiutava di costruirlo, quindi non c'era niente da
+                    linkare* — il buco non era una dimenticanza.
+                    🔑 **Nessuna casella da spuntare, e non è una scorciatoia**:
+                    per un contratto a distanza basta la conoscibilità, e una
+                    spunta obbligatoria non aggiunge validità. La stessa
+                    ragione per cui informativa e cookie policy sono link. */}
+                <Text
+                  className="text-xs text-primary underline"
+                  onPress={() => router.push('/legale/termini')}
+                >
+                  {t.legale.terminiTitolo}
+                </Text>
               </View>
             </View>
 

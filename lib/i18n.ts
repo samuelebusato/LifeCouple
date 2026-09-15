@@ -369,7 +369,7 @@ const it = {
     annullato: 'Nessun problema. Trovi Insieme quando vuoi, nelle impostazioni.',
     // 🔴 B-74 — avviso, non divieto. Comprare senza partner è legittimo
     // (D-124: il diritto è della persona e si proietta sulla coppia), ma
-    // tacerlo no: senza coppia `coppia_ha_insieme()` resta falsa e le funzioni
+    // tacerlo no: senza coppia `ho_insieme()` non apre nulla e le funzioni
     // restano chiuse. Chi paga deve saperlo **prima**, non scoprirlo dopo.
     serveLaCoppia:
       'Puoi abbonarti già ora e Insieme resta tuo. ⚠️ Le funzioni si aprono quando avrai un partner: Insieme vale per due.',
@@ -1057,6 +1057,7 @@ const it = {
     sezione: 'Documenti legali',
     privacyTitolo: 'Informativa privacy',
     cookieTitolo: 'Cookie policy',
+    terminiTitolo: 'Termini d’uso',
     primaDiCreare: 'Creando l’account dichiari di aver letto:',
     impostazioniNota: 'Puoi rileggerli quando vuoi, anche senza connessione.',
     soloInglese: 'Questo documento è disponibile solo in inglese.',
@@ -1825,6 +1826,7 @@ const en: Dizionario = {
     sezione: 'Legal',
     privacyTitolo: 'Privacy Policy',
     cookieTitolo: 'Cookie Policy',
+    terminiTitolo: 'Terms of Use',
     primaDiCreare: 'By creating an account you confirm you have read:',
     impostazioniNota: 'You can read them again any time, even offline.',
     soloInglese: 'This document is available in English only.',

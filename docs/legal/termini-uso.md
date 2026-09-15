@@ -2,7 +2,9 @@
 
 > 🔴 **DOCUMENTO DI LAVORO — NON È IL TESTO UFFICIALE.** Dal **2026-09-10** la documentazione ufficiale di LifeCouple è **in inglese** (**D-123**): il testo di riferimento è [`en/terms-of-use.md`](en/terms-of-use.md), scritto lo stesso giorno. ⚠️ **Nessuno dei due è in vigore** — restano le decisioni di prodotto elencate in fondo — ma quando lo saranno sarà **l'inglese** a esserlo. In caso di divergenza vince l'inglese, sempre: si corregge questo file, mai quello.
 >
-> **Versione `termini-1.0` — bozza del 2026-09-09, non ancora in vigore.**
+> **Versione `termini-1.2` — in vigore dal 2026-09-15.** ⚠️ **Questo file è il documento DI LAVORO**: il testo ufficiale è [`en/terms-of-use.md`](en/terms-of-use.md) (**D-123**), ed è quello reso dentro l'app e pubblicato su `terms-of-use.html`. In caso di divergenza vince l'inglese.
+>
+> ➳ **Dal 2026-09-15 il documento è RESO, e lo è con due segnaposto dentro** — `[indirizzo]` e `[numero di telefono]`, l'obbligo DSA. 🔑 *È una decisione esplicita dell'utente*, presa sapendo che finiscono anche su una pagina pubblica: i due dati esistono come decisione ma non ancora come valori, e verranno sostituiti. ⚠️ **Il rischio non è legale ma di memoria** — l'app non è pubblicata, quindi l'obbligo DSA non è ancora attivo verso nessuno — e per questo `tools/genera-legale.mjs` **chiude ogni esecuzione** con il conto dei segnaposto rimasti, invece di un silenzioso «fatto».
 >
 > 🔴 **Non è consulenza legale.** Vale la stessa frase con cui si apre [`conformita.md`](../conformita.md): *dal momento in cui il servizio incassa, serve la validazione di un avvocato prima del lancio commerciale*. Questo documento è la mappa dei temi da coprire e il testo su cui farla, non il testo definitivo.
 >
@@ -19,8 +21,8 @@
 LifeCouple è offerta da **Samuele Busato**, persona fisica residente in Italia.
 
 - Email: **info@heleox.it** *(scelta il 2026-09-10, D-121 — la stessa della §1 dell'[informativa privacy](informativa-privacy.md), come doveva essere: una sola)*
-- Telefono: **[DA DECIDERE — obbligo DSA, vedi sotto]**
-- Indirizzo: **[DA DECIDERE — obbligo DSA]**
+- Telefono: **[numero di telefono]**
+- Indirizzo: **[indirizzo]**
 
 Sugli store l'editore risulta **«Samuele Busato»**, la stessa persona indicata sopra, che è anche il titolare del trattamento dei dati — vedi l'[informativa privacy](informativa-privacy.md) §1.
 
@@ -38,8 +40,10 @@ Creando un account accetti questi termini e dichiari di aver letto l'[informativ
 
 1. ✅ nella schermata di registrazione, i link **all'informativa e alla cookie policy**, prima del pulsante che crea l'account — fatti, `app/(pubbliche)/registrati.tsx`. È anche il momento in cui l'art. 13 GDPR vuole che l'informativa sia resa, cioè *al momento della raccolta*;
 2. ✅ gli stessi link **permanenti** in Impostazioni — fatti, `app/impostazioni.tsx`;
-3. 🔴 **i link a QUESTI termini: non esistono, in nessuno dei due punti.** Il documento non entra nell'app finché porta segnaposto, e il generatore si rifiuta di costruirlo — quindi il buco non è una dimenticanza ma la conseguenza voluta delle decisioni ancora aperte;
-4. 🔴 i medesimi link **dentro la schermata di acquisto**, che non esiste ancora: sono un requisito degli store prima ancora che della legge ([`pubblicazione.md`](../pubblicazione.md) §3.1 li elenca fra i tre rifiuti banali e frequentissimi).
+3. ✅ **i link a QUESTI termini — fatti il 2026-09-15**, in registrazione (`app/(pubbliche)/registrati.tsx`, prima del pulsante che crea l'account) e in Impostazioni. ➳ *Questa riga è stata rossa fino a oggi per una ragione precisa*: il documento non entrava nell'app finché portava segnaposto, e il generatore si rifiutava di costruirlo. Ora è reso con i due segnaposto dei dati di contatto, per decisione dell'utente;
+4. ✅ i medesimi link **dentro la schermata di acquisto — fatti il 2026-09-15**: `app/paywall.tsx` porta tutti e tre. Sono un requisito degli store prima ancora che della legge ([`pubblicazione.md`](../pubblicazione.md) §3.1 li elenca fra i tre rifiuti banali e frequentissimi).
+
+✅ **Quindi il «punto di accettazione» ESISTE, dal 2026-09-15**: creando l'account si accettano questi termini, e sono **conoscibili prima** — che è ciò che rende vera la prima frase di questa sezione. ⚠️ *Restano dentro i due segnaposto dei dati di contatto*, e restano dovute la revisione dell'avvocato e la conferma del commercialista.
 
 ⚠️ **Non serve una casella da spuntare**: per un contratto a distanza è sufficiente che i termini siano conoscibili prima di concludere, e un'accettazione per spunta obbligatoria non aggiunge validità. Serve invece che i link **ci siano** — e per i termini d'uso, oggi, non ce n'è nessuno.
 

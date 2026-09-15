@@ -28,6 +28,131 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (7) — I termini d'uso entrano in vigore con due segnaposto dentro, e il punto di accettazione esiste
+
+✅ **D-138 — i termini d'uso sono RESI, con `[indirizzo]` e `[numero di telefono]` in chiaro.** Decisione esplicita dell'utente: *«lascia i segnaposto e produci i documenti, sostituirò io in un secondo momento»*. 🔑 **La ragione per cui è una decisione difendibile e non una scorciatoia**: i due dati non sono *indecisi*, sono **decisi e non ancora trascritti** — e l'app non è pubblicata, quindi l'obbligo DSA non è ancora attivo verso nessuno store né verso alcun utente. ⚠️ *Il rischio vero non è legale: è dimenticarsene*, perché da oggi quel documento è pubblico e nessuno lo rilegge più.
+
+✅ **Per questo il generatore ha una categoria nuova.** `SEGNAPOSTO` (bloccanti: `[DA DECIDERE]`, `TODO`…) resta com'era; accanto c'è **`DA_COMPLETARE`** — tollerati, contati, e stampati in un riquadro che **chiude** l'esecuzione. 🔑 *L'ultima cosa sul terminale è l'unica che si rilegge davvero*: un avviso a metà output, sopra tre righe verdi, diventa arredamento in due giorni. ⬜ **Non fa fallire lo script**, perché i dati mancano per decisione e bloccare fermerebbe ogni commit: *questo controllo non impedisce, ricorda.* ⚠️ E usa `match` invece di `test`, perché con il flag `/g` un `test` porta avanti `lastIndex` e al secondo documento direbbe di no — *un contatore che sbaglia per un dettaglio di API è peggio di nessun contatore*.
+
+---
+
+✅ **Il punto di accettazione esiste, ed era la riga 3 di `termini-uso.md` §2 — rossa dal 2026-09-09.** Tre link, dove oggi ce n'erano due: **registrazione** (prima del pulsante che crea l'account), **Impostazioni** (permanenti), **paywall** (§3.1 di `pubblicazione.md` elenca *«mancano i link a termini e privacy»* fra i rifiuti banali e frequentissimi in revisione).
+
+🔑 **Nessuna casella da spuntare, e non è una scorciatoia**: §2 dei termini l'aveva già stabilito — *per un contratto a distanza basta che i termini siano conoscibili prima di concludere, e una spunta obbligatoria non aggiunge validità.* ⚠️ **Da non confondere con la domanda aperta per l'avvocato**, che riguarda le **due frasi del recesso nel paywall** (art. 59.1.o): è un'altra cosa e resta aperta.
+
+⬜ **La rotta non è stata toccata**: `/legale/[doc]` legge la chiave dall'URL e la cerca nel registro dei documenti, quindi il terzo documento vi entra **senza una riga di routing** — e `ChiaveDocumento` è **generato**, quindi è passato da solo a `'privacy' | 'cookie' | 'termini'`. *È il pezzo che D-121 aveva costruito bene, e oggi si è visto perché.*
+
+⬜ **Utenti già registrati: non si fa niente** (strada **a**, confermata dall'utente). Nessuno si è mai registrato fuori dagli account di prova, quindi non esiste nessuno a cui rendere i termini a posteriori.
+
+---
+
+🔴 **E un residuo di D-136 trovato per caso, un giorno dopo: `conformita.md` dichiarava ancora «Titolare del trattamento: F.R. di Busato Fausto».**
+
+⚠️ **Era sfuggito ad A10 perché quella passata aveva cercato il soggetto vecchio nei documenti *legali*** — `docs/legal/`, la landing, i derivati — **e questo è un documento interno**: nomina il titolare senza essere reso a nessuno, quindi non compariva in nessuna delle ricerche fatte quel giorno.
+
+🔑 **Ed è il posto peggiore dove sbagliarlo**: `conformita.md` è il file che dice *cosa deve essere vero perché si possa pubblicare*. Chi lo apriva per verificare la conformità leggeva il titolare sbagliato **proprio mentre verificava**. ✅ Controllato ora l'intero repo: gli altri riferimenti sono tutti **storici dichiarati** (le sezioni «versione superata» che il progetto conserva apposta).
+
+---
+
+✅ **Verificato**: `tsc` **0**, `test:legale` verde con **3 documenti** resi e le 3 pagine della landing allineate, e il riquadro dei 4 segnaposto in chiusura. ⬜ `landing/index.html` ha ora il terzo link nel piè di pagina.
+
+### 2026-09-15 (6) — Il paywall rifatto, e B-80: la rete di sicurezza di B-77 stava fuori dallo schermo
+
+✅ **Rifatto l'aspetto del paywall su richiesta dell'utente**, senza toccare **una sola** delle regole che ci sono state messe dentro a caro prezzo: le due frasi del Codice del Consumo restano **sopra** il pulsante (B-66), i link ai documenti legali restano nel paywall (D-121), l'acquisto **non** si blocca a chi non ha ancora un partner (B-74, D-124), il diritto lo decide sempre il database (`ho_insieme()`), `chiudi()` resta al posto di `router.back()`, e `useMovimentoRidotto()` continua a spegnere ogni animazione. 🔑 *Su una schermata che incassa, «più bello» non può voler dire «con una riga in meno».*
+
+**Cosa è cambiato, e perché ciascuna cosa:**
+
+| | Prima | Ora |
+|---|---|---|
+| **Emblema** | respirava da solo | due **aloni concentrici**, di cui uno respira *in controfase e più ampio* — 🔑 *un alone che pulsa all'unisono con la sagoma sembra uno zoom, non un respiro* |
+| **Prova gratuita** | nominata **solo** nel «poi €39,99» sotto il pulsante | occhiello **sopra il titolo**: `provaGiorni` esisteva in `i18n` e **non era mostrata da nessuna parte**. ⚠️ *La prova era annunciata dopo la decisione* |
+| **Elenco** | cinque righe sul fondo sfumato | dentro una **carta**, come il listino: la schermata ha due blocchi — *cosa ottieni* e *quanto costa* — invece di sette elementi in fila |
+| **Listino** | bordo + pallino + prezzo di corpo 18 | spunta al posto del pallino (*dice «questo», non «acceso»*), prezzo **serif di corpo 24**, equivalente mensile **in accento**, e il **prezzo pieno barrato** |
+| **Pulsante** | pastiglia piatta | sfumatura stretta sulla stessa famiglia + **ombra del proprio colore**, e la rotella dentro quando è in corso |
+| **Fine dello scorrimento** | taglio netto contro il blocco fisso | **dissolvenza** di 28 punti |
+
+🔑 **Il barrato è calcolato, non scritto**: mensile vero × 12, e compare **solo** se `sconto` esiste. ⚠️ *Un prezzo barrato che non corrisponde a un prezzo realmente praticato è pubblicità ingannevole* — qui il prezzo barrato è praticato davvero, ed è l'altra carta nella stessa schermata.
+
+---
+
+🔴 **B-80 — l'esito dell'acquisto era dentro lo ScrollView, e non si vedeva.** Il blocco d'acquisto era già stato portato **fuori** dallo scorrimento perché su 375 px finiva sotto la piega. Ma il messaggio che **risponde a quel pulsante** era rimasto dentro, sopra l'elenco: chi premeva «Passa a Insieme» guardava il fondo dello schermo, e la risposta compariva fuori campo.
+
+⚠️ **E il messaggio che ci finiva più spesso è il peggiore da perdere**: `arrivoInCorso`, cioè **la rete di sicurezza di B-77** — quella che dice *«stiamo registrando l'acquisto»* quando il webhook tarda. 🔑 *Una rete di sicurezza fuori dal campo visivo non è una rete*: per chi paga, quel testo non è mai stato scritto, e si torna esattamente al silenzio che B-77 doveva togliere.
+
+✅ **Spostato nel blocco fisso, subito sopra il pulsante**, e in un riquadro che **distingue attesa da errore** — l'attesa porta l'accento e una rotella, l'errore no. *Non è colore decorativo: dice se c'è qualcosa da fare o solo da aspettare.*
+
+🔑 **È la seconda volta che questo errore capita sulla stessa schermata**, e la prima correzione non ha protetto dalla seconda: si era spostato **il blocco**, non *ciò che il blocco deve poter dire*. ⚠️ *Spostare un contenitore fuori dallo scorrimento non mette al sicuro i messaggi che lo riguardano se quelli sono nati altrove.*
+
+---
+
+✅ **Un secondo miglioramento che non è estetico: l'avviso «serve la coppia» era invisibile.** Grigio, corpo 12, **identico** alle due righe legali e incastrato **fra quelle e il pulsante**. 🔑 *Si perdeva fra righe che gli somigliavano, ed è l'unica delle tre che parla di **questo** utente qui.* ⚠️ **E in più allontanava dal pulsante la presa d'atto del recesso**, che invece deve stargli adiacente. Ora ha superficie, icona, e sta **in cima** al blocco: più visibile lui, e le frasi legali più vicine al pulsante di prima.
+
+⬜ **`C.accentoChiaro` aggiunto a `lib/tema.ts`** — l'estremo chiaro della sfumatura del pulsante. Sta lì e non nel componente perché la regola in testa a quel file dice che i valori non esprimibili come classe vivono **solo** lì, e `expo-linear-gradient` vuole stringhe.
+
+---
+
+🔴 **B-81 — B-75 aveva una SECONDA residenza, e la `0047` non l'aveva raggiunta.** Trovata cercando nel codice i punti che nominano ancora il cancello vecchio: sette erano commenti, **uno era una chiamata viva** — [`app/onboarding.tsx`](app/onboarding.tsx).
+
+Quel blocco decide se mostrare il paywall d'ingresso, e lo faceva così: cerca una coppia → se c'è, chiedi `coppia_ha_insieme(cid)` → se è vera, non mostrare niente. 🔴 **Senza coppia, il controllo veniva saltato del tutto** e il paywall si apriva comunque.
+
+⚠️ **Cioè proponeva di comprare «Insieme» a chi lo aveva già comprato**, per il solo motivo di non avere ancora un partner. 🔑 *Ed è precisamente il caso che il paywall stesso dichiara legittimo*: l'avviso di **B-74** dice «puoi abbonarti già ora e Insieme resta tuo» — e all'ingresso successivo l'app chiedeva di abbonarsi di nuovo. *Le due schermate si contraddicevano a un tocco di distanza.*
+
+✅ **Corretto con `ho_insieme()`**, che risponde per la **persona**: due interrogazioni diventano una, e quella che resta fa la domanda giusta. ⬜ *La query su `membro_coppia` non serve più affatto.*
+
+🔑 **La lezione, ed è sulla forma della correzione più che sul difetto**: la `0047` ha cambiato **la funzione**, e si è aggiornato **il posto da cui era arrivato il sintomo**. Nessuno ha cercato gli **altri** chiamanti — e il difetto è sopravvissuto un giorno in una schermata che nessuno stava guardando. ⚠️ *Sostituire un cancello non è finito quando il caso che l'ha rivelato funziona: è finito quando si è cercato chi altro bussava alla stessa porta.*
+
+---
+
+✅ **Verificato**: `tsc` **0**, `eslint` **0 errori** su tutto `app/`, `lib/` e `components/`. ✅ **E il modulo si carica davvero**: il bundle web di Metro compila e apre `/paywall` senza errori di console — l'unico errore è il `401` di Supabase, che è l'assenza di sessione.
+
+🔴 **Ma l'aspetto NON è stato visto**, e il perché va scritto perché non è pigrizia: il paywall richiede una **sessione**, e soprattutto `react-native-purchases` **non funziona su web** — senza offerte la schermata cade nello stato «prezzi non disponibili», quindi carte, prezzo barrato e pulsante **non esistono** nel browser. 🔑 *Questa schermata si può guardare solo su un telefono con una development build*, ed è per questo che le tre voci nuove sono andate in `verifica-sul-telefono.md` §9-bis.
+
+### 2026-09-15 (5) — I documenti raccontavano il sistema di ieri: B-78 (sei intestazioni), B-79 (un fornitore mai dichiarato), e il PUNTO DI RIPRESA fermo a prima dell'acquisto vero
+
+🔴 **§7 si era fermata al 2026-09-14 (3), e quattro sessioni hanno lavorato senza che le nominasse.** La nota in cima dichiarava in rosso *«L'anello mai provato è l'acquisto vero […] nessun pagamento è mai arrivato fino alla tabella»* — **falso da un giorno intero**. ⚠️ *Il corpo del registro era invece aggiornato*: D-136, D-137 e B-69 → B-77 erano tutti scritti in §2. Il difetto era **solo** nella sezione che si legge per prima, cioè la peggiore dove averlo.
+
+🔑 **Ed è la forma che la nota del 14 denunciava di sé**, alla lettera — *«chi avesse ripreso da qui avrebbe creduto che i pagamenti non esistessero»* — ripetuta il giorno dopo da chi l'aveva scritta. *Sapere una regola e applicarla sono due cose diverse, e la seconda non segue dalla prima* (già detto da D-60 e ripetuto il 2026-09-07: questa è la terza volta che compare in questo registro).
+
+---
+
+🔴 **B-78 — sei intestazioni di migrazione hanno dichiarato «NON ANCORA APPLICATA» a migrazione viva.** `0041` e `0042` (corrette il 2026-09-14 (3)), `0047` e `0048` (un giorno), **`0039` e `0040` (una settimana)** — trovate cercando le prime due.
+
+🔑 **Sei in tre occasioni non sono tre sviste: è una forma.** *La riga che dichiara lo stato di una migrazione vive nel file che descrive **cosa fare**, mentre lo stato cambia altrove* — nel pannello Supabase, per mano dell'utente, in un altro momento e spesso in un'altra sessione. Il file non ha modo di accorgersene, e chi applica non ha motivo di tornare a scriverlo.
+
+⚠️ **Il danno è asimmetrico, e sempre nello stesso verso.** Una migrazione *da applicare* che si dichiara applicata fa credere di avere una protezione che non c'è; una *applicata* che si dichiara da applicare invita a **rieseguirla** — e nessuna di queste è scritta per essere idempotente. 🔴 *Il secondo caso è quello che si è verificato sei volte su sei.*
+
+✅ **Verificate misurando, non sulla parola** — ed è l'unico modo che chiude la questione invece di spostarla:
+
+| | Misura | Esito |
+|---|---|---|
+| `0039` | `test:rls`, le quattro asserzioni «0039» | verdi — e `permission denied for function accoda_ricordi` (42501) si può negare **solo su una funzione che esiste**: se la migrazione mancasse, l'errore sarebbe un altro |
+| `0040` | `test:punti`, prima asserzione | `prima=540 dopo=560` — misura **esattamente** il trigger che la `0040` sostituisce, e senza di essa varrebbe 0 |
+| `0046` | `test:punti`, ottava asserzione | verde, ed è dichiarata *«rosso = 0046 non applicata»* nel testo stesso |
+| `0047` | **B2**, il 2026-09-15 | l'acquisto vero non si chiuderebbe senza `ho_insieme()` |
+| `0048` | **1,7 secondi** col telefono fermo | senza la pubblicazione realtime nessuno sveglia l'app: non è un tempo ottenibile aspettando |
+
+✅ **La difesa che funziona esiste già, e va estesa invece che inventata**: `0039` e `0046` hanno un'asserzione che diventa **rossa** se la migrazione manca. 🔑 *Un'intestazione si può dimenticare, un test rosso no* — ed è la stessa ragione per cui B-70 è uscito da una misura e non da una rilettura. ⬜ **Non è stato fatto per le altre**: resta nel backlog §6.
+
+---
+
+🔴 **B-79 — un fornitore riceveva richieste per conto nostro e non era dichiarato da nessuna parte: AWS.** Trovato completando la documentazione legale, cercando **se** i documenti descrivessero il sistema di oggi invece di rileggerli.
+
+**Cosa mancava.** `S3 + CloudFront` serve le pagine pubbliche — informativa, cookie policy, landing, 404 — e **non compariva** né fra i destinatari dell'informativa (§4), né nella Parte C del registro art. 30, né fra i terzi di [`conformita.md`](docs/conformita.md) §6. Gli accordi art. 28 da accettare erano contati **cinque**: sono **sei**.
+
+⚠️ **La lacuna è del 2026-09-10, non del 15.** La landing è pubblica da allora, e da allora un responsabile trattava dati per conto nostro senza essere nominato. 🔑 *Il 2026-09-15 l'ha solo aggravata*: con **D-137** l'invito viaggia su un indirizzo web, quindi chi lo apre **senza avere l'app** fa arrivare a CloudFront un URL che **contiene il token**.
+
+🔑 **Perché è passato inosservato per cinque giorni, ed è la parte che vale**: *pubblicare delle pagine non sembra un trattamento.* Le altre sei righe della Parte C sono entrate nel registro quando è entrato il codice che le usava — un SDK, una funzione, una chiamata. Qui non è entrato codice: è stato **caricato un file su un bucket**, e nessuno ha pensato che servisse una riga. ⚠️ **È la quarta comparsa della stessa forma** (B-60, B-62, il registro del 2026-09-14), e la prima in cui il fornitore non è stato aggiunto *da* uno sviluppo ma *da un deploy*.
+
+✅ **Due attenuanti, verificate nel codice dell'infrastruttura e non supposte** — [`infra/main.tf`](infra/main.tf): **nessun `logging_config`**, quindi i log di accesso non sono attivi e non si raccoglie per nostro conto nessun registro di chi ha aperto cosa; e **`PriceClass_100`**, che limita gli edge a Europa e Nord America — una richiesta dall'Italia è servita normalmente dall'Europa.
+
+✅ **Scritto in cinque posti**: informativa §4 e §5 (EN ufficiale + IT di lavoro), cookie policy (la voce dello storage locale che mancava), registro art. 30 Parte C e A2, `conformita.md` §6, e A7 del piano. **Versioni portate a `app-1.2` e `cookie-1.2`**, derivati rigenerati, `test:legale` verde, `tsc` 0.
+
+🔴 **Conseguenza operativa da non perdere: le pagine online sono indietro.** I file sono rigenerati, ma `landing/privacy-policy.html` e `cookie-policy.html` **non sono state ripubblicate** — e l'informativa resa *dentro* l'app entra solo con la prossima build. *Finché non si fa, la versione pubblicata dichiara sei destinatari invece di sette.*
+
+---
+
+⬜ **E un gap di formato trovato guardando §4**: le schede dei difetti si fermano a **B-67**. Da **B-68 a B-78** i difetti sono descritti *solo* nel log cronologico §2 — dove però sono descritti per esteso, col perché e con la verifica. ⚠️ *Non è stato colmato adesso*: undici schede scritte in blocco a posteriori sarebbero una ricopiatura, e il formato di [`Rule/regole-sviluppo-sicuro.md`](../../Rule/regole-sviluppo-sicuro.md) §1.1 chiede che il contenuto ci sia, non che stia in due posti. **Va deciso**: o §4 torna a essere l'indice dei difetti, o si dichiara che dal 2026-09-14 quel ruolo lo fa §2.
+
 ### 2026-09-15 (4) — B-77: chi pagava vedeva lo schermo di chi non aveva pagato
 
 🔴 **Il difetto.** Dopo un acquisto riuscito il paywall chiamava `ricarica({ insistendo: true })` — **6 tentativi in ~9 secondi** — e poi si arrendeva **senza guardare l'esito**: `router.back()`, muri su, nessun messaggio.
@@ -4635,7 +4760,9 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 > Qui vanno **tutti** gli sviluppi futuri interni a questo progetto, brevi e lunghi (`CLAUDE.md` §3.4). Un progetto *nuovo* va invece in `Projects/elenco-progetti.md`.
 
-### 🔴 I pagamenti: l'impianto c'è, mancano l'acquisto vero e due frasi — aggiunto il 2026-09-14 (3)
+### ⟳ I pagamenti: l'impianto è PERCORSO — aggiunto il 2026-09-14 (3), aggiornato il 2026-09-15 (5)
+
+> ✅ **Il titolo di questa sezione diceva «mancano l'acquisto vero e due frasi», e non è più così**: l'acquisto vero è stato percorso il 2026-09-15 (**B2**) e le due frasi sono scritte (**A5**). Restano la **validazione legale** di quelle frasi e gli **accordi art. 28**, che non sono lavoro di codice.
 
 | Pezzo | Stato |
 |---|---|
@@ -4643,10 +4770,10 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 | Edge Function `abbonamento-webhook` | ✅ deployata con `--no-verify-jwt`, e **concede davvero**: le coppie di prova ottengono «Insieme» solo passando da lì |
 | SDK, paywall, muri, Customer Center | ✅ fatti (D-133, D-135) |
 | Avviso «cancellare l'account non disdice l'abbonamento» | ✅ fatto |
-| 🔴 **Le due frasi del Codice del Consumo prima del pulsante**, più il terzo aggancio ai documenti legali | **manca — B-66.** Finché manca, il recesso **non decade**. ⚠️ *Prima ancora, va corretto il commento che dichiara il contrario: è una riga e non richiede un avvocato* |
-| 🔴 **L'acquisto vero, mai percorso** | StoreKit non serve ancora i prodotti: la catena **acquisto → Apple → RevenueCat → webhook → diritto** non è mai stata attraversata da un capo all'altro. 🔑 *È l'unico anello che nessuna delle prove fatte sostituisce* |
+| ⟳ **Le due frasi del Codice del Consumo prima del pulsante**, più il terzo aggancio ai documenti legali | ⟳ **scritte il 2026-09-15** (**A5**): stanno **sopra** il pulsante e i link ai documenti sono nel paywall. 🔴 **Resta la validazione** — la scelta fra testo-sopra-il-pulsante e **casella da spuntare** è dell'avvocato (**A6**), e finché non è validata il recesso va considerato **non decaduto** |
+| ✅ ~~L'acquisto vero, mai percorso~~ | ✅ **PERCORSO il 2026-09-15** (**B2**): la catena **acquisto → Apple → Server Notifications → RevenueCat → webhook → diritto → schermo** è stata attraversata da un capo all'altro, e la prova è una riga scritta da un evento **non generato da noi**. ⚠️ *Per arrivarci sono usciti cinque difetti* (B-71 → B-75) |
 | 🔴 **Accordo art. 28** con RevenueCat — e con Expo, Apple, Google, Supabase | nessuno accettato né archiviato: i trasferimenti avvengono senza la base documentale che il registro dichiara |
-| ⚠️ **Guardia sul prefisso della chiave** | niente impedisce di pubblicare una build con la chiave `test_…`: gli acquisti finirebbero al **negozio di prova**, e il diritto verrebbe concesso a chi non ha pagato nulla |
+| ✅ ~~Guardia sul prefisso della chiave~~ | ✅ **fatta il 2026-09-14 (3)** (**B4**): con una chiave `test_…` l'SDK non si configura in una build non di sviluppo, e il paywall dice «non disponibile» invece di vendere nel negozio di prova. ⬜ *Non se ne accorge prima del build: la chiave sta nei secret di EAS* |
 | ⚠️ **Il nome dell'entitlement vive in due posti** che nessun controllo confronta (`lib/acquisti.ts` e il pannello RevenueCat) | se divergono, l'app non concede mai niente **e non lo dice** |
 
 ### 🔴 I buchi di misura, messi in fila il 2026-09-14 (3)
@@ -4656,9 +4783,10 @@ Emersi allineando il threat model. Nessuno rompe qualcosa **oggi**; tutti rendon
 | Cosa manca | Perché conta |
 |---|---|
 | ✅ ~~Il test che fallisce se una tabella non ha policy RLS~~ | **costruito il 2026-09-14 (3)**: `tests/rls.copertura.mjs`. 🔑 *Chiude il caso che le asserzioni avversariali non potevano coprire per costruzione* — quelle misurano le tabelle a cui qualcuno ha pensato |
-| 🔴 **La prova end-to-end della catena di cancellazione** | il codice c'è dal 2026-08-31 e **nessuno ha mai cancellato un account di prova per controllare che non restino file**. È l'errore già trovato su HeleoX, e l'art. 17 lo rende una violazione **invisibile** |
-| ⚠️ **L'esito dei giri di `test:abbonamento`, `test:webhook`, `test:confine`** | le asserzioni esistono, ma **nessun documento registra un giro verde**. 🔑 *Un test il cui esito non è scritto da nessuna parte è un ricordo, non una prova* |
-| ⚠️ **I punti di partite ed elementi di lista** | stessa forma di **B-64**, e nessuna misura diretta: `test:punti` copre i **luoghi**. La zona è stata ridotta, non svuotata |
+| ✅ ~~La prova end-to-end della catena di cancellazione~~ | **ESEGUITA il 2026-09-14 (3)** con `npm run test:cancellazione`, esito nella tabella di [`docs/legal/catena-cancellazione.md`](docs/legal/catena-cancellazione.md). 🔴 *E al primo giro non ha funzionato*: **B-68**, due difetti sovrapposti, corretti da `0044` e `0045`. ✅ Bucket compreso: **zero oggetti**, contati direttamente. ⚠️ **Questa riga è rimasta rossa per un giorno dopo la prova**, come §7.3 del threat model: corrette insieme il 2026-09-15 (5) |
+| ✅ ~~L'esito dei giri di `test:abbonamento`, `test:webhook`, `test:confine`~~ | **eseguiti e registrati il 2026-09-15** (voce **D2**): **4/4**, **13/13**, **7/7**, con gli esiti scritti nel log di quella giornata. 🔑 *Erano un ricordo, ora sono una prova* |
+| ✅ ~~I punti di partite ed elementi di lista~~ | **misurati il 2026-09-15** (voce **D3**), e la misura ha trovato **B-70** al primo giro: la stessa forma era anche lo stesso buco. ⬜ *Resta dichiarato non coperto* il passaggio a «conclusa» più volte da stati diversi |
+| 🔴 **Un'asserzione-sentinella per ogni migrazione** — da **B-78**, 2026-09-15 (5) | `0039` e `0046` hanno un test che diventa **rosso** se la migrazione manca, e sono le uniche due: è così che si è potuto verificare il loro stato in un minuto invece di crederci. ⚠️ *Le altre si possono controllare solo a mano, ed è la ragione per cui sei intestazioni hanno mentito per giorni.* 🔑 **Non serve per tutte**: bastano quelle che cambiano un comportamento osservabile da un client — un trigger, una funzione, una policy |
 
 ### ⬜ Tre cose vere e non costruite, dichiarate il 2026-09-14 (3)
 
@@ -5109,6 +5237,48 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> **Nota del 2026-09-15 (4) — l'acquisto vero è PERCORSO, e fino a stasera questa sezione diceva il contrario.**
+>
+> 🔴 **La prima cosa da sapere è una correzione a ciò che sta qui sotto.** La nota del 2026-09-14 (3) dichiara in rosso *«L'anello mai provato è l'acquisto vero […] nessun pagamento è mai arrivato fino alla tabella»*. **È falso dal 2026-09-15**, e lo è stato per un giorno intero: **quattro sessioni** hanno lavorato senza che questa sezione le nominasse. ⚠️ *È esattamente la forma che la nota del 14 denunciava di sé* — «chi avesse ripreso da qui avrebbe creduto che i pagamenti non esistessero» — e §4 la dice per esteso a proposito delle migrazioni: **un PUNTO DI RIPRESA che dice il falso è peggio di uno vuoto, perché il primo lo si crede.**
+>
+> ✅ **B2 è chiusa — sei anelli insieme per la prima volta.** Apple → *App Store Server Notifications* → RevenueCat → `abbonamento-webhook` → `abbonamento` → `ho_insieme()` → i muri caduti **da soli**, senza riavviare l'app. La prova non è una schermata: è una riga scritta da un evento **che non abbiamo generato noi** (`…insieme.mensile`, mentre i nostri strumenti concedono sempre *annuale*), un secondo dopo l'acquisto. ⬜ Visto anche il **rinnovo**, che nessuno aveva mai osservato — e che ha prodotto un falso allarme, sovrascrivendo le revoche fatte a mano.
+>
+> ✅ **B3 erano due cose e non una**, e la metà documentata era già a posto: mancava del tutto l'anello **Apple → RevenueCat**, che nessun documento descriveva. Procedura ora in [`docs/pagamenti.md`](docs/pagamenti.md) **§3.4**, che prima non esisteva. 🔑 *Il difetto stava nel documento, non nella configurazione: descriveva una catena a due anelli quando ne ha tre.*
+>
+> ✅ **Le tre migrazioni del 15 sono APPLICATE** — `0046`, `0047`, `0048`, confermate dall'utente. ⚠️ *Le intestazioni di `0047` e `0048` hanno detto «NON ANCORA APPLICATA» per un giorno mentre il codice che le presuppone era già in funzione*: corrette, e ognuna porta ora la prova che la verifica — **B2** per la prima, i **1,7 secondi** misurati per la seconda.
+>
+> 🔴 **E cercando quelle due ne sono uscite altre due, ferme da una settimana**: `0039` e `0040` dichiaravano «NON ANCORA APPLICATA» dal 2026-09-14. **Verificate misurando, non sulla parola** — `test:rls` ha le quattro asserzioni «0039» verdi (e `permission denied for function accoda_ricordi` si può negare **solo su una funzione che esiste**), `test:punti` è **10/10** e la sua prima asserzione misura esattamente il trigger della `0040`. 🔑 **Sei intestazioni in tre occasioni, ed è quindi una forma, non tre sviste**: *la riga che dichiara lo stato di una migrazione sta nel file che descrive **cosa fare**, mentre lo stato cambia altrove — nel pannello, dall'utente, in un altro momento.* ⚠️ **Il danno è asimmetrico e sempre nello stesso verso**: una migrazione applicata che si dichiara da applicare invita a **riapplicarla**, e nessuna di queste è scritta per essere idempotente. ✅ *La difesa che ha funzionato esiste già e va estesa*: `0039` e `0046` hanno un test che diventa **rosso** se la migrazione manca — un'intestazione si può dimenticare, un'asserzione no.
+>
+> 🔴 **Nove difetti in una giornata — B-69 → B-77 — e quattro hanno la stessa forma**: *l'app diceva «no» dove la verità era «non lo so»*. Coppia non ancora caricata (**B-73**), coppia inesistente (**B-75**), acquisto abortito da StoreKit (**B-72**), webhook più lento della finestra d'attesa (**B-77**). 🔑 **Un «no» e un «non lo so» si disegnano identici sullo schermo e si diagnosticano in modo opposto**, ed è per questo che si è cercato per ore nei pagamenti un difetto che stava in React, in una funzione SQL e in una finestra di nove secondi. *Nessuno dei tre posti aveva a che fare con Apple.*
+>
+> 🔑 **E la difesa che ha funzionato non è stata leggere il codice: è stata metterci una sonda.** Due righe di log hanno chiuso in tre minuti una diagnosi ferma da ore — e la prima è stata decisiva **proprio perché non compariva mai**: la sua assenza era l'informazione. *Le sonde sono rimaste, ridotte e dietro `__DEV__`.*
+>
+> 🔴 **B-77 era il modo peggiore di fallire dell'intera giornata**: chi aveva pagato vedeva **lo schermo identico** a chi non aveva pagato. Chiuso **togliendo l'attesa invece che allungandola** (`0048`): l'app non indovina più *quando* chiedere, viene **svegliata** quando il webhook scrive. ⚠️ *Il realtime dice «è cambiato», mai «hai diritto»*: si rilegge `ho_insieme()` invece di fidarsi del payload, perché il telefono è ostile per definizione.
+>
+> ✅ **Tre voci che le note qui sotto danno per aperte sono chiuse.** La **chiave APNs** esiste (**C3**: `T9YBQQ859L`, team `8C8FJLJBB8`) — 🔴 *e il default di Apple era `Sandbox`, che non si cambia dopo il salvataggio*: salvandola così le notifiche avrebbero funzionato in TestFlight e sarebbero morte **alla pubblicazione**, in silenzio e senza rimedio. Portata a `Sandbox & Production`. Le **pagine legali della landing** sono online, `200` verificato (**E2**). Il **commento della funzione** nel database dice `B-64` dalla `0043` (**C4**, riferito da chi l'ha applicata, non verificato in prima persona).
+>
+> ✅ **D-136 — si pubblica a nome «Samuele Busato», persona fisica.** Di **D-81** cade *quale persona*, **non** la conclusione «individuo e non organizzazione», che anzi si rafforza. Informativa, cookie policy, **registro dei trattamenti**, termini d'uso (`terms-1.1`) e landing riscritti sul titolare nuovo e **ripubblicati** (**A10**). ✅ *Verificato in linea, non dedotto*: le tre pagine rispondono `200` e non contengono più né P.IVA né il soggetto precedente.
+>
+> ✅ **D-137 — l'invito ha finalmente dove atterrare**: `https://lifecouple.heleox.it/invito/<token>`. 🔑 *Il nodo non era la route ma l'ordine dei fatti* — chi riceve un invito quasi sempre **non ha ancora un account** — ed è per questo che la questione era ferma dal 2026-08-13. Ora il token aspetta e l'onboarding lo riprende. ⚠️ **Serve una build nuova**: `associatedDomains` è una capability nativa, ricaricare non basta. ⚠️ *E il file AASA non ha estensione*: va caricato con `--content-type application/json` a parte, ogni volta.
+>
+> 🔴 **Cosa resta, e quasi niente è codice.** Con **D-132** è caduto il test chiuso di Google, cioè l'unica coda che nessun lavoro poteva accelerare: *il collo di bottiglia non è più un'attesa.* Restano **A8** (con quale forma vende una persona fisica senza partita IVA — **precede A3 e A4**), **A6** (l'avvocato: la coda più lunga, e con lei **A5** ed **E4**), **A3** (telefono e indirizzo: gli **unici due segnaposto** rimasti nei termini d'uso — *senza, il paywall vende senza contratto*), **A7** (⟳ **sei** accordi art. 28, non cinque: AWS aggiunto il 2026-09-15 (5)), **E1** (nome ed EUIPO, **prima** degli screenshot o si rifanno), **C1** (la chiave esposta: rischio accettato in §5, *da riconsiderare prima della pubblicazione*).
+>
+> 🔴 **E l'unica voce tecnica rimasta è D4**: [`docs/verifica-sul-telefono.md`](docs/verifica-sul-telefono.md), **12 blocchi**, pronta e **mai percorsa**, e servono **due telefoni** (D-25). ⚠️ *È la traduzione operativa di §9 di `pubblicazione.md`, la condizione che sta sopra a tutto il piano, e non è caduta*: una passata complessiva con esito positivo **non è** una spunta voce per voce.
+>
+> ⚠️ **E qui il PRODOTTO è cambiato — a differenza del resto di questa nota, che tocca solo documenti.** Il paywall è stato **rifatto nell'aspetto** (sessione 6, su richiesta dell'utente): testata con aloni e occhiello della prova, elenco dentro una carta, listino con spunta, prezzo serif e **prezzo pieno barrato** (calcolato, mai scritto), pulsante sfumato con ombra propria, dissolvenza a fine scorrimento. ✅ **Nessuna delle regole legali è stata toccata**: le due frasi del recesso restano sopra il pulsante, i link ai documenti restano, l'acquisto senza partner **non** si blocca, il diritto lo decide `ho_insieme()`. File toccati: `app/paywall.tsx` e `lib/tema.ts` (`C.accentoChiaro`).
+>
+> 🔴 **B-80, trovato ridisegnando: la rete di sicurezza di B-77 stava fuori dallo schermo.** Il messaggio che risponde al pulsante — `arrivoInCorso`, *«stiamo registrando l'acquisto»* — era rimasto **dentro lo ScrollView**, sopra l'elenco, mentre il pulsante è fuori dallo scorrimento in fondo. 🔑 *Chi paga guarda il fondo dello schermo, e la risposta compariva fuori campo: per lui quel testo non è mai stato scritto.* Spostato accanto al pulsante, in un riquadro che distingue **attesa** da **errore**. ⚠️ *È la seconda volta che questo errore capita sulla stessa schermata*: la prima correzione aveva spostato **il blocco**, non ciò che il blocco deve poter dire.
+>
+> 🔴 **B-81 — e questa è la più istruttiva delle tre: B-75 aveva una seconda residenza.** `app/onboarding.tsx` decideva se mostrare il paywall d'ingresso chiedendo ancora `coppia_ha_insieme(cid)`, e **senza coppia saltava il controllo**: proponeva di comprare «Insieme» a chi lo aveva già comprato senza avere ancora un partner — *il caso che il paywall stesso dichiara legittimo due schermate prima*. ✅ Ora chiede `ho_insieme()`. ⚠️ **La `0047` aveva corretto il posto da cui era arrivato il sintomo, e nessuno aveva cercato gli altri chiamanti**: sostituire un cancello non è finito quando il caso che l'ha rivelato funziona, è finito quando si è cercato *chi altro bussava alla stessa porta*.
+>
+> ⬜ **La lista dei controlli sul telefono si allunga di tre voci**, tutte nel paywall: che il **barrato** compaia solo con uno sconto vero e corrisponda al mensile × 12; che l'**occhiello della prova** appaia solo quando l'offerta ha davvero un periodo introduttivo; e che il **riquadro d'attesa** si veda senza scorrere, dopo un acquisto in cui il webhook tarda. 🔑 *L'ultima è la sola che si prova rallentando apposta il webhook* — altrimenti non compare mai.
+>
+> 🔴 **B-79 — AWS non era dichiarato come responsabile, e la lacuna è del 2026-09-10.** `S3 + CloudFront` serve le pagine pubbliche da allora e non compariva né nell'informativa, né nel registro art. 30, né fra i terzi di `conformita.md`: gli accordi art. 28 sono **sei**, non cinque. 🔑 *È passato perché **pubblicare delle pagine non sembra un trattamento*** — gli altri sei fornitori erano entrati nel registro insieme al codice che li usava, questo è entrato con un `aws s3 sync`. ✅ Scritto in cinque posti, versioni a **`app-1.2`** e **`cookie-1.2`**, derivati rigenerati.
+>
+> 🔴 **Conseguenza da fare, non da ricordare: le pagine online sono indietro di una versione.** I file sono rigenerati ma **non ripubblicati**, e l'informativa dentro l'app entra solo con la prossima build. *Finché non si fa, la versione pubblicata dichiara sei destinatari invece di sette.* Runbook: `docs/deploy-landing.md`.
+>
+> ⬜ **Resta invariato dalle note precedenti**: la lista **Film** è spenta (**D-127**, e riaccenderla rimette il muro di TMDB esattamente dov'era); «N anni fa» si calcola in **UTC**; ⏸️ il **ciclo mestruale** è dopo la prima pubblicazione, per non sommare gli errori in un lotto solo. ⬜ *E una coda piccola di A2*: le foto della coppia demo per Apple sono **segnaposto da 1 px**.
 
 > **Nota del 2026-09-14 (3) — i documenti dicono ciò che c'è, e la mezza giornata dei pagamenti ha finalmente una nota di ripresa.**
 >

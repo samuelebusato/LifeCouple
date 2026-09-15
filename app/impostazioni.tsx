@@ -567,10 +567,14 @@ export default function Impostazioni() {
               toccarlo.* */}
           <Gruppo titolo={t.legale.sezione}>
             <Riga titolo={t.legale.privacyTitolo} onPress={() => router.push('/legale/privacy')} />
+            <Riga titolo={t.legale.cookieTitolo} onPress={() => router.push('/legale/cookie')} />
+            {/* ➳ I termini, dal 2026-09-15. 🔑 *La nota sta sull'ultima riga e
+                vale per il gruppo*: sono i documenti rileggibili, e ripeterla
+                su ciascuna la farebbe sparire. */}
             <Riga
-              titolo={t.legale.cookieTitolo}
+              titolo={t.legale.terminiTitolo}
               nota={t.legale.impostazioniNota}
-              onPress={() => router.push('/legale/cookie')}
+              onPress={() => router.push('/legale/termini')}
               ultima
             />
           </Gruppo>
