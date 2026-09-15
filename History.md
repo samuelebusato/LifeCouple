@@ -28,6 +28,82 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 — Chi pubblica l'app cambia, e con lui il titolare del trattamento
+
+**D-136 — si pubblica a nome «Samuele Busato», non «Fausto Busato».** Decisione dell'utente del 2026-09-15, presa dopo la domanda *«io sono un privato, cosa vuol dire indirizzo e telefono del professionista?»*. **Modifica D-81** (2026-08-31), registrata in [`docs/pubblicazione.md`](docs/pubblicazione.md) §2.1 — ma **solo per metà, e la metà giusta va detta**: di D-81 cade *quale persona* pubblica, **non** la conclusione «si pubblica come individuo e non come organizzazione», che resta valida e anzi si rafforza (una persona fisica non ha nemmeno il percorso *Organization* disponibile). La versione superata di §2.1 è conservata lì secondo la convenzione già usata per §2.4.
+
+🔑 **Non è un cambio di intestazione: cambia il soggetto giuridico del prodotto.** Il venditore verso lo store, la controparte contrattuale dell'utente pagante e il **titolare del trattamento** sono lo stesso soggetto, e finora erano `F.R. di Busato Fausto` — ditta individuale con P.IVA `01878620358`, REA `RE 232527`, sede a Novellara (RE), scritta in [`docs/legal/registro-trattamenti.md`](docs/legal/registro-trattamenti.md) §intestazione e in [`docs/legal/informativa-privacy.md`](docs/legal/informativa-privacy.md) §1.
+
+⚠️ **Conseguenza da non sottovalutare: i documenti legali pubblicati il 2026-09-15 dichiarano un titolare che la decisione di oggi rende sbagliato.** `privacy-policy.html` e `cookie-policy.html` sono online su CloudFront da ieri (E2). Nessun utente reale li ha ancora letti — il danno concreto è nullo — ma vanno rigenerati e ripubblicati prima che ne esista uno.
+
+**Cosa resta aperto e non è stato deciso oggi** (la decisione riguarda **chi**, non **con quale forma fiscale**):
+
+| # | Domanda | A chi |
+|---|---|---|
+| Q1 | **Si apre una partita IVA a nome di Samuele Busato, oppure l'app rinuncia a vendere?** Vendere abbonamenti in modo continuativo è attività commerciale: «privato senza partita IVA» non è una terza strada | **commercialista** |
+| ~~Q2~~ | ✅ **CHIUSA lo stesso giorno.** Avevo posto la domanda *«di chi è l'infrastruttura?»* deducendo dal dominio `heleox.it` che fosse dell'azienda. **Dedotto, non verificato**: l'utente ha chiarito che *«è tutta roba mia — il software è stato progettato e sviluppato da me, l'infrastruttura è mia»*. Titolare e mezzi **coincidono**, e gli accordi art. 28 (**A7**) li firma lui. 🔑 *L'errore è istruttivo e vale la pena lasciarlo scritto: ho inferito la proprietà di un bene dal nome del dominio che gli sta davanti* | ✅ risolta |
+| ~~Q2-bis~~ | ✅ **CHIUSA anch'essa lo stesso giorno, e con essa il secondo errore dello stesso tipo.** Avevo scritto che `lifecouple.heleox.it` e `info@heleox.it` erano «l'identità di un altro prodotto»: **`heleox.it` è intestato a Samuele Busato come persona fisica** (riferito dall'utente il 2026-09-15). Dominio ed email sono già del titolare, non c'è niente da spostare. ⚠️ *Resta una riga da correggere e sta dentro **A10***: l'informativa §1 giustifica `info@heleox.it` con *«è l'indirizzo di un altro prodotto della stessa azienda — coerente sul piano giuridico»*, e quella frase è ora **falsa** | ✅ risolta |
+
+🔑 **Due inferenze sbagliate sulla proprietà nello stesso giro, e hanno la stessa radice**: ho dedotto di chi fosse un bene dal **nome** che gli sta davanti — `heleox.it` → HeleoX → l'azienda. ⚠️ *La ragione per cui ho potuto dedurre è che il dato non c'è*: il brain descrive i fornitori (Cloudflare, AWS) e i domini, ma **non registra da nessuna parte chi intesta cosa**. Finché quel dato non ha una casa, la prossima inferenza sarà uguale — ed è l'unica cosa di questa giornata che riguarda il brain e non LifeCouple.
+| Q3 | Indirizzo e telefono da esporre (**A3**), che ora sono quelli di Samuele e non più della sede di Novellara | utente |
+
+🔴 **Q1 e Q2 vengono prima dei termini d'uso (A4)**: scriverli adesso significherebbe dichiarare una controparte contrattuale che potrebbe non esistere. *È lo stesso errore che B-66 ha appena insegnato — un documento che descrive uno stato che nessuno ha verificato.*
+
+⚠️ **E una cosa che la decisione NON cambia**, per non doverla riscoprire: l'iscrizione ad Apple resta comunque *Individual*, perché quel percorso vale sia per una persona fisica sia per una ditta individuale. Cambiano i dati, non il tipo di account — e il vincolo «nel campo nome va il **nome legale**, mai una denominazione d'impresa» resta identico.
+
+✅ **I documenti privacy sono stati riscritti sul titolare nuovo** (A10), su richiesta dell'utente dopo aver dichiarato *«io non ho partita IVA e l'applicazione ha dei piani a pagamento»*. Titolare ora **Samuele Busato, persona fisica residente in Italia**, contatto `info@heleox.it`, in: `en/privacy-policy.md` e l'italiana di lavoro, `en/cookie-policy.md` e l'italiana, il **registro dei trattamenti**, i termini (entrambe le lingue), il piè di pagina di `tools/genera-legale.mjs` e `landing/index.html`. Derivati rigenerati (`lib/legale/testi.ts` + due pagine): `test:legale` verde, `tsc` 0. Versioni portate a `app-1.1` e `cookie-1.1`.
+
+🔑 **Tre campi sono stati tolti, non accorciati: P.IVA, REA e PEC.** Appartengono a un soggetto diverso da quello che ora è titolare; lasciarli sarebbe stato attribuire a una persona i dati di un'altra. ⚠️ *E l'indirizzo postale non è stato sostituito da un segnaposto, che è una scelta e va detta*: l'art. 13.1.a chiede «identità e dati di contatto», e un'email li soddisfa — mentre un `[DA DECIDERE]` avrebbe fatto rifiutare la pubblicazione **anche dell'informativa**, che invece adesso è corretta. *Un danno certo per evitarne uno inesistente.*
+
+🔴 **B-69 — i termini d'uso dichiaravano gratuito ciò che il servizio fa pagare, e uno dei quattro punti era una promessa.** Scoperto scrivendoli, su richiesta dell'utente, **eseguendo la riverifica che una nota del documento chiedeva dal 2026-09-09** — e facendola contro `0042_confine_gratis.sql`, cioè contro ciò che il database impone, non contro il registro delle decisioni.
+
+| §7 diceva | Il servizio fa (D-135, `0042`, applicata il 2026-09-14) |
+|---|---|
+| mappa e luoghi **gratis** | **a pagamento** |
+| liste **gratis** | **a pagamento** |
+| «la creatura per intero», e *«non è e non sarà a pagamento»* | **a pagamento** |
+| foto gratis **fino a 1 GB** | **una foto per evento**; 1 GB è il tetto di spazio di tutti |
+
+🔑 **Il quarto punto non era una descrizione sbagliata, era un impegno**: *«la crescita della creatura non è e non sarà a pagamento — è il cuore del prodotto»*. Riga rimossa. ⚠️ *La sessione del 2026-09-14 aveva già annotato che l'obiezione era stata sollevata citando il documento che difende la creatura per nome, e che la decisione era stata presa lo stesso*: quello che mancava era il passo successivo — **andare a correggere il documento citato**.
+
+🔑 **E la causa è la stessa delle tre del 2026-09-14**: D-135 è stata presa in un'altra sessione, in un altro file, e non contiene la parola «termini». *Una frase corretta quando è stata scritta non resta corretta da sola*, e ciò che la rende falsa vive altrove e non si trova cercando il suo nome. Questa volta però la difesa ha funzionato: la nota `[DA VERIFICARE]` piantata il 2026-09-09 diceva *«questo è il punto del documento in cui è più facile che accada»*, ed è esattamente lì che è accaduto.
+
+✅ **Chiusi nello stesso giro altri due punti aperti del documento**: **chi è il venditore** (Apple, in forza del *Paid Applications Agreement*: emette la ricevuta e riceve le richieste di rimborso) e i **riferimenti a Google Play**, rimossi da termini e informativa perché con **D-132** si pubblica su iPhone soltanto.
+
+⚠️ **I termini restano comunque non pubblicabili, ma per un motivo diverso e molto più piccolo.** Restano in `NON_RESI`, ma con **due** segnaposto invece di tre, e sono **dati mancanti, non decisioni aperte**: il **telefono** e l'**indirizzo** del professionista (obbligo DSA). *Nel momento in cui quei due valori esistono, il documento è pubblicabile e si sposta in `DOCUMENTI`.*
+
+⚠️ **Tolto il segnaposto «forma con cui si vende» che avevo aggiunto poche ore prima, e la ragione è una distinzione che conviene tenere**: un segnaposto dichiara *un dato che manca al testo*, e alla §1 non ne manca nessuno — il venditore è nominato per intero, ed è un fatto vero. Ciò che manca **non è una riga del contratto ma una verifica fuori dal contratto**, e tenerla dentro come `[DA DECIDERE]` confondeva le due cose e avrebbe bloccato il documento anche dopo l'arrivo di telefono e indirizzo. Vive ora dove vivono gli altri rischi accettati: §5, il piano (**A8**) e questa voce.
+
+🔑 **La distinzione che regge tutto questo giro**: l'informativa privacy si poteva scrivere perché **il titolare del trattamento è un fatto** — chi decide finalità e mezzi — e vale a prescindere dal regime fiscale. I termini d'uso sono il **contratto di vendita**, e restano veritieri dicendo chi eroga il servizio; ⚠️ *ma il nodo «persona fisica senza partita IVA che incassa abbonamenti ricorrenti» non è un nodo che un testo scioglie*, ed è per il commercialista. Il documento non lo nasconde e non lo dichiara risolto.
+
+🔴 **B-70 — un elemento di lista creato già «fatto» non riceve i suoi 10 punti.** È **la terza comparsa dello stesso difetto**, ed è uscito estendendo `tests/punti.mjs` alle due sorgenti che il file stesso dichiarava non coperte (voce **D3**).
+
+| Sorgente | Trigger | Riga nata nello stato premiato |
+|---|---|---|
+| `luogo` | `before update of stato` | **B-64** — 0 punti invece di 20 · chiuso dalla `0040` |
+| `elemento_lista` | `before update of stato` | **B-70** — 0 punti invece di 10 · chiuso dalla `0046`, ✅ **applicata e verificata** |
+| `partita` | `after update of stato` | 0 punti invece di 5 — **e va bene così**, vedi sotto |
+
+🔑 **Un trigger `update of stato` misura una transizione, e un INSERT non è una transizione**: la riga nasce già nello stato premiato e non ci passa mai. Tre tabelle, tre volte la stessa forma.
+
+⚠️ **Nessuno dei due buchi è raggiungibile dall'app oggi**, ed è il motivo per cui va detto bene invece di gonfiarlo: `lib/preferiti.ts` non passa mai `stato` (quindi 'desiderato') e `lib/partita.ts` non crea mai una partita diversa da 'attesa'. **Erano latenti.** 🔑 *Ma B-64 era latente esattamente così, finché `collegaPosto` non ha cominciato a creare luoghi già visitati — e da quel momento i punti sono spariti in silenzio per settimane, senza un errore da nessuna parte.* La latenza non è una difesa: è il tempo che passa fra il difetto e il primo che ci cammina sopra.
+
+✅ **E la partita NON si corregge, che è la decisione più importante delle tre.** Premiare una partita nata «conclusa» farebbe comparire punti per **una partita mai giocata**, cioè darebbe a un client il modo di fabbricarsi punti inserendo partite finte. La `0033` lo diceva già — *il punto premia «la chiusura del cerchio, non il tempo passato dentro l'app»* — e un cerchio nato chiuso non è mai stato percorso. ⚠️ *L'asserzione nel test è quindi **rovesciata in positivo**, così che se un domani qualcuno "correggesse" anche quello per simmetria, il test lo fermi.*
+
+✅ **`0046` applicata dall'utente nella stessa sessione, e verificata misurando**: `test:punti` da **9/10 a 10/10**, e l'asserzione che ha cambiato colore è esattamente quella che nomina la migrazione. 🔑 *Il valore non è il verde: è che le due guardie sono rimaste verdi* — il giro avanti-indietro non fabbrica punti (il rischio introdotto **dalla** correzione) e la partita nata «conclusa» continua a non valerne (la simmetria che **non** andava applicata).
+
+⬜ **Un dettaglio che il vincolo ha insegnato**: il primo tentativo creava la partita con `stato: 'invito'`, preso dalla `0001`, ed è finito contro `partita_stato_check` — la `0020` ha rifatto gli stati in `('attesa','in_corso','conclusa','abbandonata')`. *Il vincolo ha fatto il suo lavoro su di me prima che su un utente.*
+
+✅ **D2 — gli esiti dei tre test, eseguiti e non ricordati.** `test:abbonamento` **4/4** (il client non può darsi il diritto, e la proiezione risponde) · `test:webhook` **13/13** (segreto mancante e segreto sbagliato danno la stessa risposta; l'evento doppio è riconosciuto; un evento più vecchio non riporta indietro lo stato; la disdetta non toglie e il rimborso toglie subito) · `test:confine` **7/7** (il muro è imposto dal database, non solo disegnato). 🔑 *Un test il cui esito non è scritto è un ricordo, non una prova* — ora è scritto.
+
+✅ **E4 — [`docs/app-privacy.md`](docs/app-privacy.md)**, dieci righe pronte da ricopiare in App Store Connect, rifatte sui destinatari aggiunti il 2026-09-14 (token del dispositivo verso Expo, cronologia acquisti verso RevenueCat). **Tracking = No** ovunque, e verificato sul `package.json`: nessun SDK pubblicitario, di analytics o di diagnostica. 🔴 *Una riga resta senza valore*: se la **deduzione strutturale** dell'orientamento sessuale conti come «Sensitive Info» per Apple — è la domanda di `conformita.md` §9 posta a un questionario invece che a un regolamento, e si fa nella stessa telefonata.
+
+✅ **D4 — [`docs/verifica-sul-telefono.md`](docs/verifica-sul-telefono.md)**, 12 blocchi con i difetti da riprovare per nome e i confini del piano da vedere scattare. ⚠️ *Dichiara in fondo le **tre voci che non può contenere*** — posizione condivisa (due telefoni), B-50 (solo iOS), confine UTC (un altro fuso): una lista che le omette sembra completa e non lo è.
+
+✅ **C4 era già fatta, e la voce nel piano era stale**: la `0043` si dichiara applicata nella sessione **(4)** del 2026-09-14, mentre §7-ter è stato scritto nella **(3)**. ⚠️ *Non verificata in prima persona*: la CLI `supabase` non è su questo dispositivo e PostgREST non espone `obj_description`.
+
+✅ **Landing pubblicata**, su conferma esplicita dell'utente. Identità AWS verificata prima (`790304250429`, l'account giusto — `fr-busato` sta su un altro e il runbook avverte di non confonderli), poi i tre comandi, invalidazione `IAETTFLOM8WPY62T3N5D0W9OFH`. 🔑 **Verificato in linea e non dedotto dall'esito dei comandi**: `privacy-policy.html`, `cookie-policy.html` e la home rispondono `200`, nominano Samuele Busato e **non contengono più né la P.IVA né il soggetto precedente**. *Un `exit 0` di `aws s3 sync` dice che il caricamento è riuscito, non che la pagina servita sia cambiata — fra i due c'è una cache.*
+
 ### 2026-09-14 (4) — La notte dei muri: la cancellazione non funzionava
 
 **Chiesto dall'utente**: una lista di sette cose, con la richiesta di lavorare bene e riferire alla fine.

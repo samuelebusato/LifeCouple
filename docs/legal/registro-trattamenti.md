@@ -12,10 +12,12 @@
 
 ## Titolare
 
-**F.R. di Busato Fausto** — titolare **Fausto Busato**
-Novellara (RE) — P.IVA **01878620358** — REA **RE 232527**
-PEC: fr-busato@pec.fr-busato.it
+**Samuele Busato** — persona fisica, residente in Italia
 Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
+
+> 🔴 **Riscritto il 2026-09-15 (D-136).** Diceva *«F.R. di Busato Fausto — titolare Fausto Busato, Novellara (RE), P.IVA 01878620358, REA RE 232527, PEC fr-busato@pec.fr-busato.it»*. ⚠️ **Il registro dei trattamenti è il documento di accountability**: se il titolare che dichiara non è quello vero, non prova niente — è il primo campo che il Garante guarda, e l'unico che non si può correggere a posteriori senza che si veda.
+>
+> ⬜ **Indirizzo, telefono e PEC mancano perché non esistono ancora per questo soggetto** (vedi `pubblicazione.md` **A3**). *Non si stimano*: un registro con un indirizzo inventato è peggio di uno con un campo vuoto.
 
 **DPO**: non nominato. ⚠️ Valutazione da confermare con un professionista — vedi §D.
 

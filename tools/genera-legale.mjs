@@ -72,7 +72,7 @@ const NON_RESI = [
   {
     file: 'terms-of-use.md',
     perche:
-      'bozza: restano TRE segnaposto, e nessuno e\' piu\' una decisione di prodotto — telefono e indirizzo del professionista (obbligo DSA, vanno chiesti) e chi e\' il venditore verso l\'utente finale (da verificare sui contratti Apple/Google). Le quattro decisioni di prodotto sono chiuse il 2026-09-10 (D-124). Aggiungerlo a DOCUMENTI ora farebbe fallire questo script di proposito.',
+      'bozza terms-1.1 (2026-09-15): restano DUE segnaposto, e sono DATI MANCANTI, non decisioni — telefono e indirizzo del professionista, obbligo DSA, vanno chiesti all\'utente. Nel momento in cui esistono, questo documento e\' pubblicabile e va spostato in DOCUMENTI. Chiusi il 2026-09-15: il venditore (Apple, Paid Applications Agreement), il confine gratis/a pagamento (riscritto contro 0042 — diceva il falso su quattro punti, uno dei quali era una promessa sulla creatura) e la forma di vendita, che NON e\' un segnaposto del testo ma una verifica fuori dal testo e vive in History.md e in pubblicazione.md A8. Restano dovute la revisione dell\'avvocato e quella conferma del commercialista.',
   },
 ];
 
@@ -495,7 +495,7 @@ ${corpoHtml(doc.testo)}
 
 <footer>
   <div class="guscio">
-    <span>LifeCouple — F.R. di Busato Fausto</span>
+    <span>LifeCouple — Samuele Busato</span>
     <span><a href="index.html">Back to the app page</a></span>
   </div>
 </footer>

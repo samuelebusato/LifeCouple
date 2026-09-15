@@ -14,7 +14,9 @@
 
 ## Titolare
 
-**F.R. di Busato Fausto**, Novellara (RE) — P.IVA 01878620358 — **info@heleox.it** *(scelta il 2026-09-10, D-121)*
+**Samuele Busato**, persona fisica residente in Italia — **info@heleox.it** *(scelta il 2026-09-10, D-121)*
+
+> ⟳ **Riscritta il 2026-09-15 (D-136)**, stessa ragione dell'informativa §1: il titolare è cambiato, e P.IVA e sede erano del soggetto precedente.
 
 ## In breve
 

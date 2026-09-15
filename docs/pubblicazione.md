@@ -61,19 +61,41 @@ Con gli abbonamenti attivi l'uso è **commerciale dal primo giorno**, indipenden
 
 ---
 
-## 2. Gli account — RISCRITTA il 2026-08-31
+## 2. Gli account — riscritta il 2026-08-31, poi di nuovo il 2026-09-15
 
-> 🔴 **Questa sezione diceva «va scelto organizzazione, il prezzo è il D-U-N-S». Era sbagliata**, e la versione superata è conservata in **§2.4** perché il ragionamento che conteneva resta valido — cambia il fatto su cui poggiava.
+> ⟳ **Due riscritture, e le versioni superate sono conservate** (§2.1-bis e §2.4): in questo progetto una decisione superata non si cancella, perché il ragionamento che conteneva di solito resta valido e cambia solo il fatto su cui poggiava.
 >
-> **Due cose l'hanno ribaltata**, verificate sulla documentazione ufficiale il 2026-08-31: che per una ditta individuale il percorso «organizzazione» su Apple **non è aperto**, e la decisione dell'utente di pubblicare **a nome proprio, non a nome dell'azienda**.
+> 🔴 **2026-09-15 (D-136) — cambia la persona che pubblica**: non più Fausto Busato ma **Samuele Busato**, persona fisica. ⚠️ *Il venditore perde in un colpo partita IVA, sede e PEC* — cioè proprio i dati che il DSA pretende. Dettaglio e domande aperte in **§2.1**.
+>
+> **2026-08-31 — cambiava il tipo di account**: la sezione diceva «va scelto organizzazione, il prezzo è il D-U-N-S» ed era sbagliata, perché per una ditta individuale il percorso «organizzazione» su Apple **non è aperto**. Quella conclusione regge ancora.
 
-### 2.1 La decisione: si pubblica come INDIVIDUO
+### 2.1 La decisione: si pubblica come INDIVIDUO, a nome **Samuele Busato** — RISCRITTA il 2026-09-15
 
-**Decisa dall'utente il 2026-08-31**: l'app esce a nome **Fausto Busato**, non a nome F.R. di Busato Fausto.
+**Decisa dall'utente il 2026-09-15 (D-136)**: l'app esce a nome **Samuele Busato**, persona fisica. La versione precedente — *«esce a nome Fausto Busato»*, decisa il 2026-08-31 con **D-81** — è conservata in **§2.1-bis**.
 
-🔑 **E per questa forma d'impresa non è nemmeno una scelta libera su Apple.** Apple ha due percorsi — *Individual / Sole Proprietor* e *Organization* — e stabilisce che chi è **ditta individuale / impresa unipersonale si iscrive come individuo**, col proprio nome legale come venditore. Il percorso «Organization» è per **entità legali separate** (S.r.l., S.p.A.), e il D-U-N-S serve appunto a provare che quell'entità esiste come soggetto distinto dalla persona.
+🔑 **La conclusione «individuo e non organizzazione» non cambia, e anzi si rafforza.** Apple ha due percorsi — *Individual / Sole Proprietor* e *Organization* — e quello «Organization» è per **entità legali separate** (S.r.l., S.p.A.), provate dal D-U-N-S. Una persona fisica non ha nemmeno quella porta: *l'unico percorso è Individual*. Cambiano i **dati**, non il tipo di account.
+
+⚠️ **Ma cambia il soggetto giuridico del prodotto, e questo sì che pesa.** Venditore verso lo store, controparte contrattuale di chi paga e **titolare del trattamento** sono lo stesso soggetto. Finora era `F.R. di Busato Fausto` — P.IVA `01878620358`, REA `RE 232527`, Novellara (RE) — scritto in [`legal/registro-trattamenti.md`](legal/registro-trattamenti.md) e in [`legal/informativa-privacy.md`](legal/informativa-privacy.md) §1. **Tutti quei documenti dichiarano ora un titolare sbagliato**, comprese le due pagine già online su CloudFront.
+
+🔴 **Tre domande che la decisione apre e non chiude** — e le prime due vengono **prima** dei termini d'uso (A4):
+
+| # | Domanda | A chi |
+|---|---|---|
+| **Q1** | **Partita IVA a nome di Samuele, oppure l'app rinuncia a vendere?** Vendere abbonamenti in modo continuativo è attività commerciale: *«privato senza partita IVA»* non è una terza strada, e un'app senza acquisti è l'unica alternativa reale | **commercialista** |
+| **Q2** | **Di chi è l'infrastruttura?** Progetto Supabase, dominio `lifecouple.heleox.it` ed email dei diritti `info@heleox.it` sono dell'**azienda**. Titolare e mezzi finirebbero su due soggetti diversi — e cambia **chi firma gli accordi art. 28** di A7 | utente, poi commercialista |
+| **Q3** | Indirizzo e telefono da esporre (**A3**): ora sono di Samuele, non la sede di Novellara | utente |
+
+> ⚠️ *Scrivere i termini d'uso prima di Q1 e Q2 significherebbe dichiarare una controparte contrattuale che potrebbe non esistere* — la stessa forma di B-66, un documento che descrive uno stato che nessuno ha verificato.
+
+### 2.1-bis ~~La versione superata: «esce a nome Fausto Busato»~~ (2026-08-31, D-81)
+
+Conservata per la stessa ragione di §2.4: il ragionamento resta utile, cambia il fatto su cui poggiava.
+
+Diceva: l'app esce a nome **Fausto Busato**, non a nome F.R. di Busato Fausto — e per quella forma d'impresa non era nemmeno una scelta libera, perché Apple stabilisce che chi è **ditta individuale / impresa unipersonale si iscrive come individuo**, col proprio nome legale come venditore.
 
 ⚠️ **Una ditta individuale non è un soggetto distinto**: fiscalmente e giuridicamente, `F.R. di Busato Fausto` **è** `Fausto Busato`. È anche il motivo per cui D&B elenca le *sole proprietorships* fra le forme che non censisce — e quindi perché la ricerca del D-U-N-S sarebbe stata verosimilmente un vicolo cieco.
+
+🔑 **Cosa di questo resta vero anche adesso**: il ragionamento su individuo-vs-organizzazione, che vale a maggior ragione per una persona fisica. **Cosa cade**: che il venditore avesse già una partita IVA, una sede e una PEC — cioè esattamente i dati che il DSA chiede, e che ora **non esistono più nel brain** e vanno prodotti da zero.
 
 ### 2.2 Cosa serve, per ciascuno store
 
@@ -314,8 +336,12 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 |---|---|---|---|
 | **A1** | ✅ **FATTA il 2026-09-14 (3)**, e non era una formalità: la cancellazione **non funzionava** — due difetti sovrapposti (**B-68**), corretti dalle migrazioni `0044` e `0045`, applicate. Ora la catena regge su tutti e cinque i controlli, **bucket compreso** | ✅ io | — |
 | **A2** | ✅ **FATTO il 2026-09-15**: `tools/semina-demo.mjs` crea la coppia appaiata e la riempie — 4 eventi, 4 luoghi, 2 voci, 4 foto, 1 partita conclusa. Credenziali in `.env.demo.local`, note per Apple stampate dallo script. ⬜ *Le foto sono segnaposto di 1 px*: per una demo migliore caricane di vere dall'app | ✅ io | — |
-| **A3** | 🔴 **Indirizzo e telefono del professionista (DSA)** — nel brain non esistono da nessuna parte | **solo tu** | — |
-| **A4** | 🔴 **I termini d'uso entrano nell'app**: oggi il generatore si rifiuta di costruirli perché portano segnaposto, quindi **non sono resi a nessuno**. 🔑 *Senza, il paywall vende senza contratto* | io | **A3** |
+| **A8** | 🔴 **NUOVA il 2026-09-15 (D-136, Q1) — con quale forma vende Samuele Busato?** Partita IVA, oppure app gratuita senza acquisti. ⚠️ *«Privato senza partita IVA» che vende abbonamenti non è una terza strada*, e questa domanda ora **precede A3**: da essa dipende quale indirizzo esista da esporre | **commercialista** | — |
+| **A9** | ✅ **CHIUSA il 2026-09-15, poche ore dopo essere nata.** L'utente: *«è tutta roba mia — il software è stato progettato e sviluppato da me, l'infrastruttura è mia»*. Titolare e mezzi **coincidono**, e **A7 lo firma lui**. ⚠️ *Resta solo la coda della coda*, ed è **A11**: le due superfici pubbliche portano il marchio di un altro prodotto | ✅ | — |
+| **A11** | ✅ **RIDOTTA a una riga il 2026-09-15**: `heleox.it` è **intestato a Samuele Busato** come persona fisica (riferito dall'utente). Quindi dominio ed email sono già del titolare e **non c'è niente da cambiare**. ⚠️ *Resta però che l'informativa §1 spiega `info@heleox.it` con «è l'indirizzo di un altro prodotto della stessa azienda — coerente sul piano giuridico»*, e quella frase ora è **falsa**: va corretta dentro **A10**, non separatamente | io, dentro A10 | **A8** |
+| **A10** | ✅ **FATTA il 2026-09-15, deploy compreso.** Titolare cambiato in **Samuele Busato, persona fisica** su: informativa (`en/privacy-policy.md` + italiana), cookie policy (entrambe), **registro dei trattamenti**, termini d'uso (entrambi), il piè di pagina di `tools/genera-legale.mjs` e `landing/index.html`. Derivati rigenerati; `test:legale` verde, `tsc` 0. **Pubblicata coi tre comandi del runbook**, invalidazione `IAETTFLOM8WPY62T3N5D0W9OFH`. ✅ *Verificato in linea, non dedotto*: le tre pagine rispondono `200`, nominano Samuele Busato e **non contengono più P.IVA né il soggetto precedente** | ✅ io | — |
+| **A3** | 🔴 **Indirizzo e telefono del professionista (DSA)** — nel brain non esistono da nessuna parte, e dal 2026-09-15 **non esistono più nemmeno di riflesso**: la sede di Novellara era del soggetto precedente. 🔑 *Non deve essere l'abitazione* — una domiciliazione basta, e il telefono può essere dedicato | **solo tu** | **A8** |
+| **A4** | ⟳ **RISCRITTI il 2026-09-15 (`terms-1.1`), e non sono ancora resi.** Soggetto nuovo, venditore chiuso (Apple), Google rimosso, e **§7-§8 rifatte contro `0042`: dichiaravano gratuito ciò che si paga, su quattro punti — B-69**. 🔴 **Restano DUE segnaposto, ed è tutto ciò che manca**: telefono e indirizzo (**A3**). *Sono dati, non decisioni: quando esistono, il documento si sposta in `DOCUMENTI` ed è reso.* 🔑 *Senza, il paywall vende senza contratto* | io · attende **A3** | **A3** |
 | **A5** | ⟳ **Scritte il 2026-09-15**, su richiesta esplicita: le due frasi stanno **sopra il pulsante** e i link ai documenti sono nel paywall. 🔴 **Resta la validazione**: la scelta fra testo-sopra-il-pulsante e **casella da spuntare** è dell'avvocato | ✅ io · 🔴 valida l'avvocato | **A6** |
 | **A6** | ⏸️ **Rimandata a un secondo momento** — decisione dell'utente del 2026-09-14 (3). ⚠️ *Resta bloccante sulla pubblicazione e resta la coda più lunga*: può imporre una DPIA e cambiare la nomina del DPO (`conformita.md` §9), e due lavori la aspettano — la traduzione dei documenti (§5 di `History.md`) e le due frasi di **B-66** | **solo tu** | — |
 | **A7** | 🔴 **Accordi art. 28** da accettare e archiviare: Supabase, Expo, Apple, Google, RevenueCat | **solo tu** | — |
@@ -336,16 +362,16 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | **C1** | ⏸️ **Non si revoca** — decisione dell'utente del 2026-09-14 (3), registrata come **rischio accettato** in `History.md` §5 col suo perimetro: la chiave tocca la superficie StoreKit, non il diritto, che lo scrive solo il webhook. ⚠️ *Da riconsiderare prima della pubblicazione* | — |
 | **C2** | ✅ **FATTO il 2026-09-14 (3)** — riferito dall'utente, **non verificato dall'agente**. 🔑 *La prova che vale non è il pannello ma la coda che si svuota*: `"ok": true`, e a coda vuota i campi `lette`/`scartate` mancano invece di valere zero | ✅ tu |
 | **C3** | 🔴 **Chiave APNs** (l'unica operazione che la API key non copre): serve alla build firmata | tu |
-| **C4** | ⚠️ **Il `comment on function` che dice ancora «B-63»** nel database | io, una riga |
+| **C4** | ✅ **ERA GIÀ FATTA, e questa riga era stale.** La migrazione `0043` si dichiara *«APPLICATA il 2026-09-14 (4) con `supabase db query` … Verificata: il commento comincia con B-64»*. 🔑 *Questa tabella è stata scritta nella sessione (3), la migrazione applicata nella (4)*: il piano non è stato riaperto, non il contrario. ⚠️ **Non verificata in prima persona**: la CLI `supabase` non è installata su questo dispositivo e PostgREST non espone `obj_description` — resta la parola del registro, che qui è di chi l'ha eseguita | ✅ |
 
 ### Corsia D — La verifica: la condizione di §9
 
 | | Cosa | Chi |
 |---|---|---|
 | **D1** | ✅ **FATTO il 2026-09-14 (3)** — `npm run test:copertura`: 30 tabelle, tutte con RLS, l'unica senza policy è dichiarata per nome. *Guardato fallire su quattro controprove.* ⚠️ Legge le migrazioni, non il catalogo | ✅ io |
-| **D2** | ⚠️ **Registrare l'esito** di `test:abbonamento`, `test:webhook`, `test:confine`. 🔑 *Un test il cui esito non è scritto da nessuna parte è un ricordo, non una prova* | io |
-| **D3** | ⚠️ **I punti di partite ed elementi di lista**, che hanno la stessa forma di B-64 e nessuna misura | io |
-| **D4** | 🔴 **La lista dei controlli sul telefono, voce per voce.** *Il 2026-09-14 è stata percorsa una volta con esito positivo: è una passata complessiva, non una spunta* | tu col telefono, io la preparo |
+| **D2** | ✅ **FATTA il 2026-09-15 — eseguiti, non ricordati.** `test:abbonamento` **4/4**, `test:webhook` **13/13** (compresi: evento doppio riconosciuto, evento più vecchio che non riporta indietro lo stato, disdetta che non toglie e rimborso che toglie subito), `test:confine` **7/7**. Esiti per esteso in `History.md`, 2026-09-15 | ✅ io |
+| **D3** | ✅ **MISURATI il 2026-09-15, e hanno trovato B-70.** `tests/punti.mjs` esteso: elementi di lista e partite ora hanno misura diretta. **La stessa forma era anche lo stesso buco** — un elemento creato già «fatto» vale **0 punti invece di 10**. 🔑 *Una partita nata già «conclusa» vale 0 ed è **giusto**: premiarla darebbe punti per una partita mai giocata* — l'asserzione è rovesciata apposta. ✅ **`0046` applicata dall'utente il 2026-09-15**: `test:punti` è passato da 9/10 a **10/10**, e le due guardie tengono | ✅ |
+| **D4** | ⟳ **LISTA PRONTA il 2026-09-15**: [`docs/verifica-sul-telefono.md`](verifica-sul-telefono.md) — **12 blocchi**, dall'accesso alla cancellazione, con dentro i difetti da riprovare per nome (B-24, B-15, B-50, B-68) e i confini del piano gratuito da vedere scattare. 🔑 *Dichiara anche le **tre voci che non può contenere*** — posizione condivisa, B-50, confine UTC — perché una lista che le omette sembra completa e non lo è. 🔴 **Resta da percorrerla**, e servono **due telefoni** (D-25) | 🔴 tu col telefono · ✅ lista mia |
 | **D5** | ✅ **FATTO il 2026-09-15**: `locales/it.json` e `locales/en.json`, agganciati da `app.json`. ⬜ *Vederli richiede una build nuova* — la parte scrivibile di B-20 è chiusa | ✅ io |
 
 ### Corsia E — La confezione: ultima, e dipende dalle altre
@@ -355,16 +381,18 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | **E1** | **Controlli sul nome** — EUIPO classi 9 e 42, disponibilità, handle. ⚠️ *Prima degli screenshot, o si rifanno* | tu | — |
 | **E2** | ✅ **FATTO il 2026-09-15**: `privacy-policy.html` e `cookie-policy.html` sono online su CloudFront, HTTP 200 verificato, e la versione pubblicata nomina RevenueCat | ✅ io | — |
 | **E3** | **Screenshot** | io + tu | E1, D5 |
-| **E4** | **App Privacy** compilata da `threat-model.md` §1. ⚠️ *Da rifare dopo i due sottosistemi del 2026-09-14*: notifiche e RevenueCat hanno cambiato l'elenco dei destinatari | io | — |
+| **E4** | ⟳ **SCRITTA il 2026-09-15**: [`docs/app-privacy.md`](app-privacy.md) — dieci righe pronte da ricopiare, con **Tracking = No** ovunque (nessun SDK pubblicitario, di analytics o di diagnostica nel `package.json`), e le esclusioni motivate una per una. Rifatta sui destinatari nuovi: token del dispositivo (Expo) e cronologia acquisti (RevenueCat). 🔴 **Una riga resta senza valore ed è bloccante**: se la deduzione strutturale dell'orientamento sessuale conti come *«Sensitive Info»* per Apple. *Stessa domanda di `conformita.md` §9 — si fa in una telefonata sola con l'avvocato* | io · 🔴 attende **A6** | **A6** |
 | **E5** | **TestFlight**, poi invio | tu | tutto |
 
 ### L'ordine dei prossimi giorni
 
-1. **C1** — cinque minuti, e toglie un'esposizione reale. *Prima di tutto il resto.*
-2. **A1** e **D1** — il muro più vicino a cadere e l'unico buco di misura che rende invisibili i guasti futuri.
-3. **A3** e **A6** — sono tue e hanno una **coda**: chiederle tardi le fa costare settimane, non giorni.
-4. **B1 → B2** — finché l'acquisto vero non è percorso, i pagamenti sono costruiti e non dimostrati.
-5. **A2** — la voce che scivola sempre in fondo, e che fa rifiutare l'app.
+> ⟳ **Riscritto il 2026-09-15.** L'ordine precedente apriva con C1, A1, D1, B1 e A2: tutte chiuse o decise fra il 14 e il 15. **E D-136 ha messo davanti a tutto una domanda che prima non esisteva.**
+
+1. **A8** — *il commercialista, e prima di ogni altra cosa.* Con quale forma si vende. ⚠️ Da qui discendono **A3** (quale indirizzo esiste), **A4** (chi è la controparte nei termini) e **A10** (chi è il titolare nei documenti): finché è aperta, scriverne uno significa scrivere un soggetto che potrebbe non esistere.
+2. **A6** — l'avvocato. È tua e ha una **coda**: chiederla tardi la fa costare settimane, non giorni, ed è ancora la coda più lunga del piano. *(A9 è nata e morta il 2026-09-15: l'infrastruttura è dell'utente, e questo la chiude.)*
+3. **A3**, poi **A10** e **A4** — appena A8 dà una risposta, questi tre si sbloccano in fila e sono per lo più lavoro mio.
+4. **B2 → B3** — l'acquisto vero. *Finché non è percorso, i pagamenti sono costruiti e non dimostrati*, ed è l'unico anello del sistema mai attraversato da capo a fondo.
+5. **D4** — la verifica voce per voce sul telefono: l'unica voce senza scadenza esterna, e per questo quella che si rimanda da giorni. §9 non cade senza.
 
 ### Cosa NON è in questo piano, e perché
 

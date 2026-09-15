@@ -16,16 +16,19 @@
 
 ## 1. Chi eroga il servizio
 
-LifeCouple è offerta da **Fausto Busato**, titolare dell'impresa individuale **F.R. di Busato Fausto**, Novellara (RE) — P.IVA **01878620358**, REA **RE 232527**.
+LifeCouple è offerta da **Samuele Busato**, persona fisica residente in Italia.
 
 - Email: **info@heleox.it** *(scelta il 2026-09-10, D-121 — la stessa della §1 dell'[informativa privacy](informativa-privacy.md), come doveva essere: una sola)*
 - Telefono: **[DA DECIDERE — obbligo DSA, vedi sotto]**
 - Indirizzo: **[DA DECIDERE — obbligo DSA]**
-- PEC: **fr-busato@pec.fr-busato.it**
 
-🔑 **Sugli store l'editore risulta «Fausto Busato», non «F.R. di Busato Fausto», e non è un'incoerenza**: per un'impresa individuale i due nomi sono **lo stesso soggetto giuridico**, e Apple impone di iscriversi come individuo col nome legale personale ([`pubblicazione.md`](../pubblicazione.md) §2.1). Il titolare del trattamento dei dati resta il medesimo soggetto — vedi l'[informativa privacy](informativa-privacy.md) §1.
+Sugli store l'editore risulta **«Samuele Busato»**, la stessa persona indicata sopra, che è anche il titolare del trattamento dei dati — vedi l'[informativa privacy](informativa-privacy.md) §1.
 
 🔴 **Dati del professionista ai sensi del DSA — obbligo bloccante.** Chi vende nella UE deve fornire agli store e **rendere visibili** nome, indirizzo, telefono ed email. Finché indirizzo e telefono non sono decisi, questo documento non è pubblicabile: non è una formalità redazionale, è il motivo per cui la scheda store può essere rifiutata.
+
+⚠️ **La forma con cui si vende resta da confermare, e il documento non la dichiara** (D-136, Q1 · `pubblicazione.md` **A8**). Il soggetto è una **persona fisica senza partita IVA** e il servizio ha **piani a pagamento** (D-134). 🔑 *Il testo qui sopra è comunque veritiero — dice chi eroga il servizio, e quello è un fatto* — ma il contratto non è la sede in cui quel nodo si scioglie: è una questione per il **commercialista**, e resta aperta anche quando questo documento sarà pubblicabile.
+
+> 🔑 **Perché il segnaposto sulla forma è stato tolto il 2026-09-15**, dopo essere stato aggiunto poche ore prima: un segnaposto dichiara *un dato che manca al testo*, e alla §1 non manca nulla — il venditore è nominato per intero. ⚠️ *Ciò che manca non è una riga del contratto, è una verifica fuori dal contratto*, e tenerla dentro come `[DA DECIDERE]` confondeva le due cose. Vive ora dove gli altri rischi accettati vivono: in `History.md` e nel piano.
 
 ## 2. Cosa si accetta, e quando
 
@@ -79,23 +82,29 @@ LifeCouple è il diario privato di **due persone**: calendario, luoghi, fotograf
 
 ## 7. Cosa è gratuito e cosa si paga
 
-> ⚠️ **Questa sezione e la §8 descrivono un'offerta commerciale decisa** ([`monetizzazione.md`](../../../../Marketing/LifeCouple/monetizzazione.md) §1, §3 e §4) **e non ancora costruita**: al 2026-09-09 in `package.json` non esiste alcuna libreria di pagamenti e nel codice non esiste alcun concetto di abbonamento. 🔴 **Prima di mandare in vigore questi termini, il confine qui sotto va riverificato contro ciò che l'applicazione fa davvero**: un termine che promette più di quanto il prodotto dà è una dichiarazione falsa, e questo è il punto del documento in cui è più facile che accada.
+> 🔴 **RISCRITTA il 2026-09-15, e la riverifica che questa nota chiedeva è stata fatta — contro `0042_confine_gratis.sql`, non contro il registro delle decisioni.** L'esito: **questa sezione diceva il falso su quattro punti**. Mappa, luoghi, liste e creatura erano dichiarati gratuiti e **sono a pagamento** da **D-135** (2026-09-14); il gratuito sulle foto non è «1 GB» ma **una foto per evento**.
+>
+> ⚠️ **E il quarto punto era una promessa, non una descrizione**: *«la crescita della creatura non è e non sarà a pagamento»*. Quella riga è stata **rimossa**, perché D-135 l'ha contraddetta. 🔑 *La nota che stava qui aveva ragione a esistere e ha funzionato*: diceva «questo è il punto del documento in cui è più facile che accada», e infatti è accaduto — nel senso opposto a quello temuto, cioè il prodotto che si stringe sotto un testo che era rimasto largo.
+>
+> 🔑 **La ragione per cui nessuno se n'era accorto è sempre la stessa di questo progetto**: D-135 è stata presa in un altro file, in un'altra sessione, e *non contiene la parola «termini»*. Una frase corretta quando è stata scritta non resta corretta da sola.
 
-**Gratuito, e inteso come gratuito per sempre**: calendario, mappa e luoghi, liste, fotografie **fino a 1 GB per coppia** (tetto già imposto dal database), **la creatura per intero**, e un gioco completo al giorno.
+**Gratuito**: calendario ed eventi, **una fotografia su ciascun evento**, e **una partita completa al giorno** per la coppia.
 
-**Compreso nell'abbonamento «Insieme»**: giochi senza limite giornaliero e banchi tematici, spazio fotografico oltre 1 GB, personalizzazione dell'aspetto della creatura.
+**Compreso nell'abbonamento «Insieme»**: mappa e luoghi, liste, creatura, fotografie oltre la prima su ogni evento, fotografie aggiunte direttamente in galleria, e partite oltre la prima di ogni giorno.
 
-🔑 **La crescita della creatura non è e non sarà a pagamento.** È il cuore del prodotto, e tenerlo dietro un muro renderebbe la versione gratuita monca invece che stretta.
+**Il tetto di 1 GB per coppia vale su ogni piano**, abbonamento compreso: è un limite di spazio (D-22), non una funzione a pagamento.
+
+🔑 **Cosa non dipende mai dal pagare**: leggere, esportare e cancellare i propri contenuti. Se un abbonamento finisce, **nulla di ciò che hai già inserito viene rimosso, alterato o reso illeggibile** — i limiti valgono sull'*aggiungere*, mai su ciò che c'è già. ⚠️ *Non è una cortesia: è la ragione scritta in `0042` per cui mappa e liste non hanno un muro sulla lettura* — chiudere la lettura dei propri luoghi sarebbe tenere in ostaggio i ricordi di qualcuno. Gli artt. 15 e 20 GDPR valgono su ogni piano.
 
 ## 8. L'abbonamento «Insieme»
 
 - **Prezzo**: **€7,99 al mese** oppure **€39,99 all'anno**. I prezzi indicati negli store al momento dell'acquisto sono quelli che fanno fede, IVA inclusa.
 - 🔑 **Un solo pagamento, valete in due.** L'abbonamento è **della coppia**: lo store lo intesta però alla persona che paga, perché non esiste un abbonamento intestato a due account.
 - **Una settimana gratis, la prima volta.** Un abbonamento nuovo comincia con **sette giorni senza costi**. Se disdici prima della fine di quei sette giorni **non paghi nulla**; se non lo fai, l'abbonamento parte da solo al prezzo indicato sopra e si rinnova da lì. ⚠️ Il periodo gratuito è offerto **una volta per persona e per gruppo di abbonamento**, per regola dello store e non nostra: chi l'ha già usato — anche tramite l'In Famiglia — si abbona al prezzo pieno. Se il periodo gratuito sia disponibile o no te lo dice l'applicazione **prima** che tu confermi, perché è lo store a concederlo.
-- **Rinnovo automatico** alla scadenza, salvo disdetta. La disdetta si effettua **dalle impostazioni del tuo telefono** (App Store o Google Play), non dall'applicazione: noi non possiamo disdire al posto tuo. Per non pagare il periodo successivo — compreso il primo dopo una settimana gratuita — la disdetta deve avvenire **almeno 24 ore prima** della fine del periodo in corso, come gli store richiedono.
+- **Rinnovo automatico** alla scadenza, salvo disdetta. La disdetta si effettua **dalle impostazioni del tuo telefono** (App Store), non dall'applicazione: noi non possiamo disdire al posto tuo. Per non pagare il periodo successivo — compreso il primo dopo una settimana gratuita — la disdetta deve avvenire **almeno 24 ore prima** della fine del periodo in corso, come gli store richiedono.
 - **Momento della disdetta**: se disdici, il servizio resta disponibile **fino alla fine del periodo già pagato**, e non oltre.
 - **Ripristino acquisti**: se cambi o reinstalli, puoi ripristinare l'abbonamento dall'applicazione.
-- ⚠️ **[DA VERIFICARE] Chi è il venditore verso di te.** Apple e Google agiscono da rivenditori nella UE, e questo determina **chi emette il documento fiscale e a chi si chiede il rimborso**. Va verificato sui contratti di programma, non assunto: cambia il testo di questa clausola e gli obblighi fiscali dell'impresa ([`conformita.md`](../conformita.md) §7).
+- ✅ **Chi è il venditore verso di te — chiuso il 2026-09-15.** L'abbonamento si acquista **tramite App Store**, e in forza del *Paid Applications Agreement* di Apple è **Apple** il venditore verso di te nella UE: **Apple emette la ricevuta** e **il rimborso si chiede ad Apple**, non a noi. Possiamo assisterti, non possiamo rimborsare al posto suo. ⚠️ *Google non compare più in questa clausola*: con **D-132** si pubblica su iPhone soltanto.
 - ✅ **L'abbonamento resta a chi l'ha pagato** — deciso dall'utente il 2026-09-10 (**D-124**). 🔑 **La conseguenza tecnica è la parte che conta**: il diritto si scrive **sull'utente**, non sulla coppia, e mentre la coppia esiste si *proietta* su entrambi. Allo scioglimento finisce la proiezione, non il diritto. Va costruito così quando si costruiranno i pagamenti.
 - ✅ **Non si cancella mai niente per fare spazio** — deciso il 2026-09-10 (**D-124**), e **non è una scelta nuova: è ciò che il codice già fa.** Il tetto è un trigger `BEFORE INSERT` che solleva un'eccezione (`0001_schema_iniziale.sql:330`); non esiste nessuna potatura. ⚠️ *E lo scenario temuto non è raggiungibile*: dopo lo scioglimento `foto_insert` richiede `e_membro_attivo`, quindi in quella cartella non carica più nessuno, e una coppia nuova nasce col contatore a zero.
 
@@ -107,7 +116,7 @@ Sei un **consumatore**: hai diritto di recedere entro **14 giorni** dall'acquist
 
 🔑 **Tradotto in una voce di lavoro, non in una clausola**: la schermata di acquisto deve dire queste due cose **prima** del pulsante che paga. Senza, la decadenza non opera e il recesso resta esercitabile per quattordici giorni.
 
-Il recesso, dove spetta, si esercita presso lo store che ha venduto (vedi §8, `[DA VERIFICARE]`).
+Il recesso, dove spetta, si esercita presso **Apple**, che ha venduto (vedi §8).
 
 ## 10. Conformità del servizio e responsabilità
 
@@ -125,7 +134,7 @@ Puoi cancellare il tuo account **dall'applicazione**, da Impostazioni. La cancel
 
 Fanno eccezione i **dati contabili e fiscali**, che la legge impone di conservare per 10 anni.
 
-🔴 **Cancellare l'account non disdice l'abbonamento.** Gli abbonamenti sono gestiti da Apple e Google: vanno disdetti dalle impostazioni del telefono, altrimenti il rinnovo prosegue anche se l'account non esiste più. ⚠️ *Va detto anche dentro l'app, nel momento in cui si preme «cancella account», non solo qui.*
+🔴 **Cancellare l'account non disdice l'abbonamento.** Gli abbonamenti sono gestiti da Apple: vanno disdetti dalle impostazioni del telefono, altrimenti il rinnovo prosegue anche se l'account non esiste più. ⚠️ *Va detto anche dentro l'app, nel momento in cui si preme «cancella account», non solo qui.*
 
 Dettagli e limiti nell'[informativa privacy](informativa-privacy.md) §7.
 

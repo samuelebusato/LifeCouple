@@ -1,6 +1,12 @@
 # Terms of Use — LifeCouple
 
-> ⚠️ **Draft `terms-1.0` — not in force.** This document is **not** shown in the app and **not** published at a public address yet, and it must not be: the points marked **`[TO BE DECIDED]`** / **`[TO BE VERIFIED]`** are decisions still open, and a contract that states a term it cannot keep is worse than one that is missing. The generator that brings legal texts into the app refuses to build while any of those markers remain. Review by a lawyer is still owed before the service starts charging.
+> ⚠️ **Draft `terms-1.1` — revised 15 September 2026, not in force.** This document is **not** shown in the app and **not** published at a public address, and it must not be while any **`[TO BE DECIDED]`** marker remains: a contract that states a term it cannot keep is worse than one that is missing, and the generator that brings legal texts into the app refuses to build while those markers are present.
+>
+> **What changed on 15 September 2026**: the provider is now **Samuele Busato**, a natural person; sections 7 and 8 were rewritten because they described a free/paid boundary that **the service no longer applies** — checked against migration `0042`, not against the decision log; the seller clause was settled; and references to Google Play were removed, the app being released on iPhone only.
+>
+> **Two markers remain, and both are missing *data*, not open decisions**: the trader's telephone number and full address, required by the Digital Services Act. The moment they exist, this document is publishable.
+>
+> Review by a lawyer is still owed before the service starts charging, and so is confirmation of the form under which the sale takes place.
 >
 > 🔴 **One precondition is about the app, not about this text**: section 2 says these Terms are reachable before an account is created, and today **only the Privacy Policy and the Cookie Policy are**. Linking these Terms from registration, Settings and the purchase screen has to happen in the same change that puts them in force — otherwise section 2 becomes the false statement this document exists to avoid.
 
@@ -8,14 +14,13 @@
 
 ## 1. Who provides the service
 
-LifeCouple is offered by **Fausto Busato**, owner of the sole proprietorship **F.R. di Busato Fausto**, Novellara (RE), Italy — VAT no. **01878620358**, REA **RE 232527**.
+LifeCouple is offered by **Samuele Busato**, a natural person resident in Italy.
 
 - Email: **info@heleox.it**
-- Telephone: **[TO BE DECIDED: the professional's telephone number, required by the Digital Services Act]**
-- Address: **[TO BE DECIDED: the professional's full address, required by the Digital Services Act]**
-- Certified email (PEC): **fr-busato@pec.fr-busato.it**
+- Telephone: **[TO BE DECIDED: the trader's telephone number, required by the Digital Services Act]**
+- Address: **[TO BE DECIDED: the trader's full address, required by the Digital Services Act]**
 
-On the app stores the publisher appears as **"Fausto Busato"** rather than "F.R. di Busato Fausto". For a sole proprietorship these are **the same legal person**, and Apple requires enrolment as an individual under the owner's legal name. The controller of your personal data is that same person — see section 1 of the Privacy Policy.
+On the app stores the publisher appears as **"Samuele Busato"**, the same person named above, who is also the controller of your personal data — see section 1 of the Privacy Policy.
 
 ## 2. What you accept, and when
 
@@ -62,23 +67,23 @@ LifeCouple is the private diary of **two people**: a shared calendar, places, ph
 
 ## 7. What is free and what is paid
 
-**Free, and meant to stay free**: the calendar, the map and places, the lists, photographs **up to 1 GB per couple**, **the creature in full**, and one complete game a day.
+**Free**: the shared calendar and its events, **one photograph on each event**, and **one complete game per day** for the couple.
 
-**Included in the "Insieme" subscription** (*insieme* is Italian for *together*): games without a daily limit and themed question decks, photo storage beyond 1 GB, and customising how the creature looks.
+**Included in the "Insieme" subscription** (*insieme* is Italian for *together*): the map and your places, the lists, the creature, further photographs beyond the first on each event, photographs added straight to the gallery, and games beyond the first each day.
 
-**The creature's growth is not, and will not become, a paid feature.** It is the heart of the product, and putting it behind a wall would make the free version crippled rather than merely smaller.
+**Photo storage is capped at 1 GB per couple on every plan**, subscription included. It is a limit on space, not a paid feature.
 
-**[TO BE VERIFIED: this section and section 8 describe an offer that is decided but not yet built.]** There is no payment code in the app at the time of writing. Before these Terms come into force, the boundary described here must be checked against what the app actually does — a term that promises more than the product delivers is a false statement.
+**What never depends on paying**: reading, exporting and deleting your own content. If a subscription ends, nothing you have already added is removed, altered or made unreadable — the limits above apply to *adding* new content, never to what is already there. Your rights of access and portability under Articles 15 and 20 GDPR are available on every plan.
 
 ## 8. The "Insieme" subscription
 
 - **Price**: **€7.99 per month** or **€39.99 per year**. The prices shown in the stores at the time of purchase are the ones that apply, VAT included.
 - **One payment, both of you covered.** The subscription belongs to **the couple**; the store, however, registers it to the person who pays, because a subscription cannot be held by two accounts.
 - **One free week, the first time.** A new subscription begins with **seven days at no cost**. If you cancel before the end of those seven days you are **charged nothing**; if you do not, the subscription starts automatically at the price above and renews from there. ⚠️ The free period is offered **once per person and per subscription group**, by the store's own rule and not by ours: someone who has already used it — including through Family Sharing — subscribes at the full price. Whether the free period is available at all is shown in the app **before** you confirm, because it is the store that grants it.
-- **Automatic renewal** on expiry, unless cancelled. Cancellation is done **from your phone's settings** (App Store or Google Play), not from the app: we cannot cancel on your behalf. To avoid being charged for the next period — including the first one after a free week — cancellation must happen **at least 24 hours before** the current period ends, as the stores require.
+- **Automatic renewal** on expiry, unless cancelled. Cancellation is done **from your phone's settings** (App Store), not from the app: we cannot cancel on your behalf. To avoid being charged for the next period — including the first one after a free week — cancellation must happen **at least 24 hours before** the current period ends, as the stores require.
 - **When you cancel**, the service remains available **until the end of the period already paid for**, and no longer.
 - **Restoring purchases**: if you change or reinstall your phone, you can restore the subscription from within the app.
-- **[TO BE VERIFIED: who sells to you.]** Apple and Google act as resellers in the European Union, and this determines **who issues the tax document and who a refund is requested from**. It has to be confirmed against their programme agreements rather than assumed, and it changes the wording of this clause.
+- **Who sells to you.** The subscription is purchased **through the App Store**, and under Apple's Paid Applications Agreement Apple is the seller towards you in the European Union. This means **Apple issues the purchase receipt** and **refunds are requested from Apple**, not from us. We can help you, but we cannot issue a refund on Apple's behalf.
 - **If the couple is dissolved, the subscription stays with the person who paid for it.** It belongs to that person and not to the couple: while you are a couple its benefits reach both of you, and when the couple ends they stop reaching the other person. Nobody is charged for something they did not buy, and nobody keeps a benefit they never paid for.
 - **Nothing you uploaded is ever deleted to make room.** The 1 GB limit stops new uploads once it is reached; it never removes what is already there. That holds at every moment, dissolution included: if you are over the limit, you free space by deleting your own content or by subscribing. We do not choose for you which memories to lose.
 
@@ -88,7 +93,7 @@ You are a **consumer**: you have the right to withdraw within **14 days** of pur
 
 **For digital content the right lapses** if performance begins immediately, and it does begin immediately by design: the moment the subscription activates, the service is already supplied. For that lapse to be valid, two things are required together, at the time of purchase: your **express consent** to immediate performance and your **acknowledgement** that you lose the right of withdrawal. The purchase screen states both **before** the button that pays; without them, the right remains exercisable for fourteen days.
 
-Where it applies, withdrawal is exercised with the store that made the sale — see section 8.
+Where it applies, withdrawal is exercised with **Apple**, which made the sale — see section 8.
 
 ## 10. Conformity of the service, and liability
 
@@ -106,7 +111,7 @@ You can delete your account **from the app**, in Settings. Deletion is **immedia
 
 **Accounting and tax data** is an exception, kept for 10 years as the law requires.
 
-**Deleting your account does not cancel your subscription.** Subscriptions are managed by Apple and Google: they must be cancelled from your phone's settings, otherwise renewal continues even though the account no longer exists.
+**Deleting your account does not cancel your subscription.** Subscriptions are managed by Apple: they must be cancelled from your phone's settings, otherwise renewal continues even though the account no longer exists.
 
 Details and limits are in section 7 of the Privacy Policy.
 

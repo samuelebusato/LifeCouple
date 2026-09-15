@@ -1,12 +1,12 @@
 # Cookie Policy and Local Storage — LifeCouple
 
-**Version `cookie-1.0` — last updated 9 September 2026.** Written in accordance with the Italian Data Protection Authority's *Guidelines on cookies and other tracking tools* (measure of 10 June 2021) and **Article 122 of the Italian Privacy Code** (Legislative Decree 196/2003).
+**Version `cookie-1.1` — last updated 15 September 2026.** Written in accordance with the Italian Data Protection Authority's *Guidelines on cookies and other tracking tools* (measure of 10 June 2021) and **Article 122 of the Italian Privacy Code** (Legislative Decree 196/2003).
 
 ---
 
 ## Who is responsible
 
-**F.R. di Busato Fausto**, Novellara (RE), Italy — VAT no. 01878620358 — **info@heleox.it**
+**Samuele Busato**, a natural person resident in Italy — **info@heleox.it**
 
 ## In short
 

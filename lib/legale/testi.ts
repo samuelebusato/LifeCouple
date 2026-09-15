@@ -16,16 +16,15 @@ export const DOCUMENTI_LEGALI: Record<ChiaveDocumento, { titolo: string; testo: 
     titolo: "Privacy Policy — LifeCouple",
     testo: `# Privacy Policy — LifeCouple
 
-**Version \`app-1.0\` — last updated 9 September 2026.** Provided under Articles 13–14 of Regulation (EU) 2016/679 (GDPR).
+**Version \`app-1.1\` — last updated 15 September 2026.** Provided under Articles 13–14 of Regulation (EU) 2016/679 (GDPR).
 
 ---
 
 ## 1. Who is responsible for your data
 
-**F.R. di Busato Fausto**, owner **Fausto Busato**, Novellara (RE), Italy — VAT no. **01878620358**, REA **RE 232527**.
+**Samuele Busato**, a natural person resident in Italy — the developer and operator of LifeCouple.
 
 - Contact, support and **exercising your rights**: **info@heleox.it**
-- Certified email (PEC): **fr-busato@pec.fr-busato.it**
 
 No Data Protection Officer has been appointed. The service does not involve systematic large-scale monitoring, but it does handle data that is particularly sensitive when combined; this assessment is kept under review.
 
@@ -129,7 +128,7 @@ You can delete your account **directly from the app**, in Settings.
 
 **Deletion is immediate and permanent**, and covers — in this order — your **stored photographs**, all content you authored, and finally your account. There is no cooling-off period: **once you confirm, the data is deleted**.
 
-**Deleting your account does not cancel your subscription.** Subscriptions are managed by Apple and Google, not by us: they must be cancelled from your phone's settings, otherwise renewal continues even though the account no longer exists.
+**Deleting your account does not cancel your subscription.** Subscriptions are managed by Apple, not by us: they must be cancelled from your phone's settings, otherwise renewal continues even though the account no longer exists.
 
 **Accounting and tax data** relating to purchases is an exception, kept for 10 years as required by law.
 
@@ -161,7 +160,7 @@ If LifeCouple were one day to stop being offered, you would receive **at least 6
 
 Before that date you would be able to **export your data** from the app, a feature already available today in Settings. On closure, data is deleted in accordance with section 7, with the sole exception of the accounting and tax data the law requires us to keep.
 
-Subscriptions in progress are managed by Apple and Google: automatic renewal is switched off and the service remains available **until the end of the period already paid for**.
+Subscriptions in progress are managed by Apple: automatic renewal is switched off and the service remains available **until the end of the period already paid for**.
 
 ## 11. Minimum age
 
@@ -177,13 +176,13 @@ Changes to this policy are published with an updated version number and date. Su
     titolo: "Cookie Policy and Local Storage — LifeCouple",
     testo: `# Cookie Policy and Local Storage — LifeCouple
 
-**Version \`cookie-1.0\` — last updated 9 September 2026.** Written in accordance with the Italian Data Protection Authority's *Guidelines on cookies and other tracking tools* (measure of 10 June 2021) and **Article 122 of the Italian Privacy Code** (Legislative Decree 196/2003).
+**Version \`cookie-1.1\` — last updated 15 September 2026.** Written in accordance with the Italian Data Protection Authority's *Guidelines on cookies and other tracking tools* (measure of 10 June 2021) and **Article 122 of the Italian Privacy Code** (Legislative Decree 196/2003).
 
 ---
 
 ## Who is responsible
 
-**F.R. di Busato Fausto**, Novellara (RE), Italy — VAT no. 01878620358 — **info@heleox.it**
+**Samuele Busato**, a natural person resident in Italy — **info@heleox.it**
 
 ## In short
 

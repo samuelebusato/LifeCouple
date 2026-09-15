@@ -16,12 +16,17 @@
 
 ## 1. Titolare del trattamento
 
-**F.R. di Busato Fausto**, titolare **Fausto Busato**, Novellara (RE) — P.IVA **01878620358**, REA **RE 232527**.
+**Samuele Busato**, persona fisica residente in Italia — sviluppatore e gestore di LifeCouple.
 
-- Contatti, assistenza ed **esercizio dei diritti**: **info@heleox.it** *(scelta dall'utente nella sessione del 2026-09-10, **D-121**; è l'indirizzo di un altro prodotto della stessa azienda — coerente sul piano giuridico, meno per chi scrive)*
-- PEC: **fr-busato@pec.fr-busato.it**
+- Contatti, assistenza ed **esercizio dei diritti**: **info@heleox.it** *(scelta dall'utente nella sessione del 2026-09-10, **D-121**)*
 
-⚠️ **Dati del professionista ai sensi del DSA**: chi vende nella UE deve fornire agli store e rendere visibili nome, indirizzo, telefono ed email del professionista. Gli stessi dati vanno esposti qui e nella scheda dello store.
+> 🔴 **RISCRITTA il 2026-09-15 — D-136.** Diceva *«F.R. di Busato Fausto, titolare Fausto Busato, Novellara (RE) — P.IVA 01878620358, REA RE 232527»*, più la PEC aziendale. **Il titolare del trattamento è cambiato**: l'app la pubblica Samuele Busato come persona fisica, e software, infrastruttura e dominio `heleox.it` sono suoi. ⚠️ *Sono stati tolti P.IVA, REA e PEC perché a questo soggetto **non appartengono**, non per sintesi*: scriverli sarebbe stato attribuirgli dati di un altro.
+>
+> 🔑 **E la riga su `info@heleox.it` è stata ripulita, non solo accorciata.** Diceva *«è l'indirizzo di un altro prodotto della stessa azienda — coerente sul piano giuridico, meno per chi scrive»*. Quella giustificazione era vera quando il titolare era l'azienda; ora `heleox.it` è intestato allo stesso soggetto che è titolare, quindi **non c'è più niente da giustificare**.
+>
+> ⬜ **Manca l'indirizzo postale, e l'assenza è una scelta**: l'art. 13.1.a chiede *«identità e dati di contatto»* del titolare, e un'email li soddisfa. Mettere un segnaposto avrebbe fatto fallire `genera-legale.mjs` di proposito, rendendo **impubblicabile anche questa informativa** — cioè un danno certo per evitarne uno che non c'è. L'indirizzo si aggiunge quando arriva **A3**.
+
+⚠️ **Dati del professionista ai sensi del DSA — restano dovuti e qui non ci sono.** Chi vende nella UE deve fornire agli store e rendere visibili nome, **indirizzo**, **telefono** ed email del professionista. 🔴 *Quell'obbligo non vive in questo documento ma nei **termini d'uso** e nella scheda dello store*, ed è lì che è bloccante: vedi [`pubblicazione.md`](../pubblicazione.md) **A3** e **A8**. Un'informativa privacy conforme non rende conforme la vendita.
 
 Non è stato nominato un Responsabile della protezione dei dati (DPO). ⚠️ **Valutazione da rivedere con un professionista** (vedi §11): il servizio non comporta monitoraggio sistematico su larga scala, ma tratta dati la cui aggregazione è particolarmente delicata.
 
@@ -162,7 +167,7 @@ Se un giorno LifeCouple cessasse di essere offerto, riceverai un **preavviso** a
 
 Prima di quella data potrai **esportare i tuoi dati** dall'applicazione, funzione già disponibile oggi in Impostazioni. Alla chiusura i dati sono cancellati secondo la §7, con la sola eccezione dei dati contabili e fiscali che la legge impone di conservare.
 
-Gli abbonamenti in corso sono gestiti da Apple e Google: il rinnovo automatico viene disattivato e il servizio resta disponibile **fino alla scadenza del periodo già pagato**.
+Gli abbonamenti in corso sono gestiti da Apple: il rinnovo automatico viene disattivato e il servizio resta disponibile **fino alla scadenza del periodo già pagato**.
 
 > ✅ **Preavviso: almeno 60 giorni, e mai prima della fine di un periodo già pagato** — deciso il 2026-09-10 (**D-124**), e scritto con lo stesso numero nei [**termini d'uso**](termini-uso.md) §15. 🔑 *«Non chiudo prima che scada quello che hai pagato» è mantenibile senza costruire niente — basta non spegnere; il rimborso del non goduto su iOS non lo emetteresti tu.* 🔴 **Resta però da costruire una procedura di cancellazione di massa**: oggi la catena funziona per un utente alla volta, e spegnere l'infrastruttura non è una cancellazione a norma. Vedi il backlog di [`History.md`](../../History.md) → *«La fine del servizio»*.
 
