@@ -38,6 +38,8 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ⬜ **Perimetro tenuto stretto, come chiesto**: i `[DA VERIFICARE]` che restano in `registro-trattamenti.md` e `catena-cancellazione.md` riguardano la **retention dei backup Supabase**, sono in documenti **interni** che legge il Garante e **non entrano nell'app**. Non toccati.
 
+✅ **E pubblicato lo stesso giorno, su autorizzazione dell'utente** — quattro comandi del runbook (sync, HTML a `no-cache`, `apple-app-site-association` col suo `content-type`, invalidazione `E24HEU9QRSMF0N`). ✅ **Verificato in linea, non sulla parola dello strumento**: `terms-of-use.html` → `200`, **`terms-1.3`**, **zero segnaposto**, e sparite entrambe le frasi false; `apple-app-site-association` → `200` con `application/json`, che è la trappola per cui gli inviti smetterebbero di aprire l'app senza dirlo. 🔑 *Le righe «manca il deploy» sono state corrette nello stesso turno*: erano già scritte in due posti, ed erano esattamente la forma di B-85 documentata poche ore prima.
+
 #### 🔑 Cosa questa decisione cambia, e cosa non cambia — la distinzione è il punto
 
 ⚠️ **Togliere il segnaposto non toglie l'obbligo: toglie il promemoria.** Il DSA continua a chiedere un indirizzo geografico e un telefono a chi vende nella UE, e Apple li raccoglie come *trader* **esponendoli sulla scheda pubblica dell'app**. Niente di ciò che è stato scritto oggi cambia quel fatto.
@@ -5533,12 +5535,12 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 >
 > | | Cosa | Chi | Costo |
 > |---|---|---|---|
-> | 1 | **Deploy della landing** — online c'è `terms-1.2`, i file sono a **`terms-1.3`** | tu autorizzi, io eseguo | tre comandi |
-> | 2 | **A7** — sei accordi art. 28 | solo tu | minuti |
-> | 3 | **C1** — la chiave esposta | solo tu | cinque minuti |
-> | 4 | **La lingua della scheda** | solo tu | una riga |
-> | 5 | **E3** — screenshot | io + tu, su un telefono | — |
-> | 6 | **E5** — build `production`, caricamento, invio | tu | — |
+> | ✅ | ~~Deploy della landing~~ — **fatto e verificato in linea**: `terms-1.3` online, zero segnaposto | ✅ io | — |
+> | 1 | **A7** — sei accordi art. 28 | solo tu | minuti |
+> | 2 | **C1** — la chiave esposta | solo tu | cinque minuti |
+> | 3 | **La lingua della scheda** | solo tu | una riga |
+> | 4 | **E3** — screenshot | io + tu, su un telefono | — |
+> | 5 | **E5** — build `production`, caricamento, invio | tu | — |
 >
 > ⬜ **E le traduzioni, che D-141 ha sbloccato invece di chiudere**: erano ferme solo per la sequenza «revisione → traduzione», e quella revisione non arriverà.
 >
