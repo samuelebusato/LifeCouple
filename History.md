@@ -102,6 +102,26 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ✅ **C4 era già fatta, e la voce nel piano era stale**: la `0043` si dichiara applicata nella sessione **(4)** del 2026-09-14, mentre §7-ter è stato scritto nella **(3)**. ⚠️ *Non verificata in prima persona*: la CLI `supabase` non è su questo dispositivo e PostgREST non espone `obj_description`.
 
+✅ **B3 — e la voce del piano ne comprimeva due in una riga.** Guardando i pannelli invece del documento: il webhook **RevenueCat → la nostra Edge Function** era **già** su `Both Production and Sandbox`, quindi quella metà era fatta da sempre. 🔴 **Mancava l'anello a monte, che nessun documento descriveva**: *Apple → RevenueCat*. Entrambi i campi di «Notifiche del server dell'App Store» in App Store Connect erano **vuoti**, e RevenueCat lo dichiarava accanto al proprio URL — **«No notifications received»**. Configurati produzione e sandbox con lo stesso endpoint, copiato col pulsante e non trascritto (139 caratteri: un refuso darebbe **lo stesso sintomo dell'assenza**). Procedura scritta in `pagamenti.md` **§3.4**, sezione nuova.
+
+🔑 **Il difetto qui non era nella configurazione ma nel documento**: `pagamenti.md` descriveva una catena a **due** anelli quando ne ha **tre**, e chi leggeva §3.3 credeva di aver finito. ⚠️ *È la stessa forma dei difetti del 2026-09-14 — una frase corretta su ciò che descrive, e falsa su ciò che tace.*
+
+⚠️ **La conferma non è arrivata e non poteva**: Apple manda notifiche sugli **eventi**, non al salvataggio. Finché non si fa l'acquisto sandbox di B2, RevenueCat continuerà a dire «No notifications received» ed è corretto — *ma da ora quella scritta è la misura di B2, non più di B3.*
+
+⬜ **Quattro cose viste di passaggio nei pannelli, che valgono più della voce chiusa:**
+1. 🔴 **L'email dell'account RevenueCat non è confermata** — banner su ogni pagina. *Il 2026-09-14 (3) era un'ipotesi scritta per spiegare un rinomina che non attecchiva; ora è un fatto verificato.* Finché resta così non si sa quali salvataggi prendano.
+2. ✅ **Quale dei due progetti RevenueCat gemelli è quello vivo**: **`86e41335`** — la sua chiave pubblica è `appl_RgvqWUWdiIvqmtzqcchXnfKexue`, identica a `EXPO_PUBLIC_REVENUECAT_KEY_IOS` nel `.env`. 🔑 *Dai nomi era impossibile: si chiamano **entrambi** `lifecouple`, perché il rinomina non è mai attecchito.*
+3. ⬜ **La In-App Purchase Key caricata è `T3HLB536G3`** — cioè proprio quella finita in chat (**C1**). Ora è noto anche **dove** vive, che è l'informazione che mancava per poterla sostituire.
+4. 🔴 **Il riquadro della App Store Connect API key è ancora vuoto**, e il campo è marcato *Required*: è la lacuna che `pagamenti.md` §2 dichiarava, ed è il motivo per cui la tabella Products scrive «Could not check».
+
+✅ **C3 — la chiave APNs esiste**, creata guidando il browser dell'utente (estensione Claude in Chrome) dopo che la sessione Apple era già autenticata. `LifeCouple APNs` · Key ID **`T9YBQQ859L`** · Team ID **`8C8FJLJBB8`** · `Sandbox & Production` · `Team Scoped (All Topics)`. Caricata su EAS e assegnata a `lifecouple` dall'utente da `eas credentials` — ⚠️ *riferito da lui, non verificato dall'agente*: `expo.dev` nel browser non è autenticato e la CLI è interattiva, quindi non raggiungibile da qui. ✅ **La capability sull'App ID invece è stata verificata di persona**: già attiva, accesa da EAS con la development build del 14.
+
+🔴 **E il valore che Apple preseleziona era quello sbagliato: `Environment: Sandbox`.** Salvandolo così, le notifiche avrebbero funzionato in TestFlight e sarebbero **morte alla pubblicazione** — senza errore e senza log. ⚠️ *La configurazione «can't be changed once saved»*, quindi l'unico rimedio sarebbe stato revocare e rifare, su un massimo di **2 chiavi per team**. 🔑 *È lo stesso difetto di forma che questo progetto insegue da settimane — uno stato scritto che nessuno verifica — ma preso in anticipo invece che dopo.*
+
+⬜ **Non seguito il consiglio di Apple di usare chiavi separate per ambiente**, e la ragione sta nei documenti: è pensato per chi ha un server push proprio con pipeline distinte, mentre qui instrada Expo, che ne vuole una. Due chiavi ambiente-specifiche avrebbero occupato **entrambi** gli slot, senza scorta.
+
+⬜ **Il confine tenuto durante l'operazione**, perché torni utile alla prossima: password e codici 2FA non li ha digitati l'agente, e il clic su **Download** del `.p8` l'ha fatto l'utente — *quel file è una chiave privata, si scarica una volta sola e la copia sul server di Apple viene rimossa.* Key ID e Team ID sì, sono identificativi e non segreti.
+
 ✅ **Landing pubblicata**, su conferma esplicita dell'utente. Identità AWS verificata prima (`790304250429`, l'account giusto — `fr-busato` sta su un altro e il runbook avverte di non confonderli), poi i tre comandi, invalidazione `IAETTFLOM8WPY62T3N5D0W9OFH`. 🔑 **Verificato in linea e non dedotto dall'esito dei comandi**: `privacy-policy.html`, `cookie-policy.html` e la home rispondono `200`, nominano Samuele Busato e **non contengono più né la P.IVA né il soggetto precedente**. *Un `exit 0` di `aws s3 sync` dice che il caricamento è riuscito, non che la pagina servita sia cambiata — fra i due c'è una cache.*
 
 ### 2026-09-14 (4) — La notte dei muri: la cancellazione non funzionava

@@ -150,6 +150,23 @@ npx supabase functions deploy abbonamento-webhook --no-verify-jwt --project-ref 
 
 ⚠️ **Sandbox serve quanto Production**: gli acquisti di prova da TestFlight passano da lì, e se il webhook è collegato solo a Production **niente di ciò che provi arriva mai al database** — e sembrerebbe un difetto del codice.
 
+**3.4 Collegare Apple a RevenueCat** — ⚠️ **sezione aggiunta il 2026-09-15, e la sua assenza era il difetto.**
+
+> 🔑 **Questo documento descriveva una catena a due anelli e ne ha tre.** §3.3 collega *RevenueCat → noi*, ed era l'unico anello documentato. Ma RevenueCat viene a sapere di rinnovi, rimborsi e disdette **da Apple**, e quel primo anello va configurato a mano in App Store Connect: se manca, RevenueCat non ha nulla da inoltrarci e il nostro webhook resta muto **pur essendo configurato bene**. ⚠️ *Il piano di pubblicazione chiamava tutto questo «B3 — App Store Server Notifications su Sandbox e Production», e chi leggeva §3.3 credeva di averlo già fatto.*
+
+Dove si prende l'URL: pannello RevenueCat → **Apps → `lifecouple (App Store)`** → *Apple Server to Server notification settings* → **Apple Server Notification URL**. 🔑 *Si copia col pulsante, non si trascrive*: è lungo ~139 caratteri e un carattere sbagliato dà **lo stesso sintomo dell'assenza**, mandando a cercare nel posto sbagliato.
+
+Dove si incolla: **App Store Connect → l'app → Informazioni sull'app → «Notifiche del server dell'App Store»**, in **entrambi** i campi:
+
+| Campo | Valore |
+|---|---|
+| URL del server di produzione | l'URL di RevenueCat |
+| **URL del server di sandbox** | **lo stesso URL** |
+
+✅ **Fatto il 2026-09-15.** Prima di allora entrambi i campi erano vuoti — e RevenueCat lo diceva, accanto al proprio URL: **«No notifications received»**. 🔑 *Quella dicitura è il modo più rapido di sapere se questo anello esiste*, e va guardata lì e non su App Store Connect, che mostra solo cosa hai scritto e non se qualcuno ti ha mai risposto.
+
+⚠️ **La conferma vera non arriva dal salvataggio ma dal primo acquisto**: Apple manda notifiche sugli **eventi**, non quando configuri l'URL. Finché non si fa l'acquisto sandbox di **B2**, quella scritta resta «No notifications received» ed è corretto che lo sia.
+
 ---
 
 ## 🔴 Quando l'app dice «None of the products could be fetched»

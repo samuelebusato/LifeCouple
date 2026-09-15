@@ -121,7 +121,12 @@ La funzione risponde con un riepilogo, e **i numeri vanno letti insieme**.
 
 ## Le due cose che restano fuori da questo documento
 
-- 🔴 **La capability *Push Notifications* sull'App ID e la chiave APNs su EAS.** Senza, su iOS non arriva niente. Richiedono l'account Apple Developer, che il progetto non ha ancora.
+- ✅ **La capability *Push Notifications* sull'App ID e la chiave APNs su EAS — FATTE il 2026-09-15.** ⚠️ *Questa riga diceva «richiedono l'account Apple Developer, che il progetto non ha ancora», ed era falsa dal 2026-09-14*, quando la prima development build su EAS ha creato certificato, profilo e dispositivo registrato.
+  - Chiave **`LifeCouple APNs`** · Key ID **`T9YBQQ859L`** · Team ID **`8C8FJLJBB8`** · `Sandbox & Production` · `Team Scoped (All Topics)`.
+  - La capability sull'App ID `com.lifecouple.app` era **già attiva**: l'aveva accesa EAS con quella build.
+  - 🔑 **Il valore predefinito di Apple per l'ambiente è `Sandbox`, e non è modificabile dopo il salvataggio.** Lasciandolo, le notifiche avrebbero funzionato in TestFlight e sarebbero **morte alla pubblicazione** — senza errore, senza log, e con l'unico rimedio di revocare la chiave e rifarla. *Apple ne concede 2 per team: gli errori qui si contano.*
+  - ⚠️ Apple consiglia **chiavi separate per ambiente**. Non si è seguito il consiglio, di proposito: sono pensate per chi gestisce un server push proprio con pipeline distinte, mentre qui instrada **Expo**, che ne vuole una sola — e due chiavi ambiente-specifiche occuperebbero **entrambi** gli slot, senza scorta.
+  - ⬜ Il file `.p8` **non è nel repository e non deve entrarci**: si scarica una volta sola e la copia sul server di Apple viene rimossa.
 - ⚠️ **Una prova nella build finale.** In Expo Go il token si ottiene e la notifica **arriva davvero**, ma il comportamento non è identico a quello della build firmata: è la stessa decisione sul prebuild ferma da **B-20**.
 
 ✅ **E una cosa che questo documento dava per impossibile e non lo è** (verificato il 2026-09-14): su **iPhone in Expo Go le notifiche push arrivano**, senza account Apple Developer. La rimozione del push da Expo Go nella SDK 53 riguarda **solo Android** — `node_modules/expo-notifications/src/warnOfExpoGoPushUsage.ts` lancia un errore se `Platform.OS === 'android'` e su iOS si limita a un avviso in console. Il token viene emesso contro il certificato APNs di Expo Go, e APNs ha restituito ricevuta `ok`. 🔑 *Serve per provare la catena, non per pubblicare*: la capability sull'App ID resta necessaria per la build tua.
