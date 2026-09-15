@@ -99,18 +99,24 @@ export default function Onboarding() {
 
     // Chi ha gia' il diritto non vede niente. Se la domanda fallisce si tace:
     // un paywall in meno non fa danno, uno di troppo a un abbonato si'.
-    const { data: riga } = await supabase
-      .from('membro_coppia')
-      .select('coppia_id')
-      .is('uscito_il', null)
-      .limit(1)
-      .maybeSingle();
-    if (riga?.coppia_id) {
-      const { data: haInsieme, error } = await supabase.rpc('coppia_ha_insieme', {
-        cid: riga.coppia_id,
-      });
-      if (error || haInsieme === true) return;
-    }
+    //
+    // 🔴 **B-81 — qui viveva la seconda residenza di B-75, e la `0047` non
+    //    l'aveva raggiunta.** Questo blocco chiedeva `coppia_ha_insieme(cid)`,
+    //    e per farlo doveva prima **trovare una coppia**: senza, saltava il
+    //    controllo e mostrava il paywall lo stesso.
+    //
+    // ⚠️ *Cioe' proponeva di comprare «Insieme» a chi lo aveva gia' comprato*,
+    //    per il solo fatto di non avere ancora un partner — che e' il caso che
+    //    **D-124 dichiara legittimo** e che il paywall stesso spiega con
+    //    l'avviso di B-74. La schermata diceva «puoi abbonarti gia' ora», e
+    //    all'ingresso dopo chiedeva di abbonarsi di nuovo.
+    //
+    // 🔑 **`ho_insieme()` risponde per la PERSONA** — diritto proprio oppure
+    //    proiezione dal partner — quindi non serve piu' nemmeno cercare la
+    //    coppia: due interrogazioni diventano una, e quella che resta fa la
+    //    domanda giusta.
+    const { data: haInsieme, error } = await supabase.rpc('ho_insieme');
+    if (error || haInsieme === true) return;
 
     setTimeout(() => router.push('/paywall'), 0);
   }, [router, session?.user?.id]);
