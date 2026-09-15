@@ -351,7 +351,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | | Cosa | Chi |
 |---|---|---|
 | **B1** | ✅ **RISOLTO il 2026-09-14 (3)**: nessuna delle due cause ipotizzate. Mancavano **le localizzazioni** (gruppo *e* piani) e la **disponibilità era 0 paesi** — un prodotto disponibile in nessun paese non è servibile da nessuna parte. Configurate entrambe, i prezzi arrivano | ✅ fatto |
-| **B2** | 🔴 **Un acquisto sandbox fino alla tabella**: `select` su `abbonamento` e `coppia_ha_insieme()` che si accende. 🔑 *Finché non succede, l'impianto è costruito e non dimostrato* | tu + io |
+| **B2** | ✅ **FATTA il 2026-09-15 — l'anello mai percorso è percorso.** La prova è una riga scritta da un evento **non generato da noi**: `prodotto: …insieme.mensile` (i nostri strumenti concedono sempre *annuale*), `evento_il 09:35:11 → aggiornato_il 09:35:12`, un secondo dall'acquisto al database. I muri sono caduti **da soli**. 🔑 *Sei anelli insieme per la prima volta*: Apple → Server Notifications (B3) → RevenueCat → Edge Function → `abbonamento` → `ho_insieme()` → schermo. ⬜ Visto anche il **rinnovo** (ogni 5 minuti in sandbox). ⚠️ *Per arrivarci sono usciti cinque difetti* — **B-71 → B-75**, il più grave dei quali teneva chiusi i muri **a chiunque non avesse una coppia** | ✅ |
 | **B3** | ✅ **FATTA il 2026-09-15 — ed erano due cose, non una.** 🔑 *Questa voce ne comprimeva due in una riga, e la metà documentata era già a posto*: il webhook **RevenueCat → la nostra funzione** era già su `Both Production and Sandbox`. Mancava del tutto l'anello **Apple → RevenueCat**, che `pagamenti.md` non descriveva: entrambi i campi di *«Notifiche del server dell'App Store»* erano vuoti, e RevenueCat lo diceva accanto al proprio URL — **«No notifications received»**. Ora produzione e sandbox puntano all'endpoint RevenueCat. Procedura scritta in `pagamenti.md` **§3.4**, che prima non esisteva. ⚠️ *La conferma vera arriva da B2*: Apple manda notifiche sugli eventi, non al salvataggio | ✅ |
 | **B4** | ✅ **FATTO il 2026-09-14 (3)**: con una chiave `test_…` l'SDK non si configura in una build non di sviluppo — il paywall dice «non disponibile» invece di vendere nel negozio di prova. ⬜ *Non se ne accorge prima del build: la chiave sta nei secret di EAS* | ✅ io |
 
@@ -391,8 +391,8 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 1. **A8** — *il commercialista, e prima di ogni altra cosa.* Con quale forma si vende. ⚠️ Da qui discendono **A3** (quale indirizzo esiste), **A4** (chi è la controparte nei termini) e **A10** (chi è il titolare nei documenti): finché è aperta, scriverne uno significa scrivere un soggetto che potrebbe non esistere.
 2. **A6** — l'avvocato. È tua e ha una **coda**: chiederla tardi la fa costare settimane, non giorni, ed è ancora la coda più lunga del piano. *(A9 è nata e morta il 2026-09-15: l'infrastruttura è dell'utente, e questo la chiude.)*
 3. **A3**, poi **A10** e **A4** — appena A8 dà una risposta, questi tre si sbloccano in fila e sono per lo più lavoro mio.
-4. **B2 → B3** — l'acquisto vero. *Finché non è percorso, i pagamenti sono costruiti e non dimostrati*, ed è l'unico anello del sistema mai attraversato da capo a fondo.
-5. **D4** — la verifica voce per voce sul telefono: l'unica voce senza scadenza esterna, e per questo quella che si rimanda da giorni. §9 non cade senza.
+4. ✅ ~~**B2 → B3** — l'acquisto vero~~ **fatti entrambi il 2026-09-15.** *L'impianto dei pagamenti non è più costruito-e-non-dimostrato: è percorso.*
+5. **D4** — la verifica voce per voce sul telefono: l'unica voce senza scadenza esterna, e per questo quella che si rimanda da giorni. §9 non cade senza. ⚠️ *Ora è anche la sola voce tecnica rimasta*: tutto il resto aspetta una telefonata.
 
 ### Cosa NON è in questo piano, e perché
 

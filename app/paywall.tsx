@@ -55,6 +55,7 @@ import { C } from '@/lib/tema';
 import { cascata, ciclo, molla, tatto, useMovimentoRidotto } from '@/lib/movimento';
 import { t } from '@/lib/i18n';
 import { useInsieme, ripristinaAcquisti } from '@/lib/acquisti';
+import { useCoppia } from '@/lib/coppia';
 
 /**
  * Un'icona per funzione, **le stesse della barra in basso**: chi legge lega la
@@ -218,6 +219,28 @@ export default function Paywall() {
   const router = useRouter();
   const bordi = useSafeAreaInsets();
   const { ricarica } = useInsieme();
+
+  /**
+   * 🔴 **B-74 — il paywall vendeva a chi non poteva ricevere niente.**
+   *
+   * `coppia_ha_insieme()` (0041) è una proiezione **sulla coppia**: *«esiste un
+   * membro attivo con un diritto valido?»*. Chi non è in nessuna coppia non
+   * può soddisfarla, **mai**, qualunque cosa abbia comprato.
+   *
+   * ⚠️ Fino al 2026-09-15 questa schermata non lo guardava: mostrava i prezzi,
+   * accettava l'acquisto, incassava — e i muri restavano su. 🔑 *Non è un caso
+   * di laboratorio: è successo davvero, su un account senza partner, e ha
+   * consumato ore di diagnosi perché il sintomo («ho pagato e non si sblocca»)
+   * punta ai pagamenti, dove non c'era niente di rotto.*
+   *
+   * 🔑 **E per un cliente vero sarebbe stato un addebito senza contropartita.**
+   * D-124 dice che il diritto è della persona e si *proietta* sulla coppia:
+   * comprare prima di avere un partner non è assurdo in sé — ma venderlo senza
+   * dirlo lo è. Qui si dice, e non si vende.
+   */
+  const { coppiaId, loading: coppiaInCaricamento } = useCoppia();
+  const senzaCoppia = !coppiaInCaricamento && !coppiaId;
+
   const fermo = useMovimentoRidotto();
 
   const [pacchetti, setPacchetti] = React.useState<PurchasesPackage[] | null>(null);
@@ -271,6 +294,12 @@ export default function Paywall() {
 
   async function compra() {
     if (!scelto) return;
+
+    // ⚠️ **Non si blocca l'acquisto a chi non ha ancora una coppia**, e la
+    // prima stesura di B-74 sbagliava proprio qui. **D-124**: il diritto è
+    // della **persona** e si *proietta* sulla coppia — comprare prima di avere
+    // un partner è legittimo, e il diritto resta acquisito. Quello che non si
+    // può fare è **tacerlo**: vedi l'avviso sopra il pulsante.
     setErrore(null);
     setInCorso(true);
     try {
@@ -284,8 +313,50 @@ export default function Paywall() {
     } catch (e) {
       // `userCancelled` non è un errore: è una risposta. Dirgli «qualcosa è
       // andato storto» a chi ha semplicemente cambiato idea è una bugia.
-      const annullato = (e as { userCancelled?: boolean })?.userCancelled;
-      setErrore(annullato ? t.abbonamento.annullato : String((e as Error)?.message ?? e));
+      const err = e as {
+        userCancelled?: boolean;
+        code?: string | number;
+        readableErrorCode?: string;
+        underlyingErrorMessage?: string;
+        message?: string;
+      };
+      const annullato = err?.userCancelled;
+
+      // 🔴 **B-72 — l'unica riga che spiegava il guasto veniva buttata via.**
+      //
+      // Il 2026-09-15 un acquisto sandbox è fallito con «Purchase was
+      // cancelled» *senza che nessuno avesse annullato*, e non c'era modo di
+      // sapere perché: questo `catch` teneva `userCancelled` e il solo
+      // `message`, scartando **`code`, `readableErrorCode` e soprattutto
+      // `underlyingErrorMessage`** — che è dove StoreKit scrive la causa vera
+      // (account sandbox assente, prodotto non servibile, transazione non
+      // finalizzabile).
+      //
+      // 🔑 *La distinzione che conta: `userCancelled` dice COSA ha risposto lo
+      // store, mai PERCHÉ.* StoreKit restituisce `userCancelled` anche quando
+      // è lui ad abortire — quindi quel booleano da solo racconta una scelta
+      // dell'utente che può non esserci stata mai.
+      //
+      // ⚠️ Va in console e non sullo schermo: a chi paga non si mostra un
+      // codice di errore. Ma senza, chi diagnostica non ha niente.
+      console.warn(
+        '[paywall] acquisto non riuscito —',
+        JSON.stringify(
+          {
+            userCancelled: err?.userCancelled ?? null,
+            code: err?.code ?? null,
+            readableErrorCode: err?.readableErrorCode ?? null,
+            underlyingErrorMessage: err?.underlyingErrorMessage ?? null,
+            message: err?.message ?? String(e),
+            pacchetto: scelto?.identifier ?? null,
+            prodotto: scelto?.product?.identifier ?? null,
+          },
+          null,
+          2
+        )
+      );
+
+      setErrore(annullato ? t.abbonamento.annullato : String(err?.message ?? e));
     } finally {
       setInCorso(false);
     }
@@ -454,6 +525,21 @@ export default function Paywall() {
                   {t.legale.cookieTitolo}
                 </Text>
               </View>
+
+              {/* 🔴 **B-74 — se non c'è ancora una coppia, lo si dice PRIMA.**
+                  Comprare senza partner è legittimo (D-124: il diritto è della
+                  persona e si proietta sulla coppia), ma `coppia_ha_insieme()`
+                  resta falsa finché la coppia non esiste — quindi le funzioni
+                  restano chiuse anche dopo aver pagato.
+                  ⚠️ *È accaduto davvero il 2026-09-15*: muri su dopo l'acquisto,
+                  e ore passate a cercare il guasto nei pagamenti, dove non
+                  c'era. 🔑 Sta **sopra il pulsante** per la stessa ragione delle
+                  frasi del recesso: dopo non è informare, è giustificarsi. */}
+              {senzaCoppia && (
+                <Text className="px-2 pt-2 text-center text-xs leading-relaxed text-muted-foreground">
+                  {t.abbonamento.serveLaCoppia}
+                </Text>
+              )}
 
               <Premibile onPress={compra} scala={0.98} disabled={inCorso || !scelto}>
                 <View

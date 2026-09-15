@@ -24,12 +24,10 @@ import {
   type TipoNotifica,
 } from '@/lib/notifiche';
 import { t } from '@/lib/i18n';
-import {
-  useInsieme,
-  apriPaywall,
-  apriGestioneAbbonamento,
-  ripristinaAcquisti,
-} from '@/lib/acquisti';
+// ⚠️ `apriPaywall` NON si importa qui, di proposito (B-71): apre il paywall
+// ospitato da RevenueCat, che è una seconda porta per la stessa vendita e non
+// porta le frasi del recesso. Si usa `router.push('/paywall')`, come i muri.
+import { useInsieme, apriGestioneAbbonamento, ripristinaAcquisti } from '@/lib/acquisti';
 
 /**
  * **Impostazioni**: invito, scioglimento, cancellazione dell'account, uscita.
@@ -141,21 +139,30 @@ export default function Impostazioni() {
   const [esitoInsieme, setEsitoInsieme] = React.useState<string | null>(null);
   const [inCorso, setInCorso] = React.useState(false);
 
-  async function passaAInsieme() {
+  /**
+   * 🔴 **B-71 — c'erano DUE paywall, e questo apriva quello sbagliato.**
+   *
+   * Questa funzione chiamava `apriPaywall()`, cioè `RevenueCatUI.presentPaywall()`:
+   * il paywall **ospitato da RevenueCat**, disegnato nel loro pannello. Ma i
+   * muri di `components/muro.tsx` mandano a `/paywall`, cioè
+   * [`app/paywall.tsx`](paywall.tsx), costruito coi componenti dell'app.
+   *
+   * ⚠️ **Quindi la stessa app vendeva la stessa cosa da due schermate diverse**,
+   * con aspetto, testi e prezzi presi da fonti diverse — e quella di RevenueCat
+   * **non è nemmeno configurata** nel loro pannello (l'onboarding del progetto
+   * elenca ancora «Create your first paywall» fra i passi da fare).
+   *
+   * 🔑 *Il difetto non è estetico*: `app/paywall.tsx` porta le due frasi del
+   * recesso sopra il pulsante e i link ai documenti legali (**B-66**, D-121).
+   * Il paywall di RevenueCat no. Vendere da lì significava vendere **senza le
+   * informazioni precontrattuali** che il Codice del Consumo impone — e senza
+   * il testo che fa decadere il recesso.
+   *
+   * Ora fa esattamente ciò che fanno i muri: una porta sola.
+   */
+  function passaAInsieme() {
     setEsitoInsieme(null);
-    setInCorso(true);
-    const esito = await apriPaywall();
-    if (esito.stato === 'comprato' || esito.stato === 'ripristinato') {
-      // ⚠️ Il webhook e' asincrono: per qualche secondo l'SDK sa e il database
-      // no. Si insiste su di lui invece di fidarsi dell'SDK — una scorciatoia
-      // in un cancello di sicurezza e' permanente il giorno dopo.
-      setEsitoInsieme(t.abbonamento.arrivoInCorso);
-      const arrivato = await ricaricaInsieme({ insistendo: true });
-      if (arrivato) setEsitoInsieme(null);
-    } else if (esito.stato === 'non-disponibile') {
-      setEsitoInsieme(t.abbonamento.nonDisponibile);
-    }
-    setInCorso(false);
+    router.push('/paywall');
   }
 
   async function ripristina() {

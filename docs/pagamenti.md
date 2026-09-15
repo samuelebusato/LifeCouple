@@ -77,7 +77,20 @@ Ogni prodotto vuole anche: nome visibile, descrizione, e **una schermata di ante
 
 > ⟳ **Precisazione aggiunta poche ore dopo, guardando il pannello (2026-09-14 (3)) — e correggo me stesso.** La frase «servono entrambe» viene dalla pagina di troubleshooting, ma **il pannello di RevenueCat dice una cosa più precisa**: la *App-specific shared secret* è marcata **(Legacy)** e serve *«to validate transactions if your app is targeting iOS 15 or below, or is configured to use StoreKit 1»*. 🔑 **Con `react-native-purchases` 10.x si usa StoreKit 2, quindi la credenziale che conta è la In-App Purchase Key** — e la shared secret può restare vuota. ⚠️ *Verificato sul progetto reale: la shared secret **è** vuota, la IAP Key è caricata con Key ID e Issuer ID, e non è questo il motivo per cui i prodotti non si recuperavano.*
 
-⬜ **Resta invece davvero da caricare la App Store Connect API key** (`AuthKey_….p8`, sezione *App Store Connect API* della stessa scheda): senza, RevenueCat **non riesce a leggere lo stato dei prodotti** e nella tabella Products scrive *«Could not check»*. Non blocca il recupero dal telefono, ma toglie l'unico modo di vedere dal pannello se un prodotto è pronto — cioè proprio la diagnosi che serve quando succede quello che è successo.
+✅ **App Store Connect API key — CARICATA il 2026-09-15**, chiave `HSP3848M3G` (Issuer `4a06024d-d8ff-4cdf-b978-50f3412d602c`), sezione *App Store Connect API* della stessa scheda. Entrambe le sezioni ora dichiarano **«Valid credentials»**: il file non è solo presente, RevenueCat l'ha **validato contro Apple**.
+
+> 🔑 **Creata nuova invece di riusare quella di EAS** (`M4235JWVSS`, ruolo *Gestore dell'app*), e la ragione è la stessa di **D-129** quando si preferì un segreto dedicato al cron invece della `service_role`: **se un domani RevenueCat va revocato, si revoca la sua e le build continuano a funzionare.** Con una chiave sola, revocarla rompe entrambi — e lo si scopre al primo build fallito. ✅ *E qui non c'è scarsità: Apple ne concede **50** attive per team, non 2 come per le APNs.*
+>
+> ⚠️ **Il ruolo è «Gestore dell'app», non «Amministrazione»**: è il minimo che RevenueCat richiede, e dare di più non aggiunge niente che serva.
+
+🎯 **Cosa si è guadagnato, subito e in modo misurabile.** La tabella *Products* scriveva **«Could not check»** su ogni riga; ora legge lo stato vero da App Store Connect:
+
+| Prodotto | Status | Entitlement |
+|---|---|---|
+| `com.lifecouple.app.insieme.annuale` | **Ready to Submit** | 1 |
+| `com.lifecouple.app.insieme.mensile` | **Ready to Submit** | 1 |
+
+🔑 **E quel primo sguardo dice già qualcosa che non sapevamo**: *«Ready to Submit»* significa che i due prodotti sono **configurati ma mai sottoposti a revisione**. ✅ *Per l'acquisto **sandbox** di B2 va benissimo* — Apple serve in sandbox anche i prodotti in quello stato. 🔴 **Ma per vendere in produzione vanno sottoposti**, e si sottopongono **insieme alla prima versione dell'app** (E5). *Senza questa chiave, questo dato non era visibile da nessuna parte.*
 
 **2.2 Entitlement** — uno solo:
 

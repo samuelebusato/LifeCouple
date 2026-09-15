@@ -357,6 +357,12 @@ const it = {
     nessunaOfferta:
       'Non riusciamo a caricare i prezzi in questo momento. Riprova fra poco.',
     annullato: 'Nessun problema. Trovi Insieme quando vuoi, nelle impostazioni.',
+    // 🔴 B-74 — avviso, non divieto. Comprare senza partner è legittimo
+    // (D-124: il diritto è della persona e si proietta sulla coppia), ma
+    // tacerlo no: senza coppia `coppia_ha_insieme()` resta falsa e le funzioni
+    // restano chiuse. Chi paga deve saperlo **prima**, non scoprirlo dopo.
+    serveLaCoppia:
+      'Puoi abbonarti già ora e Insieme resta tuo. ⚠️ Le funzioni si aprono quando avrai un partner: Insieme vale per due.',
     // ⚠️ Obbligo, non stile: PRIMA del pulsante si devono leggere durata,
     // prezzo alla scadenza e come disdire. 🔑 Questo lo pretende **Apple**, ed è
     // esattamente ciò che questa stringa dice.
@@ -1310,6 +1316,10 @@ const en: Dizionario = {
     caricamento: 'One moment\u2026',
     nessunaOfferta: 'We cannot load the prices right now. Please try again shortly.',
     annullato: 'No problem. You can find Insieme any time, in Settings.',
+    // 🔴 B-74 — a notice, not a block. See the Italian note: buying without a
+    // partner is legitimate (D-124), but staying silent about it is not.
+    serveLaCoppia:
+      'You can subscribe now and Insieme stays yours. ⚠️ The features open up once you have a partner: Insieme is for two.',
     // 🔴 **B-66 vale soprattutto qui.** Dal 2026-09-10 (D-123) l'inglese è
     // l'**unico testo ufficiale**: quando le due frasi del recesso arriveranno,
     // è questa la stringa che le porta, e l'italiana è la traduzione di cortesia.

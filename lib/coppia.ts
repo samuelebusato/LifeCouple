@@ -73,6 +73,22 @@ export function useCoppia() {
       .select('coppia_id, utente_id')
       .is('uscito_il', null);
 
+    // 🔎 **Solo in sviluppo, e ridotta all'osso.** La sonda del 2026-09-15
+    // stampava anche l'email e le righe per intero: serviva a distinguere
+    // «la riga non c'è» da «la RLS la nasconde» da «è connesso un altro
+    // utente», e quella diagnosi è chiusa. ⚠️ *Le righe contengono
+    // identificativi di entrambi i membri della coppia: non è roba da lasciare
+    // in un log a ogni lettura.*
+    if (__DEV__) {
+      console.log(
+        '[coppia]',
+        JSON.stringify({
+          righeVisibili: data?.length ?? 0,
+          errore: error ? error.message : null,
+        })
+      );
+    }
+
     let nuovo: StatoCoppia;
     if (error) {
       // Lettura fallita: si tiene quel che si sapeva e si dichiara il guasto.

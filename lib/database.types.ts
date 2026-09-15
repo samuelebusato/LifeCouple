@@ -1250,6 +1250,12 @@ export type Database = {
       crea_invito: { Args: never; Returns: string }
       e_membro_attivo: { Args: { cid: string }; Returns: boolean }
       ha_coppia_attiva: { Args: { uid: string }; Returns: boolean }
+      // ⚠️ Aggiunta A MANO il 2026-09-15 perché la `0047` non è ancora
+      // applicata e i tipi non si possono rigenerare dal database.
+      // 🔑 **Va rigenerata appena la migrazione è passata**: `lib/database.types.ts`
+      // scritto a mano ha già prodotto un difetto il 2026-09-14 — `lib/partita.ts`
+      // compilava solo perché i tipi dicevano una cosa diversa dal database.
+      ho_insieme: { Args: never; Returns: boolean }
       imposta_insieme_dal: {
         Args: { p_data: string; p_titolo: string }
         Returns: undefined

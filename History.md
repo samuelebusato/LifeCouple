@@ -28,6 +28,48 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (2) — B2 è percorsa, e per arrivarci sono usciti cinque difetti
+
+✅ **L'ACQUISTO VERO FUNZIONA — B2 chiusa, la voce mai percorsa da quando esiste il piano.** La prova non è una schermata ma una riga di database scritta da un evento che non abbiamo generato noi:
+
+```
+prodotto  com.lifecouple.app.insieme.mensile     ← i nostri strumenti concedono sempre «annuale»
+evento_il 09:35:11   aggiornato_il 09:35:12      ← un secondo dall'acquisto al database
+scade_il  09:40:42                               ← cinque minuti: un «mese» in sandbox
+```
+
+🔑 **Tutti e sei gli anelli, insieme, per la prima volta**: Apple → *App Store Server Notifications* (configurate stamattina, **B3**) → RevenueCat → `abbonamento-webhook` → `abbonamento` → `ho_insieme()` → i muri caduti **da soli**, senza riavviare l'app.
+
+⬜ **E si è visto anche il rinnovo**, che nessuno aveva mai osservato: `evento_il 09:39:59 → scade_il 09:45:42`. In sandbox un mensile si rinnova ogni cinque minuti, fino a sei volte. ⚠️ *Questo ha prodotto un falso allarme costato tempo*: le revoche fatte a mano venivano **sovrascritte dal rinnovo successivo** dopo un minuto, e sembrava che non funzionassero. Non stavamo perdendo contro un difetto, stavamo perdendo contro Apple.
+
+---
+
+🔴 **B-75 — il cancello chiedeva della COPPIA, e il diritto è della PERSONA.** È il difetto che ha tenuto fermi i muri per tutta la sessione, ed è il più grave dei cinque.
+
+`useInsieme` chiamava `coppia_ha_insieme(cid)`, cioè *«questa coppia ha Insieme?»*. Ma **D-124** stabilisce che il diritto è della **persona** e si *proietta* sulla coppia. Chi paga senza avere ancora un partner aveva un abbonamento valido e registrato, e **non sbloccava niente**.
+
+⚠️ **E il modo di fallire era il peggiore possibile.** Quella funzione vuole un `cid`, quindi senza coppia l'hook usciva **prima** di interrogare il database: nessuna chiamata, nessun errore, nessun log. Solo un muro che non se ne andava — e un sintomo, *«ho pagato e resta chiuso»*, che punta ai pagamenti, dove non c'era **niente** di rotto. 🔑 *Sono state necessarie due sonde per vederlo, e la seconda è servita solo perché la prima non compariva mai: la sua assenza era l'informazione.*
+
+Chiuso dalla **`0047`**: `ho_insieme()`, senza argomenti, soggetto `auth.uid()`, vera per diritto proprio **o** per proiezione. ✅ *Ed è più sicura della precedente*: `coppia_ha_insieme(cid)` è `security definer` e ha bisogno del cancello `e_membro_attivo` per non diventare un oracolo sugli abbonamenti altrui (TB-3); qui non c'è niente da chiedere su qualcun altro.
+
+⬜ `coppia_ha_insieme()` **resta e non si tocca**: la usano i trigger della `0042`, e lì la domanda giusta *è* quella sulla coppia — il tetto di una foto per evento vale sull'album condiviso.
+
+🔴 **B-74 — il paywall non diceva che serve un partner.** Prima stesura della correzione **sbagliata e corretta dall'utente**: avevo **bloccato** l'acquisto, e non va bloccato. Comprare senza partner è legittimo (D-124), il diritto resta acquisito. ⚠️ *Quel che non si può fare è tacerlo*: senza coppia le funzioni restano chiuse anche dopo aver pagato. Ora un avviso sta **sopra il pulsante**, accanto alle frasi del recesso e per la stessa ragione — dopo non è informare, è giustificarsi.
+
+🔴 **B-73 — «non lo so ancora» detto come «no».** `useInsieme` non leggeva il `loading` di `useCoppia`: finché la coppia non era nota dichiarava `loading = false, insieme = false`, e `mappa.tsx:543` mostra il muro esattamente su quella combinazione. Ora il `loading` che esce dall'hook include quello dell'autenticazione.
+
+🔴 **B-71 — c'erano DUE paywall, e le impostazioni aprivano quello sbagliato.** *Get Insieme* chiamava `RevenueCatUI.presentPaywall()` — il paywall **ospitato da RevenueCat**, che nel loro pannello non è nemmeno configurato — mentre i muri vanno a `app/paywall.tsx`. 🔑 **Non è estetica**: solo il nostro porta le due frasi del recesso e i link ai documenti legali (B-66, D-121). *Vendere da lì significava vendere senza le informazioni precontrattuali.*
+
+🔴 **B-72 — il `catch` buttava via la riga che spiega il guasto.** Teneva `userCancelled` e `message`, scartando `code`, `readableErrorCode` e **`underlyingErrorMessage`**, dove StoreKit scrive la causa. ⚠️ *`userCancelled` dice **cosa** ha risposto lo store, mai **perché***: StoreKit lo restituisce anche quando è lui ad abortire, quindi quel booleano da solo racconta una scelta dell'utente che può non esserci mai stata. È successo, e ha mandato a cercare nel posto sbagliato.
+
+---
+
+✅ **Strumento nuovo: [`tools/revoca-insieme.mjs`](tools/revoca-insieme.mjs)**, gemello di `concedi-insieme.mjs`, che sapeva dare e non togliere. ⚠️ *Uno strumento che concede senza poter revocare lascia l'ambiente di prova sporco dopo il primo uso*, e la prova successiva parte da uno stato che nessuno ha scelto. Passa dal webhook come il gemello, e **controlla `"azione":"togli"` invece del codice HTTP**: il webhook risponde `200` anche quando ignora un evento.
+
+⬜ **Le due sonde sono state ridotte e messe dietro `__DEV__`.** Quella su `abbonamento` leggeva la riga a ogni giro — una query in più per ogni controllo, su un hook che gira a ogni montaggio di mappa, liste e creatura. Quella su `membro_coppia` stampava gli identificativi di entrambi i membri. 🔑 *Resta il minimo che evita di ripetere questa giornata*: se `ho_insieme` non esistesse su un ambiente, l'errore lo direbbe — mentre `data !== true` da solo somiglia di nuovo a B-73.
+
+🔑 **Il filo che lega quattro difetti su cinque, e vale più dei difetti**: *l'app diceva «no» in tre posti diversi dove la verità era «non lo so»* — coppia non ancora caricata (B-73), coppia inesistente (B-75), acquisto abortito da StoreKit (B-72). ⚠️ **Un «no» e un «non lo so» si disegnano uguali e si diagnosticano in modo opposto**, ed è per questo che si è cercato per ore nei pagamenti un difetto che stava in React e in una funzione SQL.
+
 ### 2026-09-15 — Chi pubblica l'app cambia, e con lui il titolare del trattamento
 
 **D-136 — si pubblica a nome «Samuele Busato», non «Fausto Busato».** Decisione dell'utente del 2026-09-15, presa dopo la domanda *«io sono un privato, cosa vuol dire indirizzo e telefono del professionista?»*. **Modifica D-81** (2026-08-31), registrata in [`docs/pubblicazione.md`](docs/pubblicazione.md) §2.1 — ma **solo per metà, e la metà giusta va detta**: di D-81 cade *quale persona* pubblica, **non** la conclusione «si pubblica come individuo e non come organizzazione», che resta valida e anzi si rafforza (una persona fisica non ha nemmeno il percorso *Organization* disponibile). La versione superata di §2.1 è conservata lì secondo la convenzione già usata per §2.4.
@@ -102,6 +144,14 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ✅ **C4 era già fatta, e la voce nel piano era stale**: la `0043` si dichiara applicata nella sessione **(4)** del 2026-09-14, mentre §7-ter è stato scritto nella **(3)**. ⚠️ *Non verificata in prima persona*: la CLI `supabase` non è su questo dispositivo e PostgREST non espone `obj_description`.
 
+✅ **App Store Connect API key caricata su RevenueCat** — `HSP3848M3G`, ruolo *Gestore dell'app*. Era la quarta delle «cose viste di passaggio» qui sotto, e si è chiusa nello stesso giro. Entrambe le sezioni del pannello dicono ora **«Valid credentials»**: il file non è solo presente, è stato **validato contro Apple**.
+
+🔑 **Creata nuova invece di riusare quella di EAS**, e la ragione è **la stessa di D-129** — segreto dedicato al cron invece della `service_role`: *revocare la chiave di RevenueCat non deve rompere le build*. Apple ne concede 50 per team, quindi la separazione non costa niente. ⚠️ *Ruolo «Gestore dell'app», non «Amministrazione»: il minimo che RevenueCat richiede.*
+
+🎯 **Il guadagno è arrivato subito, ed è il motivo per cui la voce esisteva.** La tabella *Products* scriveva «Could not check» su ogni riga; ora legge lo stato vero: i due prodotti sono **«Ready to Submit»**, cioè configurati e **mai sottoposti a revisione**. ✅ *Per l'acquisto sandbox di B2 basta* — Apple li serve anche in quello stato. 🔴 **Ma per vendere in produzione vanno sottoposti insieme alla prima versione (E5)**, ed è un dato che prima non era visibile da nessuna parte. *Una diagnosi che sarebbe mancata esattamente quando serviva, come il 2026-09-14 con i prezzi che non arrivavano.*
+
+⬜ **Nota operativa che smentisce un timore**: il salvataggio **ha attecchito** nonostante l'email dell'account non confermata — verificato ricaricando la pagina da zero, non fidandosi della schermata. *Quindi il guasto del 2026-09-14 (3) sul rinomina ha un'altra causa, ancora ignota.*
+
 ✅ **B3 — e la voce del piano ne comprimeva due in una riga.** Guardando i pannelli invece del documento: il webhook **RevenueCat → la nostra Edge Function** era **già** su `Both Production and Sandbox`, quindi quella metà era fatta da sempre. 🔴 **Mancava l'anello a monte, che nessun documento descriveva**: *Apple → RevenueCat*. Entrambi i campi di «Notifiche del server dell'App Store» in App Store Connect erano **vuoti**, e RevenueCat lo dichiarava accanto al proprio URL — **«No notifications received»**. Configurati produzione e sandbox con lo stesso endpoint, copiato col pulsante e non trascritto (139 caratteri: un refuso darebbe **lo stesso sintomo dell'assenza**). Procedura scritta in `pagamenti.md` **§3.4**, sezione nuova.
 
 🔑 **Il difetto qui non era nella configurazione ma nel documento**: `pagamenti.md` descriveva una catena a **due** anelli quando ne ha **tre**, e chi leggeva §3.3 credeva di aver finito. ⚠️ *È la stessa forma dei difetti del 2026-09-14 — una frase corretta su ciò che descrive, e falsa su ciò che tace.*
@@ -112,7 +162,7 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 1. 🔴 **L'email dell'account RevenueCat non è confermata** — banner su ogni pagina. *Il 2026-09-14 (3) era un'ipotesi scritta per spiegare un rinomina che non attecchiva; ora è un fatto verificato.* Finché resta così non si sa quali salvataggi prendano.
 2. ✅ **Quale dei due progetti RevenueCat gemelli è quello vivo**: **`86e41335`** — la sua chiave pubblica è `appl_RgvqWUWdiIvqmtzqcchXnfKexue`, identica a `EXPO_PUBLIC_REVENUECAT_KEY_IOS` nel `.env`. 🔑 *Dai nomi era impossibile: si chiamano **entrambi** `lifecouple`, perché il rinomina non è mai attecchito.*
 3. ⬜ **La In-App Purchase Key caricata è `T3HLB536G3`** — cioè proprio quella finita in chat (**C1**). Ora è noto anche **dove** vive, che è l'informazione che mancava per poterla sostituire.
-4. 🔴 **Il riquadro della App Store Connect API key è ancora vuoto**, e il campo è marcato *Required*: è la lacuna che `pagamenti.md` §2 dichiarava, ed è il motivo per cui la tabella Products scrive «Could not check».
+4. ✅ **Il riquadro della App Store Connect API key era vuoto** — ed è stato riempito poche ore dopo, nella stessa sessione: vedi la voce in cima.
 
 ✅ **C3 — la chiave APNs esiste**, creata guidando il browser dell'utente (estensione Claude in Chrome) dopo che la sessione Apple era già autenticata. `LifeCouple APNs` · Key ID **`T9YBQQ859L`** · Team ID **`8C8FJLJBB8`** · `Sandbox & Production` · `Team Scoped (All Topics)`. Caricata su EAS e assegnata a `lifecouple` dall'utente da `eas credentials` — ⚠️ *riferito da lui, non verificato dall'agente*: `expo.dev` nel browser non è autenticato e la CLI è interattiva, quindi non raggiungibile da qui. ✅ **La capability sull'App ID invece è stata verificata di persona**: già attiva, accesa da EAS con la development build del 14.
 

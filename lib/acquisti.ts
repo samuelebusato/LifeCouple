@@ -38,7 +38,9 @@ import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { useCoppia } from '@/lib/coppia';
+// ⚠️ `useCoppia` non si importa più qui, ed è il segno che B-75 è chiuso: il
+// cancello non dipende più dalla coppia. Era proprio quella dipendenza a far
+// uscire l'hook prima di interrogare il database, in silenzio.
 
 /**
  * L'entitlement configurato su RevenueCat (decisione dell'utente, 2026-09-14).
@@ -182,23 +184,67 @@ export function ProvederAcquisti(): null {
  * scorciatoia permanente il giorno dopo.
  */
 export function useInsieme() {
-  const { coppiaId } = useCoppia();
+  // 🔴 **B-75 — il cancello chiedeva della COPPIA, e il diritto è della
+  // PERSONA.**
+  //
+  // Fino al 2026-09-15 questo hook chiamava `coppia_ha_insieme(cid)`, che
+  // risponde a *«questa coppia ha Insieme?»*. Ma **D-124** stabilisce che il
+  // diritto è della persona e si *proietta* sulla coppia — quindi chi paga
+  // **senza avere ancora un partner** ha un abbonamento valido e registrato,
+  // e non sbloccava niente.
+  //
+  // ⚠️ **E il modo di fallire era il peggiore possibile**: quella funzione
+  // vuole un `cid`, quindi senza coppia l'hook usciva **prima** di interrogare
+  // il database — nessuna chiamata, nessun errore, nessun log. Solo un muro
+  // che non se ne andava, e un sintomo («ho pagato e resta chiuso») che punta
+  // ai pagamenti, dove non c'era niente di rotto. *Sono servite due sonde per
+  // vederlo, ed è il motivo per cui questa versione non dipende più dalla
+  // coppia per niente.*
+  //
+  // Ora chiama `ho_insieme()` (0047): niente argomenti, soggetto `auth.uid()`,
+  // vera per diritto proprio **o** per proiezione dalla coppia.
+  // 🔑 Si dipende dall'**autenticazione**, non più dalla coppia: `ho_insieme()`
+  // ha per soggetto `auth.uid()`. ⚠️ E si aspetta che l'auth abbia finito —
+  // chiamarla con la sessione ancora nulla direbbe «non hai Insieme» a chi ce
+  // l'ha, che è la forma esatta di B-73.
+  const { session, loading: autenticazioneInCorso } = useAuth();
+  const utenteId = session?.user?.id ?? null;
   const [insieme, setInsieme] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
 
   const ricarica = React.useCallback(
     async (opzioni?: { insistendo?: boolean }) => {
-      if (!coppiaId) {
-        setInsieme(false);
-        setLoading(false);
-        return false;
-      }
       // Sei tentativi in ~9 secondi: è la finestra tipica fra l'acquisto e
       // l'arrivo del webhook. Se non basta, il diritto comparirà comunque al
       // prossimo avvio — non si perde, arriva tardi.
       const tentativi = opzioni?.insistendo ? 6 : 1;
       for (let i = 0; i < tentativi; i++) {
-        const { data, error } = await supabase.rpc('coppia_ha_insieme', { cid: coppiaId });
+        const { data, error } = await supabase.rpc('ho_insieme');
+
+        // 🔎 **Resta una riga di diagnostica, e solo in sviluppo.**
+        //
+        // La sonda del 2026-09-15 leggeva anche la riga di `abbonamento` a
+        // ogni giro: è stata tolta perché costava **una query in più per ogni
+        // controllo**, e questo hook gira a ogni montaggio di mappa, liste e
+        // creatura. ⚠️ *Serviva a distinguere «la funzione sbaglia» da «la
+        // riga dice ancora sì», e quella distinzione si rifà a mano quando
+        // serve — non si paga a ogni render.*
+        //
+        // 🔑 Ciò che resta è il minimo che evita di ripetere la giornata del
+        // 2026-09-15: se `ho_insieme` non esistesse (0047 non applicata su un
+        // ambiente), `error` lo direbbe — mentre `data !== true` da solo
+        // somiglierebbe di nuovo a «non hai Insieme», che è la forma di B-73.
+        if (__DEV__) {
+          console.log(
+            '[insieme]',
+            JSON.stringify({
+              data,
+              errore: error ? { message: error.message, code: error.code } : null,
+              tentativo: `${i + 1}/${tentativi}`,
+            })
+          );
+        }
+
         if (!error && data === true) {
           setInsieme(true);
           setLoading(false);
@@ -210,14 +256,23 @@ export function useInsieme() {
       setLoading(false);
       return false;
     },
-    [coppiaId]
+    [utenteId]
   );
 
   React.useEffect(() => {
+    // Non si conclude niente finché l'auth non ha finito: `auth.uid()` sarebbe
+    // null e la funzione tornerebbe false — cioè «non hai Insieme» detto a chi
+    // ce l'ha. È la lezione di B-73, applicata alla dipendenza nuova.
+    if (autenticazioneInCorso) return;
     void ricarica();
-  }, [ricarica]);
+  }, [ricarica, autenticazioneInCorso]);
 
-  return { insieme, loading, ricarica };
+  // ⚠️ **Il `loading` che esce da qui include quello dell'autenticazione**
+  // (B-73). 🔑 *«Non lo so ancora» è uno stato, non un no* — e chi disegna il
+  // muro (`mappa.tsx`, `preferiti.tsx`) decide su `!loading && !insieme`:
+  // dichiarare di sapere troppo presto è ciò che faceva comparire il muro a
+  // chi aveva diritto.
+  return { insieme, loading: loading || autenticazioneInCorso, ricarica };
 }
 
 // -----------------------------------------------------------------------------
