@@ -29,6 +29,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { fotoDemo } from './foto-demo.mjs';
 
 const leggiEnv = (f) =>
   Object.fromEntries(
@@ -66,17 +67,10 @@ async function utente(email) {
   return c;
 }
 
-/** Fotografie: sfumature nei colori dell'app, generate qui. ⚠️ Sono segnaposto
- *  dichiarati — il revisore deve vedere una galleria piena, non finte persone. */
-function jpegSfumato() {
-  // Un JPEG 1x1: il bucket accetta solo immagini (0009) e a noi serve che la
-  // galleria non sia vuota. Chi vuole una demo piu' bella carica foto vere
-  // dall'app: questo script non le inventa.
-  return Buffer.from(
-    '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigD//2Q==',
-    'base64'
-  );
-}
+// Fotografie: quattro illustrazioni a piena risoluzione, generate da
+// `foto-demo.mjs`. ⚠️ Non sono fotografie e il documento lo dichiara — ma una
+// galleria di riquadri da 1 pixel si legge come un'app incompleta, ed e' cio'
+// che il revisore guarda per primo in un'app che condivide foto.
 
 console.log('\nAccount demo per la revisione — semina\n');
 
@@ -140,17 +134,17 @@ await rev.from('elemento_lista').insert([
 console.log('✅ 2 voci di lista');
 
 // --- Le fotografie ---------------------------------------------------------------
-const JPEG = jpegSfumato();
 let foto = 0;
 for (let i = 0; i < idEventi.length; i++) {
-  const chiave = `${cid}/demo-${Date.now()}-${i}.jpg`;
+  const png = fotoDemo(i);
+  const chiave = `${cid}/demo-${Date.now()}-${i}.png`;
   const { error: eUp } = await rev.storage
     .from('foto')
-    .upload(chiave, new Blob([JPEG], { type: 'image/jpeg' }), { contentType: 'image/jpeg' });
+    .upload(chiave, new Blob([png], { type: 'image/png' }), { contentType: 'image/png' });
   if (eUp) continue;
   const { error: eR } = await rev
     .from('foto')
-    .insert({ coppia_id: cid, chiave_storage: chiave, byte: JPEG.length, evento_id: idEventi[i] });
+    .insert({ coppia_id: cid, chiave_storage: chiave, byte: png.length, evento_id: idEventi[i] });
   if (!eR) foto++;
 }
 console.log(`✅ ${foto} fotografie (una per evento: e' il limite del piano gratuito, 0042)`);
@@ -178,9 +172,9 @@ console.log(`
   invitation screen and nothing else. This account is already paired, so the
   calendar, the map, the lists and the game are populated.
 
-⚠️ Le fotografie sono segnaposto di 1 pixel: servono a non lasciare la galleria
-   vuota, non a mostrare foto vere. Per una demo migliore, carica 3-4 foto
-   dall'app con questo account.
+⚠️ Le fotografie sono illustrazioni generate (1080×1440), non foto vere: la
+   galleria si legge come voluta, non come vuota. Restano comunque meglio 3-4
+   foto vere caricate dall'app con questo account.
 
 ⬜ L'account NON ha «Insieme»: mappa, liste e creatura sono dietro il muro.
    E' voluto — cosi' il revisore puo' provare l'acquisto in sandbox, che e'
