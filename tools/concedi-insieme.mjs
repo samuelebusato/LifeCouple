@@ -69,7 +69,9 @@ let falliti = 0;
 for (const u of id) {
   const r = await fetch(`${URL_SB}/functions/v1/abbonamento-webhook`, {
     method: 'POST',
-    headers: { authorization: SEGRETO, 'content-type': 'application/json' },
+    // `connection: close`: senza, il pool keep-alive di undici tiene vivo il
+    // processo per qualche secondo dopo l'ultima risposta. Vedi in fondo.
+    headers: { authorization: SEGRETO, 'content-type': 'application/json', connection: 'close' },
     body: JSON.stringify({
       event: {
         type: 'INITIAL_PURCHASE',
@@ -101,4 +103,19 @@ console.log(`
   group by 1, 2;
 `);
 
-process.exit(falliti === 0 ? 0 : 1);
+// ⚠️ **`exitCode` e non `process.exit()`, ed e' una correzione del 2026-09-15.**
+//    `process.exit()` tronca il processo **mentre `fetch` ha ancora dei socket
+//    aperti**, e su Windows libuv se ne accorge:
+//
+//      Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\winsync.c
+//
+//    🔑 *Compariva DOPO che il lavoro era stato fatto* — la revoca era gia'
+//    andata a buon fine — quindi non rompeva niente. Ma un errore stampato
+//    sotto una riga di successo insegna a diffidare di quella riga, ed e'
+//    esattamente cio' che uno strumento di prova non deve fare.
+//
+//    Assegnare `exitCode` lascia che Node esca da solo quando l'event loop e'
+//    vuoto: stesso codice d'uscita, nessun handle troncato. Insieme a
+//    `connection: close` sulla fetch — che impedisce al pool keep-alive di
+//    tenere vivo il processo per qualche secondo — l'uscita e' immediata.
+process.exitCode = falliti === 0 ? 0 : 1;

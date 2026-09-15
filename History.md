@@ -28,6 +28,32 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (8) — B-82: un errore stampato sotto una riga di successo
+
+✅ **Revocato «Insieme» a `samuele.busato@heleox.it`** (`c86d6959…`) su richiesta dell'utente, dal webhook vero. ✅ **Verificato nel database e non sulla risposta**: `attivo` da `true` a **`false`**, `scade_il` riportata all'istante dell'evento, `vale_adesso` **falso**.
+
+🔑 **E cercare invece di indovinare è servito**: in `auth.users` ci sono **quattro** account che cominciano per `samuele.busato`, fra cui un **`@netpricer.con`** — col typo — che avrebbe potuto assorbire una revoca destinata a un altro. ⚠️ *L'email riferita a voce era troncata* (`@heleox`), e una scelta a occhio fra quattro simili è il genere di errore che poi si diagnostica come «la revoca non funziona».
+
+⬜ **Una cosa vista passando, e che vale per il collaudo**: il diritto stava **scadendo da sé fra 36 minuti**. Chi avesse provato i muri poco dopo li avrebbe visti tornare su comunque — e avrebbe potuto attribuire alla revoca un effetto che era solo una scadenza, o il contrario.
+
+---
+
+🔴 **B-82 — `revoca-insieme.mjs` terminava con un'assertion di libuv.**
+
+```
+Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c, line 76
+```
+
+**La causa**: `process.exit()` in fondo allo script tronca il processo **mentre `fetch` ha ancora socket aperti**, e su Windows libuv se ne accorge.
+
+🔑 **Compariva DOPO che il lavoro era stato fatto**, quindi non rompeva nulla — ed è precisamente il motivo per cui andava corretto: *un errore stampato sotto una riga di successo insegna a diffidare di quella riga*, e uno strumento di prova che fa dubitare del proprio esito è peggio che inutile. ⚠️ *Su un impianto dove la domanda ricorrente è «ha funzionato davvero o sembra soltanto?», il rumore costa più del difetto.*
+
+✅ **Corretto in due punti**: `process.exitCode` invece di `process.exit()`, così Node esce da sé a event loop vuoto; e `connection: close` sulla fetch, perché altrimenti il pool keep-alive di undici terrebbe vivo il processo qualche secondo. ✅ **Verificato rieseguendo**: nessuna assertion, uscita `0`.
+
+🔑 **E la correzione è stata fatta su ENTRAMBI i gemelli, non solo su quello che ha mostrato il sintomo** — `concedi-insieme.mjs` aveva lo stesso `process.exit()` dopo la stessa fetch. ⚠️ *È la lezione di **B-81** applicata lo stesso giorno in cui è stata imparata*: sostituire qualcosa non è finito quando il caso che l'ha rivelato funziona, è finito quando si è cercato **chi altro bussava alla stessa porta**. *Questa volta si è cercato prima.*
+
+⬜ **Rimosso `Projects/LifeCouple/.claude/launch.json`**, creato per errore poche ore prima: il brain ha già le sue configurazioni per questo progetto — `lifecouple-telefoni-lan` e la gemella `-watch` — e due case per la stessa cosa divergono.
+
 ### 2026-09-15 (7) — I termini d'uso entrano in vigore con due segnaposto dentro, e il punto di accettazione esiste
 
 ✅ **D-138 — i termini d'uso sono RESI, con `[indirizzo]` e `[numero di telefono]` in chiaro.** Decisione esplicita dell'utente: *«lascia i segnaposto e produci i documenti, sostituirò io in un secondo momento»*. 🔑 **La ragione per cui è una decisione difendibile e non una scorciatoia**: i due dati non sono *indecisi*, sono **decisi e non ancora trascritti** — e l'app non è pubblicata, quindi l'obbligo DSA non è ancora attivo verso nessuno store né verso alcun utente. ⚠️ *Il rischio vero non è legale: è dimenticarsene*, perché da oggi quel documento è pubblico e nessuno lo rilegge più.
