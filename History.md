@@ -67,6 +67,49 @@ Il documento **pubblicato** portava in testa: *«section 2 says these Terms are 
 
 🔑 **Quarta volta in due giorni** — B-78, B-79, B-85, e questa. ⚠️ **Ma è la prima che stava in un documento PUBBLICO**: le altre tre le leggevamo noi, questa la leggeva chiunque aprisse `terms-of-use.html`, e diceva ai lettori che il contratto non era accettabile nel momento in cui lo era. *Tolta insieme alla riga che prometteva la revisione di un avvocato, che era l'altra frase che questo documento non poteva più mantenere.*
 
+#### ⟳ La build di pubblicazione non parte da qui — e poi l'ha avviata l'utente
+
+✅ **Esito**: build **`94dd41b7`** in coda alle **18:51**, profilo `production`, distribuzione **`store`**. Riusato il certificato di distribuzione esistente — `L48VT5A4PT`, team **`8C8FJLJBB8`** (lo stesso della chiave APNs di **C3**), *Samuele Busato (Individual)*, scadenza **2027-09-14** — e generato un **provisioning profile App Store**, che è nuovo: quello che c'era è **ad-hoc** e vincola gli UDID, ed è ciò che ha installato la `preview` sul telefono. *I due convivono: la preview continua a funzionare.*
+
+Il resto di questa voce resta scritto perché **il vincolo non è un incidente, è permanente**. Avviata prima su richiesta dell'utente da qui, **non era partita**, e l'errore è preciso:
+
+```
+Distribution Certificate is not validated for non-interactive builds.
+Credentials are not set up. Run this command again in interactive mode.
+```
+
+🔑 **La ragione non è un difetto di configurazione**: per la distribuzione **App Store** — a differenza di `internal`, che ha prodotto le build `development` e `preview` di oggi — EAS deve **validare il certificato di distribuzione con Apple**, e quella validazione chiede **Apple ID e 2FA**. *Sono esattamente le credenziali che l'agente non ha e non deve avere*, come per la chiave APNs di **C3** e per il `.p8` scaricato a mano.
+
+⚠️ **Ma due effetti sono avvenuti lo stesso, e vanno registrati perché non sono reversibili con un annullamento**:
+
+| | |
+|---|---|
+| `buildNumber` remoto | **da 1 a 2** (`autoIncrement` con `appVersionSource: remote`) |
+| Su EAS | creati il **canale** e il **ramo** `production` |
+
+✅ **Verificato che nessuna build sia stata accodata**: `eas build:list --platform ios` mostra come ultime una `preview` **finished** delle 14:36 e due `development`. *Nessuna con profilo `production`.* 🔑 *Controllato invece di dedurlo dal codice d'uscita*: un comando che fallisce dopo aver già incrementato un contatore può averne fatta metà.
+
+⬜ **Va lanciata dall'utente**, in un terminale interattivo: `eas build --platform ios --profile production`. 🔑 *E varrà anche la prossima volta*: non è uno stato da sbloccare una volta sola, è dove passa il confine delle credenziali Apple.
+
+#### 🔴 B-87 — il seminatore della demo stampava ✅ su due cose che non erano mai riuscite
+
+Trovato **da un controllo nato per altro**. Dopo la build ho scritto [`tools/verifica-demo.mjs`](tools/verifica-demo.mjs) (`npm run test:demo`) per misurare che le foto nuove fossero arrivate davvero; al primo giro ha detto che l'account demo **non era in uno stato da revisione**, e per due ragioni che duravano da sempre:
+
+| Cosa | Che diceva | Cosa succedeva |
+|---|---|---|
+| `insieme_dal` | *(niente: `update` senza controllo)* | `coppia` ha la **sola policy di `select`**: la `update` dal client aggiorna **zero righe e non solleva un errore** |
+| Le voci di lista | `✅ 2 voci di lista` | `insert` **fallito**, e l'errore non veniva mai guardato |
+
+🔑 **Il difetto non è nei due errori: è che il seminatore dichiarava l'esito invece di misurarlo.** `await` che non solleva e un `console.log` scritto sotto sono una coppia che mente sempre nello stesso verso. ⚠️ *È la forma di **B-83*** — il cron diceva `succeeded` perché `pg_net` aveva **accodato** — e di **C2**, dove la prova che valeva non era il pannello ma la coda che si svuotava.
+
+**Le due cause, una volta guardate, erano diverse da come sembravano:**
+- 🔴 *L'errore delle liste non era il `tipo`* — che era la mia prima ipotesi — ma **`stato`, `not null` senza default**. E c'era un secondo pezzo invisibile: un `elemento_lista` **senza `lista_id` non compare in nessuna lista**, quindi non esiste per chi guarda l'app. Le tre liste di default sono **tipizzate** (`Film` è `film`, `Viaggi` e `Ristoranti` sono `luogo`), quindi una voce generica vuole **una lista sua** — che è poi ciò che farebbe una coppia vera. ⚠️ *Avevo cambiato `tipo` in `ristorante` per «sicurezza»: sarebbe stato peggio*, perché il `check` della `0022` ammette `film`, `luogo` e `voce` — e non `ristorante`.
+- ✅ *E `insieme_dal` non era da forzare*: l'app lo scrive con l'RPC **`imposta_insieme_dal`** (`0005`), che imposta la data **e** crea l'evento speciale che la mostra nel calendario. Usarla dà al revisore la stessa home di una coppia vera, invece di una scritta a mano.
+
+⚠️ **E un errore mio nello stesso giro, tenuto scritto perché è lo stesso tipo.** La prima versione del controllo contava **12 eventi, 12 luoghi e 12 foto** dove il seminatore ne crea 4: leggeva **tutte le coppie dell'account**, non quella attiva. 🔑 *L'appartenenza a una coppia è un intervallo* (`membro_coppia.uscito_il`, **D-04**) *e lo scioglimento revoca senza cancellare*, quindi rieseguire il seminatore lascia visibili i contenuti delle coppie precedenti. **Contarli tutti insieme misura la storia dell'account, non lo stato in cui il revisore lo troverà.** ✅ *Trovato guardando un numero implausibile*, non un errore.
+
+✅ **Esito, dopo le correzioni**: coppia appaiata, `insieme dal` impostato, 5 eventi, 4 luoghi, 2 voci in una lista, 1 partita conclusa, **4 fotografie a piena risoluzione e zero segnaposto**, e **nessun «Insieme»** — l'ultima voluta, perché senza il muro il revisore non può percorrere l'acquisto in sandbox.
+
 #### ⟳ Una conseguenza che nessuno ha chiesto, e va colta
 
 🔑 **Saltare l'avvocato SBLOCCA le traduzioni.** Il rischio accettato del 2026-09-09 — documenti legali in solo inglese su un prodotto venduto in Italia — dichiara come si chiude: *«tradurre i tre documenti pubblici»*, non fatto perché *«la revisione dell'avvocato può cambiare il testo, e tradurre prima significa tradurre due volte»*.
@@ -5536,11 +5579,13 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 > | | Cosa | Chi | Costo |
 > |---|---|---|---|
 > | ✅ | ~~Deploy della landing~~ — **fatto e verificato in linea**: `terms-1.3` online, zero segnaposto | ✅ io | — |
-> | 1 | **A7** — sei accordi art. 28 | solo tu | minuti |
-> | 2 | **C1** — la chiave esposta | solo tu | cinque minuti |
-> | 3 | **La lingua della scheda** | solo tu | una riga |
-> | 4 | **E3** — screenshot | io + tu, su un telefono | — |
-> | 5 | **E5** — build `production`, caricamento, invio | tu | — |
+> | ✅ | ~~La build `production`~~ — **`94dd41b7` finished**, `.ipa` firmato per lo store. 🔑 *Va sempre lanciata da un terminale interattivo*: la validazione del certificato vuole Apple ID e 2FA | ✅ | — |
+> | ✅ | ~~L'account demo~~ — **riseminato e misurato**: `npm run test:demo` verde. Ha trovato **B-87** | ✅ io | — |
+> | 0 | 🔴 **L'`ascAppId`** — l'ID numerico della scheda su App Store Connect. Senza, `eas submit` non parte in modo automatico. *Sta in App Information → Apple ID; va messo in `eas.json`* | **solo tu** lo leggi | il caricamento |
+> | 2 | **A7** — sei accordi art. 28 | solo tu | minuti |
+> | 3 | **C1** — la chiave esposta | solo tu | cinque minuti |
+> | 4 | **La lingua della scheda** | solo tu | una riga |
+> | 5 | **E3** — screenshot | io + tu, su un telefono | — |
 >
 > ⬜ **E le traduzioni, che D-141 ha sbloccato invece di chiudere**: erano ferme solo per la sequenza «revisione → traduzione», e quella revisione non arriverà.
 >
