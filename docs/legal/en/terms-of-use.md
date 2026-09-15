@@ -1,16 +1,8 @@
 # Terms of Use — LifeCouple
 
-**Version `terms-1.2` — 15 September 2026.**
+**Version `terms-1.3` — 15 September 2026.**
 
-> ⚠️ **Two contact details are still being completed**, and they are shown below as **[indirizzo]** and **[numero di telefono]**. They are the trader's address and telephone number, which the Digital Services Act requires us to publish. They are not undecided: they are being put in place, and this document will be updated with them. **Everything else in these terms is final and applies as written.**
->
-> In the meantime you can reach us at the email address in section 1, which is the contact that Article 13 of the GDPR requires and which works today.
-
-> **What changed on 15 September 2026**: the provider is now **Samuele Busato**, a natural person; sections 7 and 8 were rewritten because they described a free/paid boundary that **the service no longer applies** — checked against migration `0042`, not against the decision log; the seller clause was settled; and references to Google Play were removed, the app being released on iPhone only.
->
-> Review by a lawyer is still owed before the service starts charging.
->
-> 🔴 **One precondition is about the app, not about this text**: section 2 says these Terms are reachable before an account is created, and today **only the Privacy Policy and the Cookie Policy are**. Linking these Terms from registration, Settings and the purchase screen has to happen in the same change that puts them in force — otherwise section 2 becomes the false statement this document exists to avoid.
+> **What changed on 15 September 2026**: the provider is now **Samuele Busato**, a natural person; sections 7 and 8 were rewritten because they described a free/paid boundary that **the service no longer applies** — checked against migration `0042`, not against the decision log; the seller clause was settled; references to Google Play were removed, the app being released on iPhone only; and these Terms became reachable from registration, from Settings and from the purchase screen, as section 2 requires.
 
 ---
 
@@ -19,8 +11,6 @@
 LifeCouple is offered by **Samuele Busato**, a natural person resident in Italy.
 
 - Email: **info@heleox.it**
-- Telephone: **[numero di telefono]**
-- Address: **[indirizzo]**
 
 On the app stores the publisher appears as **"Samuele Busato"**, the same person named above, who is also the controller of your personal data — see section 1 of the Privacy Policy.
 

@@ -2,17 +2,19 @@
 
 > 🔴 **DOCUMENTO DI LAVORO — NON È IL TESTO UFFICIALE.** Dal **2026-09-10** la documentazione ufficiale di LifeCouple è **in inglese** (**D-123**): il testo di riferimento è [`en/terms-of-use.md`](en/terms-of-use.md), scritto lo stesso giorno. ⚠️ **Nessuno dei due è in vigore** — restano le decisioni di prodotto elencate in fondo — ma quando lo saranno sarà **l'inglese** a esserlo. In caso di divergenza vince l'inglese, sempre: si corregge questo file, mai quello.
 >
-> **Versione `termini-1.2` — in vigore dal 2026-09-15.** ⚠️ **Questo file è il documento DI LAVORO**: il testo ufficiale è [`en/terms-of-use.md`](en/terms-of-use.md) (**D-123**), ed è quello reso dentro l'app e pubblicato su `terms-of-use.html`. In caso di divergenza vince l'inglese.
+> **Versione `termini-1.3` — in vigore dal 2026-09-15.** ⚠️ **Questo file è il documento DI LAVORO**: il testo ufficiale è [`en/terms-of-use.md`](en/terms-of-use.md) (**D-123**), ed è quello reso dentro l'app e pubblicato su `terms-of-use.html`. In caso di divergenza vince l'inglese.
 >
-> ➳ **Dal 2026-09-15 il documento è RESO, e lo è con due segnaposto dentro** — `[indirizzo]` e `[numero di telefono]`, l'obbligo DSA. 🔑 *È una decisione esplicita dell'utente*, presa sapendo che finiscono anche su una pagina pubblica: i due dati esistono come decisione ma non ancora come valori, e verranno sostituiti. ⚠️ **Il rischio non è legale ma di memoria** — l'app non è pubblicata, quindi l'obbligo DSA non è ancora attivo verso nessuno — e per questo `tools/genera-legale.mjs` **chiude ogni esecuzione** con il conto dei segnaposto rimasti, invece di un silenzioso «fatto».
+> 🔴 **Dal 2026-09-15 (3) i due segnaposto NON ci sono più, e non perché siano stati riempiti — D-141.** `[indirizzo]` e `[numero di telefono]` sono stati **rimossi**, per decisione esplicita dell'utente, insieme alla rinuncia al commercialista e all'avvocato. ⚠️ **Rimuovere il segnaposto non rimuove l'obbligo: rimuove il promemoria.** Il DSA continua a chiedere un indirizzo geografico e un telefono a chi vende nella UE, e Apple li raccoglie come *trader* esponendoli sulla scheda pubblica dell'app.
+>
+> 🔑 **Cosa cambia davvero, ed è meno di quanto sembri**: un documento con `[indirizzo]` in chiaro è **visibilmente incompleto** e attira l'occhio del revisore; uno che i due dati li **omette** è ugualmente non conforme ma non lo dichiara. *La conformità non cambia, cambia dove si scopre il problema* — e adesso si scopre nel modulo *trader* di App Store Connect, che quei campi li chiede comunque. Perimetro e ragioni in `History.md` **D-141**.
 >
 > 🔴 **Non è consulenza legale.** Vale la stessa frase con cui si apre [`conformita.md`](../conformita.md): *dal momento in cui il servizio incassa, serve la validazione di un avvocato prima del lancio commerciale*. Questo documento è la mappa dei temi da coprire e il testo su cui farla, non il testo definitivo.
 >
 > 🔑 **A differenza degli altri cinque documenti di [`legal/`](.), questo non è l'adattamento di un modello: in [`Rule/`](../../../../Rule/) non esiste un modello di termini d'uso.** Gli unici termini scritti nel brain sono [`Projects/HeleoX/docs/legal/condizioni-beta.md`](../../../HeleoX/docs/legal/condizioni-beta.md), che regolano una **beta B2B** con clausole di autorizzazione alla scansione: struttura riusabile, contenuto no. LifeCouple è **B2C puro con abbonamento**, ed è un altro contratto.
 >
-> ⟳ **Ne restano TRE**, e nessuno è più una decisione di prodotto: **telefono** e **indirizzo** del professionista (obbligo DSA, vanno chiesti — non si stimano) e **chi è il venditore verso l'utente finale** (da verificare sui contratti Apple/Google). *(Erano otto il 2026-09-09 e il documento ne dichiarava sette. Il 2026-09-10 si è chiusa l'email, poi le **quattro decisioni di prodotto** — **D-124**. Ricontati: tre.)*
+> ⟳ **Ne restava UNO, e dal 2026-09-15 (3) è chiuso per rinuncia**: telefono e indirizzo sono stati **tolti** invece che trovati (D-141), e il venditore verso l'utente finale è **Apple**, accertato il 2026-09-15. *(Erano otto il 2026-09-09 e il documento ne dichiarava sette. Il 2026-09-10 si è chiusa l'email, poi le **quattro decisioni di prodotto** — **D-124**, poi il venditore. Ricontati: zero.)*
 >
-> 🔴 **E una condizione che precede il documento: nell'applicazione non esiste il punto in cui QUESTI termini vengono accettati.** ⟳ *Rivisto il 2026-09-10*: dal 2026-09-09 [`app/(pubbliche)/registrati.tsx`](../../app/(pubbliche)/registrati.tsx) mostra i link all'**informativa privacy** e alla **cookie policy** prima del pulsante che crea l'account (**D-121**) — ma **non ai termini d'uso**, che nell'app non entrano finché portano segnaposto. Un contratto che nessuno accetta non è in vigore, per quanto ben scritto sia. Vedi §2.
+> ✅ **La condizione che precedeva il documento è caduta il 2026-09-15**: i termini sono raggiungibili da **registrazione**, **Impostazioni** e **paywall** — `registrati.tsx`, `impostazioni.tsx`, `paywall.tsx`, verificati uno per uno. ⚠️ *Questa riga ha dichiarato il contrario per un giorno intero* (**B-86**), ed è la stessa forma di B-78, B-79 e B-85: una frase vera quando è stata scritta, resa falsa da un lavoro fatto altrove.
 
 ---
 
@@ -21,14 +23,14 @@
 LifeCouple è offerta da **Samuele Busato**, persona fisica residente in Italia.
 
 - Email: **info@heleox.it** *(scelta il 2026-09-10, D-121 — la stessa della §1 dell'[informativa privacy](informativa-privacy.md), come doveva essere: una sola)*
-- Telefono: **[numero di telefono]**
-- Indirizzo: **[indirizzo]**
 
 Sugli store l'editore risulta **«Samuele Busato»**, la stessa persona indicata sopra, che è anche il titolare del trattamento dei dati — vedi l'[informativa privacy](informativa-privacy.md) §1.
 
-🔴 **Dati del professionista ai sensi del DSA — obbligo bloccante.** Chi vende nella UE deve fornire agli store e **rendere visibili** nome, indirizzo, telefono ed email. Finché indirizzo e telefono non sono decisi, questo documento non è pubblicabile: non è una formalità redazionale, è il motivo per cui la scheda store può essere rifiutata.
+🔴 **Dati del professionista ai sensi del DSA — l'obbligo resta, il testo non lo assolve (D-141).** Chi vende nella UE deve fornire agli store e **rendere visibili** nome, indirizzo, telefono ed email. Indirizzo e telefono **non sono stati inseriti**, per decisione dell'utente del 2026-09-15 (3), presa insieme alla rinuncia al commercialista.
 
-⚠️ **La forma con cui si vende resta da confermare, e il documento non la dichiara** (D-136, Q1 · `pubblicazione.md` **A8**). Il soggetto è una **persona fisica senza partita IVA** e il servizio ha **piani a pagamento** (D-134). 🔑 *Il testo qui sopra è comunque veritiero — dice chi eroga il servizio, e quello è un fatto* — ma il contratto non è la sede in cui quel nodo si scioglie: è una questione per il **commercialista**, e resta aperta anche quando questo documento sarà pubblicabile.
+⚠️ **Questa riga non va addolcita col tempo.** È qui perché chi rilegge il documento fra sei mesi deve trovare la lacuna **dichiarata**, non dedurla dall'assenza di due righe — e perché è la prima cosa da correggere se arriva un rilievo. 🔑 *Un documento che omette un dato obbligatorio senza dirlo sembra completo, ed è il modo in cui una lacuna sopravvive a chi la conosceva.*
+
+⚠️ **La forma con cui si vende non è stata confermata** (D-136, Q1 · `pubblicazione.md` **A8**): il soggetto è una **persona fisica senza partita IVA** e il servizio ha **piani a pagamento** (D-134). Il passaggio dal commercialista è stato **saltato** il 2026-09-15 (3). 🔑 *Il testo qui sopra resta veritiero — dice chi eroga il servizio, e quello è un fatto*; ciò che manca non è una riga del contratto ma una verifica fuori dal contratto, e vive fra i rischi accettati di `History.md` §5.
 
 > 🔑 **Perché il segnaposto sulla forma è stato tolto il 2026-09-15**, dopo essere stato aggiunto poche ore prima: un segnaposto dichiara *un dato che manca al testo*, e alla §1 non manca nulla — il venditore è nominato per intero. ⚠️ *Ciò che manca non è una riga del contratto, è una verifica fuori dal contratto*, e tenerla dentro come `[DA DECIDERE]` confondeva le due cose. Vive ora dove gli altri rischi accettati vivono: in `History.md` e nel piano.
 
