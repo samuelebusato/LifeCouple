@@ -28,6 +28,51 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (12) — D-141: si rinuncia ai due professionisti, e i segnaposto si tolgono invece di riempirli
+
+**La decisione è dell'utente**, e ha tre parti che stanno insieme: *«ho deciso di saltare i passaggi di commercialista e avvocato e non inserire indirizzo e numero di telefono (nella documentazione che verrà inserita nell'applicazione devi rimuovere anche i flag `[da inserire]`)»*.
+
+#### Cosa è stato fatto
+
+`terms-of-use.md` sale a **`terms-1.3`**. Tolti i due segnaposto dalla §1 — resta **l'email**, che è il recapito che l'art. 13 GDPR richiede e che funziona — e tolto il riquadro d'avviso in testa che li annunciava. ✅ **Verificato misurando**: `lib/legale/testi.ts` e le tre pagine della landing contengono **zero** occorrenze di `[indirizzo]`, `[numero di telefono]`, `DA DECIDERE` e `DA VERIFICARE`. `tsc` **0**, `test:legale` **0**.
+
+⬜ **Perimetro tenuto stretto, come chiesto**: i `[DA VERIFICARE]` che restano in `registro-trattamenti.md` e `catena-cancellazione.md` riguardano la **retention dei backup Supabase**, sono in documenti **interni** che legge il Garante e **non entrano nell'app**. Non toccati.
+
+#### 🔑 Cosa questa decisione cambia, e cosa non cambia — la distinzione è il punto
+
+⚠️ **Togliere il segnaposto non toglie l'obbligo: toglie il promemoria.** Il DSA continua a chiedere un indirizzo geografico e un telefono a chi vende nella UE, e Apple li raccoglie come *trader* **esponendoli sulla scheda pubblica dell'app**. Niente di ciò che è stato scritto oggi cambia quel fatto.
+
+🔑 **Ma il cambiamento reale è meno grave di come suona, e va detto per intero**: un documento con `[indirizzo]` in chiaro è **visibilmente incompleto** e attira l'occhio di chi revisiona; uno che i due dati semplicemente **omette** è ugualmente non conforme ma non lo annuncia. *La conformità non cambia. Cambia dove si scopre il problema* — e adesso si scopre nel **modulo *trader* di App Store Connect**, che quei campi li chiede comunque, non leggendo i termini.
+
+⚠️ **Per questo la lacuna è rimasta dichiarata nel documento di lavoro** `termini-uso.md` §1, in rosso, invece di sparire con le due righe. 🔑 *Un documento che omette un dato obbligatorio senza dirlo sembra completo, ed è il modo in cui una lacuna sopravvive a chi la conosceva.*
+
+#### ✅ E-4 si chiude di conseguenza, su un fatto e non su un parere
+
+Con l'avvocato saltato, la riga **«Sensitive Info»** del questionario App Privacy andava comunque risposta: *è un campo, e il questionario non si invia in bianco*. ✅ **Risposta: No**, e la ragione non è «non lo chiediamo» ma una **proprietà dello schema**:
+
+| Tabella | Cosa contiene davvero |
+|---|---|
+| `profilo_utente` (`0032`) | **solo `data_nascita`** |
+| `profilo_coppia` (`0029`) | `conosciuto_da`, `fascia_eta`, `convivenza`, `interesse` |
+
+🔑 **Nessuna tabella raccoglie genere, sesso o pronomi di nessuno** — l'unico `genere` in tutto lo schema è il **tipo di un luogo** (`restaurant`, `city_park`, `museum`, dalla `0016`). **La deduzione strutturale che `conformita.md` §9 descrive richiede un dato che il sistema non possiede**: sapere che due account sono una coppia non rivela l'orientamento di nessuno senza sapere il genere di entrambi.
+
+🔴 **E una correzione a `app-privacy.md`, che diceva una cosa imprecisa**: dichiarava che quella di Apple e quella dell'art. 9 fossero *«la stessa domanda in due sedi»*. **Non lo sono**: Apple chiede *«raccogli questo tipo di dato?»*, l'art. 9 riguarda il **trattamento di dati che rivelano**, che è più ampio e comprende l'inferenza. ⚠️ *Le due hanno risposte legittimamente diverse*, e trattarle come una sola avrebbe portato a rispondere ad Apple con l'argomento sbagliato. **Quella dell'art. 9 resta aperta**, ed è ora un rischio accettato (§5).
+
+#### 🔴 B-86 — i termini dichiaravano di non essere raggiungibili, e lo erano
+
+Il documento **pubblicato** portava in testa: *«section 2 says these Terms are reachable before an account is created, and today **only the Privacy Policy and the Cookie Policy are**»*. ✅ **Falso dal 2026-09-15 (7)**, verificato riga per riga: `registrati.tsx:189`, `impostazioni.tsx:576`, `paywall.tsx:786` — i tre link esistono. Stessa riga, stesso errore, nel documento di lavoro italiano.
+
+🔑 **Quarta volta in due giorni** — B-78, B-79, B-85, e questa. ⚠️ **Ma è la prima che stava in un documento PUBBLICO**: le altre tre le leggevamo noi, questa la leggeva chiunque aprisse `terms-of-use.html`, e diceva ai lettori che il contratto non era accettabile nel momento in cui lo era. *Tolta insieme alla riga che prometteva la revisione di un avvocato, che era l'altra frase che questo documento non poteva più mantenere.*
+
+#### ⟳ Una conseguenza che nessuno ha chiesto, e va colta
+
+🔑 **Saltare l'avvocato SBLOCCA le traduzioni.** Il rischio accettato del 2026-09-09 — documenti legali in solo inglese su un prodotto venduto in Italia — dichiara come si chiude: *«tradurre i tre documenti pubblici»*, non fatto perché *«la revisione dell'avvocato può cambiare il testo, e tradurre prima significa tradurre due volte»*.
+
+⚠️ **Quella revisione adesso non arriverà**, quindi **l'argomento che teneva ferme le traduzioni è caduto**. Tradurre è ora la cosa più economica che riduca il rischio accettato più grande del progetto — ed è lavoro mio, senza code esterne. *Non è stato fatto oggi perché non è stato chiesto: sta nel backlog e nella proposta all'utente.*
+
+---
+
 ### 2026-09-15 (11) — Il nome è libero, la scheda esiste, e le funzionalità si dichiarano testate
 
 Sessione aperta da una richiesta netta dell'utente: *«voglio concludere il tutto e inviare a Apple la richiesta di pubblicazione. Le funzionalità dell'applicazione possiamo darle come testate»*.
@@ -4906,6 +4951,31 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 ## 5. Rischi accettati esplicitamente
 
+### 🔴 Si pubblica senza i dati del professionista richiesti dal DSA (2026-09-15, D-141)
+
+**La decisione è dell'utente**, presa dopo che l'obbligo era stato posto per iscritto **due volte** nella stessa giornata — la seconda con la precisazione che *non è un rilievo che arriva dopo la revisione, è un campo del modulo prima*.
+
+**Il fatto**: indirizzo geografico e telefono non esistono e non verranno inseriti. I due segnaposto che li tenevano visibili nei termini sono stati **rimossi** (`terms-1.3`), non riempiti.
+
+**Il rischio, in chiaro**: il DSA e il Codice del Consumo (art. 49) impongono a chi vende nella UE di fornire e **rendere visibili** nome, indirizzo, telefono ed email. ⚠️ *Apple li raccoglie come dati «trader» e li espone sulla scheda pubblica dell'app*, quindi l'assenza non è invisibile: è un campo che resterà vuoto o non compilabile.
+
+**Cosa lo contiene, e cosa no.** ✅ L'email della §1 è un recapito reale e funzionante, ed è quello che l'art. 13 GDPR richiede. ✅ Il testo resta **veritiero**: non dichiara un indirizzo falso, ne omette uno dovuto — e l'omissione è **dichiarata in rosso** nel documento di lavoro, non nascosta. ❌ Niente di tutto questo assolve l'obbligo, che resta intero.
+
+**Come si chiude**: una domiciliazione (dal commercialista o presso un servizio di sede operativa) e un numero dedicato — **non serve l'abitazione**. 🔑 *Il costo di chiuderlo non cambia col tempo; il punto in cui lo si scopre sì*, ed è il modulo *trader* di App Store Connect, non la risposta di Apple.
+
+### 🔴 Il contratto va in vigore senza validazione professionale (2026-09-15, D-141)
+
+**La decisione è dell'utente**: il passaggio dall'avvocato è **saltato**, non rimandato. La riga dei termini che prometteva *«review by a lawyer is still owed before the service starts charging»* è stata tolta, perché era una promessa che non sarà mantenuta e stava in un documento pubblico.
+
+**Cosa resta senza risposta**, per nome:
+- **A5** — se le due frasi del recesso debbano essere **testo sopra il pulsante** o una **casella da spuntare**. Oggi sono testo. *`conformita.md` §7 pone la scelta e non la risolve.*
+- **L'art. 9 GDPR** (`conformita.md` §9) — se un'app che registra l'esistenza di una relazione fra due persone tratti dati che **rivelano** l'orientamento sessuale. ⚠️ **Da non confondere con la riga «Sensitive Info» di Apple, che è chiusa e con un argomento diverso**: Apple chiede *cosa raccogli*, e nello schema non c'è nessun campo di genere; l'art. 9 riguarda il **trattamento che rivela**, che comprende l'inferenza. *Rispondere alla seconda con l'argomento della prima sarebbe l'errore da non fare.*
+- **La DPIA** — se sia dovuta. Nessuno l'ha valutato.
+
+**Cosa lo contiene.** ✅ I documenti non sono improvvisati: sono scritti contro il codice (`0042`, `0041`) e contro il registro art. 30, e l'ultimo giro ha corretto **B-69** proprio confrontandoli con una migrazione. ❌ Ma nessuna di queste è una validazione: *verificare che un testo descriva il sistema non è verificare che il testo sia sufficiente.*
+
+⟳ **Una conseguenza che questa decisione produce e che va colta**: il rischio qui sotto — documenti in solo inglese — dichiarava di non potersi chiudere perché *«tradurre prima della revisione significa tradurre due volte»*. **Quella revisione non arriverà, quindi l'argomento è caduto** e tradurre è ora possibile subito.
+
 ### 🔴 La In-App Purchase Key esposta in chat non viene revocata (2026-09-14)
 
 **La decisione è dell'utente**, presa dopo che il rischio era stato posto per iscritto tre volte nella stessa giornata — l'ultima in cima a un elenco di priorità, con la nota *«è l'unica voce che peggiora col tempo»*. Va qui perché una scelta del genere, riletta fra sei mesi, deve risultare **valutata e presa**, non dimenticata.
@@ -4926,9 +4996,11 @@ Due delle tre sono state riscritte **più forti**: contano con una `select` norm
 
 **Cosa mitiga, e cosa no.** ✅ La schermata **dichiara in cima** che il documento è disponibile solo in inglese, invece di lasciarlo scoprire a metà pagina; le etichette dell'interfaccia restano bilingui, quindi chi legge in italiano capisce *cosa* sta aprendo. ❌ Nessuna di queste due cose rende il testo comprensibile a chi l'inglese non lo legge: sono attenuazioni di forma, non rimedi.
 
-**Come si chiude**: tradurre i tre documenti pubblici. 🔑 **Non è stato fatto ora per una ragione che vale la pena scrivere**: la revisione dell'avvocato che [`Rule/legale-beta.md`](../../../Rule/legale-beta.md) prescrive prima del lancio commerciale può cambiare il testo, e tradurre prima di quella revisione significa tradurre due volte. La sequenza sensata è **revisione → traduzione**, ed è la stessa ragione per cui i quattro `[DA DECIDERE]` dei termini non sono stati riempiti con stime.
+**Come si chiude**: tradurre i tre documenti pubblici. ~~🔑 **Non è stato fatto ora per una ragione che vale la pena scrivere**: la revisione dell'avvocato che [`Rule/legale-beta.md`](../../../Rule/legale-beta.md) prescrive prima del lancio commerciale può cambiare il testo, e tradurre prima di quella revisione significa tradurre due volte. La sequenza sensata è **revisione → traduzione**.~~
 
-⚠️ **Da portare esplicitamente all'avvocato**, insieme alla domanda sull'art. 9 già aperta in [`conformita.md`](docs/conformita.md) §9.
+⟳ **Quella ragione è caduta il 2026-09-15 (3) con D-141: la revisione dell'avvocato non arriverà.** 🔑 **Quindi le traduzioni sono sbloccate, e sono ora la cosa più economica che riduca questo rischio** — lavoro interno, nessuna coda esterna, nessun rischio di rifarlo due volte. ⚠️ *Il rischio che restava dichiarato «in attesa di una sequenza» è diventato un rischio che resta perché non lo si è ancora chiuso*, che è una posizione diversa e peggiore.
+
+~~⚠️ **Da portare esplicitamente all'avvocato**, insieme alla domanda sull'art. 9 già aperta in [`conformita.md`](docs/conformita.md) §9.~~ ⟳ **Non più: l'avvocato è stato saltato** (D-141). La domanda sull'art. 9 è ora un rischio accettato a sé, in cima a questa sezione.
 
 > ⟳ **Esteso il 2026-09-10 (D-123), e il rischio cresce invece di restare fermo.** L'utente ha stabilito che **la documentazione ufficiale è in inglese, landing compresa**: non più solo il contratto e l'informativa, ma anche la **comunicazione commerciale che li precede**. ⚠️ *Il Codice del Consumo riguarda le informazioni precontrattuali quanto quelle contrattuali*, quindi la superficie contestabile si allarga dalla schermata legale alla vetrina.
 >
@@ -5457,19 +5529,20 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 >
 > 🔴 **B-85 — questa sezione dichiarava che le pagine online erano indietro di una versione.** Erano state pubblicate nella sessione (7) e la riga non era stata aggiornata. ✅ **Verificato in linea**: `app-1.2`, `cookie-1.2`, `terms-1.2`, tutte `200`, titolare corretto, e **4 segnaposto davvero pubblici** sui termini (che è la scelta dell'utente, non un difetto). 🔑 *Terza volta in due giorni che un documento dichiara «da fare» una cosa fatta altrove* — B-78, B-79, e ora una riga del PUNTO DI RIPRESA, cioè **il posto che §4 indica come quello in cui una falsità costa di più**.
 >
-> 🔴 **Cosa resta, davvero tutto**, in ordine di coda e non di importanza:
+> ⟳ **Aggiornato più tardi lo stesso giorno da D-141**, che chiude la corsia A per rinuncia: **A3, A5, A6 e A8 sono decise**, A4 è resa senza segnaposto (`terms-1.3`), **E4 è completa**. *Non resta nessuna coda esterna in tutto il piano: quello che manca è lavoro.*
 >
-> | | Cosa | Chi | Sblocca |
+> | | Cosa | Chi | Costo |
 > |---|---|---|---|
-> | 1 | **A8** — con quale forma vende una persona fisica | commercialista | **A3** → **A4**, e il modulo *trader* |
-> | 2 | **A6** — recesso (**A5**), art. 9 (**E4**), traduzioni | avvocato | la riga *Sensitive Info* di App Privacy |
-> | 3 | **A3** — indirizzo e telefono | tu, dopo A8 | i **4 segnaposto già pubblici** |
-> | 4 | **A7** — sei accordi art. 28 | tu | — |
-> | 5 | **E3** — screenshot | io + tu, su un telefono | **E5** |
-> | 6 | **C1** — la chiave esposta | tu, cinque minuti | — |
-> | 7 | **La lingua della scheda** | tu | — |
+> | 1 | **Deploy della landing** — online c'è `terms-1.2`, i file sono a **`terms-1.3`** | tu autorizzi, io eseguo | tre comandi |
+> | 2 | **A7** — sei accordi art. 28 | solo tu | minuti |
+> | 3 | **C1** — la chiave esposta | solo tu | cinque minuti |
+> | 4 | **La lingua della scheda** | solo tu | una riga |
+> | 5 | **E3** — screenshot | io + tu, su un telefono | — |
+> | 6 | **E5** — build `production`, caricamento, invio | tu | — |
 >
-> ⚠️ **E il punto in cui si scopre se A3 basta è il modulo, non la risposta di Apple**: i dati *trader* si compilano **prima** della revisione. L'utente ha scelto di procedere e vederlo lì.
+> ⬜ **E le traduzioni, che D-141 ha sbloccato invece di chiudere**: erano ferme solo per la sequenza «revisione → traduzione», e quella revisione non arriverà.
+>
+> ⚠️ **Il punto in cui si scopre se i dati che abbiamo bastano è il modulo, non la risposta di Apple**: i dati *trader* si compilano **prima** della revisione. L'utente ha scelto di procedere e vederlo lì.
 >
 > 🔑 **C1 merita una riga a sé, perché è l'unica voce che peggiora aspettando.** Il rischio accettato in §5 dice *«da riconsiderare prima della pubblicazione, quando gli abbonamenti diventano veri e la superficie smette di essere teorica»*. **Quel momento è adesso**, e chiuderla costa cinque minuti che non cambiano col tempo.
 
