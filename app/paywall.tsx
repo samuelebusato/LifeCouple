@@ -14,8 +14,8 @@
 // ## Cosa NON fa questa schermata
 //
 // 🔑 **Non concede niente.** Un acquisto riuscito qui non sblocca nulla da
-//    solo: il diritto lo scrive il webhook e lo legge `coppia_ha_insieme()`
-//    dal database (0041, threat-model §4-ter). Questa schermata vende, poi
+//    solo: il diritto lo scrive il webhook e lo legge `ho_insieme()`
+//    dal database (0047, threat-model §4-ter). Questa schermata vende, poi
 //    aspetta che il database confermi.
 //
 // ⚠️ **I prezzi non sono scritti nel codice**, mai: vengono da `getOfferings()`
@@ -44,7 +44,8 @@ import Riani, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { Heart, Image, ListChecks, Map, Sparkles, X } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Check, Heart, Image, ListChecks, Map, Sparkles, Users, X } from 'lucide-react-native';
 import Purchases, { type PurchasesPackage, PACKAGE_TYPE } from 'react-native-purchases';
 import { Emblema } from '@/components/emblema';
 import { Text } from '@/components/ui/text';
@@ -98,10 +99,15 @@ function scontoAnnuale(mensile: PurchasesPackage | null, annuale: PurchasesPacka
  */
 function EmblemaCheRespira({ fermo }: { fermo: boolean }) {
   const scala = useSharedValue(1);
+  /** L'alone respira **in controfase e più ampio**: l'emblema resta fermo al
+   *  centro mentre la luce intorno si allarga. Un alone che pulsa all'unisono
+   *  con la sagoma sembra un ingrandimento, non un respiro. */
+  const alone = useSharedValue(1);
 
   React.useEffect(() => {
     if (fermo) {
       scala.value = 1;
+      alone.value = 1;
       return;
     }
     scala.value = withRepeat(
@@ -112,14 +118,54 @@ function EmblemaCheRespira({ fermo }: { fermo: boolean }) {
       -1,
       false
     );
-  }, [fermo, scala]);
+    alone.value = withRepeat(
+      withSequence(
+        withTiming(1.14, { duration: ciclo.respiro / 2 }),
+        withTiming(1, { duration: ciclo.respiro / 2 })
+      ),
+      -1,
+      false
+    );
+  }, [fermo, scala, alone]);
 
   const stile = useAnimatedStyle(() => ({ transform: [{ scale: scala.value }] }));
+  const stileAlone = useAnimatedStyle(() => ({
+    transform: [{ scale: alone.value }],
+    opacity: 1.16 - alone.value,
+  }));
 
   return (
-    <Riani.View style={stile}>
-      <Emblema size={84} />
-    </Riani.View>
+    <View className="items-center justify-center">
+      {/* I due aloni concentrici. ⚠️ `pointerEvents="none"`: sono decorazione
+          sotto un elemento che non si preme, ma stanno in posizione assoluta e
+          senza questo intercetterebbero il tocco delle righe vicine. */}
+      <Riani.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            height: 168,
+            width: 168,
+            borderRadius: 84,
+            backgroundColor: C.alone,
+          },
+          stileAlone,
+        ]}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          height: 120,
+          width: 120,
+          borderRadius: 60,
+          backgroundColor: C.alone,
+        }}
+      />
+      <Riani.View style={stile}>
+        <Emblema size={84} />
+      </Riani.View>
+    </View>
   );
 }
 
@@ -132,6 +178,7 @@ function Carta({
   attivo,
   sconto,
   equivalenteMensile,
+  prezzoPieno,
   fermo,
   onScegli,
 }: {
@@ -139,6 +186,9 @@ function Carta({
   attivo: boolean;
   sconto: number | null;
   equivalenteMensile: string | null;
+  /** Il mensile × 12, formattato: il termine di paragone dell'annuale. Si
+   *  mostra **barrato**, e solo quando c'è davvero uno sconto da mostrare. */
+  prezzoPieno: string | null;
   fermo: boolean;
   onScegli: () => void;
 }) {
@@ -167,16 +217,33 @@ function Carta({
           style={{
             borderColor: attivo ? C.accento : 'rgba(0,0,0,0.10)',
             borderWidth: attivo ? 2 : 1,
-            backgroundColor: attivo ? '#ffffff' : 'rgba(255,255,255,0.7)',
+            backgroundColor: attivo ? '#ffffff' : 'rgba(255,255,255,0.72)',
+            // 🔑 L'ombra è **dell'accento, non nera**: alza la carta scelta dal
+            //    fondo senza sporcarlo di grigio. Su un fondo rosa pallido
+            //    un'ombra neutra si legge come una macchia.
+            shadowColor: C.accento,
+            shadowOpacity: attivo ? 0.18 : 0,
+            shadowRadius: attivo ? 16 : 0,
+            shadowOffset: { width: 0, height: 6 },
+            elevation: attivo ? 4 : 0,
           }}
         >
           {/* La pillola sta SOPRA il bordo: è l'unica cosa che deve saltare
-              all'occhio prima del prezzo. */}
+              all'occhio prima del prezzo. ⚠️ Nessun `overflow: hidden` lungo
+              questa catena, altrimenti sparirebbe: è sovrapposta di proposito. */}
           {eAnnuale && sconto !== null && (
             <View
-              className="absolute -top-3 right-4 rounded-full px-3 py-1"
-              style={{ backgroundColor: C.accento }}
+              className="absolute -top-3 right-4 flex-row items-center gap-1 rounded-full px-3 py-1"
+              style={{
+                backgroundColor: C.accento,
+                shadowColor: C.accento,
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: 3,
+              }}
             >
+              <Sparkles size={12} color="#ffffff" strokeWidth={2.4} />
               <Text style={{ color: '#ffffff', fontSize: 12 }}>
                 {t.abbonamento.risparmio.replace('{sconto}', String(sconto))}
               </Text>
@@ -186,14 +253,16 @@ function Carta({
           <View className="flex-row items-center gap-3">
             {/* ⚠️ Un indicatore esplicito, non solo il bordo: su fondo colorato
                 la differenza fra bordo sottile e spesso non si legge a colpo
-                d'occhio. */}
+                d'occhio. 🔑 Da scelto porta una **spunta**, non un pallino: dice
+                «questo» invece di «acceso», che è ciò che si sta scegliendo. */}
             <View
-              className="h-5 w-5 items-center justify-center rounded-full border-2"
-              style={{ borderColor: attivo ? C.accento : 'rgba(0,0,0,0.22)' }}
+              className="h-6 w-6 items-center justify-center rounded-full border-2"
+              style={{
+                borderColor: attivo ? C.accento : 'rgba(0,0,0,0.20)',
+                backgroundColor: attivo ? C.accento : 'transparent',
+              }}
             >
-              {attivo && (
-                <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: C.accento }} />
-              )}
+              {attivo && <Check size={14} color="#ffffff" strokeWidth={3} />}
             </View>
 
             <View className="flex-1">
@@ -201,13 +270,33 @@ function Carta({
                 {eAnnuale ? t.abbonamento.annuale : t.abbonamento.mensile}
               </Text>
               {eAnnuale && equivalenteMensile && (
-                <Text className="text-sm text-muted-foreground">
+                // 🔑 L'equivalente mensile è **in accento**: è il numero che
+                //    rende confrontabili le due carte, e prima si perdeva in
+                //    grigio sotto il nome del piano.
+                <Text className="text-sm" style={{ color: C.accento }}>
                   {t.abbonamento.alMese.replace('{prezzo}', equivalenteMensile)}
                 </Text>
               )}
             </View>
 
-            <Text className="text-lg text-foreground">{pacchetto.product.priceString}</Text>
+            <View className="items-end">
+              <Text className="font-serif-bold text-2xl leading-tight text-foreground">
+                {pacchetto.product.priceString}
+              </Text>
+              {/* Il prezzo pieno barrato: **calcolato sul mensile vero × 12**,
+                  mai scritto a mano. ⚠️ Compare solo se uno sconto esiste — un
+                  barrato senza risparmio dietro è pubblicità ingannevole, e su
+                  una schermata che incassa è esattamente il tipo di riga che
+                  un'autorità contesta. */}
+              {eAnnuale && prezzoPieno && (
+                <Text
+                  className="text-sm text-muted-foreground"
+                  style={{ textDecorationLine: 'line-through' }}
+                >
+                  {prezzoPieno}
+                </Text>
+              )}
+            </View>
           </View>
         </View>
       </Premibile>
@@ -254,7 +343,8 @@ export default function Paywall() {
   /**
    * 🔴 **B-74 — il paywall vendeva a chi non poteva ricevere niente.**
    *
-   * `coppia_ha_insieme()` (0041) è una proiezione **sulla coppia**: *«esiste un
+   * Fino alla `0047` il cancello era `coppia_ha_insieme(cid)`, una proiezione
+   * **sulla coppia**: *«esiste un
    * membro attivo con un diritto valido?»*. Chi non è in nessuna coppia non
    * può soddisfarla, **mai**, qualunque cosa abbia comprato.
    *
@@ -322,6 +412,29 @@ export default function Paywall() {
       return null;
     }
   }, [annuale]);
+
+  /**
+   * Quanto costerebbe un anno **pagato mese per mese**: è il termine di
+   * paragone barrato accanto al prezzo dell'annuale.
+   *
+   * 🔑 **Si ricava dal mensile vero × 12, e solo quando c'è uno sconto** —
+   * `sconto` è già null se l'annuale non conviene. ⚠️ *Un prezzo barrato che
+   * non corrisponde a un prezzo realmente praticato è pubblicità ingannevole*,
+   * e qui il prezzo barrato è praticato davvero: è l'altra carta, visibile
+   * nella stessa schermata.
+   */
+  const prezzoPieno = React.useMemo(() => {
+    const m = mensile?.product;
+    if (!m?.price || sconto === null) return null;
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: m.currencyCode,
+      }).format(m.price * 12);
+    } catch {
+      return null;
+    }
+  }, [mensile, sconto]);
 
   async function compra() {
     if (!scelto) return;
@@ -430,8 +543,15 @@ export default function Paywall() {
           {/* Chiudere dev'essere possibile e visibile: un paywall senza uscita
               è un motivo di rifiuto in revisione, oltre che sgarbato. */}
           <Premibile onPress={chiudi} scala={0.9}>
-            <View className="h-10 w-10 items-center justify-center rounded-full">
-              <X size={22} color={C.tenue} />
+            {/* ⚠️ Un tondo tenue sotto la croce, non la croce nuda: sul fondo
+                sfumato un glifo sottile senza superficie sotto **non si legge
+                come un bottone**, e l'uscita da un paywall deve leggersi al
+                primo colpo d'occhio. */}
+            <View
+              className="h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: 'rgba(255,255,255,0.66)' }}
+            >
+              <X size={20} color={C.tenue} strokeWidth={2.2} />
             </View>
           </Premibile>
         </View>
@@ -443,7 +563,29 @@ export default function Paywall() {
           <Comparsa visibile da="ferma" scala={0.94}>
             <View className="items-center px-8">
               <EmblemaCheRespira fermo={fermo} />
-              <Text className="mt-4 text-center font-serif-bold text-4xl leading-tight text-foreground">
+
+              {/* L'occhiello della prova gratuita, **sopra** il titolo.
+                  🔑 `provaGiorni` esisteva già e non veniva mostrata da nessuna
+                  parte: la sola menzione della prova era il «poi €39,99» sotto
+                  il pulsante, cioè *dopo* la decisione. ⚠️ Il numero viene
+                  dall'offerta (`giorniDiProva`), mai scritto a mano: se un
+                  domani diventa di 14 giorni, questa riga lo segue da sé. */}
+              {giorni !== null && (
+                <View
+                  className="mt-4 flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5"
+                  style={{ backgroundColor: C.aloneForte }}
+                >
+                  <Sparkles size={13} color={C.accento} strokeWidth={2.4} />
+                  <Text style={{ color: C.accento, fontSize: 13 }}>
+                    {t.abbonamento.provaGiorni.replace('{giorni}', String(giorni))}
+                  </Text>
+                </View>
+              )}
+
+              <Text
+                className="text-center font-serif-bold text-4xl leading-tight text-foreground"
+                style={{ marginTop: giorni !== null ? 12 : 16 }}
+              >
                 {t.abbonamento.titolo}
               </Text>
               <Text className="mt-2 text-center text-base text-muted-foreground">
@@ -455,25 +597,43 @@ export default function Paywall() {
           {/* L'elenco entra a cascata. ⚠️ `cascata()` ha un tetto: oltre sei
               righe il ritardo si ferma, così la coda non si accende sotto il
               dito di chi sta già scorrendo. */}
-          <View className="mt-7 gap-3.5 px-8">
-            {t.abbonamento.incluso.map((riga, i) => {
-              const Icona = ICONE[i] ?? Heart;
-              return (
-                <Comparsa key={riga} visibile ritardo={fermo ? 0 : cascata(i + 1)} scarto={10}>
-                  <View className="flex-row items-center gap-3.5">
-                    {/* Il tondo con l'alone dell'accento: lo stesso trattamento
-                        che la barra in basso dà alla scheda attiva. */}
-                    <View
-                      className="h-9 w-9 items-center justify-center rounded-full"
-                      style={{ backgroundColor: C.alone }}
-                    >
-                      <Icona size={18} color={C.accento} strokeWidth={2} />
-                    </View>
-                    <Text className="flex-1 text-base text-foreground">{riga}</Text>
-                  </View>
-                </Comparsa>
-              );
-            })}
+          {/* 🔑 **Le cinque righe stanno ora dentro una carta, e non è
+              decorazione**: su un fondo sfumato un elenco senza superficie
+              sotto galleggia, e il testo scuro perde contrasto proprio dove il
+              rosa si fa più saturo. La carta è la stessa superficie delle due
+              del listino — così la schermata ha *due* blocchi, «cosa ottieni» e
+              «quanto costa», invece di sette elementi in fila. */}
+          <View className="mt-7 px-6">
+            <View
+              className="rounded-3xl px-5 py-5"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.72)',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.9)',
+              }}
+            >
+              <View className="gap-3.5">
+                {t.abbonamento.incluso.map((riga, i) => {
+                  const Icona = ICONE[i] ?? Heart;
+                  return (
+                    <Comparsa key={riga} visibile ritardo={fermo ? 0 : cascata(i + 1)} scarto={10}>
+                      <View className="flex-row items-center gap-3.5">
+                        {/* Il tondo con l'alone dell'accento: lo stesso
+                            trattamento che la barra in basso dà alla scheda
+                            attiva. */}
+                        <View
+                          className="h-9 w-9 items-center justify-center rounded-full"
+                          style={{ backgroundColor: C.alone }}
+                        >
+                          <Icona size={18} color={C.accento} strokeWidth={2} />
+                        </View>
+                        <Text className="flex-1 text-base text-foreground">{riga}</Text>
+                      </View>
+                    </Comparsa>
+                  );
+                })}
+              </View>
+            </View>
           </View>
 
           {caricando && (
@@ -511,6 +671,7 @@ export default function Paywall() {
                       attivo={scelto?.identifier === pacchetto.identifier}
                       sconto={sconto}
                       equivalenteMensile={equivalenteMensile}
+                      prezzoPieno={prezzoPieno}
                       fermo={fermo}
                       onScegli={() => setScelto(pacchetto)}
                     />
@@ -520,11 +681,6 @@ export default function Paywall() {
             </View>
           )}
 
-          {!!errore && (
-            <Comparsa visibile>
-              <Text className="mt-4 px-8 text-center text-sm text-foreground">{errore}</Text>
-            </Comparsa>
-          )}
         </ScrollView>
 
         {/* --- Il blocco d'acquisto, FUORI dallo scorrimento ---------------- */}
@@ -533,7 +689,52 @@ export default function Paywall() {
             legge vanno lette PRIMA del pulsante, finivano sotto di esso. */}
         {pronto && (
           <Comparsa visibile ritardo={fermo ? 0 : cascata(8)}>
-            <View className="gap-1 px-6 pt-2" style={{ paddingBottom: bordi.bottom + 8 }}>
+            <View
+              className="gap-1 px-6 pt-2"
+              style={{
+                paddingBottom: bordi.bottom + 8,
+                backgroundColor: 'rgba(255,255,255,0.82)',
+              }}
+            >
+              {/* La dissolvenza sopra il pannello. 🔑 Senza, l'elenco che scorre
+                  viene **tagliato di netto** dal bordo del blocco fisso, e la
+                  schermata sembra finire dove invece continua. ⚠️ Sta in
+                  posizione assoluta sopra il proprio contenitore e non deve
+                  intercettare tocchi. */}
+              <LinearGradient
+                colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.82)']}
+                style={{ position: 'absolute', left: 0, right: 0, top: -28, height: 28 }}
+                pointerEvents="none"
+              />
+
+              {/* 🔴 **B-74 — se non c'è ancora una coppia, lo si dice PRIMA.**
+                  Comprare senza partner è legittimo (D-124: il diritto è della
+                  persona e si proietta sulla coppia), ma `ho_insieme()` non
+                  apre nulla finché la coppia non esiste — quindi le funzioni
+                  restano chiuse anche dopo aver pagato.
+                  ⚠️ *È accaduto davvero il 2026-09-15*: muri su dopo l'acquisto,
+                  e ore passate a cercare il guasto nei pagamenti, dove non
+                  c'era.
+                  ⟳ **Spostato in cima al blocco e reso visibile il 2026-09-15
+                  (5), e sono due correzioni in una.** Era un testo grigio di 12
+                  punti *identico* alle due righe legali, incastrato **fra
+                  quelle e il pulsante**: 🔑 si perdeva fra righe che gli
+                  somigliavano — ed è l'unica delle tre che parla di questo
+                  utente qui — e per giunta **allontanava dal pulsante la presa
+                  d'atto del recesso**, che invece deve stargli adiacente. Ora
+                  ha una superficie sua, un'icona, e sta sopra. */}
+              {senzaCoppia && (
+                <View
+                  className="mb-2 flex-row items-start gap-2.5 rounded-2xl px-3.5 py-3"
+                  style={{ backgroundColor: C.alone }}
+                >
+                  <Users size={16} color={C.accento} strokeWidth={2.2} style={{ marginTop: 1 }} />
+                  <Text className="flex-1 text-xs leading-relaxed text-foreground">
+                    {t.abbonamento.serveLaCoppia}
+                  </Text>
+                </View>
+              )}
+
               {/* 🔴 Obbligo, non stile: rinnovo automatico, come disdire, e che
                   durante la prova non si paga. */}
               <Text className="px-2 text-center text-xs leading-relaxed text-muted-foreground">
@@ -574,39 +775,100 @@ export default function Paywall() {
                 >
                   {t.legale.cookieTitolo}
                 </Text>
+                {/* ➳ **I termini, dal 2026-09-15**, e qui sono il link che
+                    contava di piu': §3.1 di `pubblicazione.md` elenca «mancano
+                    i link a termini e privacy» fra i rifiuti banali e
+                    frequentissimi in revisione. 🔑 *E' anche la schermata dove
+                    si conclude il contratto a pagamento*, quindi è dove le
+                    condizioni devono essere raggiungibili senza uscire. */}
+                <Text
+                  className="text-xs text-muted-foreground underline"
+                  onPress={() => router.push('/legale/termini')}
+                >
+                  {t.legale.terminiTitolo}
+                </Text>
               </View>
 
-              {/* 🔴 **B-74 — se non c'è ancora una coppia, lo si dice PRIMA.**
-                  Comprare senza partner è legittimo (D-124: il diritto è della
-                  persona e si proietta sulla coppia), ma `coppia_ha_insieme()`
-                  resta falsa finché la coppia non esiste — quindi le funzioni
-                  restano chiuse anche dopo aver pagato.
-                  ⚠️ *È accaduto davvero il 2026-09-15*: muri su dopo l'acquisto,
-                  e ore passate a cercare il guasto nei pagamenti, dove non
-                  c'era. 🔑 Sta **sopra il pulsante** per la stessa ragione delle
-                  frasi del recesso: dopo non è informare, è giustificarsi. */}
-              {senzaCoppia && (
-                <Text className="px-2 pt-2 text-center text-xs leading-relaxed text-muted-foreground">
-                  {t.abbonamento.serveLaCoppia}
-                </Text>
+              {/* 🔴 **L'esito dell'acquisto era dentro lo ScrollView, e questa
+                  è la seconda volta che lo stesso errore capita su questa
+                  schermata.** Il blocco d'acquisto è stato portato fuori dallo
+                  scorrimento proprio perché su 375 px finiva sotto la piega —
+                  ma il messaggio che *risponde al pulsante* era rimasto dentro,
+                  cioè sopra l'elenco, fuori dallo schermo di chi ha appena
+                  premuto.
+                  ⚠️ **E il messaggio che ci finiva più spesso è il peggiore da
+                  perdere**: `arrivoInCorso`, la rete di sicurezza di **B-77**.
+                  Chi paga e vede il webhook tardare deve leggere *«stiamo
+                  registrando l'acquisto»* — se quel testo è fuori schermo, per
+                  lui non è mai stato scritto, e siamo di nuovo al silenzio che
+                  B-77 doveva togliere. 🔑 *Una rete di sicurezza fuori dal campo
+                  visivo non è una rete.*
+                  ⬜ Il riquadro distingue **attesa** da **errore**: l'attesa
+                  porta l'accento e una rotella, l'errore no. Non è colore
+                  decorativo — dice se c'è qualcosa da fare o solo da
+                  aspettare. */}
+              {!!errore && (
+                <Comparsa visibile>
+                  <View
+                    className="mb-2 flex-row items-start gap-2.5 rounded-2xl px-3.5 py-3"
+                    style={{
+                      backgroundColor: errore === t.abbonamento.arrivoInCorso ? C.alone : '#ffffff',
+                      borderWidth: 1,
+                      borderColor:
+                        errore === t.abbonamento.arrivoInCorso ? C.aloneForte : 'rgba(0,0,0,0.10)',
+                    }}
+                  >
+                    {errore === t.abbonamento.arrivoInCorso && (
+                      <ActivityIndicator color={C.accento} size="small" />
+                    )}
+                    <Text className="flex-1 text-sm leading-relaxed text-foreground">{errore}</Text>
+                  </View>
+                </Comparsa>
               )}
 
               <Premibile onPress={compra} scala={0.98} disabled={inCorso || !scelto}>
+                {/* Il pulsante è ora **sfumato e con un'ombra del proprio
+                    colore**, non una pastiglia piatta: è l'unico elemento della
+                    schermata che deve sembrare sollevato dal foglio.
+                    ⚠️ *La sfumatura resta stretta* — due tinte vicine sulla
+                    stessa famiglia — perché un pulsante che cambia troppo
+                    colore da un capo all'altro si legge come un'immagine, e le
+                    immagini non si premono.
+                    ⬜ `inCorso` spegne l'ombra oltre a velare il fondo: un
+                    pulsante in attesa che resta in rilievo invita a premerlo
+                    una seconda volta. */}
                 <View
-                  className="mt-2 items-center justify-center rounded-full py-4"
-                  style={{ backgroundColor: C.accento, opacity: inCorso ? 0.6 : 1 }}
+                  className="mt-2 items-center justify-center overflow-hidden rounded-full"
+                  style={{
+                    opacity: inCorso ? 0.6 : 1,
+                    shadowColor: C.accento,
+                    shadowOpacity: inCorso ? 0 : 0.35,
+                    shadowRadius: 14,
+                    shadowOffset: { width: 0, height: 6 },
+                    elevation: inCorso ? 0 : 5,
+                  }}
                 >
-                  <Text style={{ color: '#ffffff', fontSize: 17 }}>
-                    {giorni !== null ? t.abbonamento.inizia : t.abbonamento.acquista}
-                  </Text>
-                  {/* «poi €39,99»: il prezzo dopo la prova, accanto al pulsante
-                      che la avvia. Evita la sorpresa all'ottavo giorno, ed è
-                      ciò che Apple chiede di rendere chiaro. */}
-                  {giorni !== null && !!scelto && (
-                    <Text style={{ color: 'rgba(255,255,255,0.86)', fontSize: 13, marginTop: 2 }}>
-                      {t.abbonamento.poi.replace('{prezzo}', scelto.product.priceString)}
-                    </Text>
-                  )}
+                  <LinearGradient
+                    colors={[C.accentoChiaro, C.accento]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ width: '100%', alignItems: 'center', paddingVertical: 16 }}
+                  >
+                    <View className="flex-row items-center gap-2">
+                      {inCorso && <ActivityIndicator color="#ffffff" size="small" />}
+                      <Text style={{ color: '#ffffff', fontSize: 17 }}>
+                        {giorni !== null ? t.abbonamento.inizia : t.abbonamento.acquista}
+                      </Text>
+                    </View>
+                    {/* «poi €39,99»: il prezzo dopo la prova, accanto al
+                        pulsante che la avvia. Evita la sorpresa all'ottavo
+                        giorno, ed è ciò che Apple chiede di rendere chiaro. */}
+                    {giorni !== null && !!scelto && (
+                      <Text style={{ color: 'rgba(255,255,255,0.86)', fontSize: 13, marginTop: 2 }}>
+                        {t.abbonamento.poi.replace('{prezzo}', scelto.product.priceString)}
+                      </Text>
+                    )}
+                  </LinearGradient>
                 </View>
               </Premibile>
 

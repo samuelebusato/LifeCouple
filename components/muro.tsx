@@ -7,7 +7,7 @@
 //    vedono la stessa app, con porte diverse.
 //
 // ⚠️ **Questo componente NON decide niente.** Chi lo mostra ha già chiesto al
-//    database con `useInsieme()`, che legge `coppia_ha_insieme()` (0041). Qui
+//    database con `useInsieme()`, che legge `ho_insieme()` (0047). Qui
 //    non si guarda nessuno stato dell'SDK: il threat model §4-ter dice che il
 //    telefono è ostile per definizione, e un muro che si apre perché l'app lo
 //    ha deciso non è un muro.

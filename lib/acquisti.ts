@@ -3,7 +3,7 @@
 //
 // 🔑 **La riga che regge tutto il file, e va letta prima del codice: questo
 //    modulo NON decide se una funzione è concessa.** Lo decide il database,
-//    con `coppia_ha_insieme()` (0041), scritto solo dalla Edge Function
+//    con `ho_insieme()` (0047), scritto solo dalla Edge Function
 //    `abbonamento-webhook`. Ciò che l'SDK di RevenueCat sa serve a **disegnare
 //    la schermata**: a sapere se mostrare il paywall, non a sbloccare.
 //

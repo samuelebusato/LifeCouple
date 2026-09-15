@@ -35,6 +35,18 @@ const colori = {
   /** Ancora piu' tenue del tenue: separatori, righe della griglia oraria. */
   linea: '#ede4ea',
   accento: '#e4259e', //  322 78% 52% — il magenta delle azioni
+  /**
+   * L'accento **schiarito**, per un solo uso: l'estremo chiaro della sfumatura
+   * del pulsante d'acquisto (`app/paywall.tsx`).
+   *
+   * 🔑 Sta qui e non nel file che lo usa perche' `expo-linear-gradient` vuole
+   * stringhe, e la regola in testa a questo file dice che i valori non
+   * esprimibili come classe vivono **solo** qui. ⚠️ *E' la stessa tinta a
+   * luminosita' maggiore* (322 78% 61%), non un secondo rosa: due famiglie
+   * diverse in un gradiente si leggono come un'immagine invece che come un
+   * bottone.
+   */
+  accentoChiaro: '#f04fae', // 322 78% 61%
   suAccento: '#ffffff',
   pericolo: '#d93226', // 4 70% 50%
   carta: '#ffffff',

@@ -128,7 +128,7 @@ function Riquadro({
 }
 
 export default function Home() {
-  // Il cancello: legge il DATABASE (coppia_ha_insieme, 0041), mai l'SDK.
+  // Il cancello: legge il DATABASE (ho_insieme, 0047), mai l'SDK.
   const { insieme } = useInsieme();
   const router = useRouter();
   const { coppiaId, completa, insiemeDal, errore, loading, ricarica } = useCoppia();

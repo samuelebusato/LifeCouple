@@ -145,13 +145,41 @@
 - [ ] Le **due frasi del recesso** stanno **sopra il pulsante** che paga
 - [ ] La **prova di una settimana** è annunciata **prima** di confermare
 - [ ] 🔴 **L'acquisto vero in sandbox** (voce **B2**): si compra, e poi
-      `coppia_ha_insieme()` **si accende**. ⚠️ *Prima verifica che App Store
+      `ho_insieme()` **si accende** *(era `coppia_ha_insieme()` fino alla `0047`)*. ⚠️ *Prima verifica che App Store
       Server Notifications sia collegato a **Sandbox oltre che a Production**
       (**B3**), altrimenti non arriva niente al database e sembra un difetto
       del codice*
 - [ ] **Dopo l'acquisto**: mappa, liste e creatura si aprono; le foto oltre la
       prima entrano; la seconda partita del giorno entra
 - [ ] **Ripristina acquisti** dopo una reinstallazione
+
+### 9-bis. Il paywall rifatto — aggiunte il 2026-09-15 (6)
+
+> ⟳ L'aspetto è cambiato: testata con aloni, elenco dentro una carta, listino
+> con spunta e prezzo barrato, pulsante sfumato. Le voci qui sopra restano
+> valide; queste tre riguardano **ciò che prima non c'era**.
+
+- [ ] Il **prezzo barrato** accanto all'annuale corrisponde al **mensile × 12**
+      *(con €7,99 → `€95,88`)*. ⚠️ **E se un giorno l'annuale smettesse di
+      convenire, NON deve comparire affatto**: un barrato senza risparmio
+      dietro è pubblicità ingannevole
+- [ ] L'**occhiello «7 giorni gratis»** sopra il titolo c'è **solo** se
+      l'offerta ha davvero un periodo introduttivo — il numero viene da
+      `introPrice`, non dal codice
+- [ ] 🔴 **Il riquadro d'attesa si vede senza scorrere** (**B-80**): dopo un
+      acquisto in cui il webhook tarda, *«stiamo registrando l'acquisto»* deve
+      comparire **sopra il pulsante**, con la rotella. 🔑 *È l'unica voce di
+      questa sezione che non si prova per caso*: serve un webhook lento, quindi
+      o si ha fortuna o si ritarda apposta la Edge Function. ⚠️ *Prima di
+      oggi quel testo compariva sopra l'elenco, cioè fuori dallo schermo di chi
+      aveva appena premuto*
+- [ ] Se l'account **non ha ancora un partner**: l'avviso con l'icona sta in
+      **cima** al blocco, ha un fondo suo, e l'acquisto **resta possibile**
+      (D-124 — comprare senza partner è legittimo, tacerlo no)
+- [ ] 🔴 **B-81** — con un account che **ha comprato ma non ha ancora un
+      partner**: al primo ingresso dopo l'onboarding il paywall **non deve
+      riaprirsi**. 🔑 *Prima si riapriva, e proponeva di comprare ciò che era già
+      stato comprato* — in contraddizione con l'avviso della voce qui sopra
 
 ## 10. Notifiche
 

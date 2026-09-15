@@ -62,7 +62,7 @@ import { t } from '@/lib/i18n';
  * fondo, dove stanno tutte le azioni di questa schermata.
  */
 export default function Liste() {
-  // Il cancello: legge il DATABASE (coppia_ha_insieme, 0041), mai l'SDK.
+  // Il cancello: legge il DATABASE (ho_insieme, 0047), mai l'SDK.
   const { insieme, loading: insiemeCaricamento } = useInsieme();
   const router = useRouter();
   const { c } = useTema();

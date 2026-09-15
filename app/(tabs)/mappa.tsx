@@ -140,7 +140,7 @@ type Toccato =
   | { tipo: 'ristorante'; ristorante: RistoranteSuMappa };
 
 export default function Mappa() {
-  // Il cancello: legge il DATABASE (coppia_ha_insieme, 0041), mai l'SDK.
+  // Il cancello: legge il DATABASE (ho_insieme, 0047), mai l'SDK.
   const { insieme, loading: insiemeCaricamento } = useInsieme();
   const router = useRouter();
   const { coppiaId } = useCoppia();
