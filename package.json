@@ -21,7 +21,9 @@
     "test:webhook": "node tests/webhook-abbonamento.mjs",
     "test:confine": "node tests/confine.mjs",
     "test:copertura": "node tests/rls.copertura.mjs",
-    "test:cancellazione": "node tests/cancellazione.mjs"
+    "test:cancellazione": "node tests/cancellazione.mjs",
+    "semina:demo": "node tools/semina-demo.mjs",
+    "test:scheda": "node tools/verifica-scheda-store.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
