@@ -89,6 +89,26 @@ const { data: invito } = await B.c.rpc('apri_invito', { p_token: token });
 const { error: eConf } = await A.c.rpc('conferma_invito', { p_invito_id: invito });
 esito('partner appaiato', !eConf, eConf?.message);
 
+// --- 🔴 il tentativo di abuso, PRIMA di sciogliere davvero --------------------
+//
+// La prima stesura della 0049 agganciava il trigger a `registro_azioni`, che
+// **qualunque membro attivo puo' scrivere**: bastava questa riga per far
+// arrivare al partner «lo spazio e' stato sciolto» a coppia viva.
+//
+// 🔑 *Il buco e' stato chiuso spostando il trigger su `coppia`, e questa
+//    asserzione e' cio' che impedisce di riaprirlo per distrazione.* Se un
+//    domani qualcuno rimettesse un trigger sul registro, qui diventa rosso.
+const { error: eAbuso } = await B.c.from('registro_azioni').insert({
+  coppia_id: cid,
+  autore_id: B.id,
+  azione: 'scioglimento',
+  oggetto: {},
+});
+// ⚠️ L'insert **riesce**, ed e' giusto che riesca: il registro e' append-only
+//    e per progetto ci si scrive. Cio' che non deve succedere e' che da quella
+//    riga nasca una notifica — la coppia qui e' ancora viva.
+esito("la riga fabbricata nel registro viene accettata (e' un registro, non uno stato)", !eAbuso, eAbuso?.message);
+
 // --- lo scioglimento, fatto da B ---------------------------------------------
 const { error: eScio } = await B.c.rpc('sciogli_coppia');
 esito('coppia sciolta da B', !eScio, eScio?.message);
@@ -130,6 +150,16 @@ if (SERVICE) {
     trovate.find((r) => r.destinatario_id === A.id)?.dati?.autore === false
   );
 
+  // 🔴 **L'asserzione che dimostra che il buco e' chiuso.** Le notifiche
+  //    devono essere DUE: quelle dello scioglimento vero. Se fossero tre o
+  //    quattro, la riga fabbricata sopra ne avrebbe generata una — cioe' il
+  //    trigger sarebbe tornato su una tabella che l'utente puo' scrivere.
+  esito(
+    'la riga fabbricata NON ha generato notifiche (il trigger sta su coppia, non sul registro)',
+    trovate.length === 2,
+    `totali=${trovate.length}, attese=2`
+  );
+
   await s.from('notifica_in_coda').delete().eq('coppia_id', cid);
 } else {
   console.log(`
@@ -140,7 +170,9 @@ Serve la service_role, e in questo repo non entra. Dal dashboard Supabase:
   from notifica_in_coda
   where coppia_id = '${cid}' and tipo = 'scioglimento';
 
-  → devono essere DUE righe: '${B.id}' con autore=true (ha sciolto lui)
+  → devono essere **esattamente** DUE righe — tre significherebbe che la riga
+    fabbricata a mano nel registro ne ha generata una, cioe' che il trigger e'
+    tornato su una tabella scrivibile dall'utente: '${B.id}' con autore=true (ha sciolto lui)
     e '${A.id}' con autore=false.
 
   Zero righe significa una cosa fra due: la 0049 non e' applicata, oppure

@@ -1,7 +1,19 @@
 -- =============================================================================
 -- LifeCouple — 0049: lo scioglimento si annuncia, invece di farsi scoprire
 --
--- 🔴 NON ANCORA APPLICATA. Si applica dal pannello Supabase (SQL Editor).
+-- ✅ APPLICATA il 2026-09-15 dall'utente, dal pannello Supabase.
+--    **Verificata misurando, nello stesso minuto** — e su due fronti opposti:
+--
+--    1. *fa la cosa giusta*: sciogliendo una coppia di prova la coda riceve
+--       **due** righe, una per membro, con `autore=true` a chi ha sciolto e
+--       `autore=false` a chi l'ha subito, e due `chiave_dedup` distinte;
+--    2. *e NON fa quella sbagliata*: prima dello scioglimento il test inserisce
+--       a mano nel registro una riga `azione: 'scioglimento'` — l'abuso che la
+--       prima stesura consentiva — e le notifiche restano **due**, non tre.
+--
+--    🔑 *La seconda e' quella che conta*: dimostra che il trigger sta su una
+--    tabella che l'utente non puo' scrivere, invece di lasciarlo come
+--    ragionamento in un commento.
 --
 -- ## Il difetto, che era dichiarato e non costruito
 --

@@ -52,7 +52,16 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ⚠️ **Il test rispetta la convenzione del progetto invece di inventarne una.** La coda ha RLS attiva e zero policy: per contarla servirebbe la `service_role`, che **in questo repository non entra** — la stessa regola che `tests/cancellazione.mjs` segue per `storage.objects`. Quindi il file misura tutto ciò che un client può misurare, e per il conteggio **stampa la query da eseguire dal dashboard**, dichiarando di non averla verificata. ✅ *Con una porta in più*: se l'ambiente offre `SUPABASE_SERVICE_ROLE_KEY`, il conteggio si fa da solo. 🔑 *Un esito parziale detto ad alta voce è l'unica forma onesta quando manca un permesso — tacere sarebbe il gap silenzioso che il principio 7 vieta.*
 
-✅ **Verificato**: `tsc` **0**, `eslint` **0 errori**, `test:scioglimento` verde su quello che può misurare. ✅ **E la riga che non può, l'ho misurata io con la CLI**: `count = 0` sulla coppia di prova — *esattamente il valore atteso finché la `0049` non è applicata*. Diventerà `2`.
+✅ **APPLICATA dall'utente il 2026-09-15, e verificata sui due fronti opposti nello stesso minuto.**
+
+| | esito |
+|---|---|
+| *fa la cosa giusta* | **due** righe in coda, `autore=true` a chi ha sciolto e `false` a chi l'ha subito, chiavi di dedup distinte |
+| *e non fa quella sbagliata* | una riga `azione: 'scioglimento'` **fabbricata a mano** nel registro prima dello scioglimento → le notifiche restano **due**, non tre |
+
+🔑 **La seconda riga vale piu' della prima**, ed è nata dal difetto stesso: dimostra che il trigger sta su una tabella che l'utente non può scrivere, invece di lasciarlo scritto come ragionamento in un commento. ⚠️ *L'insert nel registro **riesce**, e deve riuscire — è append-only e ci si scrive per progetto. Ciò che non deve succedere è che da quella riga nasca una notifica*, ed è esattamente ciò che l'asserzione misura.
+
+✅ `tsc` **0**, `eslint` **0 errori**, `test:scioglimento` **5 PASS**. ⬜ *Prima dell'applicazione il conteggio era `0`*, come atteso: è passato a `2` con la migrazione.
 
 ⬜ **Toccati**: `0049` (nuova), `invia-notifiche/index.ts` (tipo + testi bilingui), `lib/notifiche.ts`, `lib/i18n.ts` (due lingue), `app/impostazioni.tsx`, `lib/database.types.ts` (a mano, come da nota del file), `tests/notifica-scioglimento.mjs` (nuovo), registro art. 30 A10 (**tre finalità diventano quattro**), `Architecture.md` §4.3-bis, `threat-model.md` TB-2, `verifica-sul-telefono.md` §10.
 
