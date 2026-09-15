@@ -296,7 +296,7 @@ Tre tabelle e una funzione periodica. ⚠️ **Nessuna di esse è scrivibile o l
 | Tabella | Cosa tiene | Accesso |
 |---|---|---|
 | `dispositivo` | token push, piattaforma, **`lingua`**, ultimo accesso | Solo il proprio (`utente_id = auth.uid()`), tutte e quattro le operazioni. ⚠️ **Il partner non lo vede**: è TB-2, non TB-3 — chi segna un posto non deve poter leggere i dispositivi dell'altro |
-| `preferenze_notifiche` | i tre consensi | Solo i propri. ⚠️ **Tre policy e non quattro**: manca `delete`, di proposito — l'app fa upsert e non cancella mai |
+| `preferenze_notifiche` | i **quattro** consensi — il quarto, `scioglimento`, dalla `0049` | Solo i propri. ⚠️ **Tre policy e non quattro**: manca `delete`, di proposito — l'app fa upsert e non cancella mai |
 | `notifica_in_coda` | destinatario, tipo, dati, `chiave_dedup`, esiti | 🔑 **RLS attiva e ZERO policy**: nessun client legge e nessuno scrive. L'unico che la tocca è il `service_role` |
 
 🔑 **Perché la `lingua` sta sul dispositivo e non sulla persona.** Il testo lo compone il **server**, perché quando la notifica arriva l'app non è in esecuzione. Senza quella colonna scriverebbe in inglese a tutti, e la cosa si scoprirebbe solo ricevendo la prima notifica — cioè dopo la pubblicazione. Sul dispositivo perché il locale è del telefono: la stessa persona con due telefoni impostati diversamente riceve ciascuno nella sua lingua.

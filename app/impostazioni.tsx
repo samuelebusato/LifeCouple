@@ -295,6 +295,7 @@ export default function Impostazioni() {
                 ['luogo_del_partner', t.notifiche.luogoDelPartner, t.notifiche.luogoDelPartnerNota],
                 ['ricordi', t.notifiche.ricordi, t.notifiche.ricordiNota],
                 ['inviti_a_tornare', t.notifiche.invitiATornare, t.notifiche.invitiATornareNota],
+                ['scioglimento', t.notifiche.scioglimento, t.notifiche.scioglimentoNota],
               ] as [TipoNotifica, string, string][]
             ).map(([tipo, titolo, nota], i, tutte) => (
               <View

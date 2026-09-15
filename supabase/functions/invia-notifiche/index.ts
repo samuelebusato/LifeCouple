@@ -44,7 +44,7 @@ const MAX_PER_GIRO = 500;
  *  sempre una notifica che nessuno ricevera' mai. */
 const MAX_TENTATIVI = 5;
 
-type Tipo = 'luogo_del_partner' | 'ricordi' | 'inviti_a_tornare';
+type Tipo = 'luogo_del_partner' | 'ricordi' | 'inviti_a_tornare' | 'scioglimento';
 type Lingua = 'it' | 'en';
 
 type Coda = {
@@ -109,6 +109,31 @@ const TESTI: Record<Tipo, Record<Lingua, (d: Record<string, unknown>) => { titol
     it: () => ({ titolo: 'Dove andiamo?', corpo: 'È da un po’ che non aggiungete un posto nuovo.' }),
     en: () => ({ titolo: 'Where to next?', corpo: 'It’s been a while since you added a new place.' }),
   },
+  /**
+   * 🔴 **Lo scioglimento, e i due membri leggono cose diverse** — `autore`
+   * distingue chi l'ha fatto da chi lo subisce.
+   *
+   * 🔑 **Il testo per chi lo SUBISCE non dice chi e' stato, e non e' una
+   * dimenticanza.** Una notifica sulla schermata bloccata la legge chiunque
+   * abbia il telefono in mano: su un evento che riguarda la fine di una
+   * relazione, un nome li' sopra e' un'informazione che non spetta a noi
+   * mettere davanti a terzi. ⚠️ *Del resto in una coppia di due persone chi
+   * sia stato si deduce da se': dirlo non aggiunge niente e lo espone.*
+   *
+   * ⚠️ **E nessuno dei due testi nomina contenuti** — nessun luogo, nessun
+   * titolo di evento. E' la stessa regola del 2026-09-14 per la notifica del
+   * posto segnato: fuori dall'UE esce il minimo indispensabile (TB-4).
+   */
+  scioglimento: {
+    it: (d) =>
+      d.autore
+        ? { titolo: 'Avete sciolto lo spazio condiviso', corpo: 'I tuoi ricordi restano tuoi. Apri l’app per rivederli.' }
+        : { titolo: 'Lo spazio condiviso è stato sciolto', corpo: 'I tuoi ricordi restano tuoi. Apri l’app per rivederli.' },
+    en: (d) =>
+      d.autore
+        ? { titolo: 'You closed your shared space', corpo: 'Your own memories stay yours. Open the app to look back at them.' }
+        : { titolo: 'Your shared space has been closed', corpo: 'Your own memories stay yours. Open the app to look back at them.' },
+  },
 };
 
 /**
@@ -124,6 +149,9 @@ const DATI_DA_INVIARE: Record<Tipo, (d: Record<string, unknown>) => Record<strin
   luogo_del_partner: (d) => ({ luogo_id: d.luogo_id }),
   ricordi: (d) => ({ evento_id: d.evento_id }),
   inviti_a_tornare: () => ({}),
+  // ⚠️ Nemmeno `coppia_id`: la notifica apre l'app, non una schermata di una
+  //    coppia che da questo momento non esiste piu'.
+  scioglimento: () => ({}),
 };
 
 /** I default della 0038, ripetuti qui perche' la riga dei consensi puo' non

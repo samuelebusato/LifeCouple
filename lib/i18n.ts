@@ -424,6 +424,9 @@ const it = {
     invitiATornare: 'Ogni tanto, un invito a tornare',
     invitiATornareNota:
       'Un suggerimento a segnare un viaggio che vorreste fare. È l’unica notifica che non racconta qualcosa che avete già fatto, e per questo nasce spenta.',
+    scioglimento: 'Se lo spazio condiviso viene sciolto',
+    scioglimentoNota:
+      'Avvisa tutti e due quando la coppia viene sciolta. Non dice chi è stato né cosa conteneva: dice solo che è successo, e che i tuoi ricordi restano tuoi.',
     nonRiuscito: 'Non siamo riusciti a salvare la scelta. Riprova.',
   },
   coppia: {
@@ -1366,6 +1369,9 @@ const en: Dizionario = {
     invitiATornare: 'Once in a while, a nudge',
     invitiATornareNota:
       'A suggestion to note down a trip you would like to take. It is the only notification that is not about something you have already done, and that is why it starts off.',
+    scioglimento: 'If your shared space is closed',
+    scioglimentoNota:
+      'Lets you both know when the couple is dissolved. It does not say who did it or what was in it: only that it happened, and that your own memories stay yours.',
     nonRiuscito: 'We could not save your choice. Please try again.',
   },
   coppia: {

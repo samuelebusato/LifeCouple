@@ -941,6 +941,7 @@ export type Database = {
         Row: {
           aggiornate_il: string
           inviti_a_tornare: boolean
+          scioglimento: boolean
           luogo_del_partner: boolean
           ricordi: boolean
           utente_id: string
@@ -948,6 +949,7 @@ export type Database = {
         Insert: {
           aggiornate_il?: string
           inviti_a_tornare?: boolean
+          scioglimento?: boolean
           luogo_del_partner?: boolean
           ricordi?: boolean
           utente_id: string
@@ -955,6 +957,7 @@ export type Database = {
         Update: {
           aggiornate_il?: string
           inviti_a_tornare?: boolean
+          scioglimento?: boolean
           luogo_del_partner?: boolean
           ricordi?: boolean
           utente_id?: string

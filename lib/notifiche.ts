@@ -30,7 +30,11 @@ import { supabase } from '@/lib/supabase';
 import { lingua } from '@/lib/i18n';
 
 /** I tre tipi, con gli stessi nomi delle colonne di `preferenze_notifiche`. */
-export type TipoNotifica = 'luogo_del_partner' | 'ricordi' | 'inviti_a_tornare';
+export type TipoNotifica =
+  | 'luogo_del_partner'
+  | 'ricordi'
+  | 'inviti_a_tornare'
+  | 'scioglimento';
 
 export type Preferenze = Record<TipoNotifica, boolean>;
 
@@ -44,6 +48,11 @@ export const PREFERENZE_INIZIALI: Preferenze = {
   luogo_del_partner: true,
   ricordi: true,
   inviti_a_tornare: false,
+  // ⚠️ Accesa di default come le prime due, ma per una ragione diversa: quelle
+  //    raccontano qualcosa di bello, questa avvisa che uno spazio condiviso
+  //    non c'è più. 🔑 *Chi non la vuole la spegne; nessuno deve doverla
+  //    accendere per essere avvisato di un fatto che riguarda i suoi dati.*
+  scioglimento: true,
 };
 
 /**
@@ -171,7 +180,7 @@ export function usePreferenzeNotifiche() {
     }
     const { data, error } = await supabase
       .from('preferenze_notifiche')
-      .select('luogo_del_partner, ricordi, inviti_a_tornare')
+      .select('luogo_del_partner, ricordi, inviti_a_tornare, scioglimento')
       .eq('utente_id', utente)
       .maybeSingle();
 
@@ -182,6 +191,13 @@ export function usePreferenzeNotifiche() {
             luogo_del_partner: data.luogo_del_partner,
             ricordi: data.ricordi,
             inviti_a_tornare: data.inviti_a_tornare,
+            // ⚠️ `?? true` e non `data.scioglimento` secco: finché la `0049`
+            //    non è applicata la colonna non esiste, e chi legge da un
+            //    ambiente non ancora migrato otterrebbe `undefined`. 🔑 *Il
+            //    valore di ripiego è quello del database — acceso — non
+            //    `false`: un ripiego che spegne un avviso di servizio lo
+            //    spegne proprio dove qualcosa è già fuori posto.*
+            scioglimento: data.scioglimento ?? true,
           }
         : PREFERENZE_INIZIALI
     );

@@ -28,6 +28,34 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (9) — D-139: lo scioglimento si annuncia, invece di farsi scoprire
+
+✅ **Costruita la notifica di scioglimento** — migrazione **`0049`**, 🔴 **da applicare**. Era una mitigazione **dichiarata e non costruita** da un mese: `threat-model.md` TB-2 categoria **T** prometteva *«notifica esplicita a entrambi»* e portava accanto il suo stesso smentito — *«la notifica esplicita a entrambi non esiste»*. ⚠️ *Chi subiva uno scioglimento se ne accorgeva **trovando l'app vuota**: mappa, liste e creatura sparite, i contenuti condivisi chiusi, e nessuno che gli dicesse perché.*
+
+**Tre decisioni, e nessuna è ovvia.**
+
+🔑 **1. Arriva a ENTRAMBI, non solo a chi la subisce.** Avvisare chi ha appena premuto il pulsante sembra rumore — ma la notifica raggiunge **tutti i dispositivi registrati di quella persona**, non quello da cui è partito il comando. *Se qualcuno sciogliesse da una sessione che non è sua — un telefono lasciato aperto, un accesso mai revocato — la ricevuta arriverebbe sull'altro telefono del legittimo proprietario, che è l'unico modo in cui potrebbe accorgersene.* È lo stesso motivo per cui una banca avvisa chi ha appena disposto un bonifico.
+
+🔑 **2. Rispetta il consenso, e la ragione è documentale.** L'istinto dice che un avviso così non si deve poter spegnere. ⚠️ *Ma l'informativa **pubblicata** dichiara «le notifiche arrivano solo se le accendi, e le spegni quando vuoi con un tocco»*: un tipo che parte comunque la renderebbe **falsa** — la quarta comparsa oggi della forma di B-60, B-62 e B-79. Quindi ha il suo consenso, **acceso di default** (a differenza di `inviti_a_tornare`, che nasce spento perché è ingaggio). 🔴 **E questo lascia scoperto chi le tiene spente**: per loro la difesa non è una notifica ma **una schermata che lo dica all'apertura**, ed è il complemento dichiarato in §6 — *il difetto originale era «se ne accorge trovando l'app vuota», e una notifica spegnibile non lo chiude per chi l'ha spenta.*
+
+🔑 **3. Non si riscrive `sciogli_coppia()`, ci si aggancia a un fatto che il client non può fabbricare.** Quella funzione è un centinaio di righe che spostano contenuti, duplicano elementi di lista, riassegnano recensioni e cancellano la creatura: ⚠️ *riscriverla dentro una migrazione **di notifiche**, per aggiungerne una sola, metterebbe a rischio la logica più delicata del progetto per il motivo più banale.*
+
+🔴 **E la prima stesura sbagliava il punto d'aggancio — era un buco, trovato rileggendola per mostrarla all'utente.** Il trigger stava su `registro_azioni`, che sembra perfetto: la `0004` ci scrive *prima* di far uscire i membri, col suo commento che lo spiega. ⚠️ **Ma la policy `registro_insert` della `0001` lascia scrivere a *qualunque membro attivo***: bastava un `insert` a mano con `azione: 'scioglimento'` per far arrivare al partner *«lo spazio condiviso è stato sciolto»* **mentre la coppia è viva** — e per lasciare nel registro append-only la traccia di uno scioglimento mai avvenuto.
+
+🔑 **È TB-2 in forma pura, e di un tipo che il modello non elencava**: non fa perdere dati a nessuno, fa arrivare a una persona un messaggio angosciante su una cosa che non è successa. *Un trigger è sicuro quanto la tabella che lo innesca — e `registro_azioni` è scrivibile dall'utente **per progetto**: è un registro, non uno stato.*
+
+✅ **Corretto agganciandolo a `coppia`**, quando lo stato passa a «sciolta». Quella tabella ha **una sola policy, di `select`**: con RLS attiva l'assenza di policy è un divieto, quindi lo stato lo cambia **solo** `sciogli_coppia()`. *Il fatto che innesca la notifica diventa impossibile da fabbricare dal telefono.* ⬜ Cambia anche chi sono i destinatari — lì i membri sono già usciti, quindi si cerca chi è uscito **con questo** scioglimento (`uscito_il >= sciolta_il`): senza quel filtro, un ex membro uscito mesi prima riceverebbe l'avviso della fine di una coppia che aveva già lasciato.
+
+🔴 **Resta una dipendenza dall'ordine, ed è dichiarata**: il trigger legge ciò che il passo precedente ha appena scritto. Se lo stato della coppia cambiasse **prima** dell'uscita dei membri, la coda resterebbe vuota e **nessun errore lo direbbe**. ✅ **Per questo è misurata e non sperata**: `tests/notifica-scioglimento.mjs` scioglie una coppia vera e pretende **due** righe. *È la lezione di B-78 applicata nel momento in cui si crea la dipendenza, invece che dopo.*
+
+⬜ **Il testo non nomina nessuno e niente.** Né chi ha sciolto — *una notifica sulla schermata bloccata la legge chiunque abbia il telefono in mano, e su un evento come questo un nome lì sopra è un'informazione che non spetta a noi mettere davanti a terzi* — né contenuti, né l'identificativo della coppia nel payload. Stessa regola del 2026-09-14 per il posto segnato (TB-4).
+
+⚠️ **Il test rispetta la convenzione del progetto invece di inventarne una.** La coda ha RLS attiva e zero policy: per contarla servirebbe la `service_role`, che **in questo repository non entra** — la stessa regola che `tests/cancellazione.mjs` segue per `storage.objects`. Quindi il file misura tutto ciò che un client può misurare, e per il conteggio **stampa la query da eseguire dal dashboard**, dichiarando di non averla verificata. ✅ *Con una porta in più*: se l'ambiente offre `SUPABASE_SERVICE_ROLE_KEY`, il conteggio si fa da solo. 🔑 *Un esito parziale detto ad alta voce è l'unica forma onesta quando manca un permesso — tacere sarebbe il gap silenzioso che il principio 7 vieta.*
+
+✅ **Verificato**: `tsc` **0**, `eslint` **0 errori**, `test:scioglimento` verde su quello che può misurare. ✅ **E la riga che non può, l'ho misurata io con la CLI**: `count = 0` sulla coppia di prova — *esattamente il valore atteso finché la `0049` non è applicata*. Diventerà `2`.
+
+⬜ **Toccati**: `0049` (nuova), `invia-notifiche/index.ts` (tipo + testi bilingui), `lib/notifiche.ts`, `lib/i18n.ts` (due lingue), `app/impostazioni.tsx`, `lib/database.types.ts` (a mano, come da nota del file), `tests/notifica-scioglimento.mjs` (nuovo), registro art. 30 A10 (**tre finalità diventano quattro**), `Architecture.md` §4.3-bis, `threat-model.md` TB-2, `verifica-sul-telefono.md` §10.
+
 ### 2026-09-15 (8) — B-82: un errore stampato sotto una riga di successo
 
 ✅ **Revocato «Insieme» a `samuele.busato@heleox.it`** (`c86d6959…`) su richiesta dell'utente, dal webhook vero. ✅ **Verificato nel database e non sulla risposta**: `attivo` da `true` a **`false`**, `scade_il` riportata all'istante dell'evento, `vale_adesso` **falso**.
@@ -4818,7 +4846,7 @@ Emersi allineando il threat model. Nessuno rompe qualcosa **oggi**; tutti rendon
 
 - **Nessun limite di frequenza sui caricamenti.** Il tetto di 1 GB (D-22) esiste e si impone, ma niente impedisce di riempirlo in un'ora — ed è la riga «D» di TB-1.
 - **`registro_azioni` riceve solo lo scioglimento.** Alla domanda per cui la tabella esiste — *«non sono stato io a cancellarle»*, TB-2 categoria R — oggi non risponde. È accountability, art. 5(2).
-- **La notifica di scioglimento a entrambi non esiste.** I tre tipi della `0039` non la comprendono, quindi chi lo subisce se ne accorge **trovando l'app vuota**: esattamente ciò che quella mitigazione voleva evitare.
+- ➳ ~~La notifica di scioglimento a entrambi non esiste~~ — **costruita il 2026-09-15 (D-139), migrazione `0049` da applicare.** 🔴 *Resta scoperto chi tiene le notifiche spente*: per loro l'unica difesa è che **l'app lo dica all'apertura** invece di presentarsi vuota — una schermata, non una notifica. ⚠️ **È il complemento dichiarato della `0049`, non un di più**: il difetto originale era *«se ne accorge trovando l'app vuota»*, e una notifica spegnibile non lo chiude per chi l'ha spenta.
 
 ### ⟳ Le notifiche push: il codice c'è tutto, mancano quattro gesti — aggiornato il 2026-09-14
 

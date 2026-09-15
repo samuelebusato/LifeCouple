@@ -193,6 +193,15 @@
 - [ ] ⬜ **Il giorno di «N anni fa» è calcolato in UTC**: chi vive molto a est o
       a ovest può riceverlo sfasato. *Difetto noto e dichiarato — si guarda che
       arrivi, non che arrivi all'ora giusta*
+- [ ] ➳ **Lo scioglimento avvisa tutti e due** (**0049**, D-139): sciogliendo la
+      coppia, l'avviso arriva **sia a chi scioglie sia a chi lo subisce**, con
+      testi diversi. 🔑 *Non deve dire chi è stato né cosa conteneva la coppia*:
+      una notifica sulla schermata bloccata la legge chiunque abbia il telefono
+      in mano. ⚠️ **Serve il secondo telefono** per vedere entrambi i lati, e la
+      `0049` **applicata** — altrimenti non arriva nulla e non è un difetto
+- [ ] L'interruttore **«Se lo spazio condiviso viene sciolto»** c'è nelle
+      impostazioni ed è **acceso** di partenza *(a differenza di «un invito a
+      tornare», che nasce spento)*
 
 ## 11. Impostazioni, diritti e uscita
 
