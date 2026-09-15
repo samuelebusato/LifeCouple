@@ -110,6 +110,20 @@ Trovato **da un controllo nato per altro**. Dopo la build ho scritto [`tools/ver
 
 ✅ **Esito, dopo le correzioni**: coppia appaiata, `insieme dal` impostato, 5 eventi, 4 luoghi, 2 voci in una lista, 1 partita conclusa, **4 fotografie a piena risoluzione e zero segnaposto**, e **nessun «Insieme»** — l'ultima voluta, perché senza il muro il revisore non può percorrere l'acquisto in sandbox.
 
+#### ⟳ La coda della giornata: due muri interattivi, un tunnel che non si alza, sei screenshot da rifare
+
+✅ **L'`ascAppId` è in `eas.json`** — `6811948208`, letto dall'utente in *App Information*. Non era registrato da nessuna parte, serve a ogni invio, e ora non blocca più niente.
+
+🔴 **Ma dietro ce n'era un secondo**: `App Store Connect API Keys cannot be set up in --non-interactive mode`. EAS non ha una chiave API di App Store Connect per questo progetto. 🔑 *È lo stesso confine della build*, ed è la seconda volta in una giornata che si incontra: **le credenziali Apple sono dell'utente, e ogni catena che le tocca passa da lui una volta**. Configurata una volta in interattivo, i caricamenti successivi tornano automatici.
+
+🔴 **Il tunnel di Expo non si alza su questo dispositivo**: `ngrok tunnel took too long to connect`, dopo un minuto. ⚠️ **Va a correggere una riga di [[progetto-lifecouple]] che diceva il contrario**: *«il telefono si raggiunge via tunnel, non via LAN»* — oggi è vero l'opposto, perché il tunnel **non parte affatto** e la configurazione LAN si è alzata regolarmente su `192.168.99.194:8081`. *Se il telefono ci arrivi resta non verificato: Metro ha risposto, non un telefono.*
+
+⚠️ **E i sei screenshot sono arrivati due volte, la prima inutilizzabili.** Il primo giro è passato da **WhatsApp**: `942 × 2048 JPEG`, ricompressi. Il secondo da iCloud: **`1206 × 2622 PNG`**, nativi di un iPhone 16 Pro — la misura è buona.
+
+🔑 **Ma il contenuto va rifatto, e il difetto più interessante non è tecnico**: tre schermate su sei mostrano **stati vuoti** — *«Still empty»*, *«Nothing ahead»*, *«Never played»*. ⚠️ *Sono le stesse parole che l'app dice a chi la installa adesso*, e in una vetrina raccontano un prodotto che nessuno ha usato. Più un **pulsante di sistema che galleggia in tutte e sei** (AssistiveTouch), la batteria al **18% in rosso**, e tre scatti presi **a metà animazione**.
+
+⬜ **E una conseguenza della decisione sulla lingua che prima non aveva un costo visibile**: l'app sul telefono è **in inglese**. Se la scheda esce anche in italiano servono **due set di screenshot**, non uno — il che rende la scelta di §6 una cosa che si paga in lavoro, non solo in coerenza.
+
 #### ⟳ Una conseguenza che nessuno ha chiesto, e va colta
 
 🔑 **Saltare l'avvocato SBLOCCA le traduzioni.** Il rischio accettato del 2026-09-09 — documenti legali in solo inglese su un prodotto venduto in Italia — dichiara come si chiude: *«tradurre i tre documenti pubblici»*, non fatto perché *«la revisione dell'avvocato può cambiare il testo, e tradurre prima significa tradurre due volte»*.
@@ -5581,7 +5595,8 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 > | ✅ | ~~Deploy della landing~~ — **fatto e verificato in linea**: `terms-1.3` online, zero segnaposto | ✅ io | — |
 > | ✅ | ~~La build `production`~~ — **`94dd41b7` finished**, `.ipa` firmato per lo store. 🔑 *Va sempre lanciata da un terminale interattivo*: la validazione del certificato vuole Apple ID e 2FA | ✅ | — |
 > | ✅ | ~~L'account demo~~ — **riseminato e misurato**: `npm run test:demo` verde. Ha trovato **B-87** | ✅ io | — |
-> | 0 | 🔴 **L'`ascAppId`** — l'ID numerico della scheda su App Store Connect. Senza, `eas submit` non parte in modo automatico. *Sta in App Information → Apple ID; va messo in `eas.json`* | **solo tu** lo leggi | il caricamento |
+> | ✅ | ~~L'`ascAppId`~~ — **`6811948208`, in `eas.json`**. Non blocca più | ✅ | — |
+> | 0 | 🔴 **La chiave API di App Store Connect** — `eas submit` non la sa creare in modo non interattivo. *Una volta sola, poi i caricamenti tornano automatici* | **solo tu** | il caricamento |
 > | 2 | **A7** — sei accordi art. 28 | solo tu | minuti |
 > | 3 | **C1** — la chiave esposta | solo tu | cinque minuti |
 > | 4 | **La lingua della scheda** | solo tu | una riga |
