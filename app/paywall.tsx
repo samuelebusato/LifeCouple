@@ -218,7 +218,38 @@ function Carta({
 export default function Paywall() {
   const router = useRouter();
   const bordi = useSafeAreaInsets();
-  const { ricarica } = useInsieme();
+  const { insieme, ricarica } = useInsieme();
+
+  /**
+   * 🔴 **`GO_BACK was not handled by any navigator`** — l'errore visto il
+   * 2026-09-15.
+   *
+   * `router.back()` presuppone che sotto ci sia qualcosa. Ma a questa
+   * schermata si arriva anche **come prima schermata**: dal muro dopo un link
+   * d'invito, o a fine onboarding. Lì lo stack è vuoto e `back()` non ha
+   * nessuno che lo gestisca.
+   *
+   * ⚠️ *In sviluppo è un riquadro rosso; in produzione è peggio — non si vede
+   * niente e **la schermata non si chiude**, lasciando chi ha appena pagato
+   * davanti al listino.*
+   */
+  const chiudi = React.useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/home');
+  }, [router]);
+
+  /**
+   * **La schermata si chiude quando il diritto arriva, non quando l'app lo
+   * scopre** (B-77).
+   *
+   * Se il webhook tarda, `compra()` resta qui e mostra *«stiamo registrando
+   * l'acquisto»*. Il realtime della `0048` sveglia `useInsieme`, `insieme`
+   * diventa vero, e questo effetto chiude. 🔑 *Nessuna finestra, nessun
+   * numero di tentativi: arriva quando arriva.*
+   */
+  React.useEffect(() => {
+    if (insieme) chiudi();
+  }, [insieme, chiudi]);
 
   /**
    * 🔴 **B-74 — il paywall vendeva a chi non poteva ricevere niente.**
@@ -308,8 +339,27 @@ export default function Paywall() {
       // ⚠️ Non si chiude subito: il webhook è asincrono, e uscire qui
       // mostrerebbe per qualche secondo un'app ancora bloccata a chi ha
       // appena pagato. Si aspetta il database, che è l'unico che decide.
-      await ricarica({ insistendo: true });
-      router.back();
+      const arrivato = await ricarica({ insistendo: true });
+
+      // 🔴 **B-77 — qui si chiudeva comunque, e in silenzio.**
+      //
+      // `ricarica({ insistendo })` prova 6 volte in ~9 secondi e poi si
+      // arrende. Fino al 2026-09-15 l'esito non veniva nemmeno guardato: si
+      // usciva lo stesso, coi muri su, **senza dire niente**. ⚠️ *Chi aveva
+      // pagato vedeva lo schermo identico a chi non aveva pagato* — e il
+      // 2026-09-15 è successo davvero, perché il webhook quel pomeriggio ci ha
+      // messo più di nove secondi.
+      //
+      // 🔑 **Ora se tarda si resta qui e lo si dice.** Non è un errore: è
+      // un'attesa, e ha un testo suo (`arrivoInCorso`) che esisteva già e da
+      // questa strada non veniva mai mostrato. La schermata si chiude da sé
+      // appena il diritto arriva — se ne occupa il realtime della `0048`,
+      // tramite l'effetto qui sotto.
+      if (!arrivato) {
+        setErrore(t.abbonamento.arrivoInCorso);
+        return;
+      }
+      chiudi();
     } catch (e) {
       // `userCancelled` non è un errore: è una risposta. Dirgli «qualcosa è
       // andato storto» a chi ha semplicemente cambiato idea è una bugia.
@@ -379,7 +429,7 @@ export default function Paywall() {
         <View className="flex-row justify-end px-5 pt-1">
           {/* Chiudere dev'essere possibile e visibile: un paywall senza uscita
               è un motivo di rifiuto in revisione, oltre che sgarbato. */}
-          <Premibile onPress={() => router.back()} scala={0.9}>
+          <Premibile onPress={chiudi} scala={0.9}>
             <View className="h-10 w-10 items-center justify-center rounded-full">
               <X size={22} color={C.tenue} />
             </View>
@@ -561,7 +611,7 @@ export default function Paywall() {
               </Premibile>
 
               <View className="flex-row items-center justify-center gap-6">
-                <Premibile onPress={() => router.back()} scala={0.98}>
+                <Premibile onPress={chiudi} scala={0.98}>
                   <View className="py-3">
                     <Text className="text-sm text-muted-foreground">
                       {t.abbonamento.continuaSenza}

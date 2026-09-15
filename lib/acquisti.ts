@@ -36,8 +36,21 @@ import * as React from 'react';
 import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+
+/**
+ * Cresce a ogni montaggio, e finisce nel nome del canale realtime.
+ *
+ * ⚠️ **È la correzione di B-58, non un vezzo.** `supabase.channel(nome)`
+ * restituisce il canale **esistente** se il nome combacia, e `removeChannel`
+ * è asincrono: uscendo e rientrando con lo **stesso** account il nome
+ * collideva, `.on(…)` lanciava dentro un effetto, e l'albero React si
+ * smontava — schermata bianca. *Con un account diverso non succedeva mai, ed
+ * è il motivo per cui è sopravvissuto a lungo.*
+ */
+let istanzaCanaleAbbonamento = 0;
 // ⚠️ `useCoppia` non si importa più qui, ed è il segno che B-75 è chiuso: il
 // cancello non dipende più dalla coppia. Era proprio quella dipendenza a far
 // uscire l'hook prima di interrogare il database, in silenzio.
@@ -235,6 +248,20 @@ export function useInsieme() {
         // ambiente), `error` lo direbbe — mentre `data !== true` da solo
         // somiglierebbe di nuovo a «non hai Insieme», che è la forma di B-73.
         if (__DEV__) {
+          // 🔎 **Il minimo che resta, e perché proprio questo.**
+          //
+          // La sonda del 2026-09-15 leggeva anche la riga di `abbonamento` a
+          // ogni giro — `attivo`, `scade_il`, `evento_il` — ed è stata
+          // decisiva due volte: ha distinto «il webhook non ha scritto» da
+          // «ha scritto e l'app non lo vede», che sono guasti opposti.
+          // ⚠️ *Ma costava una query in più per ogni controllo*, su un hook
+          // che gira a ogni montaggio di mappa, liste e creatura. Si rimette a
+          // mano quando serve, non si paga sempre.
+          //
+          // 🔑 Questa riga invece resta: se `ho_insieme` non esistesse su un
+          // ambiente (0047 non applicata), `error` lo direbbe — mentre
+          // `data !== true` da solo somiglia di nuovo a «non hai Insieme»,
+          // che è la forma di B-73.
           console.log(
             '[insieme]',
             JSON.stringify({
@@ -266,6 +293,64 @@ export function useInsieme() {
     if (autenticazioneInCorso) return;
     void ricarica();
   }, [ricarica, autenticazioneInCorso]);
+
+  /**
+   * **I muri cadono quando il webhook scrive, non quando l'app si ricorda di
+   * chiedere** (B-77, `0048`).
+   *
+   * ## Il difetto che chiude
+   *
+   * Dopo un acquisto riuscito il paywall chiamava `ricarica({ insistendo })`,
+   * che prova **6 volte in ~9 secondi** e poi si arrende **in silenzio**. Il
+   * 2026-09-15 il webhook ci ha messo un secondo la mattina e molto di più il
+   * pomeriggio: la finestra ha ceduto, e chi aveva pagato si è ritrovato coi
+   * muri su e **nessun messaggio**. ⚠️ *Identico allo schermo di chi non ha
+   * pagato — cioè, per un cliente vero, soldi buttati.*
+   *
+   * 🔑 **La risposta non è aspettare di più, è smettere di aspettare.** Il
+   * realtime non ha finestre: arriva quando arriva, anche fra dieci minuti,
+   * anche mentre la persona sta guardando un'altra scheda.
+   *
+   * ## ⚠️ Il realtime dice «è cambiato», mai «hai diritto»
+   *
+   * Si **rilegge** `ho_insieme()` invece di fidarsi del payload, e non è
+   * prudenza di troppo: una riga che arriva al telefono è una cosa che il
+   * telefono ha visto, e `docs/threat-model.md` §4-ter dice che il telefono è
+   * ostile per definizione. *Concedere un diritto da un payload sarebbe lo
+   * stesso errore dell'SDK di RevenueCat, spostato di un livello.*
+   *
+   * ## 🔴 Il numero d'istanza nel nome, che è la correzione di B-58
+   *
+   * `supabase.channel(nome)` **restituisce quello esistente** se il nome
+   * combacia, e `removeChannel` è asincrono. Uscendo e rientrando **con lo
+   * stesso account** il nome collide, il canale è già sottoscritto, e
+   * `.on('postgres_changes', …)` lancia — dentro un effetto, cioè **schermata
+   * bianca**. *Un nome diverso a ogni montaggio non ha finestre di corsa.*
+   */
+  React.useEffect(() => {
+    if (!utenteId) return;
+    const canale: RealtimeChannel = supabase
+      .channel(`abbonamento:${utenteId}:${++istanzaCanaleAbbonamento}`)
+      .on(
+        'postgres_changes',
+        {
+          // ⚠️ `*` e non `UPDATE`: la prima volta che si compra la riga **nasce**
+          // (il webhook fa un upsert), e ascoltare i soli UPDATE perderebbe
+          // esattamente il caso che questo codice esiste per coprire.
+          event: '*',
+          schema: 'public',
+          table: 'abbonamento',
+          filter: `utente_id=eq.${utenteId}`,
+        },
+        () => {
+          void ricarica();
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(canale);
+    };
+  }, [utenteId, ricarica]);
 
   // ⚠️ **Il `loading` che esce da qui include quello dell'autenticazione**
   // (B-73). 🔑 *«Non lo so ancora» è uno stato, non un no* — e chi disegna il

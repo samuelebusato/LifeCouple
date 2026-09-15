@@ -28,6 +28,35 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (4) — B-77: chi pagava vedeva lo schermo di chi non aveva pagato
+
+🔴 **Il difetto.** Dopo un acquisto riuscito il paywall chiamava `ricarica({ insistendo: true })` — **6 tentativi in ~9 secondi** — e poi si arrendeva **senza guardare l'esito**: `router.back()`, muri su, nessun messaggio.
+
+⚠️ **Nove secondi bastano quasi sempre, ed è esattamente il problema.** La mattina del 2026-09-15 il webhook ha impiegato **un secondo**; il pomeriggio, sullo stesso impianto, più di nove. 🔑 *Una finestra che regge nel caso normale e cede in quello lento produce un difetto che non si riproduce a comando e colpisce chi ha la rete peggiore.*
+
+🔑 **E il modo di fallire era il peggiore della giornata**: chi aveva pagato vedeva **lo schermo identico** a chi non aveva pagato. Nessun errore, nessuna attesa dichiarata, nessun invito a riprovare. *Per un cliente vero: credere di aver buttato dei soldi.* È il difetto che l'utente ha segnalato più volte prima che lo trovassimo, e aveva ragione ogni volta.
+
+✅ **Chiuso non allungando l'attesa, ma togliendola.** La `0048` mette `abbonamento` nella pubblicazione realtime, come la `0034` fece per `creatura`: l'app non indovina più *quando* chiedere, viene **svegliata** quando il webhook scrive.
+
+**Misurato al millisecondo, con l'app ferma su Map:**
+
+```
+11:39:31.499  comando lanciato
+11:39:31.726  il webhook scrive        (evento_il)
+11:39:32.670  la riga è aggiornata     (aggiornato_il)
+11:39:33.195  l'app legge data:true    ← nessuno ha toccato niente
+```
+
+⬜ *La lettura precedente era delle 11:39:14 — **19 secondi prima**. Non è stato un sondaggio fortunato: è stato il realtime.*
+
+⚠️ **Il realtime dice «è cambiato», mai «hai diritto».** Si rilegge `ho_insieme()` invece di fidarsi del payload: una riga che arriva al telefono è una cosa che il telefono ha visto, e il threat model §4-ter dice che il telefono è ostile per definizione. *Concedere da un payload sarebbe lo stesso errore dell'SDK di RevenueCat, spostato di un livello.*
+
+⚠️ **Non copre il partner che compra**: la `0041` non lascia leggere la riga altrui e il realtime rispetta la RLS. ✅ *Ed è il compromesso giusto* — il caso che lascia una persona davanti a un muro **dopo aver pagato di tasca propria** è quello coperto; chi aspetta il partner non ha appena premuto un pulsante.
+
+✅ **Rete di sicurezza**: se il diritto tarda, il paywall ora **resta aperto e lo dice** (`t.abbonamento.arrivoInCorso`, testo che esisteva già e che da questa strada non veniva **mai** mostrato), e si chiude da sé quando arriva.
+
+🔴 **E un difetto trovato di rimbalzo: `GO_BACK was not handled by any navigator`.** `router.back()` presuppone che sotto ci sia qualcosa, ma a questa schermata si arriva anche **come prima schermata** — dal muro dopo un link d'invito, o a fine onboarding. ⚠️ *In sviluppo è un riquadro rosso; in produzione è peggio: non si vede niente e **la schermata non si chiude**, lasciando chi ha appena pagato davanti al listino.* Ora c'è `chiudi()`, che ripiega su `/(tabs)/home` quando non c'è nulla da chiudere.
+
 ### 2026-09-15 (3) — Il link d'invito trova dove atterrare, e le impostazioni un contenitore
 
 ✅ **D-137 — l'invito passa da un universal link, non più dallo schema dell'app.** `https://lifecouple.heleox.it/invito/<token>`, al posto di `lifecouple://…`.
