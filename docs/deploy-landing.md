@@ -45,6 +45,23 @@ Perché sono tre e non uno:
 - l'**invalidazione** serve perché CloudFront ha già una copia. `/*` conta come
   un solo percorso, e ce ne sono 1.000 gratuiti al mese.
 
+🔴 **Il file degli universal link va caricato a mano, e ogni volta.**
+
+```bash
+aws s3 cp .well-known/apple-app-site-association s3://lifecouple-landing-790304250429/.well-known/apple-app-site-association --content-type "application/json" --cache-control "no-cache"
+```
+
+⚠️ **Senza questo comando gli inviti smettono di aprire l'app, e non lo dice
+nessuno.** Il file `apple-app-site-association` **non ha estensione** — è una
+regola di Apple, non una svista — quindi `aws s3 sync` non sa indovinarne il
+tipo e lo carica come `binary/octet-stream`. 🔑 *iOS scarica un file che c'è,
+risponde 200, e lo scarta perché non è `application/json`*: il link continua a
+funzionare come indirizzo web, apre la landing invece dell'app, e sembra che
+manchi la configurazione nel telefono.
+
+⬜ `no-cache` perché iOS lo rilegge di rado: una copia sbagliata in cache di
+CloudFront costerebbe ore di diagnosi su un file di sei righe.
+
 ⚠️ **Se aggiungi o sostituisci un font**, il `Content-Type` va imposto a mano:
 `mimetypes` non conosce `.woff2`, quindi `aws s3 sync` lo caricherebbe come
 `binary/octet-stream`.

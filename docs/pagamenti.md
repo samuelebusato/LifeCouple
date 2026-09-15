@@ -116,8 +116,10 @@ Ogni prodotto vuole anche: nome visibile, descrizione, e **una schermata di ante
 **3.1 Il segreto.** 🔴 **Non generarlo sulla riga di comando**: la forma `"$(openssl rand -hex 32)"` funziona in bash e **fallisce in silenzio in cmd.exe**, impostando come segreto la stringa stessa. È successo il 2026-09-14 (**B-65**), e `secrets set` risponde `Finished` identico nei due casi.
 
 ```bash
-node -e "require('fs').writeFileSync('.env.segreto.local','RC_WEBHOOK_SECRET='+require('crypto').randomBytes(32).toString('hex'))"
+node -e "const f=require('fs'),p='.env.segreto.local';const v=f.existsSync(p)?f.readFileSync(p,'utf8'):'';if(/^RC_WEBHOOK_SECRET=/m.test(v)){console.error('esiste gia: non lo tocco');process.exit(1)}f.appendFileSync(p,(v&&!v.endsWith('\n')?'\n':'')+'RC_WEBHOOK_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\n')"
 ```
+
+> 🔴 **APPENDE, e la versione precedente sovrascriveva — B-76.** Diceva `writeFileSync`, come [`deploy-notifiche.md`](deploy-notifiche.md) §3 **sullo stesso file**: eseguendo questo si è cancellato `NOTIFICHE_CRON_SECRET`, scoperto il 2026-09-15 quando è servito e non c'era più. 🔑 *E il file non è un appunto: `secrets set --env-file` pubblica tutto ciò che contiene, quindi è l'elenco **completo** dei segreti.*
 
 ⚠️ Il nome del file non è arbitrario: `.gitignore` copre `.env*.local` e **non** `.segreto.env`. Verificalo con `git check-ignore` prima di scriverci dentro.
 

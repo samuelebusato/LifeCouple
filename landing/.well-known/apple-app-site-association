@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["8C8FJLJBB8.com.lifecouple.app"],
+        "components": [{ "/": "/invito/*", "comment": "Il link d'invito a una coppia" }]
+      }
+    ]
+  }
+}

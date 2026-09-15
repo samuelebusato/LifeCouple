@@ -2,7 +2,8 @@ import * as React from 'react';
 import { Alert, View, ScrollView, TextInput, ActivityIndicator, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { X } from 'lucide-react-native';
+import { ChevronRight, X } from 'lucide-react-native';
+import { Premibile } from '@/components/ui/premibile';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Fondo } from '@/components/schermata';
@@ -250,32 +251,28 @@ export default function Impostazioni() {
           contentContainerClassName="gap-6 px-6 pb-10 pt-2"
           keyboardShouldPersistTaps="handled"
         >
-          {/* --- Account ------------------------------------------------- */}
-          <View className="gap-2">
-            <Sezione titolo={t.impostazioni.sezioneAccount} />
-            {!!session?.user.email && (
-              <Text className="text-base text-foreground">{session.user.email}</Text>
-            )}
-            <Text className="text-sm text-muted-foreground">{t.impostazioni.esciNota}</Text>
-            <Button variant="outline" onPress={() => supabase.auth.signOut()}>
-              <Text>{t.impostazioni.esci}</Text>
-            </Button>
-          </View>
-
-          {/* --- Portabilità: art. 20 GDPR ------------------------------- */}
-          {/* ⚠️ Non è una comodità: è un diritto che l'utente può esercitare
-              quando vuole, e finché stava nel backlog «dopo l'MVP» l'app non
-              era distribuibile a utenti europei. */}
-          <View className="gap-2">
-            <Text className="font-serif text-lg text-foreground">
-              {t.impostazioni.esportaTitolo}
-            </Text>
-            <Text className="text-sm text-muted-foreground">{t.impostazioni.esportaNota}</Text>
-            <Button variant="outline" disabled={esporto} onPress={esporta}>
-              <Text>{esporto ? t.impostazioni.esportaInCorso : t.impostazioni.esporta}</Text>
-            </Button>
-            {!!esitoExport && <Text className="text-sm text-foreground">{esitoExport}</Text>}
-          </View>
+          {/* --- Account -------------------------------------------------
+              ⟳ **L'esportazione è rientrata qui** (2026-09-15). Era un blocco a
+              sé, senza etichetta di sezione, fra Account e Notifiche: un orfano
+              che sembrava l'inizio di una sezione nuova e non lo era.
+              ⚠️ *È **portabilità**, art. 20 GDPR — un diritto sul proprio
+              account, quindi il posto era sempre stato questo.* */}
+          <Gruppo titolo={t.impostazioni.sezioneAccount}>
+            <Riga
+              titolo={session?.user.email ?? '—'}
+              valore={t.impostazioni.esci}
+              onPress={() => supabase.auth.signOut()}
+            />
+            <Riga
+              titolo={t.impostazioni.esportaTitolo}
+              nota={t.impostazioni.esportaNota}
+              valore={esporto ? t.impostazioni.esportaInCorso : null}
+              onPress={esporto ? undefined : esporta}
+              disabilitato={esporto}
+              ultima
+            />
+            {!!esitoExport && <Text className="pb-3 text-sm text-foreground">{esitoExport}</Text>}
+          </Gruppo>
 
           {/* --- Le notifiche --------------------------------------------- */}
           {/* 🔑 I due interruttori di servizio e quello promozionale stanno
@@ -284,38 +281,58 @@ export default function Impostazioni() {
               prodotto, e un consenso presunto lì non sarebbe valido. La nota
               sotto l'interruttore lo dice a chi legge, invece di lasciarlo
               dedurre dallo stato iniziale. */}
-          <View className="gap-3">
-            <Sezione titolo={t.notifiche.sezione} />
-            <Text className="text-sm text-muted-foreground">{t.notifiche.nota}</Text>
-
+          <Gruppo titolo={t.notifiche.sezione}>
+            {/* 🔑 Questa riga resta, e sembra una cortesia ma non lo è: la
+                seconda metà — **«Puoi cambiare idea quando vuoi»** — è la
+                revocabilità del consenso (art. 7.3 GDPR) detta in italiano
+                semplice, e `inviti_a_tornare` sta proprio su consenso.
+                ⚠️ *È l'unico posto dell'app dove quella frase compare.* */}
+            <Text className="pt-3 text-xs leading-snug text-muted-foreground">
+              {t.notifiche.nota}
+            </Text>
             {(
               [
                 ['luogo_del_partner', t.notifiche.luogoDelPartner, t.notifiche.luogoDelPartnerNota],
                 ['ricordi', t.notifiche.ricordi, t.notifiche.ricordiNota],
                 ['inviti_a_tornare', t.notifiche.invitiATornare, t.notifiche.invitiATornareNota],
               ] as [TipoNotifica, string, string][]
-            ).map(([tipo, titolo, nota]) => (
-              <View key={tipo} className="gap-1">
-                <View className="flex-row items-center justify-between gap-3">
-                  <Text className="flex-1 text-base text-foreground">{titolo}</Text>
-                  <Switch
-                    value={preferenze[tipo]}
-                    onValueChange={(v) => accendiNotifiche(tipo, v)}
-                  />
+            ).map(([tipo, titolo, nota], i, tutte) => (
+              <View
+                key={tipo}
+                className="flex-row items-center gap-3 py-3.5"
+                style={
+                  i === tutte.length - 1
+                    ? undefined
+                    : { borderBottomWidth: 1, borderBottomColor: c.linea }
+                }
+              >
+                <View className="flex-1 gap-0.5">
+                  <Text className="text-base text-foreground">{titolo}</Text>
+                  {/* ⚠️ Le note restano tutte e tre, a differenza delle altre
+                      sezioni: `inviti_a_tornare` nasce SPENTO (0038) perché è
+                      un sollecito promozionale. 🔑 *Toglierla a una sola farebbe
+                      sembrare quella la voce «normale»* — il contrario. */}
+                  <Text className="text-xs leading-snug text-muted-foreground">{nota}</Text>
                 </View>
-                <Text className="text-sm text-muted-foreground">{nota}</Text>
+                <Switch value={preferenze[tipo]} onValueChange={(v) => accendiNotifiche(tipo, v)} />
               </View>
             ))}
 
             {!!esitoNotifiche && (
-              <Text className="text-sm text-foreground">{esitoNotifiche}</Text>
+              <Text className="pb-3 text-sm text-foreground">{esitoNotifiche}</Text>
             )}
-          </View>
+          </Gruppo>
 
-          {/* --- La coppia: invito ---------------------------------------- */}
-          <View className="gap-3">
-            <Sezione titolo={t.impostazioni.sezioneCoppia} />
-
+          {/* --- La coppia: invito ----------------------------------------
+              ⚠️ **Questa sezione tiene la sua forma interna, e non è una
+              scorciatoia.** Le altre sono diventate righe compatte perché sono
+              *comandi*; qui dentro ci sono un invito da generare e condividere,
+              due date da scegliere e un interruttore — cioè **moduli**, che
+              hanno bisogno di spazio per essere compilati. 🔑 *Il contenitore
+              però è lo stesso*: quel che mancava fra una sezione e l'altra era
+              il fondo, non il contenuto. */}
+          <Gruppo titolo={t.impostazioni.sezioneCoppia}>
+            <View className="gap-3 py-3">
             {completa ? (
               <Text className="text-sm text-muted-foreground">
                 {t.impostazioni.invitaCoppiaPiena}
@@ -489,7 +506,8 @@ export default function Impostazioni() {
                 </Button>
               </View>
             )}
-          </View>
+            </View>
+          </Gruppo>
 
           {/* --- Documenti legali ----------------------------------------- */}
           {/* Il secondo dei due punti d'ingresso richiesti: la registrazione li
@@ -500,95 +518,101 @@ export default function Impostazioni() {
               sostituisse con `customerInfo.entitlements.active`, il prodotto
               diventerebbe gratis per chiunque sappia ricompilare l'app — e
               nessuna schermata cambierebbe aspetto. */}
-          <View className="gap-2">
-            <Sezione titolo={t.abbonamento.sezione} />
-            <Text className="text-sm text-muted-foreground">
-              {insieme ? t.abbonamento.attivo : t.abbonamento.nota}
-            </Text>
-
-            {!insieme && (
-              <Button variant="ghost" disabled={inCorso} onPress={passaAInsieme}>
-                <Text>{t.abbonamento.passa}</Text>
-              </Button>
-            )}
-
-            {/* Il Customer Center di RevenueCat: disdetta, cambio piano,
-                rimborso. ⚠️ Apple pretende che un'app con abbonamenti dica
-                come disdire — questo lo fa senza costruirlo noi. */}
-            {insieme && (
-              <Button
-                variant="ghost"
-                disabled={inCorso}
-                onPress={async () => setEsitoInsieme(await apriGestioneAbbonamento())}
-              >
-                <Text>{t.abbonamento.gestisci}</Text>
-              </Button>
+          {/* 🔑 **Lo stato dell'abbonamento è diventato il valore della prima
+              riga**, invece di una frase grigia sopra tre pulsanti. Chi apre
+              questa sezione vuole sapere una cosa sola — *ce l'ho o no?* — e ora
+              la legge in linea col titolo, non in una nota. */}
+          <Gruppo titolo={t.abbonamento.sezione}>
+            {insieme ? (
+              <>
+                <Riga titolo={t.abbonamento.sezione} valore={t.abbonamento.attivo} />
+                {/* Il Customer Center di RevenueCat: disdetta, cambio piano,
+                    rimborso. ⚠️ Apple pretende che un'app con abbonamenti dica
+                    come disdire — questo lo fa senza costruirlo noi. */}
+                <Riga
+                  titolo={t.abbonamento.gestisci}
+                  onPress={
+                    inCorso
+                      ? undefined
+                      : async () => setEsitoInsieme(await apriGestioneAbbonamento())
+                  }
+                  disabilitato={inCorso}
+                />
+              </>
+            ) : (
+              <Riga
+                titolo={t.abbonamento.passa}
+                nota={t.abbonamento.nota}
+                onPress={inCorso ? undefined : passaAInsieme}
+                disabilitato={inCorso}
+              />
             )}
 
             {/* 🔴 Obbligatorio per la revisione Apple: chi cambia telefono o
                 reinstalla deve poter riavere cio' che ha pagato. */}
-            <Button variant="ghost" disabled={inCorso} onPress={ripristina}>
-              <Text>{t.abbonamento.ripristina}</Text>
-            </Button>
+            <Riga
+              titolo={t.abbonamento.ripristina}
+              onPress={inCorso ? undefined : ripristina}
+              disabilitato={inCorso}
+              ultima
+            />
 
-            {!!esitoInsieme && <Text className="text-sm text-foreground">{esitoInsieme}</Text>}
-          </View>
+            {!!esitoInsieme && <Text className="pb-3 text-sm text-foreground">{esitoInsieme}</Text>}
+          </Gruppo>
 
-          <View className="gap-2">
-            <Sezione titolo={t.legale.sezione} />
-            <Button variant="ghost" onPress={() => router.push('/legale/privacy')}>
-              <Text>{t.legale.privacyTitolo}</Text>
-            </Button>
-            <Button variant="ghost" onPress={() => router.push('/legale/cookie')}>
-              <Text>{t.legale.cookieTitolo}</Text>
-            </Button>
-            <Text className="text-sm text-muted-foreground">{t.legale.impostazioniNota}</Text>
-          </View>
+          {/* 🔑 Due documenti, due righe. Prima erano due pulsanti «ghost» a
+              tutta larghezza: la stessa forma dei comandi che *fanno* qualcosa,
+              per due voci che si limitano ad **aprire una pagina**. ⚠️ *Dare a
+              un link l'aspetto di un'azione è ciò che fa esitare prima di
+              toccarlo.* */}
+          <Gruppo titolo={t.legale.sezione}>
+            <Riga titolo={t.legale.privacyTitolo} onPress={() => router.push('/legale/privacy')} />
+            <Riga
+              titolo={t.legale.cookieTitolo}
+              nota={t.legale.impostazioniNota}
+              onPress={() => router.push('/legale/cookie')}
+              ultima
+            />
+          </Gruppo>
 
-          {/* --- Cose senza ritorno --------------------------------------- */}
-          <View className="gap-4">
-            <Sezione titolo={t.impostazioni.sezionePericolo} pericolo />
-
+          {/* --- Cose senza ritorno ---------------------------------------
+              ⚠️ **Qui le note restano, e non è un'incoerenza col resto.** Nelle
+              altre sezioni sono sparite perché quasi tutte le voci si spiegano
+              da sé; queste due no — e ora che sono fra le poche note della
+              schermata, **si notano**. È l'effetto voluto: in una colonna dove
+              ogni voce aveva la sua spiegazione, quelle che contavano sparivano
+              fra le altre. */}
+          <Gruppo titolo={t.impostazioni.sezionePericolo} pericolo>
             {/* Lo scioglimento esiste solo se c'è una coppia da sciogliere: un
                 comando che fallirebbe con «non sei in una coppia» è peggio di
                 un comando assente. */}
             {!!coppiaId && (
-              <View className="gap-2">
-                <Text className="font-serif text-lg text-foreground">
-                  {t.impostazioni.sciogliTitolo}
-                </Text>
-                <Text className="text-sm text-muted-foreground">{t.impostazioni.sciogliNota}</Text>
-                <Button variant="outline" onPress={() => setChiede('sciogli')}>
-                  <Text style={{ color: c.pericolo }}>{t.impostazioni.sciogliTitolo}</Text>
-                </Button>
-              </View>
+              <Riga
+                titolo={t.impostazioni.sciogliTitolo}
+                nota={t.impostazioni.sciogliNota}
+                onPress={() => setChiede('sciogli')}
+                pericolo
+              />
             )}
-
-            <View className="gap-2">
-              <Text className="font-serif text-lg text-foreground">
-                {t.impostazioni.cancellaTitolo}
-              </Text>
-              <Text className="text-sm text-muted-foreground">{t.impostazioni.cancellaNota}</Text>
-              {/* 🔴 Obbligo, non cortesia: cancellare l'account NON disdice
-                  l'abbonamento, che vive sullo store e che noi non possiamo
-                  annullare al posto suo. Senza questa riga una persona
-                  continuerebbe a pagare per un account che non esiste piu'. */}
-              {insieme && (
-                <Text className="text-sm text-muted-foreground">
-                  {t.abbonamento.avvisoCancellazione}
-                </Text>
-              )}
-              <Button
-                variant="outline"
-                onPress={() => {
-                  setParola('');
-                  setChiede('cancella');
-                }}
-              >
-                <Text style={{ color: c.pericolo }}>{t.impostazioni.cancellaTitolo}</Text>
-              </Button>
-            </View>
-          </View>
+            {/* 🔴 Obbligo, non cortesia: cancellare l'account NON disdice
+                l'abbonamento, che vive sullo store e che noi non possiamo
+                annullare al posto suo. Senza quella frase una persona
+                continuerebbe a pagare per un account che non esiste piu'. */}
+            <Riga
+              titolo={t.impostazioni.cancellaTitolo}
+              nota={
+                insieme
+                  ? `${t.impostazioni.cancellaNota} ${t.abbonamento.avvisoCancellazione}`
+                  : t.impostazioni.cancellaNota
+              }
+              onPress={() => {
+                setParola('');
+                setChiede('cancella');
+              }}
+              pericolo
+              ultima
+            />
+          </Gruppo>
 
           {/* --- La conferma, che dice cosa succede ----------------------- */}
           <Comparsa visibile={chiede !== null} scarto={12}>
@@ -693,10 +717,104 @@ function Sezione({ titolo, pericolo = false }: { titolo: string; pericolo?: bool
   const { c } = useTema();
   return (
     <Text
-      className="text-xs uppercase tracking-wide"
+      className="px-1 text-xs uppercase tracking-wide"
       style={{ color: pericolo ? c.pericolo : c.tenue }}
     >
       {titolo}
     </Text>
+  );
+}
+
+/**
+ * Una sezione: l'etichetta, e **un contenitore** per ciò che contiene.
+ *
+ * 🔑 **Il difetto che chiude** (2026-09-15, riferito dall'utente: *«troppo
+ * confusionaria»*): questa schermata era una colonna **piatta**. Sei sezioni,
+ * separate solo da un'etichetta di testo, e dentro ciascuna una sfilza di
+ * `titolo + nota + pulsante a tutta larghezza`. ⚠️ *Senza un contenitore,
+ * l'occhio non ha modo di sapere dove finisce un argomento e dove comincia il
+ * successivo* — e l'etichetta in grigetto pesa meno del titolo della voce che
+ * la segue, quindi non fa da confine.
+ *
+ * Il vetro c'era già (`CartaVetro`) ed era usato **solo** per il foglio di
+ * conferma: qui fa il lavoro per cui esiste.
+ */
+function Gruppo({
+  titolo,
+  pericolo = false,
+  children,
+}: {
+  titolo: string;
+  pericolo?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <View className="gap-2">
+      <Sezione titolo={titolo} pericolo={pericolo} />
+      <CartaVetro raggio={24} fondo="sicuro">
+        <View className="px-4 py-1">{children}</View>
+      </CartaVetro>
+    </View>
+  );
+}
+
+/**
+ * Una voce dentro un gruppo: etichetta a sinistra, azione a destra.
+ *
+ * ⚠️ **Sostituisce il `titolo + nota + Button` a tutta larghezza**, che è ciò
+ * che rendeva la schermata un muro: tre elementi verticali per ogni comando,
+ * moltiplicati per una quindicina di comandi.
+ *
+ * 🔑 **La `nota` resta facoltativa, ed è il punto.** Quasi tutte le voci non ne
+ * hanno bisogno — *«Esci»* si spiega da sé. Le poche che la meritano (cancellare
+ * l'account, esportare i dati) la tengono, e proprio perché le altre non ce
+ * l'hanno **si notano**.
+ */
+function Riga({
+  titolo,
+  nota,
+  valore,
+  onPress,
+  pericolo = false,
+  disabilitato = false,
+  ultima = false,
+}: {
+  titolo: string;
+  nota?: string | null;
+  valore?: string | null;
+  onPress?: () => void;
+  pericolo?: boolean;
+  disabilitato?: boolean;
+  ultima?: boolean;
+}) {
+  const { c } = useTema();
+  const colore = pericolo ? c.pericolo : c.testo;
+
+  const corpo = (
+    <View
+      className="flex-row items-center gap-3 py-3.5"
+      // La riga di separazione **fra** le voci, mai sotto l'ultima: una linea
+      // che chiude un contenitore lo fa sembrare troncato.
+      // 🔑 `c.linea` esiste apposta — «ancora più tenue del tenue: separatori» —
+      // e inventare un'opacità su `tenue` avrebbe rifatto a mano un colore che
+      // il tema già definisce.
+      style={ultima ? undefined : { borderBottomWidth: 1, borderBottomColor: c.linea }}
+    >
+      <View className="flex-1 gap-0.5">
+        <Text style={{ color: colore, opacity: disabilitato ? 0.4 : 1 }} className="text-base">
+          {titolo}
+        </Text>
+        {!!nota && <Text className="text-xs leading-snug text-muted-foreground">{nota}</Text>}
+      </View>
+      {!!valore && <Text className="text-sm text-muted-foreground">{valore}</Text>}
+      {!!onPress && !disabilitato && <ChevronRight size={18} color={c.tenue} />}
+    </View>
+  );
+
+  if (!onPress || disabilitato) return corpo;
+  return (
+    <Premibile onPress={onPress} scala={0.99}>
+      {corpo}
+    </Premibile>
   );
 }

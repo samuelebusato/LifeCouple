@@ -35,12 +35,22 @@ La funzione **non** si accontenta del JWT che Supabase verifica di suo: quel tok
 Genera il valore **in un file**: non dipende dalla shell, e non finisce nella cronologia dei comandi.
 
 ```bash
-node -e "require('fs').writeFileSync('.env.segreto.local','NOTIFICHE_CRON_SECRET='+require('crypto').randomBytes(32).toString('hex'))"
+node -e "const f=require('fs'),p='.env.segreto.local';const v=f.existsSync(p)?f.readFileSync(p,'utf8'):'';if(/^NOTIFICHE_CRON_SECRET=/m.test(v)){console.error('esiste gia: non lo tocco');process.exit(1)}f.appendFileSync(p,(v&&!v.endsWith('\n')?'\n':'')+'NOTIFICHE_CRON_SECRET='+require('crypto').randomBytes(32).toString('hex')+'\n')"
 ```
+
+> 🔴 **Questo comando APPENDE, e la versione precedente sovrascriveva — B-76.**
+>
+> Diceva `writeFileSync`, e lo stesso faceva [`pagamenti.md`](pagamenti.md) §3.1 **sullo stesso file**. ⚠️ *Il secondo dei due ha cancellato il primo*, e il 2026-09-15 `.env.segreto.local` conteneva solo `RC_WEBHOOK_SECRET`: il segreto del cron era sparito dalla macchina, e i segreti di Supabase non si rileggono.
+>
+> 🔑 **Il danno non è la copia persa, è il comando qui sotto**: `secrets set --env-file` pubblica **tutto ciò che il file contiene**, quindi quel file è inteso come l'elenco **completo** dei segreti del progetto. Sovrascriverlo non perde un appunto: fa pubblicare un sottoinsieme al giro successivo. *Fortunatamente `secrets set` è additivo lato server, quindi il segreto vecchio è sopravvissuto — ma per fortuna, non per costruzione.*
+>
+> ⚠️ Il comando nuovo si **rifiuta** se la chiave c'è già, invece di rigenerarla: rigenerare un segreto in uso significa spegnere il cron senza accorgersene.
 
 ```bash
 npx supabase secrets set --env-file .env.segreto.local --project-ref <progetto>
 ```
+
+> ⚠️ **Guarda il file prima di lanciarlo.** Questo comando pubblica *ogni* riga che ci trova: se una manca, quel segreto non viene aggiornato — e se una è di troppo, viene pubblicata.
 
 ⚠️ **Il nome del file non è arbitrario.** `.gitignore` ignora `.env` esatto e `.env*.local`: `.env.segreto.local` è coperto, `.segreto.env` **no** — e sarebbe un segreto committabile, cioè un rimedio peggiore del male. Verificalo con `git check-ignore .env.segreto.local` prima di scriverci dentro.
 

@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { Share } from 'react-native';
-import * as Linking from 'expo-linking';
+// ⚠️ `expo-linking` non si importa più qui: il link d'invito non si costruisce
+// più con `Linking.createURL` — vedi `collegamentoInvito` più sotto per il
+// perché. *L'import restava innocuo e sarebbe diventato la traccia che rimanda
+// alla soluzione sbagliata.*
 import { supabase } from '@/lib/supabase';
 import type { StatoCoppia } from '@/lib/coppia';
 import { t } from '@/lib/i18n';
@@ -40,6 +43,43 @@ export async function assicuraCoppia(
  * davvero l'ingresso di un estraneo che ha aperto un link inoltrato. Se
  * vivesse solo nell'onboarding, chi entra da solo non potrebbe piu' confermare.
  */
+/**
+ * Il dominio da cui parte un invito — **e non è lo schema dell'app**.
+ *
+ * ## 🔴 Perché `Linking.createURL` non andava bene, e per due ragioni diverse
+ *
+ * 1. **In Expo Go produce un indirizzo locale.** `resolveScheme` ignora lo
+ *    `scheme` dell'app e torna `exp://<ip>:8081/--/invito/<token>`: valido
+ *    solo sulla stessa Wi-Fi, e per nessun altro. *Diagnosticato il
+ *    2026-08-13, mai risolto.*
+ * 2. **Anche nella build firmata, `lifecouple://…` non è cliccabile.** WhatsApp
+ *    e Messaggi rendono cliccabili solo `http` e `https`: uno schema
+ *    personalizzato resta testo grigio, e chi lo riceve non ha modo di sapere
+ *    che si può fare qualcosa. ⚠️ *Il messaggio diceva «Apri questo link» e
+ *    non c'era niente da aprire.*
+ *
+ * ## Come funziona adesso (2026-09-15)
+ *
+ * Un **universal link**: `https://lifecouple.heleox.it/invito/<token>`.
+ * Cliccabile ovunque; iOS apre l'app se c'è, e apre il sito se non c'è — dove
+ * chi riceve l'invito trova il modo di installarla.
+ *
+ * 🔑 **È diventato possibile solo oggi**: ad agosto questa strada era stata
+ * scartata perché serviva un dominio proprio e non c'era. La landing è stata
+ * pubblicata su CloudFront stamattina, e con essa il posto dove servire
+ * `.well-known/apple-app-site-association`.
+ *
+ * ⚠️ **Il dominio è scritto qui e in tre altri posti** — `app.json`
+ * (`associatedDomains`), il file AASA sulla landing, e il record DNS. Nessun
+ * controllo li confronta: se divergono, il link smette di aprire l'app **senza
+ * errori**, comportandosi come un indirizzo web qualunque.
+ */
+const DOMINIO_INVITI = 'https://lifecouple.heleox.it';
+
+export function collegamentoInvito(token: string) {
+  return `${DOMINIO_INVITI}/invito/${token}`;
+}
+
 export function useInvito(attivo: boolean, alConfermato?: () => unknown | Promise<unknown>) {
   const [link, setLink] = React.useState<string | null>(null);
   const [invitoApertoId, setInvitoApertoId] = React.useState<string | null>(null);
@@ -56,7 +96,7 @@ export function useInvito(attivo: boolean, alConfermato?: () => unknown | Promis
       setErrore(error.message);
       return null;
     }
-    const l = Linking.createURL(`/invito/${token}`);
+    const l = collegamentoInvito(String(token));
     setLink(l);
     return l;
   }, []);

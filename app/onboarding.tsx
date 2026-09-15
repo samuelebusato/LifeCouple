@@ -16,6 +16,8 @@ import {
   useIngressoRimandato,
   paywallIngressoGiaVisto,
   segnaPaywallIngressoVisto,
+  invitoInAttesa,
+  dimenticaInvitoInAttesa,
 } from '@/lib/preferenze';
 import { t } from '@/lib/i18n';
 
@@ -34,6 +36,37 @@ export default function Onboarding() {
   const [errore, setErrore] = React.useState<string | null>(null);
   const [attesa, setAttesa] = React.useState(false);
   const [tokenIncollato, setTokenIncollato] = React.useState('');
+
+  /**
+   * **Il token lasciato da un link toccato prima di avere un account.**
+   *
+   * `app/invito/[token].tsx` non apre nulla: mette il token da parte e manda
+   * qui. Questo effetto lo raccoglie — *dopo* che c'è una sessione, che è la
+   * condizione che mancava nel momento del tocco.
+   *
+   * 🔑 **Riempie il campo e porta al ramo «unisci»; non apre l'invito da sé.**
+   * Aprirlo in automatico sarebbe più rapido di un tocco e sbagliato: chi
+   * arriva qui deve **vedere** che sta per unirsi a qualcuno, e avere modo di
+   * fermarsi. *Un link non è un consenso.*
+   *
+   * ⚠️ **Si dimentica subito, prima ancora di usarlo.** Un token che restasse
+   * in memoria tornerebbe a ogni avvio dell'onboarding — e chi l'ha già usato
+   * si vedrebbe riproporre un invito scaduto senza capire da dove esca.
+   */
+  React.useEffect(() => {
+    let vivo = true;
+    (async () => {
+      const inAttesa = await invitoInAttesa();
+      if (!vivo || !inAttesa) return;
+      await dimenticaInvitoInAttesa();
+      if (!vivo) return;
+      setTokenIncollato(inAttesa);
+      setFase('unisci');
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   /**
    * **L'unica uscita dall'onboarding.**

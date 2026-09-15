@@ -79,3 +79,50 @@ export async function segnaPaywallIngressoVisto(utenteId: string | undefined) {
   if (!utenteId) return;
   await AsyncStorage.setItem(chiavePaywall(utenteId), '1').catch(() => {});
 }
+
+/**
+ * Il token d'invito toccato da fuori, tenuto da parte finché non si può usare.
+ *
+ * ## 🔑 Perché NON è legato a un utente, a differenza di tutto il resto qui
+ *
+ * Le altre chiavi di questo file portano l'`utenteId` nel nome, perché
+ * descrivono una persona che esiste già. Questa no, ed è il punto: **chi
+ * riceve un invito quasi sempre non ha ancora un account**. Tocca il link,
+ * arriva sull'app, e deve registrarsi *prima* di poterlo aprire.
+ *
+ * ⚠️ *È esattamente il nodo su cui la questione si era fermata il 2026-08-13*
+ * («non ancora deciso come risolverlo»): non serviva una route, serviva un
+ * posto dove l'invito potesse aspettare che l'utente venisse al mondo.
+ *
+ * ## Il ciclo di vita, in tre gesti
+ *
+ *   `salva`     — la route `app/invito/[token].tsx`, appena riceve il link
+ *   `leggi`     — l'onboarding, quando c'è finalmente una sessione
+ *   `dimentica` — subito dopo averlo usato, **riuscito o no**
+ *
+ * 🔑 **Si dimentica anche quando fallisce**, e va detto: un token scaduto o
+ * già usato che restasse in memoria riproverebbe a ogni avvio, mostrando lo
+ * stesso errore a chi non ha modo di capire da dove venga.
+ */
+const CHIAVE_INVITO = 'lifecouple.invito-in-attesa';
+
+export async function salvaInvitoInAttesa(token: string) {
+  // ⚠️ Nessun token vuoto: cancellerebbe il senso di `leggi` e basta.
+  if (!token.trim()) return;
+  await AsyncStorage.setItem(CHIAVE_INVITO, token.trim()).catch(() => {});
+}
+
+export async function invitoInAttesa(): Promise<string | null> {
+  try {
+    const v = await AsyncStorage.getItem(CHIAVE_INVITO);
+    return v?.trim() ? v.trim() : null;
+  } catch {
+    // La memoria non risponde: si prosegue senza invito. ⚠️ Mai lanciare da
+    // qui — bloccherebbe l'ingresso a chi l'invito non l'ha nemmeno usato.
+    return null;
+  }
+}
+
+export async function dimenticaInvitoInAttesa() {
+  await AsyncStorage.removeItem(CHIAVE_INVITO).catch(() => {});
+}

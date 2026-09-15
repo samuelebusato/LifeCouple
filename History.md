@@ -28,6 +28,38 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (3) — Il link d'invito trova dove atterrare, e le impostazioni un contenitore
+
+✅ **D-137 — l'invito passa da un universal link, non più dallo schema dell'app.** `https://lifecouple.heleox.it/invito/<token>`, al posto di `lifecouple://…`.
+
+🔴 **Il messaggio d'invito prometteva da sempre qualcosa che non esisteva**: dice *«Apri questo link»*, e `app/invito/` **non c'era**. Chi lo toccava apriva l'app sulla home senza un motivo apparente. ⬜ *Funzionava solo incollandolo a mano*, perché `estraiToken` in `onboarding.tsx` riconosce un link dentro una stringa.
+
+🔑 **Il nodo non era la route, era l'ordine dei fatti** — ed è il motivo per cui il 2026-08-13 si era scritto *«non ancora deciso come risolverlo»* e non si era più ripreso: **chi riceve un invito quasi sempre non ha ancora un account**. Una route che chiamasse `apri_invito` subito fallirebbe per quasi tutti. Ora il token **aspetta**: `salvaInvitoInAttesa` lo tiene da parte, l'onboarding lo riprende quando una sessione finalmente c'è.
+
+⚠️ **E la route apre, non conferma.** L'invito resta a due mani (`0003`): B apre, A conferma. *Una route che unisse due account perché qualcuno ha toccato un indirizzo sarebbe un modo per entrare nel diario di due persone conoscendo una stringa.* Il campo viene riempito e la fase portata su «unisci», ma il tocco resta all'utente — **un link non è un consenso**.
+
+🔑 **Questa strada è diventata possibile solo oggi.** Ad agosto era stata scartata perché serviva un dominio proprio e non c'era: la landing è stata pubblicata su CloudFront **stamattina**, e con essa il posto dove servire `.well-known/apple-app-site-association`.
+
+⬜ **Chi non ha l'app finisce sulla 404**, perché CloudFront ci manda ogni errore. Quella pagina ora **riconosce `/invito/`** e cambia le tre righe che contano: *«Someone wants to share their diary with you»* invece di *«questa pagina non esiste»*. ⚠️ *È il momento più importante dell'acquisizione, e le si stava dicendo che si era persa.*
+
+🔴 **Due trappole di pubblicazione scritte nei runbook prima di incontrarle**: il file AASA **non ha estensione**, quindi `aws s3 sync` lo carica come `binary/octet-stream` e iOS lo scarta in silenzio — serve un `aws s3 cp --content-type application/json` a parte, ogni volta. E `associatedDomains` è una capability **nativa**: non basta ricaricare, serve una build nuova.
+
+---
+
+🔴 **B-76 — un runbook cancellava il segreto scritto dall'altro.** `deploy-notifiche.md` §3 e `pagamenti.md` §3.1 generavano i rispettivi segreti con `writeFileSync` **sullo stesso file**, `.env.segreto.local`. Il secondo ha cancellato il primo: il 2026-09-15 `NOTIFICHE_CRON_SECRET` non era più sulla macchina, scoperto quando è servito per invocare `invia-notifiche` a mano.
+
+🔑 **Il danno non è la copia persa: è che quel file è l'elenco *completo* dei segreti.** `supabase secrets set --env-file` pubblica tutto ciò che vi trova — sovrascriverlo fa pubblicare un sottoinsieme al giro dopo. ✅ *Il segreto vecchio è sopravvissuto solo perché `secrets set` è additivo lato server: per fortuna, non per costruzione.* Entrambi i comandi ora **appendono**, e si rifiutano se la chiave esiste già.
+
+---
+
+✅ **Le impostazioni non sono più una colonna piatta**, su segnalazione dell'utente (*«troppo confusionaria»*). Sei sezioni separate solo da un'etichetta grigia, e dentro ciascuna una sfilza di `titolo + nota + pulsante a tutta larghezza`. Ora ogni sezione ha un **contenitore** (`Gruppo`) e le voci-comando sono **righe compatte** (`Riga`).
+
+⬜ **L'esportazione dei dati è rientrata sotto Account**, dov'era sempre appartenuta: era un blocco senza etichetta di sezione, che sembrava l'inizio di una sezione nuova. È portabilità, art. 20 — un diritto sul proprio account.
+
+🔑 **E le note sono sparite dove non servivano.** Restano su cancellazione, scioglimento, esportazione e notifiche — e *proprio perché ora sono poche, si vedono*. ⚠️ In una colonna dove ogni voce aveva la sua spiegazione, quelle che contavano sparivano fra le altre.
+
+⚠️ **Fatto e disfatto una volta**: `npx prettier` è stato lanciato su `impostazioni.tsx` e ha riformattato l'intero file a virgolette doppie. *Prettier non è una dipendenza del progetto e non esiste una configurazione*: il file è stato ripristinato e le modifiche riapplicate a mano, per un diff di 247 righe invece di 667. 🔑 *Un diff che riformatta tutto rende invisibile la modifica vera, ed è il modo più rapido di far passare inosservato un difetto.*
+
 ### 2026-09-15 (2) — B2 è percorsa, e per arrivarci sono usciti cinque difetti
 
 ✅ **L'ACQUISTO VERO FUNZIONA — B2 chiusa, la voce mai percorsa da quando esiste il piano.** La prova non è una schermata ma una riga di database scritta da un evento che non abbiamo generato noi:

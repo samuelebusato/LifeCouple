@@ -124,16 +124,43 @@ p { color: var(--tenue); margin: 0 0 28px; }
     <path d="M50 34c-3 6-8 11-8 20 0 10 4 18 8 24 4-6 8-14 8-24 0-9-5-14-8-20z"/>
   </svg>
 
-  <h1>This page doesn&rsquo;t exist</h1>
-  <p>The link may be out of date, or mistyped. Everything else is still where you left it.</p>
+  <h1 id="titolo">This page doesn&rsquo;t exist</h1>
+  <p id="testo">The link may be out of date, or mistyped. Everything else is still where you left it.</p>
 
-  <a class="torna" href="/">Back to LifeCouple</a>
+  <a class="torna" id="torna" href="/">Back to LifeCouple</a>
 
   <div class="legali">
     <a href="/privacy-policy.html">Privacy Policy</a>
     <a href="/cookie-policy.html">Cookie Policy</a>
   </div>
 </main>
+
+<!--
+  Chi arriva qui da un invito non ha sbagliato indirizzo: non ha l'app.
+
+  🔑 **CloudFront manda ogni 404 su questa pagina** (`infra/`, due
+  `custom_error_response`), quindi `https://lifecouple.heleox.it/invito/<token>`
+  finisce qui **per chiunque non abbia LifeCouple installata** — cioè per la
+  maggior parte di chi riceve un invito la prima volta.
+
+  ⚠️ *Dirgli «questa pagina non esiste» è il messaggio più sbagliato possibile
+  nel momento più importante*: è la persona che il prodotto sta cercando di
+  acquisire, e le si dice che si è persa.
+
+  Nessun server, nessuna route: l'indirizzo lo legge il browser. Se comincia
+  per `/invito/`, la pagina cambia le tre righe che contano.
+-->
+<script>
+  (function () {
+    if (!/^\/invito\//.test(location.pathname)) return;
+    document.getElementById('titolo').textContent = 'Someone wants to share their diary with you';
+    document.getElementById('testo').textContent =
+      'LifeCouple is a private diary for two. Install the app, then open this link again to join.';
+    var torna = document.getElementById('torna');
+    torna.textContent = 'Discover LifeCouple';
+    torna.href = '/';
+  })();
+</script>
 
 </body>
 </html>

@@ -157,6 +157,16 @@ const it = {
     stessaPassword: 'Questa è già la tua password. Scrivine una diversa — il codice è ancora valido.',
     tornaIndietro: 'Torna indietro',
   },
+  /**
+   * Quel che si legge toccando un link d'invito, per il mezzo secondo in cui
+   * l'app decide dove mandarti. ⚠️ *Parla di ciò che ha fatto chi legge — ha
+   * toccato un link — non di «token», che non ha mai visto.*
+   */
+  invitoDaLink: {
+    attesa: 'Un attimo: stiamo aprendo il vostro invito…',
+    nonValido:
+      'Questo invito non sembra più valido. Chiedi al tuo partner di crearne uno nuovo dalle impostazioni.',
+  },
   onboarding: {
     titolo: 'Siete in due',
     sottotitolo: 'Crea il vostro spazio e invita il partner, oppure unisciti se hai ricevuto un invito.',
@@ -1158,6 +1168,13 @@ const en: Dizionario = {
     fatto: 'Password updated. You’re in.',
     stessaPassword: 'That’s already your password. Pick a different one — your code is still valid.',
     tornaIndietro: 'Go back',
+  },
+  // See the Italian note: it speaks about the link the reader tapped, never
+  // about a «token», which they have never seen.
+  invitoDaLink: {
+    attesa: 'One moment: we’re opening your invite…',
+    nonValido:
+      'This invite no longer seems valid. Ask your partner to create a new one from Settings.',
   },
   onboarding: {
     titolo: 'You’re two',

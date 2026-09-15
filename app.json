@@ -16,7 +16,10 @@
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "associatedDomains": [
+        "applinks:lifecouple.heleox.it"
+      ]
     },
     "android": {
       "package": "com.lifecouple.app",
