@@ -28,6 +28,110 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (11) — Il nome è libero, la scheda esiste, e le funzionalità si dichiarano testate
+
+Sessione aperta da una richiesta netta dell'utente: *«voglio concludere il tutto e inviare a Apple la richiesta di pubblicazione. Le funzionalità dell'applicazione possiamo darle come testate»*.
+
+#### 🔑 D-140 — le funzionalità si dichiarano testate, e §9 cade per decisione
+
+**La decisione è dell'utente.** La lista di [`docs/verifica-sul-telefono.md`](docs/verifica-sul-telefono.md) — **18 voci**, mai percorsa — non verrà percorsa: **D4** si chiude per dichiarazione e con essa la **condizione §9** di `pubblicazione.md`, che stava sopra a tutto il piano.
+
+**Perché era aperta**: §9 nasce dal fatto che la prima partita vera fece uscire **sette difetti in un colpo** (B-30 → B-36), e che le Liste hanno decine di punti mai visti girare. L'argomento non è cambiato.
+
+**Cosa si accetta, in chiaro**: nessuna delle cose costruite il 2026-09-15 è mai stata vista funzionare su un telefono — il **paywall rifatto**, **B-80** (il messaggio d'attesa fuori schermo) e **B-81** (l'onboarding che proponeva di comprare a chi aveva già comprato). ⚠️ *B-80 in particolare si prova solo rallentando apposta il webhook*, quindi non sarebbe emerso nemmeno da un uso normale. Le tre voci che la lista dichiarava impossibili per costruzione — posizione condivisa, B-50, confine UTC — restano tali.
+
+**Cosa NON copre questa decisione**: l'utente ha dichiarato testate le **funzionalità**, non le **dichiarazioni**. La scheda dello store, i moduli App Privacy e *trader* e i documenti legali restano soggetti ai loro controlli, e uno di essi ha trovato un difetto oggi stesso.
+
+🔑 *La ragione per cui questa voce è scritta per esteso invece che spuntata*: fra sei mesi, se arriva una recensione a una stella su una di quelle tre cose, deve risultare **valutata e accettata**, non dimenticata. È lo stesso trattamento della chiave di §5.
+
+> ⚠️ **E una precisazione data all'utente, non per riaprire la scelta ma perché cambia dove si scopre il problema**: i dati *trader* del DSA non sono qualcosa che Apple contesta **dopo** la revisione — sono un campo del modulo **prima**. Quindi l'esito di **A3** si vedrà aprendo App Store Connect, non leggendo una risposta di Apple. L'utente ha scelto di procedere così: *«se la documentazione non va bene Apple me lo farà presente»*.
+
+#### ✅ E1 chiuso — il nome è libero, e il solo marchio mai depositato è decaduto
+
+Era fermo da sempre, e §7-ter lo teneva **prima degli screenshot** («o si rifanno»). Misurato, non supposto:
+
+| Dove | Come | Esito |
+|---|---|---|
+| App Store (IT, US, GB) | API di ricerca iTunes, `term=lifecouple` e `life couple` | ✅ **nessuna app con questo nome**. I vicini — `Couple Life 3D` (un gioco), `Cutest Couple: Life Organizer` — non lo rivendicano |
+| TMview / EUIPO, tutti gli uffici | «contiene LIFECOUPLE» | ⚠️ **un solo risultato al mondo**: `LIFECOUPLE`, USPTO `88492568`, depositato il 2019-06-27, **classe 9**, stato **«Terminato»** |
+| TMview, due parole | «contiene life couple» | ✅ **nessun risultato** |
+
+🔑 **Il risultato che conta non è che sia libero, ma *dove* non lo è stato**: quel marchio decaduto copriva *«downloadable mobile applications … in the field of relationship empowerment»* — cioè esattamente la classe 9 e esattamente questa categoria. ⚠️ *Qualcuno ha già percorso questa strada e l'ha lasciata cadere*: non è un ostacolo giuridico, ma è l'informazione che una ricerca «è libero?» non avrebbe dato.
+
+✅ **In Unione Europea non esiste nulla**, in nessuna classe — quindi né 9 né 42. ⚠️ **Questo non è un parere di disponibilità**: TMview dichiara di sé che *«non costituisce un registro ufficiale»*, e i marchi **simili** (non identici) non sono stati cercati. Resta una domanda da avvocato se si vorrà depositare; non lo è per pubblicare.
+
+#### ✅ E3, la metà che si può scrivere: [`docs/scheda-store.md`](docs/scheda-store.md)
+
+§6 di `pubblicazione.md` chiamava le schede store *«la voce più sistematicamente sottostimata del piano»*, ed erano l'unica cosa richiesta dal modulo d'invio che **non esisteva da nessuna parte**. Ora ci sono, nelle due lingue: sottotitolo, testo promozionale, parole chiave, descrizione, categorie, classificazione per età e note per la revisione.
+
+**Tre scelte, col loro perché:**
+
+- **La descrizione apre dicendo cosa l'app NON è** — *«non è un social, non c'è un pubblico, non c'è un feed»*. 🔑 Non è una civetteria: è l'argomento che [`docs/conformita.md`](docs/conformita.md) §8 prepara per il revisore che chiedesse la moderazione dei contenuti generati dagli utenti. **Metterlo nella scheda lo mette sotto gli occhi di chi decide**, invece di tenerlo pronto per un'obiezione che forse non arriva.
+- **Il confine gratis/pagamento sta dentro la descrizione**, non in fondo in piccolo: un'app che scopre il prezzo dopo l'installazione raccoglie le recensioni a una stella che §9 dichiara di voler evitare — e su un abbonamento raccoglie anche i rimborsi.
+- **C'è un paragrafo «Se vi lasciate»**, che è il paragrafo che un'app di coppia non scrive mai. Ci sta perché è la funzione che **D-139** ha reso annunciata invece che silenziosa.
+
+🔴 **Attesa sulla classificazione per età: 12+, non 4+.** Contenuti generati dagli utenti e posizione condivisa. ⚠️ *E deve poter coesistere col limite contrattuale di 14 anni* dei termini (art. 8 GDPR, soglia italiana): 12+ è la fascia di Apple, 14 è più restrittivo, e i due non si contraddicono. *Dichiarare 4+ li metterebbe in conflitto a vista.*
+
+🔴 **E una decisione aperta che ho creato scrivendo, e che non mi spetta chiudere.** I testi esistono **in due lingue**, mentre **D-123** stabilisce che la documentazione ufficiale è in inglese — e `pubblicazione.md` §6 avverte **alla lettera** contro questa combinazione: *«se le schede escono anche in italiano mentre l'informativa collegata è solo in inglese, l'incoerenza la vede il revisore prima dell'utente»*.
+
+**Le ho scritte entrambe lo stesso**, perché l'interfaccia è già bilingue (D-18) e il mercato è l'Italia: una scheda in solo inglese per un'app che si apre in italiano costa conversione per davvero. ⚠️ *Ma «l'ho fatto perché aveva senso» non è una decisione presa*: le tre strade sono in §6, e finché l'utente non sceglie, **la strada coerente con le decisioni in vigore è pubblicare la sola versione inglese**.
+
+🔑 **Il punto da non confondere**: la scheda italiana **non rende contestabile** l'informativa in inglese. Quel rischio è già accettato e firmato (§5, 2026-09-09). *Cambia solo quanto è facile accorgersene* — che non è la stessa cosa, e confondere le due porterebbe a «risolvere» il problema sbagliato.
+
+#### ✅ Il limite dei campi è misurato, non ricordato — e il controllo ha trovato due difetti al primo giro
+
+[`tools/verifica-scheda-store.mjs`](tools/verifica-scheda-store.mjs) (`npm run test:scheda`) legge la scheda ed estrae gli otto campi con un limite dichiarato da Apple, misurandoli **in punti di codice**, che è come li conta Apple.
+
+🔑 *Esiste per la stessa ragione di `0042`*: **un limite scritto in una tabella e non misurato è una porta chiusa con un cartello**. Il modo in cui si scopre di aver sforato, senza, è incollare il testo in App Store Connect e vederselo troncare **in silenzio**.
+
+Al primo giro ha trovato:
+1. 🔴 **Un campo di troppo** — contava «English Description» due volte, perché il lettore non usciva mai dall'ultima lingua vista e raccoglieva anche un blocco di §6. *Il primo difetto che il controllo ha trovato è stato su se stesso.*
+2. 🔴 **Le parole chiave italiane erano a 100/100**, senza un carattere di margine — e in quella lista mancava **`foto`**, che per un'app che condivide fotografie è una delle parole con cui la si cerca.
+
+✅ **Guardato fallire**: con un sottotitolo di 49 caratteri esce `1` e lo dichiara (`SFORA di 19`); ripristinato, torna verde. ⚠️ **E si difende dal modo in cui un controllo muore senza fallire**: se trova meno di otto campi, fallisce invece di dichiarare tutto a posto.
+
+#### ✅ A2 migliorata — la galleria della demo non è più fatta di riquadri da 1 pixel
+
+`semina-demo.mjs` caricava **quattro JPEG da 1×1**, dichiarati segnaposto. ⚠️ *Il revisore apre un'app che vende la cartella condivisa di fotografie e trova quattro riquadri vuoti*: è la forma di rifiuto per **App Completeness** (Guideline 2.1), e la si sarebbe scoperta dal rifiuto.
+
+[`tools/foto-demo.mjs`](tools/foto-demo.mjs) genera ora **quattro illustrazioni 1080×1440**, una per evento e diverse fra loro — tramonto sulle colline, i tetti e le due torri, la notte con la falce di luna, i palloncini. ✅ **Verificato guardandole**, non solo eseguendo: due difetti corretti così — la torre pendente **galleggiava** sopra la linea dei tetti, e la luna era un **disco scuro sovrapposto** invece di una falce, perché il morso era disegnato con un colore di cielo fisso su un cielo che è una sfumatura.
+
+**Perché PNG e non JPEG**: il bucket `foto` accetta `image/png` (`0009`), e un PNG si scrive con `zlib`, che sta nella libreria standard. Un JPEG avrebbe richiesto una dipendenza per un guadagno nullo.
+
+⬜ **Restano comunque meglio 3-4 foto vere** caricate dall'app, e il documento continua a dirlo: questa è la difesa che regge da sola, non il risultato migliore possibile.
+
+#### 🔴 B-84 — lo script prometteva un comando che non esisteva
+
+L'intestazione di `semina-demo.mjs` dice *«node tools/semina-demo.mjs (oppure: `npm run semina:demo`)»*. **In `package.json` quello script non c'era.** Aggiunto, insieme a `test:scheda`.
+
+🔑 *Piccolo, ma è la forma di difetto che questo progetto continua a trovare*: una frase vera solo se qualcun altro fa una cosa, e nessuno l'ha fatta. Chi ci prova la prima volta è il revisore di un runbook, e lo scopre nel momento peggiore.
+
+#### 🔴 B-85 — il PUNTO DI RIPRESA dichiarava «da fare» un deploy già fatto
+
+La nota in §7 diceva: *«Conseguenza da fare, non da ricordare: **le pagine online sono indietro di una versione**. I file sono rigenerati ma non ripubblicati.»* ⚠️ **Le pagine erano state pubblicate nella sessione (7) dello stesso giorno**, e la riga non era stata aggiornata.
+
+✅ **Verificato in linea, non deciso su quale dei due documenti credere** — perché il log di sessione diceva una cosa e il PUNTO DI RIPRESA l'opposto:
+
+| Pagina | HTTP | Versione | Titolare | Segnaposto |
+|---|---|---|---|---|
+| `privacy-policy.html` | `200` | **`app-1.2`** | Samuele Busato | 0 |
+| `cookie-policy.html` | `200` | **`cookie-1.2`** | Samuele Busato | 0 |
+| `terms-of-use.html` | `200` | **`terms-1.2`** | Samuele Busato | **4** |
+
+⬜ *I quattro segnaposto sui termini sono la scelta dell'utente del 2026-09-15 (7), non un difetto* — ma è la prima volta che li si vede **dal di fuori**, ed è l'informazione che manca a chi legge solo il generatore.
+
+🔑 **Terza volta in due giorni, e quindi è una forma.** B-78 (sei intestazioni di migrazione), B-79 (un fornitore mai dichiarato), e ora questa. ⚠️ **Ma questa è peggiore delle altre due**, e lo dice §4 di questo stesso documento: *«un PUNTO DI RIPRESA che dice il falso è peggio di uno vuoto, perché il primo lo si crede»*. Le prime due si scoprivano leggendo; questa **indirizza il lavoro della sessione successiva** — chi avesse ripreso da qui avrebbe rifatto un deploy invece di chiedere il commercialista.
+
+#### ⚠️ Un'ipotesi posta e smentita, che vale scrivere
+
+Rileggendo §5 ho sospettato che il rischio accettato *«i documenti legali sono in inglese soltanto»* fosse diventato **falso**: il 2026-09-15 informativa, cookie policy e termini sono stati aggiornati **in entrambe le lingue**, e sembrava la stessa forma di B-78 e B-79.
+
+✅ **Verificato contro `genera-legale.mjs`, e l'ipotesi era sbagliata**: il generatore legge **solo** `docs/legal/en/`, e i file italiani in `docs/legal/` sono documenti di lavoro che non vengono resi né nell'app né sulla landing. **Il rischio di §5 resta valido parola per parola.**
+
+🔑 *Scritto perché la verifica è costata due comandi e l'affermazione sbagliata sarebbe costata una correzione a valle* — e perché «i file italiani esistono» e «gli utenti li leggono» sono due fatti diversi che si assomigliano molto.
+
+---
+
 ### 2026-09-15 (10) — B-83: il cron diceva «succeeded» e veniva respinto da un giorno
 
 🔴 **Le notifiche non partivano da 24 ore, e tutto sembrava verde.** Emerso da una domanda dell'utente — *«le notifiche possono arrivare lo stesso con la build preview?»* — andando a guardare il database invece di rispondere in astratto.
@@ -5339,6 +5443,36 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 
 ## 7. PUNTO DI RIPRESA
 
+> **Nota del 2026-09-15 (11) — non resta più niente che dipenda da noi, tranne gli screenshot.**
+>
+> ⏹️ **D4 è chiusa per dichiarazione (D-140), e con essa §9 di `pubblicazione.md`.** L'utente ha dichiarato testate le funzionalità. ⚠️ **Chiusa non vuol dire fatta**, e la differenza deve restare leggibile: il paywall rifatto il 2026-09-15, **B-80** e **B-81** compresi, non è mai stato visto girare su un telefono. *Il rischio ha cambiato forma, non dimensione — da «pubblichiamo senza sapere» a «pubblichiamo sapendo di non sapere», che è difendibile mentre il primo non lo è.* La lista di 18 voci **resta scritta**: serve alla prima segnalazione di un utente vero.
+>
+> ✅ **E1 è chiuso, e il nome è libero.** App Store IT/US/GB: nessuna app con questo nome. TMview, tutti gli uffici: **un solo marchio al mondo**, `LIFECOUPLE` all'USPTO, **classe 9**, **decaduto** — e copriva app per coppie, cioè qualcuno c'è già passato. **In UE non esiste nulla**, né in 9 né in 42. ⚠️ *Non è un parere di disponibilità*: i marchi **simili** non sono stati cercati, e TMview dichiara di non essere un registro ufficiale. Serve un avvocato per **depositare**, non per pubblicare.
+>
+> ✅ **Il testo della scheda store esiste**, nelle due lingue: [`docs/scheda-store.md`](docs/scheda-store.md). Era l'unica cosa richiesta dal modulo d'invio che non stava da nessuna parte. I limiti dei campi sono **imposti** (`npm run test:scheda`), non ricordati — e al primo giro il controllo ha trovato due difetti, **il primo dei quali su se stesso**.
+>
+> 🔴 **Ma la scheda è in due lingue e D-123 dice inglese: la decisione è aperta e non è mia.** Le tre strade stanno in `pubblicazione.md` §6. *Finché non è presa, pubblicare la sola versione inglese è coerente con le decisioni in vigore.*
+>
+> ✅ **La galleria della demo non è più fatta di riquadri da 1 px** (A2): quattro illustrazioni 1080×1440, una per evento — e due difetti corretti **guardandole**, non eseguendole.
+>
+> 🔴 **B-85 — questa sezione dichiarava che le pagine online erano indietro di una versione.** Erano state pubblicate nella sessione (7) e la riga non era stata aggiornata. ✅ **Verificato in linea**: `app-1.2`, `cookie-1.2`, `terms-1.2`, tutte `200`, titolare corretto, e **4 segnaposto davvero pubblici** sui termini (che è la scelta dell'utente, non un difetto). 🔑 *Terza volta in due giorni che un documento dichiara «da fare» una cosa fatta altrove* — B-78, B-79, e ora una riga del PUNTO DI RIPRESA, cioè **il posto che §4 indica come quello in cui una falsità costa di più**.
+>
+> 🔴 **Cosa resta, davvero tutto**, in ordine di coda e non di importanza:
+>
+> | | Cosa | Chi | Sblocca |
+> |---|---|---|---|
+> | 1 | **A8** — con quale forma vende una persona fisica | commercialista | **A3** → **A4**, e il modulo *trader* |
+> | 2 | **A6** — recesso (**A5**), art. 9 (**E4**), traduzioni | avvocato | la riga *Sensitive Info* di App Privacy |
+> | 3 | **A3** — indirizzo e telefono | tu, dopo A8 | i **4 segnaposto già pubblici** |
+> | 4 | **A7** — sei accordi art. 28 | tu | — |
+> | 5 | **E3** — screenshot | io + tu, su un telefono | **E5** |
+> | 6 | **C1** — la chiave esposta | tu, cinque minuti | — |
+> | 7 | **La lingua della scheda** | tu | — |
+>
+> ⚠️ **E il punto in cui si scopre se A3 basta è il modulo, non la risposta di Apple**: i dati *trader* si compilano **prima** della revisione. L'utente ha scelto di procedere e vederlo lì.
+>
+> 🔑 **C1 merita una riga a sé, perché è l'unica voce che peggiora aspettando.** Il rischio accettato in §5 dice *«da riconsiderare prima della pubblicazione, quando gli abbonamenti diventano veri e la superficie smette di essere teorica»*. **Quel momento è adesso**, e chiuderla costa cinque minuti che non cambiano col tempo.
+
 > **Nota del 2026-09-15 (4) — l'acquisto vero è PERCORSO, e fino a stasera questa sezione diceva il contrario.**
 >
 > 🔴 **La prima cosa da sapere è una correzione a ciò che sta qui sotto.** La nota del 2026-09-14 (3) dichiara in rosso *«L'anello mai provato è l'acquisto vero […] nessun pagamento è mai arrivato fino alla tabella»*. **È falso dal 2026-09-15**, e lo è stato per un giorno intero: **quattro sessioni** hanno lavorato senza che questa sezione le nominasse. ⚠️ *È esattamente la forma che la nota del 14 denunciava di sé* — «chi avesse ripreso da qui avrebbe creduto che i pagamenti non esistessero» — e §4 la dice per esteso a proposito delle migrazioni: **un PUNTO DI RIPRESA che dice il falso è peggio di uno vuoto, perché il primo lo si crede.**
@@ -5377,9 +5511,9 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 >
 > 🔴 **B-79 — AWS non era dichiarato come responsabile, e la lacuna è del 2026-09-10.** `S3 + CloudFront` serve le pagine pubbliche da allora e non compariva né nell'informativa, né nel registro art. 30, né fra i terzi di `conformita.md`: gli accordi art. 28 sono **sei**, non cinque. 🔑 *È passato perché **pubblicare delle pagine non sembra un trattamento*** — gli altri sei fornitori erano entrati nel registro insieme al codice che li usava, questo è entrato con un `aws s3 sync`. ✅ Scritto in cinque posti, versioni a **`app-1.2`** e **`cookie-1.2`**, derivati rigenerati.
 >
-> 🔴 **Conseguenza da fare, non da ricordare: le pagine online sono indietro di una versione.** I file sono rigenerati ma **non ripubblicati**, e l'informativa dentro l'app entra solo con la prossima build. *Finché non si fa, la versione pubblicata dichiara sei destinatari invece di sette.* Runbook: `docs/deploy-landing.md`.
+> ~~🔴 **Conseguenza da fare, non da ricordare: le pagine online sono indietro di una versione.**~~ ✅ **FATTA, e questa riga ha detto il falso — B-85.** Le pagine sono state pubblicate nella sessione (7) dello stesso giorno, e questa riga non è stata aggiornata. ✅ **Verificato in linea il 2026-09-15 (3), non dedotto**: `privacy-policy` → **`app-1.2`**, `cookie-policy` → **`cookie-1.2`**, `terms-of-use` → **`terms-1.2`**, tutte `200`, tutte a nome **Samuele Busato**. ⬜ *Resta vero solo il pezzo sull'app*: l'informativa **dentro** l'app entra con la prossima build. Runbook: `docs/deploy-landing.md`.
 >
-> ⬜ **Resta invariato dalle note precedenti**: la lista **Film** è spenta (**D-127**, e riaccenderla rimette il muro di TMDB esattamente dov'era); «N anni fa» si calcola in **UTC**; ⏸️ il **ciclo mestruale** è dopo la prima pubblicazione, per non sommare gli errori in un lotto solo. ⬜ *E una coda piccola di A2*: le foto della coppia demo per Apple sono **segnaposto da 1 px**.
+> ⬜ **Resta invariato dalle note precedenti**: la lista **Film** è spenta (**D-127**, e riaccenderla rimette il muro di TMDB esattamente dov'era); «N anni fa» si calcola in **UTC**; ⏸️ il **ciclo mestruale** è dopo la prima pubblicazione, per non sommare gli errori in un lotto solo. ~~⬜ *E una coda piccola di A2*: le foto della coppia demo per Apple sono **segnaposto da 1 px**.~~ ✅ **Chiusa il 2026-09-15 (3)**: sono quattro illustrazioni 1080×1440.
 
 > **Nota del 2026-09-14 (3) — i documenti dicono ciò che c'è, e la mezza giornata dei pagamenti ha finalmente una nota di ripresa.**
 >

@@ -228,6 +228,16 @@ Diceva: **va scelto organizzazione**, per tre ragioni — (1) l'editore risulta 
 - **App Privacy** (Apple) e **Data safety** (Google). ⚠️ Devono corrispondere alla realtà: `threat-model.md` §1 mappa già quali dati esistono ed è la fonte da cui compilarle. Una dichiarazione che non corrisponde è motivo di rimozione **anche dopo** l'approvazione.
 - **Classificazione per età**, su entrambi.
 - **Schede store in due lingue** — nome, descrizione, screenshot. È la voce più sistematicamente sottostimata del piano.
+  - ✅ **Il testo esiste dal 2026-09-15 (3)**: [`scheda-store.md`](scheda-store.md), con i limiti dei campi imposti da `npm run test:scheda`. 🔴 Restano gli **screenshot**.
+  - 🔴 **Ed è scritto in DUE lingue, il che contraddice D-123 e la riga qui sopra — la decisione è dell'utente e non è ancora presa.** L'agente ha prodotto entrambe le versioni perché l'app è bilingue (D-18: la lingua la decide il telefono) e il mercato è l'Italia; ma la riga sopra avverte **esattamente** contro questa combinazione. Le tre strade:
+
+| | Cosa si fa | Cosa costa |
+|---|---|---|
+| **a** | Si pubblica **solo l'inglese**, coerente con D-123 | Un utente italiano trova una scheda in inglese per un'app la cui interfaccia è in italiano. *Costa conversione, non rischio* |
+| **b** | Si pubblicano **entrambe** e si accetta l'incoerenza | ⚠️ L'incoerenza **esiste già**: l'interfaccia è in italiano e i documenti legali no. La scheda italiana la rende più visibile, non la crea |
+| **c** | Si pubblicano entrambe **e si traducono i documenti** | È il rimedio vero, ma **aspetta A6**: tradurre prima della revisione dell'avvocato significa tradurre due volte (§5 di `History.md`) |
+
+  > 🔑 **Il punto da non confondere**: la scheda in italiano non è ciò che rende contestabile l'informativa in inglese — quella è già il rischio accettato del 2026-09-09, dichiarato e firmato. *Cambia solo quanto è facile accorgersene.*
 
 ---
 
@@ -335,7 +345,7 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | | Cosa | Chi | Dipende da |
 |---|---|---|---|
 | **A1** | ✅ **FATTA il 2026-09-14 (3)**, e non era una formalità: la cancellazione **non funzionava** — due difetti sovrapposti (**B-68**), corretti dalle migrazioni `0044` e `0045`, applicate. Ora la catena regge su tutti e cinque i controlli, **bucket compreso** | ✅ io | — |
-| **A2** | ✅ **FATTO il 2026-09-15**: `tools/semina-demo.mjs` crea la coppia appaiata e la riempie — 4 eventi, 4 luoghi, 2 voci, 4 foto, 1 partita conclusa. Credenziali in `.env.demo.local`, note per Apple stampate dallo script. ⬜ *Le foto sono segnaposto di 1 px*: per una demo migliore caricane di vere dall'app | ✅ io | — |
+| **A2** | ✅ **FATTO il 2026-09-15**: `tools/semina-demo.mjs` crea la coppia appaiata e la riempie — 4 eventi, 4 luoghi, 2 voci, 4 foto, 1 partita conclusa. Credenziali in `.env.demo.local`, note per Apple stampate dallo script. ⟳ **Le foto non sono più segnaposto di 1 px** (2026-09-15 (3)): [`tools/foto-demo.mjs`](../tools/foto-demo.mjs) genera **quattro illustrazioni 1080×1440**, una per evento. ⚠️ *Quattro riquadri vuoti in un'app che vende la cartella condivisa di foto sono un rifiuto per **App Completeness***, e lo si sarebbe scoperto dal rifiuto. ⬜ Restano meglio 3-4 **foto vere** caricate dall'app | ✅ io | — |
 | **A8** | 🔴 **NUOVA il 2026-09-15 (D-136, Q1) — con quale forma vende Samuele Busato?** Partita IVA, oppure app gratuita senza acquisti. ⚠️ *«Privato senza partita IVA» che vende abbonamenti non è una terza strada*, e questa domanda ora **precede A3**: da essa dipende quale indirizzo esista da esporre | **commercialista** | — |
 | **A9** | ✅ **CHIUSA il 2026-09-15, poche ore dopo essere nata.** L'utente: *«è tutta roba mia — il software è stato progettato e sviluppato da me, l'infrastruttura è mia»*. Titolare e mezzi **coincidono**, e **A7 lo firma lui**. ⚠️ *Resta solo la coda della coda*, ed è **A11**: le due superfici pubbliche portano il marchio di un altro prodotto | ✅ | — |
 | **A11** | ✅ **RIDOTTA a una riga il 2026-09-15**: `heleox.it` è **intestato a Samuele Busato** come persona fisica (riferito dall'utente). Quindi dominio ed email sono già del titolare e **non c'è niente da cambiare**. ⚠️ *Resta però che l'informativa §1 spiega `info@heleox.it` con «è l'indirizzo di un altro prodotto della stessa azienda — coerente sul piano giuridico»*, e quella frase ora è **falsa**: va corretta dentro **A10**, non separatamente | io, dentro A10 | **A8** |
@@ -371,16 +381,16 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 | **D1** | ✅ **FATTO il 2026-09-14 (3)** — `npm run test:copertura`: 30 tabelle, tutte con RLS, l'unica senza policy è dichiarata per nome. *Guardato fallire su quattro controprove.* ⚠️ Legge le migrazioni, non il catalogo | ✅ io |
 | **D2** | ✅ **FATTA il 2026-09-15 — eseguiti, non ricordati.** `test:abbonamento` **4/4**, `test:webhook` **13/13** (compresi: evento doppio riconosciuto, evento più vecchio che non riporta indietro lo stato, disdetta che non toglie e rimborso che toglie subito), `test:confine` **7/7**. Esiti per esteso in `History.md`, 2026-09-15 | ✅ io |
 | **D3** | ✅ **MISURATI il 2026-09-15, e hanno trovato B-70.** `tests/punti.mjs` esteso: elementi di lista e partite ora hanno misura diretta. **La stessa forma era anche lo stesso buco** — un elemento creato già «fatto» vale **0 punti invece di 10**. 🔑 *Una partita nata già «conclusa» vale 0 ed è **giusto**: premiarla darebbe punti per una partita mai giocata* — l'asserzione è rovesciata apposta. ✅ **`0046` applicata dall'utente il 2026-09-15**: `test:punti` è passato da 9/10 a **10/10**, e le due guardie tengono | ✅ |
-| **D4** | ⟳ **LISTA PRONTA il 2026-09-15**: [`docs/verifica-sul-telefono.md`](verifica-sul-telefono.md) — **12 blocchi**, dall'accesso alla cancellazione, con dentro i difetti da riprovare per nome (B-24, B-15, B-50, B-68) e i confini del piano gratuito da vedere scattare. 🔑 *Dichiara anche le **tre voci che non può contenere*** — posizione condivisa, B-50, confine UTC — perché una lista che le omette sembra completa e non lo è. 🔴 **Resta da percorrerla**, e servono **due telefoni** (D-25) | 🔴 tu col telefono · ✅ lista mia |
+| **D4** | ⏹️ **CHIUSA PER DICHIARAZIONE il 2026-09-15 (3) — D-140.** L'utente: *«le funzionalità dell'applicazione possiamo darle come testate»*. La lista **non verrà percorsa**, e con essa cade **§9**. ⚠️ *Cosa si accetta, per nome*: paywall rifatto, **B-80** e **B-81** non sono mai stati visti girare su un telefono, e B-80 si prova solo rallentando apposta il webhook. La lista resta scritta — [`verifica-sul-telefono.md`](verifica-sul-telefono.md), 18 voci — perché **serve dopo la pubblicazione** quanto prima. 🔑 *Chiusa, non fatta: la differenza sta in `History.md` 2026-09-15 (11) e deve restare leggibile* | ⏹️ decisa |
 | **D5** | ✅ **FATTO il 2026-09-15**: `locales/it.json` e `locales/en.json`, agganciati da `app.json`. ⬜ *Vederli richiede una build nuova* — la parte scrivibile di B-20 è chiusa | ✅ io |
 
 ### Corsia E — La confezione: ultima, e dipende dalle altre
 
 | | Cosa | Chi | Dipende da |
 |---|---|---|---|
-| **E1** | **Controlli sul nome** — EUIPO classi 9 e 42, disponibilità, handle. ⚠️ *Prima degli screenshot, o si rifanno* | tu | — |
+| **E1** | ✅ **FATTO il 2026-09-15 (3), e misurato.** App Store IT/US/GB: **nessuna app** con questo nome. TMview, tutti gli uffici: **un solo marchio al mondo** — `LIFECOUPLE`, USPTO `88492568`, **classe 9**, **«Terminato»**; in due parole, zero. ✅ **In UE non esiste nulla**, né in classe 9 né in 42. ⚠️ *Quel marchio decaduto copriva app per coppie*: qualcuno c'è già passato e l'ha lasciata cadere. ⚠️ **Non è un parere di disponibilità**: TMview dichiara di non essere un registro ufficiale, e i marchi **simili** non sono stati cercati — serve un avvocato solo se si vuole **depositare**, non per pubblicare. ⬜ Restano gli **handle** social | ✅ io · ⬜ handle: tu | — |
 | **E2** | ✅ **FATTO il 2026-09-15**: `privacy-policy.html` e `cookie-policy.html` sono online su CloudFront, HTTP 200 verificato, e la versione pubblicata nomina RevenueCat | ✅ io | — |
-| **E3** | **Screenshot** | io + tu | E1, D5 |
+| **E3** | ⟳ **METÀ FATTA il 2026-09-15 (3)**: [`scheda-store.md`](scheda-store.md) — sottotitolo, testo promozionale, parole chiave, descrizione, categorie, età e note per la revisione, **nelle due lingue**. Era l'unica cosa richiesta dal modulo d'invio che **non esisteva da nessuna parte** (§6: *«la voce più sistematicamente sottostimata del piano»*). I limiti dei campi sono **imposti** da `npm run test:scheda`, non ricordati — e al primo giro ha trovato due difetti. 🔴 **Restano gli screenshot**, che vogliono un'app su un telefono | ✅ testo mio · 🔴 screenshot | E1 ✅, D5 ✅ |
 | **E4** | ⟳ **SCRITTA il 2026-09-15**: [`docs/app-privacy.md`](app-privacy.md) — dieci righe pronte da ricopiare, con **Tracking = No** ovunque (nessun SDK pubblicitario, di analytics o di diagnostica nel `package.json`), e le esclusioni motivate una per una. Rifatta sui destinatari nuovi: token del dispositivo (Expo) e cronologia acquisti (RevenueCat). 🔴 **Una riga resta senza valore ed è bloccante**: se la deduzione strutturale dell'orientamento sessuale conti come *«Sensitive Info»* per Apple. *Stessa domanda di `conformita.md` §9 — si fa in una telefonata sola con l'avvocato* | io · 🔴 attende **A6** | **A6** |
 | **E5** | **TestFlight**, poi invio | tu | tutto |
 
@@ -392,7 +402,22 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 2. **A6** — l'avvocato. È tua e ha una **coda**: chiederla tardi la fa costare settimane, non giorni, ed è ancora la coda più lunga del piano. *(A9 è nata e morta il 2026-09-15: l'infrastruttura è dell'utente, e questo la chiude.)*
 3. **A3**, poi **A10** e **A4** — appena A8 dà una risposta, questi tre si sbloccano in fila e sono per lo più lavoro mio.
 4. ✅ ~~**B2 → B3** — l'acquisto vero~~ **fatti entrambi il 2026-09-15.** *L'impianto dei pagamenti non è più costruito-e-non-dimostrato: è percorso.*
-5. **D4** — la verifica voce per voce sul telefono: l'unica voce senza scadenza esterna, e per questo quella che si rimanda da giorni. §9 non cade senza. ⚠️ *Ora è anche la sola voce tecnica rimasta*: tutto il resto aspetta una telefonata.
+5. ⏹️ ~~**D4** — la verifica voce per voce sul telefono~~ **chiusa per dichiarazione il 2026-09-15 (3)** (D-140), e con essa §9.
+
+> ⟳ **Riscritto una seconda volta il 2026-09-15 (3), e cambia la natura di ciò che resta.** Con D4 chiusa, E1 fatto e il testo della scheda scritto, **non c'è più nessuna voce che dipenda da lavoro mio o da un telefono**, tranne gli screenshot.
+>
+> 🔑 **Tutto ciò che resta fra noi e il pulsante «Invia» sta in due telefonate e in due dati.** In ordine di coda, non di importanza:
+>
+> | | Cosa | Chi | Sblocca |
+> |---|---|---|---|
+> | 1 | **A8** — con quale forma vende una persona fisica | commercialista | **A3** → **A4**, e il modulo *trader* |
+> | 2 | **A6** — recesso (**A5**), art. 9 (**E4**), traduzioni | avvocato | la riga *Sensitive Info* del modulo App Privacy |
+> | 3 | **A3** — indirizzo e telefono | tu, dopo A8 | **A4**, e i due segnaposto **già pubblici** |
+> | 4 | **A7** — sei accordi art. 28 | tu | niente, ma è veloce |
+> | 5 | **E3** — screenshot | io + tu, su un telefono | **E5** |
+> | 6 | **C1** — la chiave esposta, da riconsiderare **adesso** | tu, cinque minuti | — |
+>
+> ⚠️ **E il punto in cui si scopre se A3 basta non è la risposta di Apple: è il modulo.** I dati *trader* sono un campo da compilare **prima** della revisione, non un rilievo che arriva dopo. L'utente ha scelto di procedere e vederlo lì — *«se la documentazione non va bene Apple me lo farà presente»* (2026-09-15) — e la scelta è registrata in `History.md` D-140.
 
 ### Cosa NON è in questo piano, e perché
 
@@ -457,3 +482,11 @@ La prima partita vera ha fatto uscire **sette difetti in un colpo** (B-30 → B-
 > ⟳ **Stato al 2026-09-14 (3), e si è mosso in meglio.** I difetti dei giochi sono stati ripresi, l'app è stata percorsa **a mano su un iPhone** e non è saltato fuori niente; le notifiche sono arrivate davvero, i pagamenti hanno un impianto intero e le RLS hanno **89 asserzioni verdi**. ⚠️ **Ma la condizione non è caduta**: quella passata è stata *una* passata con esito positivo, **non una spunta voce per voce** — e tre cose non possono esserlo per costruzione (la posizione condivisa vuole due telefoni, B-50 distingue dito e bottone solo su iOS, i punti di partite e liste non hanno misura). La corsia **D** di §7-ter è la traduzione operativa di questa sezione.
 
 *Il piano qui sopra dice come si pubblica. Non dice che sia il momento di farlo.*
+
+> ⏹️ **QUESTA CONDIZIONE È STATA TOLTA il 2026-09-15 (3), per decisione dell'utente — D-140.** *«Le funzionalità dell'applicazione possiamo darle come testate»*. La corsia **D** si chiude, e con essa §9.
+>
+> ⚠️ **Tolta non vuol dire risolta, e la differenza va lasciata leggibile.** L'argomento di questa sezione non è cambiato: la prima partita vera fece uscire sette difetti in un colpo, e il paywall rifatto il 2026-09-15 — **B-80** e **B-81** compresi — non è mai stato visto girare su un telefono. *B-80 si prova solo rallentando apposta il webhook*, quindi non sarebbe emerso nemmeno da un uso normale.
+>
+> 🔑 **Il rischio ha cambiato forma, non dimensione**: prima era *«pubblichiamo senza sapere»*, adesso è *«pubblichiamo sapendo di non sapere»*. La seconda è una posizione difendibile — la prima no — ed è per questo che sta scritta qui e in `History.md` invece di essere una spunta.
+>
+> ⬜ **La lista resta**: [`verifica-sul-telefono.md`](verifica-sul-telefono.md) serve dopo la pubblicazione quanto prima, e le sue 18 voci sono il posto da cui ripartire alla prima segnalazione di un utente vero.
