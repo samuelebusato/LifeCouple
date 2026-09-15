@@ -90,7 +90,20 @@ if (eConf) throw new Error(`conferma_invito: ${eConf.message}`);
 console.log('✅ coppia formata e appaiata');
 
 // «Insieme da»: una data che dia senso al contatore in home.
-await rev.from('coppia').update({ insieme_dal: '2024-06-15' }).eq('id', cid);
+//
+// ⚠️ **Una `update` diretta su `coppia` non passa, ed e' voluto** (parte di
+//    B-87): quella tabella ha la **sola policy di `select`**, e lo stato lo
+//    cambiano soltanto funzioni `security definer`. Peggio: la update **non
+//    solleva un errore**, aggiorna zero righe e tace — ed e' cosi' che questa
+//    riga ha finto di funzionare finche' nessuno ha misurato il risultato.
+// 🔑 *La via giusta e' quella che usa l'app*: `imposta_insieme_dal` (`0005`),
+//    che scrive la data **e** crea l'evento speciale che la mostra nel
+//    calendario. Chiamarla qui da' al revisore la stessa home di una coppia vera.
+const { error: eI } = await rev.rpc('imposta_insieme_dal', {
+  p_data: '2024-06-15',
+  p_titolo: 'Il giorno in cui è cominciata',
+});
+console.log(eI ? `⚠️ «insieme dal» non impostato: ${eI.message}` : '✅ «insieme dal» impostato');
 
 // --- Il calendario ------------------------------------------------------------
 const giorno = (scarto) => {
@@ -127,11 +140,33 @@ await par
 console.log('✅ 4 luoghi sulla mappa (3 di uno, 1 dell’altro)');
 
 // --- Le liste -------------------------------------------------------------------
-await rev.from('elemento_lista').insert([
-  { coppia_id: cid, tipo: 'voce', titolo: 'Imparare a fare il pane' },
-  { coppia_id: cid, tipo: 'voce', titolo: 'Vedere l’aurora', stato: 'desiderato' },
-]);
-console.log('✅ 2 voci di lista');
+//
+// ⚠️ **L'esito si controlla, non si dichiara.** Fino al 2026-09-15 (3) questo
+//    blocco stampava «✅ 2 voci di lista» **senza guardare l'errore**, e per
+//    tutto quel tempo non ne ha inserita nessuna (**B-87**). Erano due cose:
+//    `stato` e' `not null` **senza default** su questa tabella, e un elemento
+//    senza `lista_id` non compare in nessuna lista — quindi non esiste per chi
+//    guarda l'app.
+//
+// 🔑 **Le tre liste di default sono TIPIZZATE** (`Film` di tipo `film`,
+//    `Viaggi` e `Ristoranti` di tipo `luogo`, create dal trigger della `0024`):
+//    una voce generica non ci sta dentro, e vuole una lista sua — che e' poi
+//    esattamente cio' che farebbe una coppia vera.
+const { data: lista, error: eLista } = await rev
+  .from('lista')
+  .insert({ coppia_id: cid, nome: 'Da fare insieme', pastello: 'impegno', tipo: 'voce' })
+  .select('id')
+  .single();
+
+if (eLista) {
+  console.log(`⚠️ lista non creata: ${eLista.message}`);
+} else {
+  const { error: eL } = await rev.from('elemento_lista').insert([
+    { coppia_id: cid, lista_id: lista.id, tipo: 'voce', titolo: 'Imparare a fare il pane', stato: 'desiderato' },
+    { coppia_id: cid, lista_id: lista.id, tipo: 'voce', titolo: 'Vedere l’aurora', stato: 'desiderato' },
+  ]);
+  console.log(eL ? `⚠️ voci di lista non inserite: ${eL.message}` : '✅ 1 lista con 2 voci');
+}
 
 // --- Le fotografie ---------------------------------------------------------------
 let foto = 0;

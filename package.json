@@ -23,7 +23,8 @@
     "test:copertura": "node tests/rls.copertura.mjs",
     "test:cancellazione": "node tests/cancellazione.mjs",
     "semina:demo": "node tools/semina-demo.mjs",
-    "test:scheda": "node tools/verifica-scheda-store.mjs"
+    "test:scheda": "node tools/verifica-scheda-store.mjs",
+    "test:demo": "node tools/verifica-demo.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
