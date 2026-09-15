@@ -28,6 +28,44 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-15 (10) — B-83: il cron diceva «succeeded» e veniva respinto da un giorno
+
+🔴 **Le notifiche non partivano da 24 ore, e tutto sembrava verde.** Emerso da una domanda dell'utente — *«le notifiche possono arrivare lo stesso con la build preview?»* — andando a guardare il database invece di rispondere in astratto.
+
+| | |
+|---|---|
+| Notifiche in coda non inviate | **17** |
+| Di cui con almeno un tentativo | **0** |
+| Ultima notifica realmente spedita | **2026-09-14, 14:22** |
+
+⚠️ **`tentativi = 0` e' la firma del guasto**, e distingue due cose che si diagnosticano in posti opposti: *«la funzione ha provato e non ce l'ha fatta»* da *«la funzione non e' mai stata chiamata»*. Era il secondo.
+
+**La catena, anello per anello.** Il cron **esisteva ed era attivo** (`invia-notifiche-ogni-ora`, `0 * * * *`), con **23 esecuzioni tutte `succeeded`**. Ma sotto, in `net._http_response`, **sei `401` consecutivi**:
+
+```
+{"code":"UNAUTHORIZED_NO_AUTH_HEADER","message":"Missing authorization header"}
+```
+
+Il comando mandava **un solo header**, `x-cron-secret`. Mancava `apikey`, quindi la piattaforma fermava la richiesta **prima** che il codice della funzione partisse.
+
+🔑 **Il runbook aveva previsto il sintomo ma non dove accorgersene**, ed e' questa la lezione vera: *`succeeded` in `cron.job_run_details` non significa che la chiamata sia arrivata.* Il comando e' un `net.http_post` di **`pg_net`, che e' asincrono** — il cron riesce quando *accoda* la richiesta e da li' in poi non sa piu' niente. ⚠️ *Tre tabelle dicono tre cose diverse, e solo `net._http_response` dice la verita'.* Aggiunto a [`docs/deploy-notifiche.md`](docs/deploy-notifiche.md) §4, con le query.
+
+🔑 **E c'e' una riga del 2026-09-14 che questo difetto smentisce**: *«✅ il cron e' stato pianificato — riferito dall'utente, non verificato dall'agente»*, accanto a *«la prova che vale non e' il pannello ma la coda che si svuota»*. **Quella prova non era mai stata fatta.** Il 2026-09-15 si e' fatta, ed e' stata negativa. ⚠️ *Una spunta su una cosa riferita e non verificata non e' un mezzo successo: e' un'affermazione senza misura, e qui e' costata un giorno di notifiche mai partite.*
+
+✅ **Corretto** con `cron.alter_job`, aggiungendo `apikey` e `Content-Type` **senza toccare ne' leggere il segreto** — riusato con una `replace` sul comando esistente.
+
+✅ **Verificato eseguendo il lavoro subito, non aspettando le :00**: la risposta passa da `401` a **`200`**, e la funzione gira per la prima volta dal 14.
+
+```json
+{"ok":true,"lette":17,"inviate":0,"scartate":17}
+```
+
+✅ **`inviate: 0` con `scartate: 17`, e gli scarti sono tutti legittimi** — e' la prova che la logica di scarto funziona, non un secondo difetto: **12** «coppia sciolta fra accodamento e invio» (non si notifica su una coppia che non c'e' piu'), **4** «nessun dispositivo registrato», **2** «consenso assente» (gli account di prova della `0049`, che non hanno mai aperto le impostazioni).
+
+✅ **E i due dispositivi veri sono a posto**: entrambi hanno la riga delle preferenze, e **tutte e sei le righe hanno `scioglimento` acceso** — il `default true` della `0049` ha funzionato sulle righe gia' esistenti, che era la cosa da verificare e non da presumere.
+
+⬜ **Resta da vedere una notifica che parte davvero**: la coda ora e' vuota e il cancello aperto, quindi la prossima sara' la prima. E' una voce di **D4**, blocco 10.
+
 ### 2026-09-15 (9) — D-139: lo scioglimento si annuncia, invece di farsi scoprire
 
 ✅ **Costruita la notifica di scioglimento** — migrazione **`0049`**, 🔴 **da applicare**. Era una mitigazione **dichiarata e non costruita** da un mese: `threat-model.md` TB-2 categoria **T** prometteva *«notifica esplicita a entrambi»* e portava accanto il suo stesso smentito — *«la notifica esplicita a entrambi non esiste»*. ⚠️ *Chi subiva uno scioglimento se ne accorgeva **trovando l'app vuota**: mappa, liste e creatura sparite, i contenuti condivisi chiusi, e nessuno che gli dicesse perché.*

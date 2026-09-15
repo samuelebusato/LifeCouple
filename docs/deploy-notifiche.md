@@ -117,6 +117,42 @@ La funzione risponde con un riepilogo, e **i numeri vanno letti insieme**.
 
 ⚠️ **`scartate` non è un errore e non va «sistemato».** È la colonna che dimostra di non aver spedito promozioni a chi non le voleva: se un domani servisse provarlo, è lì che si guarda.
 
+### 🔴 Ma prima: come ci si accorge che sta fallendo — B-83, 2026-09-15
+
+⚠️ **Il pannello dei lavori pianificati dice `succeeded` anche quando la
+chiamata viene respinta.** Non e' un difetto di Supabase: il comando e' un
+`net.http_post` di **`pg_net`, che e' asincrono** — il cron riesce nel momento
+in cui *accoda* la richiesta, e da li' in poi non sa piu' nulla dell'esito.
+
+🔑 **Il 2026-09-15 questo ha tenuto nascosto un guasto per un giorno intero**:
+23 esecuzioni verdi in fila, e sotto **sei `401` consecutivi**. Il cron era stato
+creato come *HTTP Request* con il solo `x-cron-secret`, quindi senza `apikey`:
+la piattaforma lo fermava **prima** che la funzione esistesse, e infatti le
+notifiche in coda avevano `tentativi = 0` — nessuno le aveva mai guardate.
+
+**Le tre tabelle, e solo la terza dice la verita':**
+
+| Dove guardi | Cosa ti dice | Quanto ti fidi |
+|---|---|---|
+| `cron.job` | che il lavoro esiste ed e' attivo | dice se c'e', non se funziona |
+| `cron.job_run_details` | che l'SQL e' riuscito | 🔴 **`succeeded` = richiesta accodata**, non consegnata |
+| `net._http_response` | lo **status code vero** e il corpo della risposta | ✅ e' questa |
+
+```sql
+-- l'esito reale delle ultime chiamate del cron
+select status_code, left(content, 200), created
+from net._http_response order by created desc limit 5;
+
+-- e la prova che conta davvero: la coda si svuota?
+select tipo, count(*) filter (where inviata_il is null) as in_attesa,
+       count(*) filter (where tentativi > 0) as almeno_un_tentativo
+from notifica_in_coda group by tipo;
+```
+
+🔑 **`tentativi = 0` su una coda che non si svuota e' la firma di questo
+guasto**: distingue *«la funzione non e' stata chiamata»* da *«la funzione ha
+provato e non ce l'ha fatta»*, che si diagnosticano in posti opposti.
+
 ### Quando invece risponde 401 — e sono due 401 diversi
 
 🔑 **Il corpo dice quale dei due cancelli ti ha fermato.** Senza questa distinzione si cerca nel posto sbagliato: il primo caso non nomina nemmeno il segreto.

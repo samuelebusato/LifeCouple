@@ -187,6 +187,10 @@
       *(i tre testi sono bilingui dal 2026-09-15; vederli in inglese richiede
       di cambiare lingua al telefono e **ricostruire**)*
 - [ ] Arrivano davvero a telefono **bloccato**
+      🔴 *Se non arriva NIENTE, prima di sospettare la build guarda la coda*:
+      `tentativi = 0` su notifiche ferme significa che la funzione non e' stata
+      chiamata, non che ha fallito — e' **B-83**, e il pannello del cron dice
+      `succeeded` lo stesso. Le query in `docs/deploy-notifiche.md` §4
 - [ ] Il **ricordo «N anni fa»** mostra il **titolo** dell'evento
 - [ ] Il **posto appena segnato** non nomina il luogo
 - [ ] Spegnendole dalle impostazioni **non arriva più niente**
