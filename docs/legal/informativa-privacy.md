@@ -94,6 +94,7 @@ I dati **non sono venduti né ceduti**. Sono trattati per nostro conto dai forni
 | **Expo** *(servizio di notifiche push)* | Il token del tuo dispositivo e il testo della notifica, solo quando una notifica ti viene effettivamente inviata | Stati Uniti — vedi §5 |
 | **RevenueCat** *(gestione degli abbonamenti)* | Il tuo identificativo utente e i dati dei tuoi acquisti — mai i tuoi contenuti, le tue fotografie o il tuo indirizzo email | Stati Uniti — vedi §5 |
 | **Apple** e **Google** | Dati relativi agli acquisti e agli abbonamenti e — tramite APNs e FCM — il testo delle notifiche consegnate al tuo telefono | Vedi §5 |
+| **Amazon Web Services** *(hosting delle nostre pagine pubbliche)* | Niente di ciò che inserisci nell'app. Serve le pagine che chiunque può aprire senza un account — questa informativa, la cookie policy, la pagina iniziale — quindi riceve **la richiesta**: l'indirizzo IP da cui arriva e l'indirizzo richiesto. ⚠️ **Un caso va nominato**: se apri un link d'invito **senza avere l'app installata**, quell'indirizzo contiene il codice dell'invito | Edge in **Europa e Nord America** |
 
 ⚠️ **Non utilizziamo strumenti di analisi del comportamento, pubblicità o profilazione**, né di terze parti né propri.
 

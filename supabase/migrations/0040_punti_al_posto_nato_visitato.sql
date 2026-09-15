@@ -1,7 +1,12 @@
 -- =============================================================================
 -- LifeCouple — 0040: i punti di un posto che nasce gia' visitato (B-64)
 --
--- 🔴 NON ANCORA APPLICATA. Va letta prima di eseguirla.
+-- ✅ APPLICATA il 2026-09-14. (Questa riga ha detto «NON ANCORA APPLICATA»
+--    fino al 2026-09-15 (5), a migrazione gia' viva da un giorno.)
+--    **Verificata misurando il 2026-09-15**, non sulla parola: la prima
+--    asserzione di tests/punti.mjs — «un posto creato gia visitato vale 20
+--    punti», prima=540 dopo=560 — misura esattamente il trigger che questa
+--    migrazione sostituisce, e senza di essa varrebbe 0.
 --
 -- ## Il difetto, riferito da un utente e non da un test
 --

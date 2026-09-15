@@ -4,7 +4,9 @@
 >
 > 🔴 **Non è consulenza legale.** [`Rule/legale-beta.md`](../../../Rule/legale-beta.md) si apre con questa stessa frase, e vale identica qui: *«è la mappa dei temi da coprire, da far validare a un avvocato prima del lancio commerciale»*. Finché LifeCouple era gratuito, partire dai modelli era ragionevole. **Dal momento in cui incassa**, il documento del brain dice che serve la validazione di un legale — e non è una cautela aggiunta oggi, è una regola già scritta.
 >
-> **Titolare del trattamento**: F.R. di Busato Fausto.
+> **Titolare del trattamento**: **Samuele Busato**, persona fisica.
+>
+> 🔴 **Questa riga ha detto «F.R. di Busato Fausto» fino al 2026-09-15 (7), cioè per un giorno dopo D-136** — la decisione che ha cambiato il soggetto. ⚠️ *Era sfuggita alla passata di A10 perché quella aveva cercato il soggetto vecchio nei documenti **legali** (`docs/legal/`, `landing/`, i derivati), e questo è un documento **interno**: nomina il titolare senza essere reso a nessuno.* 🔑 **Ed è il posto peggiore dove sbagliarlo**: è il file che dice *cosa deve essere vero perché si possa pubblicare*, quindi chi lo apre per controllare la conformità leggeva il titolare sbagliato proprio mentre verificava.
 
 ---
 
@@ -29,7 +31,9 @@
 | Avviso sulle domande personalizzate (D-19) | ⚠️ la funzione non esiste ancora; l'avviso va scritto **con** lei |
 | Registro append-only delle azioni distruttive | ⚠️ parziale — `sciogli_coppia()` scrive in `registro_azioni`, il resto no |
 
-🔴 **E su tutto quanto sopra vale un avvertimento che non va perso**: è **costruito e non verificato**. Nessuna cancellazione vera è mai stata eseguita, e la prova che conta è una sola — creare un account di prova, riempirlo, cancellarlo, e **ricontrollare il database e il bucket**. Non la schermata che dice di sì.
+~~🔴 **E su tutto quanto sopra vale un avvertimento che non va perso**: è **costruito e non verificato**.~~ ✅ **L'avvertimento è caduto il 2026-09-14 (3): la prova è stata eseguita**, ed è stata esattamente quella che questa riga chiedeva — account di prova creato, riempito, cancellato, database **e bucket** ricontrollati. Esito nella tabella di [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md).
+
+🔴 **E aveva ragione a esserci: al primo giro la cancellazione NON ha funzionato.** Due difetti sovrapposti (**B-68**), nessuno visibile dall'app — chiavi esterne nate *dopo* la passata della `0026`, e il trigger della `0025` che fermava anche la cascata dell'account. 🔑 *Si credeva che «Elimina account» cancellasse **male**; in realtà **falliva del tutto**.* Corretti da `0044` e `0045`. ⚠️ **Questa riga è rimasta rossa per un giorno dopo la prova**, come §7.3 del threat model e il backlog di `History.md` §6: corrette insieme il 2026-09-15 (5).
 
 ---
 
@@ -88,7 +92,7 @@ I cinque modelli in [`Rule/`](../../../Rule/) sono scritti **per HeleoX**: vanno
 | Catena di cancellazione | `Rule/catena-cancellazione.md` | interno — **§2 qui sopra è ciò che deve descrivere** | ✅ [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) — contiene il **protocollo di prova**; **in italiano di proposito** (D-123) |
 | Procedura data breach (artt. 33-34) | `Rule/procedura-data-breach.md` | interno, cronometro di 72 ore | ✅ [`legal/procedura-data-breach.md`](legal/procedura-data-breach.md) — **in italiano di proposito** (D-123) |
 | Cookie policy | `Rule/cookie-policy-app.md` | ⟳ **dentro l'app** (2026-09-09) + sul sito che ospita l'informativa | ✅ [`legal/en/cookie-policy.md`](legal/en/cookie-policy.md) — **è il testo ufficiale** (EN) · [`legal/cookie-policy.md`](legal/cookie-policy.md) (IT, **documento di lavoro, non reso**) · ✅ pagina pronta in `landing/cookie-policy.html` — ⬜ resta da **pubblicare la landing** |
-| **Termini d'uso** | 🔑 **nessun modello in `Rule/`** — scritti da zero | 🔴 **URL pubblico** + link dentro l'app | ✅ [`legal/en/terms-of-use.md`](legal/en/terms-of-use.md) *(2026-09-10)* — **testo ufficiale, bozza NON in vigore** · [`legal/termini-uso.md`](legal/termini-uso.md) (IT, di lavoro) — 🔴 **non reso e non pubblicato**: porta ancora i `[TO BE DECIDED]`, e il generatore si rifiuta di costruirlo |
+| **Termini d'uso** | 🔑 **nessun modello in `Rule/`** — scritti da zero | ✅ **URL pubblico** (`terms-of-use.html`) **+ link dentro l'app** — registrazione, Impostazioni e paywall, dal 2026-09-15 | ✅ [`legal/en/terms-of-use.md`](legal/en/terms-of-use.md) *(2026-09-10)* — **testo ufficiale, bozza NON in vigore** · [`legal/termini-uso.md`](legal/termini-uso.md) (IT, di lavoro) — 🔴 **non reso e non pubblicato**: porta ancora i `[TO BE DECIDED]`, e il generatore si rifiuta di costruirlo |
 
 > 🔴 **Il sesto documento, aggiunto il 2026-09-09: i termini d'uso.** La tabella qui sopra ne elencava cinque, e per nove giorni la loro assenza non è stata contata come lacuna perché **nessuna riga la nominava** — mentre tre documenti diversi li davano per esistenti: l'informativa §10-bis (*«va scritta qui e nei termini d'uso»*), il §8 qui sotto (Apple può chiederli per i contenuti generati dagli utenti) e [`pubblicazione.md`](pubblicazione.md) §3.1, che elenca *«mancano i link a termini e privacy»* fra i rifiuti frequenti.
 >
@@ -138,6 +142,7 @@ Ognuno riceve dati personali, va **nominato nell'informativa e nel registro**, e
 | **Apple / Google** | dati di pagamento | trasferimento USA. ⚠️ *Il denaro non passa da noi: incassa lo store* |
 | **RevenueCat** | l'identificativo dell'utente e i dati d'acquisto | ⟳ **adottato il 2026-09-14** (D-133) — questa riga diceva *«se adottato»* fino al 2026-09-14 (3). Trasferimento USA; ✅ nominato nell'informativa §3/§4/§5 e nel registro art. 30 · 🔴 **DPA art. 28 da accettare e archiviare** |
 | **Expo** (notifiche push) | il **testo** della notifica, e con esso un contenuto della coppia | ⟳ **dal 2026-09-14** (D-129): è il primo contenuto che esce dall'UE, e chi tiene spente le notifiche non ne fa uscire nessuno · 🔴 **DPA art. 28 da accettare e archiviare** |
+| ⟳ **AWS** (S3 + CloudFront) | **niente di ciò che si inserisce nell'app**: la richiesta HTTP delle pagine pubbliche — IP e indirizzo richiesto. ⚠️ Dal 2026-09-15 quell'indirizzo può contenere il **token d'invito** | 🔴 **Aggiunto il 2026-09-15 (5), e la lacuna è del 2026-09-10**: la landing è pubblica da allora. ✅ *Log di accesso non attivi* e `PriceClass_100` (Europa + Nord America), entrambi verificati in `infra/main.tf` · 🔴 **DPA da archiviare — è il sesto, non il quinto** |
 
 ---
 

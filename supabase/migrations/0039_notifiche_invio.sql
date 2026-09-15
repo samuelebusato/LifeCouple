@@ -1,7 +1,15 @@
 -- =============================================================================
 -- LifeCouple — 0039: l'invio delle notifiche — la coda, il trigger, la lingua
 --
--- 🔴 NON ANCORA APPLICATA. Va letta prima di eseguirla.
+-- ✅ APPLICATA il 2026-09-14. (Questa riga ha detto «NON ANCORA APPLICATA»
+--    fino al 2026-09-15 (5), a migrazione gia' viva da un giorno — la terza
+--    coppia di intestazioni a restare indietro, dopo 0041/0042 e 0047/0048.)
+--    **Verificata misurando il 2026-09-15**, non sulla parola: le quattro
+--    asserzioni «0039» di tests/rls.avversariali.mjs sono verdi, ed erano
+--    scritte apposta per essere ROSSE finche' la migrazione non passava.
+--    🔑 La piu' probante e' `permission denied for function accoda_ricordi`
+--    (42501): un permesso negato si puo' negare **solo su una funzione che
+--    esiste** — se la migrazione non fosse passata l'errore sarebbe un altro.
 --
 -- La 0038 ha creato dove vivono i token e i consensi. Qui c'e' cio' che
 -- **fa partire** una notifica. L'invio vero — la chiamata al servizio push di

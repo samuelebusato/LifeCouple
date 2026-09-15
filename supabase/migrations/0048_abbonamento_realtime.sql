@@ -1,7 +1,14 @@
 -- =============================================================================
 -- LifeCouple — 0048: i muri cadono quando il webhook scrive (B-77)
 --
--- 🔴 NON ANCORA APPLICATA. Si applica dal pannello Supabase (SQL Editor).
+-- ✅ APPLICATA il 2026-09-15 dall'utente, dal pannello Supabase.
+--    **Verificata misurando, non sulla parola**: col telefono fermo sul paywall
+--    sono passati **1,7 secondi** dal comando allo schermo sbloccato, contro una
+--    lettura di **19 secondi** prima — e prima di questa migrazione i 19 secondi
+--    non erano nemmeno un'attesa lunga, erano una **resa**: l'app si fermava a 9
+--    e restava coi muri su. 🔑 La misura e' la prova che il realtime consegna:
+--    senza la pubblicazione di `abbonamento` l'app non avrebbe nessuno che la
+--    sveglia, e 1,7 secondi non sarebbero ottenibili aspettando.
 --
 -- ## Il difetto, visto succedere il 2026-09-15
 --

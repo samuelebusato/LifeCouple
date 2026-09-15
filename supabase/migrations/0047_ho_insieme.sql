@@ -1,7 +1,13 @@
 -- =============================================================================
 -- LifeCouple — 0047: il diritto è della PERSONA, non della coppia (B-75)
 --
--- 🔴 NON ANCORA APPLICATA. Si applica dal pannello Supabase (SQL Editor).
+-- ✅ APPLICATA il 2026-09-15 dall'utente, dal pannello Supabase.
+--    **Verificata percorrendola, non sulla parola**: e' la migrazione che ha
+--    reso possibile **B2** — l'acquisto vero, l'unico anello del sistema mai
+--    percorso. Dopo il pagamento i muri sono caduti **da soli**, su un utente
+--    che in quel momento non aveva ancora un partner: e' esattamente il caso
+--    che il cancello precedente rifiutava, quindi la prova e' differenziale.
+--    🔑 Se questa migrazione non fosse applicata, quel giro non si chiuderebbe.
 --
 -- ## Cosa era sbagliato
 --

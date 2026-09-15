@@ -1,6 +1,6 @@
 # Privacy Policy — LifeCouple
 
-**Version `app-1.1` — last updated 15 September 2026.** Provided under Articles 13–14 of Regulation (EU) 2016/679 (GDPR).
+**Version `app-1.2` — last updated 15 September 2026.** Provided under Articles 13–14 of Regulation (EU) 2016/679 (GDPR).
 
 ---
 
@@ -73,6 +73,7 @@ Data is **never sold or traded**. It is processed on our behalf by the suppliers
 | **Expo** *(push notification service)* | Your device token and the text of the notification, only when a notification is actually sent to you | United States — see section 5 |
 | **RevenueCat** *(subscription management)* | Your user identifier and the data of your purchases — never your content, your photographs or your email address | United States — see section 5 |
 | **Apple** and **Google** | Data relating to purchases and subscriptions, and — through APNs and FCM — the text of the notifications delivered to your phone | See section 5 |
+| **Amazon Web Services** *(hosting of our public pages)* | Nothing you enter in the app. It serves the pages anyone can open without an account — this policy, the cookie policy, the home page — so it receives **the request itself**: the IP address it comes from and the address requested. ⚠️ **One case is worth naming**: if you open an invitation link **without having the app installed**, that address contains the invitation code | Edge locations in **Europe and North America** |
 
 **We do not use behavioural analytics, advertising or profiling tools**, neither third-party nor our own.
 
@@ -82,11 +83,13 @@ Data may be disclosed to competent authorities where required by law.
 
 **The database and the photographs reside in the European Union** (Frankfurt, Germany). They do not leave the European Economic Area.
 
-Three things travel to the United States. They are listed one by one because a partial list would be worse than none.
+Four things may travel outside the European Union. They are listed one by one because a partial list would be worse than none — and the fourth is different in kind from the first three, so it is marked as such rather than blended in.
 
 1. **Place and film searches.** These services receive only **the text you type into the search box** — not your content, not your photographs, not your account.
 2. **Push notifications, and only if you switch them on.** The text of the notification and your device token pass through **Expo**, and then through **Apple (APNs)** or **Google (FCM)** to reach your phone. ⚠️ One kind of notification carries a piece of your own content: the **anniversary reminder** includes the **title of the event** it refers to. The notification telling you that your partner has marked a new place as visited deliberately **does not name the place** — you open the app to see it — because that one would show where you have just been to anyone glancing at a locked phone. Notifications never carry photographs, notes, the content of your diary, or your location. If you would rather nothing travelled at all, notifications can be turned off in Settings — and then nothing is sent.
 3. **Purchases and subscriptions.** The payment itself is handled by **Apple** (and, if the app is published there, Google): we never see your card, your bank details or your billing address, and no payment data is stored in our systems. **RevenueCat** sits between them and us, to normalise the receipts and to tell our servers when a subscription begins, renews or ends; it receives **your user identifier** and the data of the purchase — not your content, not your photographs, not your email address.
+
+4. **Opening one of our public web pages — not a transfer of your content, but of your request.** The pages that anyone can open without an account are served by a content delivery network with locations in **Europe and North America**. Which one answers you depends on where you are: someone opening the page from Italy is normally served from Europe. What reaches it is the request — your IP address and the address you asked for — and **nothing you have entered in the app**. ⬜ *We do not enable access logs on this service*, so no record of who opened which page is collected on our behalf.
 
 The transfer is based on **standard contractual clauses approved by the European Commission**, or on equivalent mechanisms such as adherence to the Data Privacy Framework where applicable.
 

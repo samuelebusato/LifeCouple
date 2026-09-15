@@ -34,9 +34,10 @@ Per questo motivo **non viene mostrato alcun banner di consenso**: l'art. 122 de
 | **Se hai acceso la condivisione della posizione** | Ricordare, sul tuo telefono, se la condivisione è accesa o spenta, così la ritrovi come l'hai lasciata. ⚠️ Se la memoria locale non risponde, l'applicazione riparte da **spenta**: il valore prudente non è «come l'ultima volta» | Fino alla disinstallazione o alla cancellazione dei dati dell'app |
 | **Cosa questo telefono ti ha già mostrato** della creatura che cresce con voi (l'ultimo stadio e i punti visti) | Mostrare l'evoluzione **a ciascuno dei due sul proprio telefono**: se il ricordo stesse sul server, chi apre per primo lo consumerebbe anche per l'altro, che non vedrebbe mai la sua | Fino alla disinstallazione o alla cancellazione dei dati dell'app |
 | **La scelta di entrare rimandando la creazione dello spazio di coppia** | Non riproporti a ogni avvio una schermata che hai già superato | Fino alla disinstallazione o alla cancellazione dei dati dell'app |
+| **Un invito che hai aperto e non hai ancora usato** | Quando qualcuno ti invita nel suo spazio, il link ti arriva quasi sempre **prima che tu abbia un account**. L'invito resta sul telefono perché sia ancora lì dopo che ti sei registrato, invece di perdersi fra i due passaggi | Finché l'invito non viene usato, o finché disinstalli l'app o ne cancelli i dati |
 | **Dati temporanei di funzionamento** (cache delle immagini già scaricate) | Evitare di riscaricare ogni volta le stesse fotografie: velocità e consumo di dati | Gestita dal sistema operativo |
 
-Le tre voci centrali sono memorizzate **per singolo utente**: sullo stesso telefono possono entrare persone diverse, e le scelte di una non sono le scelte dell'altra.
+La seconda, la terza e la quarta voce sono memorizzate **per singolo utente**: sullo stesso telefono possono entrare persone diverse, e le scelte di una non sono le scelte dell'altra. **L'invito è l'eccezione, e non può non esserlo**: viene salvato prima che tu abbia un account, quindi non c'è ancora nessun utente a cui possa appartenere.
 
 🔑 **La lingua non compare in questa tabella perché non viene memorizzata**: l'applicazione legge quella impostata sul telefono a ogni avvio e non conserva nessuna preferenza linguistica.
 

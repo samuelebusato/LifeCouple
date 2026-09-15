@@ -42,9 +42,11 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | | |
 |---|---|
 | **Finalità** | Erogazione del servizio, che per costruzione esiste solo fra due persone |
-| **Categorie di dati** | Associazione fra due identificativi utente, data di ingresso, data di uscita |
+| **Categorie di dati** | Associazione fra due identificativi utente, data di ingresso, data di uscita. ⟳ **Dal 2026-09-15**: il **token d'invito**, di cui il database conserva **l'impronta e non il valore**, e che resta sul telefono di chi è stato invitato finché non lo usa |
 | **Base giuridica** | Esecuzione del contratto (art. 6.1.b) |
 | **Conservazione** | Durata del rapporto |
+| **Destinatari** | Supabase (responsabile). ⟳ **Dal 2026-09-15 anche AWS**, e solo in un caso: se chi riceve l'invito apre il link **senza avere l'app**, la richiesta — token compreso — arriva alla rete di distribuzione che serve le pagine pubbliche. Vedi Parte C |
+| ⟳ **Nota del 2026-09-15 (D-137)** | L'invito viaggia ora su un **indirizzo web pubblico** (`https://lifecouple.heleox.it/invito/<token>`) invece che su uno schema privato dell'app. ⚠️ *Il canale è più esposto — si indicizza, si inoltra, compare nell'anteprima di una notifica* — ma **la difesa non è la segretezza del link**: il legame non si forma finché **chi ha invitato non conferma** (`0003`). Il link apre, non unisce |
 | 🔴 **Nota di rischio** | Il legame **è un dato personale di entrambi**, e in alcuni contesti è **la cosa più sensibile dell'intero sistema**: può rivelare l'esistenza di una relazione sentimentale e, indirettamente, l'orientamento sessuale (art. 9). Non è un dato richiesto: è **dedotto dalla struttura del prodotto**. Vedi §D e [`conformita.md`](../conformita.md) §9 |
 
 ### A3 — Contenuti condivisi della coppia
@@ -182,6 +184,13 @@ Contatto per gli interessati: **info@heleox.it** *(scelta il 2026-09-10, D-121)*
 | **RevenueCat** | Normalizzazione ricevute, webhook | Identificativo utente, stato abbonamento | USA | ⚠️ **copia da chiedere e archiviare** — adottato il 2026-09-14 (D-133), non più «se adottato» |
 | **Expo** | Servizio push: instrada le notifiche verso Apple e Google | Token del dispositivo, lingua del telefono, testo della notifica | USA | ⚠️ **[DA FARE]** — SCC / DPF |
 | **Apple (APNs) / Google (FCM)** | Consegna della notifica al telefono | Token del dispositivo, testo della notifica | Vedi §5 | Accordi di programma |
+| **Amazon Web Services** (S3 + CloudFront) | Hosting delle **pagine pubbliche**: informativa, cookie policy, landing, 404, e il file che iOS legge per aprire i link d'invito | **Nessun dato inserito nell'app.** Riceve la richiesta HTTP: indirizzo IP e indirizzo richiesto. ⚠️ Dal 2026-09-15 quell'indirizzo **può contenere il token d'invito**, quando chi lo riceve non ha l'app installata | Edge **Europa e Nord America** (`PriceClass_100`, verificato in [`infra/main.tf`](../../infra/main.tf)) | ⚠️ **[DA FARE]** — DPA di AWS, parte del Customer Agreement |
+
+> 🔴 **AWS mancava da questa tabella, e la lacuna è del 2026-09-10 — non del 15.** La landing è pubblica da allora, e da allora un fornitore riceveva richieste per conto nostro senza comparire qui. ⚠️ *Il 2026-09-15 l'ha solo aggravata*: con l'universal link (**D-137**) il token d'invito entra nell'URL, quindi ciò che transita non è più solo «qualcuno ha aperto una pagina pubblica».
+>
+> ✅ **Due cose che riducono il peso, entrambe verificate nel codice dell'infrastruttura e non supposte**: i **log di accesso non sono attivi** (nessun `logging_config` in `infra/main.tf`), quindi non si raccoglie per nostro conto nessun registro di chi ha aperto cosa; e `PriceClass_100` limita gli edge a **Europa e Nord America**, così una richiesta dall'Italia è servita normalmente dall'Europa.
+>
+> 🔑 *È la quarta volta che questa forma si presenta* (B-60, B-62, e il registro del 2026-09-14): **una dichiarazione corretta quando è stata scritta, resa incompleta da qualcosa costruito altrove.** Qui il «qualcosa» è stato pubblicare delle pagine, che non sembra un trattamento — ed è esattamente perché non lo sembra che è passato.
 
 > ⟳ **Le parentesi tolte il 2026-09-14, ed è bene dire esattamente perché.** Il 2026-09-10 le due righe erano state scritte fra parentesi perché l'invio non esisteva: nessun token lasciava il database, quindi non c'era nessun destinatario da dichiarare. **Oggi l'invio esiste** — migrazione `0039`, Edge Function `invia-notifiche` (**D-129**) — e la regola scritta allora era *«le parentesi si tolgono nello stesso giro in cui parte la prima notifica, non dopo»*.
 >

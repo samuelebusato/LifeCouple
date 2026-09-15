@@ -1,6 +1,6 @@
 # Cookie Policy and Local Storage — LifeCouple
 
-**Version `cookie-1.1` — last updated 15 September 2026.** Written in accordance with the Italian Data Protection Authority's *Guidelines on cookies and other tracking tools* (measure of 10 June 2021) and **Article 122 of the Italian Privacy Code** (Legislative Decree 196/2003).
+**Version `cookie-1.2` — last updated 15 September 2026.** Written in accordance with the Italian Data Protection Authority's *Guidelines on cookies and other tracking tools* (measure of 10 June 2021) and **Article 122 of the Italian Privacy Code** (Legislative Decree 196/2003).
 
 ---
 
@@ -24,9 +24,10 @@ For this reason **no consent banner is shown**: Article 122 of the Privacy Code 
 | **Whether you turned location sharing on** | Remembering, on your phone, whether sharing is on or off, so you find it as you left it. If local storage does not respond, the app starts from **off**: the cautious value is not "same as last time" | Until you uninstall the app or clear its data |
 | **What this phone has already shown you** of the creature that grows with you (the last stage and points seen) | Showing the evolution **to each of you on your own phone**: if the record lived on the server, whoever opened the app first would consume it for the other as well, who would never see theirs | Until you uninstall the app or clear its data |
 | **Your choice to continue without creating the couple space yet** | Not showing you a screen you have already been through every time you open the app | Until you uninstall the app or clear its data |
+| **An invitation you have opened but not yet used** | When someone invites you to share their space, the invitation link almost always reaches you **before you have an account**. The invitation is kept on your phone so that it is still there once you have signed up, instead of being lost between the two steps | Until the invitation is used, or until you uninstall the app or clear its data |
 | **Temporary working data** (cache of images already downloaded) | Avoiding re-downloading the same photographs every time: speed and data usage | Managed by the operating system |
 
-The three middle items are stored **per user**: different people can sign in on the same phone, and one person's choices are not the other's.
+The second, third and fourth items are stored **per user**: different people can sign in on the same phone, and one person's choices are not the other's. **The invitation is the exception, and necessarily so**: it is saved before you have an account, so there is no user it could belong to yet.
 
 **Language does not appear in this table because it is not stored**: the app reads the language set on your phone every time it starts and keeps no language preference.
 
