@@ -73,28 +73,48 @@ prodotto **è** un diario personale: negarlo sarebbe falso.
 
 ---
 
-## 2. 🔴 La domanda aperta che va risolta prima di compilare
+## 2. ✅ «Sensitive Info» — la risposta è **No**, e poggia su un fatto dello schema
+
+⟳ **Chiusa il 2026-09-15 (3)** — D-141. Restava l'unica riga del documento
+senza un valore, e aspettava l'avvocato; con quel passaggio saltato andava
+comunque risposta, perché **è un campo del questionario e il questionario non
+si invia in bianco**.
 
 **«Sensitive Info»** nella tassonomia di Apple comprende, alla lettera,
-l'**orientamento sessuale**.
+l'**orientamento sessuale**. La domanda che Apple pone è però precisa: *«questi
+dati vengono raccolti dall'app?»* — raccolti, non deducibili.
 
-⚠️ Questo prodotto **non chiede** l'orientamento sessuale di nessuno. Ma
-[`conformita.md`](conformita.md) §9 pone il problema in modo che non si può
-ignorare qui: un'app che registra per definizione **l'esistenza di una
-relazione sentimentale fra due persone** può, per certi utenti, **rivelarlo per
-deduzione dalla struttura del prodotto**.
+🔑 **E qui il fatto che decide non è un'opinione, è lo schema del database:
+nessuna tabella raccoglie il genere, il sesso o i pronomi di nessuno.**
 
-🔑 **La domanda non è se lo chiediamo — è se Apple consideri «raccolta» una
-deduzione strutturale.** È la stessa domanda dell'art. 9 GDPR, posta a un
-questionario invece che a un regolamento, e ha la stessa risposta o
-l'opposta a seconda di chi la legge.
+| Tabella | Cosa contiene davvero |
+|---|---|
+| `profilo_utente` (`0032`) | **solo `data_nascita`** — serve al compleanno sul calendario e alla soglia dei 14 anni (art. 8 GDPR) |
+| `profilo_coppia` (`0029`) | `conosciuto_da`, `fascia_eta`, `convivenza`, `interesse` — quattro risposte a dominio chiuso, nessuna anagrafica |
 
-> **Va posta all'avvocato insieme a quella di `conformita.md` §9** — sono la
-> stessa domanda in due sedi, e farne una sola telefonata costa quanto farne
-> zero. ⚠️ *Finché non ha risposta, questa riga resta l'unica del documento
-> senza un valore*, e il questionario non si invia: una dichiarazione App
-> Privacy sbagliata è un motivo di rifiuto, e correggerla dopo la
-> pubblicazione lascia traccia.
+⚠️ *L'unico `genere` che esiste in tutto lo schema è il **tipo di un luogo***
+(`restaurant`, `city_park`, `museum`) introdotto dalla `0016`, e non riguarda
+le persone.
+
+**Quindi la deduzione strutturale che `conformita.md` §9 descrive richiede un
+dato che il sistema non possiede.** Sapere che due account sono una coppia non
+rivela l'orientamento di nessuno senza sapere il genere di entrambi — e quel
+secondo dato non viene chiesto, non viene memorizzato e non esce da nessuna
+parte. ✅ **`Sensitive Info` → No.**
+
+> ⚠️ **Cosa questa risposta NON chiude, e va tenuto separato.** La domanda
+> dell'**art. 9 GDPR** in [`conformita.md`](conformita.md) §9 **non è la stessa
+> domanda in un'altra sede**, come questo documento diceva fino a oggi: Apple
+> chiede *«raccogli questo tipo di dato?»*, l'art. 9 riguarda il **trattamento
+> di dati che rivelano** — che è più ampio, e comprende l'inferenza. 🔑 *Le due
+> domande hanno risposte legittimamente diverse*, e trattarle come una sola
+> porterebbe a rispondere ad Apple con l'argomento sbagliato.
+>
+> 🔴 **Quella dell'art. 9 resta aperta e senza risposta professionale**, perché
+> il passaggio dall'avvocato è stato saltato (D-141). Sta fra i rischi accettati
+> di `History.md` §5. ⚠️ *Un nome proprio può suggerire un genere*: è inferenza
+> da testo libero scritto dagli utenti, non un dato raccolto — ma è
+> esattamente il tipo di sfumatura su cui un parere professionale serviva.
 
 ---
 
