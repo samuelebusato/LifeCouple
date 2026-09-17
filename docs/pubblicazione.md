@@ -34,9 +34,11 @@ Non è un elenco di buoni propositi: è cosa c'è e cosa non c'è nel repo, cont
 
 ## 1. I due blocchi che non sono ritardi ma muri
 
-### 1.1 ⟳ La cancellazione dell'account — costruita il 2026-08-31, **mai provata**
+### 1.1 ⟳ La cancellazione dell'account — costruita il 2026-08-31, **provata il 2026-09-14**
 
 > ⟳ **Aggiornato il 2026-09-14 (3).** Il titolo diceva *«non esiste»* e ha continuato a dirlo per due settimane dopo che esisteva: la Edge Function [`cancella-account`](../supabase/functions/cancella-account/index.ts) è del 2026-08-31, `ACTIVE`, invocata da Impostazioni. 🔴 **Ma il muro non è caduto: si è spostato.** Quel che manca è la **prova end-to-end** — la tabella «Esito della prova» in [`legal/catena-cancellazione.md`](legal/catena-cancellazione.md) è vuota. ⚠️ *L'informativa §7 promette agli utenti una cancellazione «immediata e definitiva»: è la dichiarazione più impegnativa dell'intero corpo documentale, ed è l'unica che poggia su codice mai eseguito.* Tutto ciò che segue resta valido come racconto del perché la voce esiste.
+
+> ✅ **E il muro è caduto il 2026-09-14 — ma questa sezione ha continuato a dire di no per tre giorni.** La tabella «Esito della prova» **non è vuota**: l'ha riempita `npm run test:cancellazione` lo stesso giorno in cui il riquadro qui sopra la dichiarava vuota, e il commit è `bf46342`. La prova end-to-end c'è su tutte e cinque le righe — accesso rifiutato, contenuti a zero, **bucket contato direttamente su `storage.objects`** invece che dedotto da un rifiuto (B-03), coppia sciolta, contenuti del partner conservati (D-04) — e al primo giro **ha trovato B-68**, cioè i due difetti per cui la cancellazione non funzionava affatto. 🔑 *Trovato scrivendo §7-quater il 2026-09-17: è la **quarta** volta in tre giorni che un documento dichiara «da fare» una cosa fatta altrove*, dopo B-78, B-79 e B-85. ⚠️ **E stavolta la riga falsa stava in §1, cioè in una delle due voci che questo documento chiama «muri»**: chi avesse letto solo questa sezione avrebbe rinviato la pubblicazione per un blocco che non esiste più.
 
 Apple richiede che un'app che permette di **creare** un account permetta di **cancellarlo dall'app** — non per email, non dal sito. LifeCouple crea account. È fra i primi controlli del revisore, quindi non è un rischio: è un esito.
 
@@ -332,7 +334,9 @@ npx eas build --profile development --platform ios
 
 ---
 
-## 7-ter. Il piano operativo, riorganizzato il 2026-09-14 (3)
+## 7-ter. ~~Il piano operativo, riorganizzato il 2026-09-14 (3)~~ — **superato da §7-quater**
+
+> ⟳ **Superato il 2026-09-17.** Era organizzato in **cinque corsie parallele**, ed era la forma giusta finché commercialista e avvocato tenevano aperte code che scorrevano da sole. **D-141 le ha chiuse tutte**: senza code da far scorrere in parallelo, le corsie descrivono un lavoro che ormai è una **fila**. **Resta scritto** perché registra cosa si è chiuso e quando — il piano vivo è in **§7-quater**.
 
 > §7 dice **perché** l'ordine è quello e resta valido. Questa sezione dice **cosa fare**, nello stato in cui il progetto si trova stasera, e **chi può farlo** — perché metà delle voci rimaste richiede credenziali che l'agente non ha e non deve avere.
 
@@ -428,6 +432,149 @@ Il lavoro sta in **cinque corsie**. Dentro una corsia l'ordine conta; fra corsie
 - ⬜ **Android in ogni sua forma** (D-132). Torna solo se torna Android, e con esso i 12 tester.
 - ⏸️ **La lista Film e TMDB** (D-127): spenta. *Riaccenderla rimette il muro §1.2 esattamente dov'era.*
 - ⏸️ **Il ciclo mestruale** (D-07, P-02): dopo la prima pubblicazione, per non sommare gli errori in un lotto solo.
+
+---
+
+## 7-quater. Il piano di pubblicazione, scritto il 2026-09-17
+
+> §7 dice **perché** l'ordine è quello e resta valido. §7-ter organizzava il lavoro in **cinque corsie parallele**, ed era la forma giusta finché c'erano code esterne da far scorrere insieme. **Non ce ne sono più** (D-141), quindi questa sezione riscrive lo stesso lavoro nella forma che ha adesso: una **fila**, più tre voci che non dipendono da niente.
+
+⚠️ **Fra il 2026-09-15 e oggi non è cambiato nulla nel progetto**: due giorni interamente assorbiti dall'università. Lo stato di partenza è quello della nota `History.md` **2026-09-15 (11)**, ricontrollato riga per riga scrivendo questo piano.
+
+### La sola dipendenza vera che resta
+
+🔑 **La lingua della scheda decide quanti set di screenshot servono, e gli screenshot sono la voce più cara del piano.** L'app sul telefono è in inglese: se la scheda esce **anche in italiano**, il telefono va rimesso in italiano e le sei schermate vanno **riscattate una seconda volta**. *È l'unica voce che, presa nell'ordine sbagliato, fa buttare via lavoro già fatto* — ed è per questo che la decisione di §6 sta **prima** degli scatti e non dopo.
+
+Tutto il resto è indipendente: si fa in qualsiasi ordine, purché prima del passo che lo richiede.
+
+### Fuori fila — tre voci che non bloccano nessuno
+
+| | Cosa | Chi | Costo | Peggiora aspettando? |
+|---|---|---|---|---|
+| 🔴 **C1** | **Revoca della chiave `SubscriptionKey_T3HLB536G3`** — App Store Connect → *Users and Access → Integrations*, revoca, nuova chiave, caricamento su RevenueCat | solo tu | 5 minuti | 🔴 **sì, ed è l'unica del piano** |
+| **A7** | I **sei accordi art. 28** — Supabase, Expo, Apple, Google, RevenueCat, **AWS**. Da accettare e archiviare; l'elenco è in [`legal/registro-trattamenti.md`](legal/registro-trattamenti.md) Parte C | solo tu | minuti | no |
+| **Chiave API di ASC** | `eas submit` non sa crearla in `--non-interactive`. Una volta sola, poi i caricamenti tornano automatici | solo tu | una volta | no, ma **blocca la Fase 4** |
+
+🔑 **C1 va prima di tutto per una ragione che non è l'urgenza ma l'asimmetria**: chiuderla costa cinque minuti e quel costo non cambia mai; il rischio invece cresce, e cresce in silenzio — *una chiave esposta resta esposta e non se ne accorge nessuno finché non serve*. Il rischio accettato in `History.md` §5 diceva *«da riconsiderare prima della pubblicazione, quando gli abbonamenti diventano veri e la superficie smette di essere teorica»*. ⚠️ **La build `production` è firmata dal 2026-09-15: quel momento non sta arrivando, è passato.**
+
+### Fase 1 — La lingua della scheda (tua, una riga, e viene prima)
+
+Le tre strade sono in **§6** e non le ripeto. Quel che è cambiato da quando furono scritte: **la strada (c) non aspetta più niente.** Era bloccata da A6 — *«tradurre prima della revisione dell'avvocato significa tradurre due volte»* — e **D-141 ha saltato l'avvocato**, quindi quell'argomento è caduto.
+
+**Raccomandazione: strada (a) — solo inglese — per la prima pubblicazione**, e le traduzioni subito dopo. Le ragioni, in ordine:
+
+1. È **la decisione già in vigore** (D-123). Non chiede di prenderne una nuova: chiede di non disfarne una.
+2. Costa **un set di screenshot invece di due**, e gli screenshot sono la voce che §6 stesso chiama *«la più sistematicamente sottostimata del piano»*.
+3. **V3** dice che il valore atteso del progetto è percorrere il ciclo, non massimizzare la conversione. §6 dice che la strada (a) costa *«conversione, non rischio»*: è esattamente il tipo di costo che V3 autorizza a pagare.
+
+⚠️ **Ma il conto che rende buona questa raccomandazione non è stato verificato**, e va detto invece di lasciarlo implicito: si assume che aggiungere la localizzazione italiana **dopo** sia una modifica dei soli **metadati** e non una revisione nuova del binario. 🔴 **Va confermato prima di contarci** — se costasse una revisione piena, la strada (b) o (c) fatta **subito** diventerebbe più conveniente, non meno.
+
+### Fase 2 — Gli screenshot (io + tu, sul telefono) — la voce più grossa
+
+È l'unica cosa rimasta che richiede **entrambi** e un telefono vero.
+
+✅ **Il problema della misura è risolto e non va ripensato**: servono `1206 × 2622 PNG` nativi (iPhone 16 Pro), trasferiti **via iCloud**. ⚠️ *Il primo giro è passato da WhatsApp, che li ha ridotti a `942 × 2048 JPEG`* — e un difetto così non si vede finché non lo rifiuta il modulo.
+
+#### Quali sei schermate, da quale account, e cosa non va nei sette scatti del 2026-09-15
+
+> ⟳ **Riscritto il 2026-09-17, dopo aver GUARDATO gli scatti.** Fino a qualche ora prima questo riquadro diceva che l'account demo era quello da cui scattare, poi che serviva una decisione su come procurarsi un account con «Insieme». **Erano due errori consecutivi, e il secondo l'ho scritto io.** Guardare gli otto file li ha sciolti entrambi in un colpo: l'account usato il 2026-09-15 **ha già «Insieme»**.
+
+**Le sei schermate sono le sei schede della barra**: `home` (Philippe), `calendario` (gli eventi), `galleria` (le foto), `mappa` (i luoghi), `giochi` (le partite), `preferiti` (le liste).
+
+⚠️ **Tre schede su sei sono chiuse dietro «Insieme»** — `home` mostra `MuroCreatura` al posto della creatura, `mappa` e `preferiti` mostrano `Muro` (`components/muro.tsx`, diritto letto da `ho_insieme()`, `0047`). 🔑 **Quindi l'account demo non va bene per scattare, e non è un difetto della demo**: `tools/verifica-demo.mjs` verifica apposta che sia *senza* abbonamento, perché *«senza il muro il revisore non può percorrere l'acquisto in sandbox, che è proprio ciò che Apple vuole vedere»*.
+
+✅ **Ma la domanda è già risolta e non serve nessuna decisione**: negli scatti del 2026-09-15 **Philippe si vede, la mappa è aperta e le liste pure**. L'account personale ha il diritto, ed è quello da cui si è scattato e da cui si riscatterà. *Restano due account distinti con due scopi distinti — il personale per la vetrina, la demo per la revisione — e nessuno dei due va toccato per somigliare all'altro.*
+
+#### Cosa c'è che non va, scatto per scatto
+
+I sette file del 2026-09-15 (più `IMG_2902`, di un altro giorno e di un altro telefono) coprono tutte e sei le schede, `calendario` due volte. ✅ **La misura è giusta**: `1206 × 2622` su tutti e sette. 🔴 **Il resto no.**
+
+**Quattro difetti sono in tutti e sette insieme**, e si tolgono tutti prima di premere il tasto:
+
+| | Difetto | Come si evita |
+|---|---|---|
+| 1 | 🔴 **La Dynamic Island mostra una diretta calcistica** — due stemmi di club e un orario. *Non era mai stato scritto da nessuna parte*, ed è l'elemento più vistoso dopo il pulsante: **è il marchio di qualcun altro nella propria vetrina** | Chiudere la diretta prima di scattare |
+| 2 | 🔴 **Un pulsante di sistema (AssistiveTouch) galleggia a metà destra**, sopra il contenuto: sulla foto di New York, sulla Bosnia, sulla carta del quiz, sulla cena | Spegnerlo nelle impostazioni del telefono |
+| 3 | 🔴 **Batteria al 18%, in rosso** | Telefono in carica |
+| 4 | ⚠️ **Orologio 20:45** | Apple mette **9:41** su ogni suo materiale: non è un obbligo, è la convenzione che fa sembrare lo scatto voluto invece che catturato |
+
+**E poi uno per schermata**, che è la parte che la tabella generica non poteva dire:
+
+| Scheda | File | Cosa non va |
+|---|---|---|
+| `home` | `IMG_0151` | 🔴 **«Nothing ahead»** e **«Never played»**, uno accanto all'altro. ⚠️ *E il conto non torna con la mappa*: qui dice «3 places visited», la mappa ne mostra 2 |
+| `galleria` | `IMG_0152` | ✅ Sei foto **vere** e belle — è il secondo scatto migliore. 🔴 Ma **metà schermo è bianco vuoto** sotto la griglia |
+| `mappa` | `IMG_0153` | 🔴 **Il peggiore.** Inquadra mezza Europa per mostrare **2 segnaposti**; preso **a metà transizione** (il selettore *Map/List* e la barra in basso sono entrambi translucidi e mossi); l'orologio di sistema finisce **sopra i nomi delle città**; e la carta è **scura** mentre l'app è chiara |
+| `giochi` | `IMG_0154` | ✅ Contenuto buono. 🔴 Preso **a metà scorrimento**: la carta è fuori centro e si vede il bordo della successiva |
+| `preferiti` | `IMG_0155` | 🔴 **«Restaurants · 0 items · Still empty»**. Anche questo a metà scorrimento |
+| `calendario` → *Diary* | `IMG_0156` | ✅ **Il migliore dei sei**: foto vere, *«Dinner»*, *«Sicily · In love»*. 🔴 Ma le carte sono **aperte in modifica** e mostrano **«Delete» in rosso, due volte** — la parola più vistosa dello scatto è quella che distrugge un ricordo |
+| `calendario` → *Month* | `IMG_0157` | 🔴 **Il titolo è troncato: «September 2…»** — ⚠️ *questo non è un difetto dello scatto ma dell'app*, e va corretto nel codice, non col telefono. Più mezzo mese vuoto |
+
+🔑 **E il file più bello non è nessuno dei sette.** `IMG_2902` è la **pagina di un evento** — *Sicily · Syracuse · Holiday*, foto grande, quattro miniature, le date, *«In love»*, i commenti — e vende l'app meglio di qualunque scheda della barra. 🔴 **Ma è `1170 × 2532`**, cioè un altro telefono, quindi inutilizzabile com'è. ⬜ **Da rifare sul 16 Pro**: *una schermata di dettaglio non è nella barra, e le schermate dello store non devono essere schede.*
+
+#### Cosa mettere nell'account prima di riscattare
+
+Tre vuoti, tutti sull'account personale, tutti riempibili in pochi minuti:
+
+| | Cosa manca | Dove si vede |
+|---|---|---|
+| 1 | **Un evento futuro** | `home` dice «Nothing ahead», `Month` ha la seconda metà vuota |
+| 2 | **Una partita giocata** | `home` dice «Never played» |
+| 3 | **Qualche voce nelle liste** | `preferiti` dice «0 items · Still empty» |
+
+⚠️ **E prima di scattare la mappa**, decidere l'inquadratura: *stretta sui segnaposti che esistono*, non su mezza Europa.
+
+🔴 **Resta valida la scadenza dell'account demo**, che riguarda la revisione e non gli scatti: il seminatore crea l'unico evento futuro a **+9 giorni** da quando gira — seminato il 2026-09-15, *«Compleanno di lei»* cade il **2026-09-24**. ⚠️ **Dopo quella data il calendario che vedrà il revisore non ha più niente davanti.** 🔑 *Si evita rieseguendo il seminatore prima dell'invio: ricalcola le date da `new Date()`.*
+
+#### ⏹️ Il secondo giro, e la decisione di fermarsi qui (2026-09-17)
+
+**Sette scatti nuovi il 2026-09-17 alle 08:32**, tutti `1206 × 2622`, stesse sei schede (`calendario` due volte). ✅ **Quattro difetti su quattro dell'ambiente sono caduti**: niente diretta calcistica nella Dynamic Island, niente AssistiveTouch, batteria all'80% invece che al 18% in rosso, e la carta dei giochi finalmente centrata.
+
+⏹️ **E qui l'utente ha deciso di fermarsi: «gli screen vanno bene questi».** La decisione è sua e va registrata **con ciò che comprende**, non come una spunta — è lo stesso schema di **D-140**, dove *chiusa* non voleva dire *fatta*.
+
+**Cosa si accetta, per nome:**
+
+| | Cosa resta nello scatto | Perché era stato segnalato |
+|---|---|---|
+| 1 | `home` dice **«Nothing ahead»** e **«Never played»** | ⚠️ *Sono le stesse parole che l'app dice a chi la installa adesso*: in una vetrina raccontano un prodotto che nessuno ha usato |
+| 2 | `preferiti` dice **«0 items · Still empty»** | idem |
+| 3 | Il Diary mostra **«Delete» in rosso, due volte** | La parola più vistosa dello scatto è quella che distrugge un ricordo |
+| 4 | La mappa inquadra **mezza Europa per due segnaposti**, a metà transizione | È lo scatto che somiglia meno al prodotto |
+| 5 | Il mese dice **«September 2…»** | 🔴 *Difetto dell'app, non dello scatto*: resta da correggere comunque, indipendentemente dalla vetrina |
+| 6 | Un **disco grigio** sull'icona della scheda attiva | ⏹️ **Attribuito dall'utente al proprio telefono.** ⚠️ Il codice ne disegna uno **chiaro** — bianco al 48%, anello bianco, magenta al 9% ([`barra-volante.tsx`](../components/barra-volante.tsx)) — e il 2026-09-15 si vedeva chiaro. *Non è lo stato «premuto»*: il `Pressable` è stato tolto il 2026-09-01. La causa **non è stata accertata** |
+
+🔑 **E accettare questo set decide anche la Fase 1, senza che nessuno l'abbia dichiarata.** Gli scatti sono di un'app **in inglese**: una scheda anche in italiano ne vorrebbe un secondo set, cioè rifare da capo il lavoro appena chiuso. *Da qui in avanti la strada (a) di §6 non è più la raccomandazione: è la strada su cui ci si trova.* Resta possibile cambiarla, al prezzo di riscattare.
+
+⚠️ **E i sette file vivono solo sul Desktop di un dispositivo**, fuori dal repository: non sono in git, non sono su nessun altro computer, e non c'è niente che avvisi se spariscono. *Non è una proposta di metterli nel repo — pesano più di 30 MB — è il fatto che una copia sola non è una copia.*
+
+### Fase 3 — Il modulo d'invio
+
+**Tutto il testo esiste già.** È la parte del piano in cui non c'è niente da inventare:
+
+| Cosa chiede il modulo | Dove sta, già scritto |
+|---|---|
+| Nome, sottotitolo, testo promozionale, parole chiave, descrizione, categorie, età | [`scheda-store.md`](scheda-store.md) — i limiti dei campi sono **imposti** da `npm run test:scheda`, non ricordati |
+| **App Privacy**, dieci righe | [`app-privacy.md`](app-privacy.md) — da ricopiare. `Tracking = No` ovunque, esclusioni motivate una per una |
+| URL di informativa e cookie policy | Online su CloudFront dal 2026-09-10, risposta `200` verificata |
+| Note per la revisione | Credenziali dell'account demo, stampate da `tools/semina-demo.mjs` |
+
+🔴 **E un campo che non ha una risposta pronta: i dati *trader*.** È il punto che il registro segnala da due giorni — **il muro non è la risposta di Apple, è il modulo**: quei dati si compilano *prima* della revisione. **A3** ha rinunciato a indirizzo e telefono pubblici (D-141) e il DSA continua a chiederli — *togliere il segnaposto ha tolto il promemoria, non l'obbligo*. Qui si scopre se la rinuncia passa. ⬜ *Se non passa*: non serve l'abitazione, bastano una domiciliazione e un numero dedicato — è già scritto in A3.
+
+### Fase 4 — Caricamento e invio
+
+`eas submit`, profilo `production`. ✅ L'`ascAppId` **`6811948208`** è in `eas.json` e non blocca più. 🔴 Richiede la **chiave API di ASC** fra le voci fuori fila.
+
+⚠️ **Va lanciato da un terminale interattivo, e questo non cambierà**: la distribuzione App Store impone a EAS di validare il certificato con Apple, e quella validazione chiede **Apple ID e 2FA** — credenziali che l'agente non ha e non deve avere. *Stesso confine della build.*
+
+### Dopo l'invio, non prima
+
+- ⬜ **[`verifica-sul-telefono.md`](verifica-sul-telefono.md), 18 voci.** **D4 è chiusa per dichiarazione, non fatta** (D-140): il paywall rifatto il 2026-09-15 — **B-80** e **B-81** compresi — non è mai stato visto girare su un telefono, e B-80 si prova solo rallentando apposta il webhook. 🔑 *Quella lista è il posto da cui ripartire alla prima segnalazione di un utente vero*, e serve dopo la pubblicazione quanto sarebbe servita prima.
+- ⬜ **Le traduzioni dei tre documenti pubblici.** D-141 le ha **sbloccate, non chiuse**: è la cosa più economica che riduca il rischio accettato più grande del progetto, ed è lavoro interno senza code.
+- ⬜ Gli **handle** social, coda di **E1**.
+
+### Cosa NON entra in questo piano
+
+Le tre esclusioni di §7-ter restano valide parola per parola: **Android** (D-132), **la lista Film e TMDB** (D-127), **il ciclo mestruale** (D-07, P-02). *Riaccendere la lista Film rimette il muro §1.2 esattamente dov'era.*
 
 ---
 
