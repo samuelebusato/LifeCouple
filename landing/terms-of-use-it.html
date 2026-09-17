@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<title>Termini d'uso — LifeCouple</title>
+<link rel="icon" href="/immagini/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/immagini/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/immagini/apple-touch-icon.png">
+<style>
+/* PAGINA GENERATA da tools/genera-legale.mjs — non modificarla a mano. */
+:root {
+  color-scheme: light;
+  --accento:    #e4259e;
+  --inchiostro: #251d22;
+  --tenue:      #816e7b;
+  --linea:      #ede4ea;
+  --carta:      #ffffff;
+  --fondo:      #fdfbfc;
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --testo:   "Karla", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--fondo); color: var(--inchiostro);
+  font: 400 16px/1.65 var(--testo); -webkit-font-smoothing: antialiased;
+}
+.guscio { max-width: 780px; margin: 0 auto; padding: 0 22px; }
+header { border-bottom: 1px solid var(--linea); background: var(--carta); }
+header .guscio { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding-top: 18px; padding-bottom: 18px; }
+.marchio { display: inline-flex; align-items: center; gap: 9px; font: 600 19px/1 var(--display); color: var(--inchiostro); text-decoration: none; }
+.marchio svg { width: 25px; height: 25px; color: var(--accento); }
+header nav { display: flex; gap: 18px; font-size: 14px; }
+header nav a { color: var(--tenue); text-decoration: none; }
+header nav a:hover { color: var(--accento); }
+main { padding: 44px 0 64px; }
+h1 { font: 600 clamp(29px, 5vw, 40px)/1.15 var(--display); margin: 0 0 6px; letter-spacing: -.015em; }
+.versione { color: var(--tenue); font-size: 14px; margin: 0 0 34px; }
+h2 { font: 600 25px/1.25 var(--display); margin: 44px 0 12px; letter-spacing: -.01em; }
+h3 { font: 700 17px/1.35 var(--testo); margin: 30px 0 10px; }
+p { margin: 0 0 15px; }
+ul, ol { margin: 0 0 15px; padding-left: 22px; }
+li { margin-bottom: 7px; }
+a { color: var(--accento); }
+code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .88em; background: var(--linea); border-radius: 4px; padding: 1px 5px; }
+hr { border: 0; border-top: 1px solid var(--linea); margin: 34px 0; }
+blockquote { margin: 0 0 18px; padding: 14px 18px; background: var(--carta); border: 1px solid var(--linea); border-left: 3px solid var(--accento); border-radius: 0 10px 10px 0; }
+blockquote p:last-child { margin-bottom: 0; }
+.tabella { overflow-x: auto; margin: 0 0 22px; border: 1px solid var(--linea); border-radius: 12px; background: var(--carta); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 11px 13px; border-bottom: 1px solid var(--linea); }
+th { font-weight: 700; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+
+/* 🔑 Su schermo stretto la tabella diventa un elenco di blocchetti, con
+   l'intestazione come etichetta di ogni cella. Quattro colonne dentro 330 px
+   danno colonne da 80 px: testo che l'utente ha il diritto di CAPIRE, non solo
+   di ricevere (art. 12 GDPR). È la stessa scelta di components/markdown.tsx,
+   presa per la stessa ragione — e presa qui perche' i due resi dello stesso
+   documento devono somigliarsi. */
+@media (max-width: 640px) {
+  .tabella { overflow-x: visible; border: 0; background: none; }
+  table { font-size: 15px; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  tr { display: block; background: var(--carta); border: 1px solid var(--linea); border-radius: 12px; padding: 4px 14px; margin-bottom: 12px; }
+  td { display: block; padding: 9px 0; border-bottom: 1px solid var(--linea); }
+  tr td:last-child { border-bottom: 0; }
+  td[data-etichetta]::before {
+    content: attr(data-etichetta);
+    display: block;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--tenue); margin-bottom: 3px;
+  }
+}
+footer { border-top: 1px solid var(--linea); padding: 26px 0 40px; color: var(--tenue); font-size: 14px; }
+footer .guscio { display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: space-between; }
+footer a { color: var(--tenue); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="guscio">
+    <a class="marchio" href="index.html">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M42 78C30 68 16 58 16 42c0-9 7-16 16-16 6 0 10 3 13 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M45 34c3-5 7-8 13-8 9 0 16 7 16 16 0 16-14 26-26 36" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+        <path d="M44 42l6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      LifeCouple
+    </a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="privacy-policy-it.html">Informativa privacy</a>
+        <a href="cookie-policy-it.html">Cookie policy e archiviazione locale</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="guscio">
+    <h1>Termini d'uso — LifeCouple</h1>
+<p><strong>Versione <code>terms-1.3</code> — 15 settembre 2026.</strong></p>
+<blockquote><strong>Cosa è cambiato il 15 settembre 2026</strong>: il fornitore è ora <strong>Samuele Busato</strong>, persona fisica; le sezioni 7 e 8 sono state riscritte perché descrivevano un confine fra gratuito e a pagamento che <strong>il servizio non applica più</strong> — verificato sulla migrazione <code>0042</code>, non sul registro delle decisioni; la clausola sul venditore è stata definita; i riferimenti a Google Play sono stati rimossi, essendo l'app pubblicata solo su iPhone; e questi Termini sono diventati raggiungibili dalla registrazione, dalle Impostazioni e dalla schermata d'acquisto, come richiede la sezione 2.</blockquote>
+<hr>
+<h2 id="1-chi-fornisce-il-servizio">1. Chi fornisce il servizio</h2>
+<p>LifeCouple è offerta da <strong>Samuele Busato</strong>, persona fisica residente in Italia.</p>
+<ul><li>Email: <strong>info@heleox.it</strong></li></ul>
+<p>Sugli store l'editore compare come <strong>«Samuele Busato»</strong>, la stessa persona indicata sopra, che è anche titolare del trattamento dei tuoi dati personali — vedi la sezione 1 dell'Informativa privacy.</p>
+<h2 id="2-cosa-accetti-e-quando">2. Cosa accetti, e quando</h2>
+<p>Creando un account accetti questi Termini e confermi di aver letto l'<strong>Informativa privacy</strong>. Se non li accetti, non puoi utilizzare il servizio.</p>
+<p>Entrambi i documenti sono raggiungibili <strong>prima</strong> di creare l'account, dalla schermata di registrazione, e in qualsiasi momento successivo dalle Impostazioni.</p>
+<h2 id="3-cos-e-lifecouple">3. Cos'è LifeCouple</h2>
+<p>LifeCouple è il diario privato di <strong>due persone</strong>: un calendario condiviso, i luoghi, le fotografie, le liste, i giochi e una creatura che cresce con voi.</p>
+<p><strong>L'unità del servizio è la coppia, non l'individuo</strong>, e quasi tutte le regole che seguono discendono da qui. Il servizio presuppone <strong>due account collegati</strong>: da solo, non produce ciò per cui esiste.</p>
+<h2 id="4-chi-puo-usarlo">4. Chi può usarlo</h2>
+<ul><li>Devi avere <strong>almeno 14 anni</strong>, l'età stabilita dalla legge italiana per i servizi della società dell'informazione (art. 8 GDPR, art. 2-<em>quinquies</em> del Codice privacy). La data di nascita viene richiesta alla registrazione, e chi dichiara un'età inferiore ai 14 anni non può creare un account.</li><li>La data che dichiari deve essere <strong>veritiera</strong>. È una dichiarazione, non una verifica documentale: non abbiamo modo di controllarla, e non pretendiamo di farlo.</li><li><strong>Un account per persona.</strong> Il tuo account è personale: le credenziali non vanno condivise, nemmeno con il partner. Sei responsabile di ciò che avviene dal tuo account.</li><li><strong>Un limite che è solo onesto dichiarare qui oltre che nell'Informativa privacy</strong>: nessuna misura tecnica protegge da chi conosce le tue credenziali o usa il tuo telefono sbloccato. Proteggi il dispositivo con un blocco schermo.</li></ul>
+<h2 id="5-la-coppia-come-si-forma-cosa-vede-l-altro-cosa-succede-se-finisce">5. La coppia: come si forma, cosa vede l'altro, cosa succede se finisce</h2>
+<p><strong>Si forma</strong> attraverso un invito che generi tu e che l'altra persona apre. Una coppia ha <strong>due</strong> membri: non esistono gruppi.</p>
+<p><strong>Finché siete una coppia</strong>, il partner vede i contenuti condivisi — calendario, luoghi, fotografie, liste, risultati dei giochi e la tua data di nascita come compleanno. <strong>Vede la tua posizione attuale solo se attivi la condivisione</strong>, e resta spenta finché non lo fai. I dettagli sono alle sezioni 3.1 e 6 dell'Informativa privacy, e vanno letti prima di attivarla.</p>
+<p><strong>Ciascuno di voi resta l'autore di ciò che ha caricato</strong>: solo chi ha aggiunto una cosa può modificarla o cancellarla. Il partner non può cancellare le tue fotografie o i tuoi contenuti. Questo è imposto dalla base dati, non soltanto dall'interfaccia, il che rende la ritorsione strutturalmente impossibile invece che solo vietata.</p>
+<p><strong>Se la coppia si scioglie</strong>, l'accesso reciproco viene <strong>revocato</strong>: nessuno dei due vede più i contenuti dell'altro. Lo scioglimento <strong>non</strong> cancella i dati — ciascuno conserva ciò di cui è autore. Entrambi ricevete una notifica.</p>
+<p><strong>Sciogliere la coppia e cancellare l'account sono due atti diversi</strong>, con conseguenze diverse: il primo è reversibile (potete ricollegarvi), il secondo no. Sciogliere non basta a cancellare i tuoi dati — vedi la sezione 11.</p>
+<h2 id="6-i-tuoi-contenuti">6. I tuoi contenuti</h2>
+<p><strong>Restano tuoi.</strong> Non acquisiamo alcuna proprietà su ciò che carichi e non lo usiamo per finalità diverse dall'erogazione del servizio: non lo pubblichiamo, non lo vendiamo, non lo analizziamo e non lo usiamo per addestrare alcun sistema. Ci autorizzi soltanto ad archiviarlo e a mostrarlo <strong>a te e al tuo partner</strong>, che è ciò che il servizio fa.</p>
+<p><strong>Cosa non puoi caricare</strong>: contenuti illeciti, materiale che ritragga persone che non hanno prestato il consenso, contenuti lesivi dei diritti altrui e in particolare <strong>qualsiasi materiale che coinvolga minori in contesto sessuale</strong>. Non moderiamo preventivamente i contenuti privati di una coppia — e proprio per questo la responsabilità di ciò che carichi è <strong>interamente tua</strong>.</p>
+<p><strong>Fai attenzione a cosa scrivi nei campi di testo libero.</strong> Recensioni, note e domande personalizzate raggiungono i nostri server. Non ti chiediamo mai categorie particolari di dati ai sensi dell'art. 9 GDPR e non analizziamo ciò che scrivi, ma se scegli di scrivere informazioni di quel tipo vengono comunque archiviate.</p>
+<p><strong>Segnalare un contenuto.</strong> Se nel vostro spazio condiviso c'è qualcosa che non dovrebbe esserci — materiale illecito, o contenuti lesivi dei diritti di qualcuno — scrivi a <strong>info@heleox.it</strong>, indicando cosa hai visto e dove. Leggiamo ogni segnalazione e rispondiamo senza ingiustificato ritardo; i contenuti illeciti sono trattati con priorità.</p>
+<p><strong>Bloccare non richiede il nostro intervento</strong>: sciogliere la coppia revoca immediatamente l'accesso reciproco, e puoi farlo solo tu. Poiché qui un contenuto raggiunge <strong>una persona che hai scelto</strong> e mai un pubblico, queste due strade insieme costituiscono gli strumenti di blocco e segnalazione di questo servizio.</p>
+<h2 id="7-cosa-e-gratuito-e-cosa-e-a-pagamento">7. Cosa è gratuito e cosa è a pagamento</h2>
+<p><strong>Gratuito</strong>: il calendario condiviso e i suoi eventi, <strong>una fotografia per ogni evento</strong> e <strong>un gioco completo al giorno</strong> per la coppia.</p>
+<p><strong>Compreso nell'abbonamento «Insieme»</strong>: la mappa e i vostri luoghi, le liste, la creatura, le fotografie oltre la prima di ogni evento, le fotografie aggiunte direttamente alla galleria e i giochi oltre il primo di ogni giorno.</p>
+<p><strong>Lo spazio per le fotografie è limitato a 1 GB per coppia su ogni piano</strong>, abbonamento compreso. È un limite di spazio, non una funzione a pagamento.</p>
+<p><strong>Cosa non dipende mai dal pagamento</strong>: leggere, esportare e cancellare i propri contenuti. Se un abbonamento finisce, nulla di ciò che hai già aggiunto viene rimosso, alterato o reso illeggibile — i limiti qui sopra riguardano l'<em>aggiunta</em> di contenuti nuovi, mai ciò che c'è già. I tuoi diritti di accesso e portabilità ai sensi degli artt. 15 e 20 GDPR sono disponibili su ogni piano.</p>
+<h2 id="8-l-abbonamento-insieme">8. L'abbonamento «Insieme»</h2>
+<ul><li><strong>Prezzo</strong>: <strong>7,99 € al mese</strong> oppure <strong>39,99 € all'anno</strong>. Valgono i prezzi esposti negli store al momento dell'acquisto, IVA compresa.</li><li><strong>Un solo pagamento, coperti entrambi.</strong> L'abbonamento appartiene <strong>alla coppia</strong>; lo store, però, lo registra a nome di chi paga, perché un abbonamento non può essere intestato a due account.</li><li><strong>Una settimana gratuita, la prima volta.</strong> Un nuovo abbonamento inizia con <strong>sette giorni senza costi</strong>. Se disdici prima della fine di quei sette giorni <strong>non ti viene addebitato nulla</strong>; altrimenti l'abbonamento parte automaticamente al prezzo indicato sopra e si rinnova da lì. ⚠️ Il periodo gratuito è offerto <strong>una volta per persona e per gruppo di abbonamenti</strong>, per regola dello store e non nostra: chi l'ha già usato — anche tramite l'In famiglia — si abbona a prezzo pieno. Se il periodo gratuito sia disponibile o meno viene mostrato nell'applicazione <strong>prima</strong> che tu confermi, perché è lo store a concederlo.</li><li><strong>Rinnovo automatico</strong> alla scadenza, salvo disdetta. La disdetta si effettua <strong>dalle impostazioni del telefono</strong> (App Store), non dall'applicazione: non possiamo disdire per tuo conto. Per evitare l'addebito del periodo successivo — compreso il primo dopo la settimana gratuita — la disdetta deve avvenire <strong>almeno 24 ore prima</strong> della fine del periodo in corso, come richiedono gli store.</li><li><strong>Quando disdici</strong>, il servizio resta disponibile <strong>fino alla fine del periodo già pagato</strong>, e non oltre.</li><li><strong>Ripristino degli acquisti</strong>: se cambi telefono o reinstalli l'applicazione, puoi ripristinare l'abbonamento dall'applicazione stessa.</li><li><strong>Chi ti vende.</strong> L'abbonamento è acquistato <strong>tramite l'App Store</strong>, e in base al Paid Applications Agreement di Apple è Apple il venditore nei tuoi confronti nell'Unione Europea. Questo significa che <strong>è Apple a emettere la ricevuta d'acquisto</strong> e che <strong>i rimborsi si richiedono ad Apple</strong>, non a noi. Possiamo aiutarti, ma non possiamo emettere un rimborso per conto di Apple.</li><li><strong>Se la coppia si scioglie, l'abbonamento resta a chi l'ha pagato.</strong> Appartiene a quella persona e non alla coppia: finché siete una coppia i suoi benefici raggiungono entrambi, e quando la coppia finisce smettono di raggiungere l'altra persona. Nessuno paga per qualcosa che non ha comprato, e nessuno conserva un beneficio che non ha mai pagato.</li><li><strong>Nulla di ciò che hai caricato viene mai cancellato per fare spazio.</strong> Il limite di 1 GB blocca i nuovi caricamenti una volta raggiunto; non rimuove mai ciò che c'è già. Questo vale in ogni momento, scioglimento compreso: se hai superato il limite, liberi spazio cancellando i tuoi contenuti oppure abbonandoti. Non scegliamo noi per te quali ricordi perdere.</li></ul>
+<h2 id="9-diritto-di-recesso">9. Diritto di recesso</h2>
+<p>Sei un <strong>consumatore</strong>: hai diritto di recedere entro <strong>14 giorni</strong> dall'acquisto, senza doverne indicare il motivo, ai sensi del Codice del consumo (D.lgs. 206/2005).</p>
+<p><strong>Per il contenuto digitale il diritto decade</strong> se l'esecuzione comincia immediatamente, e comincia immediatamente per costruzione: nel momento in cui l'abbonamento si attiva, il servizio è già fornito. Perché quella decadenza sia valida servono due cose insieme, al momento dell'acquisto: il tuo <strong>consenso espresso</strong> all'esecuzione immediata e la tua <strong>presa d'atto</strong> di perdere il diritto di recesso. La schermata d'acquisto riporta entrambe <strong>prima</strong> del pulsante che paga; in loro assenza, il diritto resta esercitabile per quattordici giorni.</p>
+<p>Dove si applica, il recesso si esercita nei confronti di <strong>Apple</strong>, che ha effettuato la vendita — vedi la sezione 8.</p>
+<h2 id="10-conformita-del-servizio-e-responsabilita">10. Conformità del servizio e responsabilità</h2>
+<p>Il servizio è fornito con la dovuta diligenza, ma <strong>non garantiamo una disponibilità continua e ininterrotta</strong>: dipende da fornitori terzi, dalla rete e dal tuo dispositivo.</p>
+<p><strong>I tuoi diritti inderogabili di consumatore restano impregiudicati</strong>, compresa la garanzia di conformità per contenuti e servizi digitali. Nulla in questo documento li limita, e in caso di conflitto <strong>prevalgono su queste clausole</strong>.</p>
+<p>Nei limiti consentiti dalla legge, non rispondiamo dei danni indiretti né della perdita di dati imputabile a cause fuori dal nostro controllo. La responsabilità per dolo o colpa grave <strong>non può essere esclusa, e non la escludiamo</strong>, né può esserlo quella per danni alla persona.</p>
+<p><strong>E una cosa che merita di essere detta chiaramente invece che nascosta in una clausola di esonero</strong>: LifeCouple custodisce ricordi, e i ricordi non hanno una copia altrove se non la fai tu. Puoi <strong>esportare i tuoi dati in qualsiasi momento</strong> dalle Impostazioni. Fallo.</p>
+<h2 id="11-cancellazione-dell-account">11. Cancellazione dell'account</h2>
+<p>Puoi cancellare il tuo account <strong>dall'applicazione</strong>, nelle Impostazioni. La cancellazione è <strong>immediata e definitiva</strong>: non esiste un periodo di ripensamento. Riguarda le tue fotografie, i contenuti di cui sei autore e il tuo account.</p>
+<p><strong>I dati contabili e fiscali</strong> sono un'eccezione, conservati per 10 anni come la legge richiede.</p>
+<p><strong>Cancellare l'account non disdice l'abbonamento.</strong> Gli abbonamenti sono gestiti da Apple: vanno disdetti dalle impostazioni del telefono, altrimenti il rinnovo prosegue anche se l'account non esiste più.</p>
+<p>Dettagli e limiti alla sezione 7 dell'Informativa privacy.</p>
+<h2 id="12-uso-corretto-e-sospensione">12. Uso corretto e sospensione</h2>
+<p>Non puoi utilizzare il servizio per finalità illecite, tentare di raggiungere account o contenuti altrui, aggirare limiti tecnici o interferire con il funzionamento del sistema.</p>
+<p>In caso di violazione grave possiamo sospendere o chiudere l'account, <strong>dandone avviso</strong> e — quando la violazione non lo impedisce — <strong>offrendo la possibilità di esportare i dati</strong> prima della chiusura.</p>
+<h2 id="13-proprieta-intellettuale">13. Proprietà intellettuale</h2>
+<p>L'applicazione, il suo nome, la sua grafica e la creatura <strong>Philippe</strong> appartengono a noi o ai rispettivi titolari. Un abbonamento ti dà il diritto di <strong>usare</strong> il servizio, non di acquisirne i contenuti.</p>
+<p><strong>Servizi di terze parti usati per le ricerche:</strong></p>
+<ul><li><strong>Google Places</strong>, per la ricerca dei luoghi;</li><li><strong>TMDB</strong> <em>(The Movie Database)</em>, per la ricerca dei film. La loro attribuzione è mostrata accanto ai risultati, nella forma richiesta dalle rispettive condizioni.</li></ul>
+<h2 id="14-modifiche">14. Modifiche</h2>
+<p>Possiamo modificare questi Termini per ragioni tecniche, legali o di servizio. Le modifiche <strong>sostanziali</strong> sono comunicate dentro l'applicazione <strong>prima</strong> che abbiano effetto, e puoi disdire l'abbonamento se non le accetti.</p>
+<h2 id="15-se-il-servizio-dovesse-chiudere">15. Se il servizio dovesse chiudere</h2>
+<p>Riceveresti un <strong>preavviso</strong> dentro l'applicazione e all'indirizzo email del tuo account, con una data certa, e prima di quella data potresti <strong>esportare i tuoi dati</strong>. Alla chiusura i dati vengono cancellati secondo la sezione 11.</p>
+<p>Abbonamenti in corso: il rinnovo automatico viene disattivato e il servizio resta disponibile <strong>fino alla fine del periodo già pagato</strong>.</p>
+<p><strong>Il preavviso è di almeno 60 giorni</strong>, e la data di chiusura non è <strong>mai anteriore alla fine di un periodo di abbonamento che hai già pagato</strong>. Se hai un abbonamento annuale, il servizio resta disponibile fino all'esaurirsi di quell'anno, qualunque data venga annunciata.</p>
+<h2 id="16-assistenza-reclami-legge-applicabile">16. Assistenza, reclami, legge applicabile</h2>
+<ul><li>Per assistenza e reclami, scrivi ai contatti della sezione 1.</li><li><strong>Legge applicabile</strong>: legge italiana. Restano impregiudicate le disposizioni inderogabili più favorevoli della legge del Paese in cui risiedi abitualmente, se sei un consumatore residente in un altro Stato membro dell'Unione Europea.</li><li><strong>Foro competente</strong>: il giudice del luogo di residenza o domicilio del consumatore, se in Italia. Questo <strong>non può essere derogato</strong> dal presente documento.</li><li><strong>Nessun rinvio alla piattaforma ODR europea.</strong> Quella clausola compare in quasi tutte le condizioni in circolazione, ma la piattaforma <strong>ha cessato di operare nel 2025</strong>: indicartela significherebbe nominare un rimedio che non esiste. Se verrà offerta una via stragiudiziale, qui sarà indicato un <strong>organismo ADR reale</strong>.</li></ul>
+  </div>
+</main>
+
+<footer>
+  <div class="guscio">
+    <span>LifeCouple — Samuele Busato</span>
+    <span><a href="terms-of-use.html" hreflang="en" lang="en">English</a> · <a href="index.html">Torna alla pagina dell'app</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

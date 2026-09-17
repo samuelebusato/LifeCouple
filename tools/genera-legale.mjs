@@ -51,14 +51,29 @@ import { fileURLToPath } from 'node:url';
 
 const radice = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SORGENTE = path.join(radice, 'docs', 'legal', 'en');
+
+/**
+ * ⟳ **La cartella italiana, aggiunta il 2026-09-17.**
+ *
+ * 🔑 **I file dentro `it/` hanno gli STESSI NOMI di quelli dentro `en/`**, e non e'
+ * un caso: cosi' una lingua e' una cartella, non una tabella di corrispondenze fra
+ * nomi diversi che qualcuno deve tenere allineata.
+ *
+ * ⚠️ **Le traduzioni alimentano SOLO le pagine pubbliche, non `lib/legale/testi.ts`.**
+ * Quel modulo e' codice dell'app: cambiarlo renderebbe vecchia la build gia' firmata
+ * (`94dd41b7`, 2026-09-15) e ne imporrebbe una nuova. Le pagine della landing sono
+ * file statici e si pubblicano da sole. *Decisione dell'utente del 2026-09-17: prima
+ * le pagine pubbliche, i testi dentro l'app al primo aggiornamento.*
+ */
+const SORGENTE_IT = path.join(radice, 'docs', 'legal', 'it');
 const USCITA = path.join(radice, 'lib', 'legale', 'testi.ts');
 const LANDING = path.join(radice, 'landing');
 
 /** I documenti resi all'utente. L'ordine è quello in cui compaiono nei menu. */
 const DOCUMENTI = [
-  { chiave: 'privacy', file: 'privacy-policy.md', pagina: 'privacy-policy.html' },
-  { chiave: 'cookie', file: 'cookie-policy.md', pagina: 'cookie-policy.html' },
-  { chiave: 'termini', file: 'terms-of-use.md', pagina: 'terms-of-use.html' },
+  { chiave: 'privacy', file: 'privacy-policy.md', pagina: 'privacy-policy.html', paginaIt: 'privacy-policy-it.html' },
+  { chiave: 'cookie', file: 'cookie-policy.md', pagina: 'cookie-policy.html', paginaIt: 'cookie-policy-it.html' },
+  { chiave: 'termini', file: 'terms-of-use.md', pagina: 'terms-of-use.html', paginaIt: 'terms-of-use-it.html' },
 ];
 
 /**
@@ -115,13 +130,24 @@ console.log('='.repeat(62));
 /* ---------- lettura e validazione ---------- */
 
 const letti = [];
+const lettiIt = [];
 const incompleti = [];
 let problemi = 0;
 
+/**
+ * Legge e valida i documenti di UNA cartella.
+ *
+ * 🔑 **La validazione e' la stessa per tutte le lingue, e deve restarlo.** Un
+ * segnaposto dentro la versione italiana di un'informativa privacy e' esattamente
+ * grave quanto dentro quella inglese: separare i due controlli significherebbe
+ * proteggere con cura il documento che qualcuno rilegge e lasciare scoperto quello
+ * che nessuno rilegge — cioe' il contrario di quello che serve.
+ */
+function leggiCartella(sorgente, dove, dentro) {
 for (const d of DOCUMENTI) {
-  const abs = path.join(SORGENTE, d.file);
+  const abs = path.join(sorgente, d.file);
   if (!fs.existsSync(abs)) {
-    console.log(`   ❌ ${d.file} — non esiste in docs/legal/en/`);
+    console.log(`   ❌ ${d.file} — non esiste in ${dove}`);
     problemi++;
     continue;
   }
@@ -151,10 +177,14 @@ for (const d of DOCUMENTI) {
   const daCompletare = DA_COMPLETARE.flatMap((r) => testo.match(r) ?? []);
   if (daCompletare.length) incompleti.push({ file: d.file, quanti: daCompletare.length });
 
-  letti.push({ ...d, titolo: titolo.trim(), testo });
-  console.log(`   ✅ ${d.file} — «${titolo.trim()}», ${testo.split('\n').length} righe` +
+  dentro.push({ ...d, titolo: titolo.trim(), testo });
+  console.log(`   ✅ ${dove}${d.file} — «${titolo.trim()}», ${testo.split('\n').length} righe` +
       (daCompletare.length ? `  ⚠️ ${daCompletare.length} segnaposto da completare` : ''));
 }
+}
+
+leggiCartella(SORGENTE, 'en/', letti);
+leggiCartella(SORGENTE_IT, 'it/', lettiIt);
 
 /* I non resi: nominati sempre, così il buco non è silenzioso. */
 for (const n of NON_RESI) {
@@ -412,13 +442,22 @@ function corpoHtml(markdown) {
  * pagina che non somiglia al prodotto sembra di qualcun altro.
  * ⚠️ Sola modalità chiara, come la landing e come l'app (D-39).
  */
-function pagina(doc, altri) {
+function pagina(doc, altri, lingua = 'en') {
+  const it = lingua === 'it';
+  const chiavePagina = it ? 'paginaIt' : 'pagina';
   const nav = altri
-    .map((a) => `<a href="${a.pagina}">${a.titolo.replace(/ — LifeCouple$/, '')}</a>`)
+    .map((a) => `<a href="${a[chiavePagina]}">${a.titolo.replace(/ — LifeCouple$/, '')}</a>`)
     .join('\n        ');
 
+  /* Il rimando all'altra lingua: e' l'unica cosa che rende raggiungibili le
+     pagine italiane, che nessun altro file collega. Senza, esisterebbero e
+     non le troverebbe nessuno. */
+  const altraLingua = it
+    ? `<a href="${doc.pagina}" hreflang="en" lang="en">English</a>`
+    : `<a href="${doc.paginaIt}" hreflang="it" lang="it">Italiano</a>`;
+
   return `<!doctype html>
-<html lang="en">
+<html lang="${lingua}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -526,7 +565,7 @@ ${corpoHtml(doc.testo)}
 <footer>
   <div class="guscio">
     <span>LifeCouple — Samuele Busato</span>
-    <span><a href="index.html">Back to the app page</a></span>
+    <span>${altraLingua} · <a href="index.html">${it ? "Torna alla pagina dell'app" : 'Back to the app page'}</a></span>
   </div>
 </footer>
 
@@ -535,14 +574,18 @@ ${corpoHtml(doc.testo)}
 `;
 }
 
-const pagineAttese = letti.map((d) => ({
-  percorso: path.join(LANDING, d.pagina),
-  nome: d.pagina,
-  contenuto: pagina(
-    d,
-    letti.filter((a) => a.chiave !== d.chiave)
-  ),
-}));
+const pagineAttese = [
+  ...letti.map((d) => ({
+    percorso: path.join(LANDING, d.pagina),
+    nome: d.pagina,
+    contenuto: pagina(d, letti.filter((a) => a.chiave !== d.chiave), 'en'),
+  })),
+  ...lettiIt.map((d) => ({
+    percorso: path.join(LANDING, d.paginaIt),
+    nome: d.paginaIt,
+    contenuto: pagina(d, lettiIt.filter((a) => a.chiave !== d.chiave), 'it'),
+  })),
+];
 
 /* ---------- scrittura o confronto ---------- */
 
@@ -560,7 +603,7 @@ if (soloControllo) {
     riepilogoDaCompletare();
     process.exit(0);
   }
-  console.log('\n❌ Questi derivati non sono allineati a docs/legal/en/:');
+  console.log('\n❌ Questi derivati non sono allineati a docs/legal/en/ e docs/legal/it/:');
   for (const d of disallineati) console.log(`   • ${d}`);
   console.log('\n   Rigenerali:  node tools/genera-legale.mjs\n');
   process.exit(1);
