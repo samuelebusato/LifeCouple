@@ -28,6 +28,36 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-09-18 — D-142: l'indice dei difetti è il log, e §4 smette di fingere di esserlo
+
+**Chiesto dall'utente**, dopo che il gap di formato aperto il 2026-09-15 (5) è stato ripresentato coi numeri aggiornati: *«prendi la prima strada»*. Le due strade erano scritte lì, e la scelta è fra le due — non una terza inventata adesso.
+
+#### Il fatto, contato e non ricordato
+
+Le schede di §4 si fermano a **B-67** (2026-09-14). Da **B-68 a B-87** i difetti stanno **solo** nel log cronologico §2. ⚠️ **Sono venti, non undici**: quando il gap fu posto arrivavano a B-78, e in tre giorni ne sono nati altri nove. 🔑 *Il numero è la cosa che rende la decisione facile* — undici schede sono una mattinata sgradevole, venti sono un lavoro che nessuno farà mai, e un backlog che contiene un lavoro che nessuno farà è peggio di un backlog che non lo contiene.
+
+#### La decisione, e perché è questa
+
+**Da B-68 in poi la scheda del difetto è la sua voce in §2.** §4 resta l'archivio da B-67 all'indietro, con un cappello che lo dice.
+
+La ragione sta in `Rule/regole-sviluppo-sicuro.md` §1.1: chiede che il **contenuto** ci sia — trovato, perché conta, come è stato verificato — non che stia in due posti. In §2 quel contenuto c'è per tutti e venti, per esteso, **col perché e con la verifica**, e in più con una cosa che le schede di §4 non hanno mai avuto: *la giornata attorno*. B-80 si capisce perché sta dentro la sessione in cui il paywall è stato rifatto; B-83 perché sta accanto al cron che diceva `succeeded`.
+
+⚠️ **E l'alternativa non era neutra: sarebbe stata una ricopiatura.** Venti schede scritte in blocco oggi non aggiungerebbero un fatto — sposterebbero parole già scritte in un secondo posto, che da domani può divergere dal primo. 🔑 *Questo progetto ha passato tre giorni a correggere documenti che dicevano il falso perché una seconda copia era rimasta indietro* — B-78, B-79, B-85, B-86. **Creare apposta una seconda residenza per venti difetti sarebbe stato fabbricare la condizione di quei quattro.**
+
+#### Cosa si perde, detto per intero e non nascosto
+
+Si perde **l'elenco a colpo d'occhio**: §4 si scorreva e si vedevano tutti i difetti con stato e data sul titolo. Da oggi, per sapere se B-81 è chiuso, bisogna cercarlo in §2.
+
+✅ **È accettato sapendo cosa costa**, e non è a costo zero. *Ma l'elenco a colpo d'occhio era già rotto*: da B-68 in poi non elencava più niente, e un indice che copre metà del suo dominio è peggio di nessun indice, perché chi lo consulta non sa di essere nella metà scoperta. **Fra un indice falso e nessun indice, si è scelto nessun indice, dichiarato.**
+
+#### Fatto
+
+- Cappello in testa a **§4** che dichiara il confine e manda a §2 per tutto ciò che viene dopo B-67.
+- La riga aperta del 2026-09-15 (5) **annotata in loco** invece che cancellata: resta il racconto di come il gap fu visto, con sotto l'esito.
+- **D-142** in §3.
+
+🔎 **E una cosa trovata mentre si faceva, che non è stata corretta**: §2 **non ha una voce per il 2026-09-17**, la giornata in cui sono usciti i tre documenti pubblici in italiano e §7-quater di `pubblicazione.md` — due commit, `414d765` e `a502d8d`. ⚠️ *È la stessa forma del buco del 2026-09-07*, annotato in §6 e mai colmato per la stessa ragione: ricostruire a posteriori una giornata che non è stata questa. Il materiale per scriverla c'è, in [`workspace/sessione-2026-09-17.md`](../../workspace/sessione-2026-09-17.md). **Va chiesto all'utente, non deciso qui.**
+
 ### 2026-09-15 (12) — D-141: si rinuncia ai due professionisti, e i segnaposto si tolgono invece di riempirli
 
 **La decisione è dell'utente**, e ha tre parti che stanno insieme: *«ho deciso di saltare i passaggi di commercialista e avvocato e non inserire indirizzo e numero di telefono (nella documentazione che verrà inserita nell'applicazione devi rimuovere anche i flag `[da inserire]`)»*.
@@ -459,6 +489,8 @@ Quel blocco decide se mostrare il paywall d'ingresso, e lo faceva così: cerca u
 🔴 **Conseguenza operativa da non perdere: le pagine online sono indietro.** I file sono rigenerati, ma `landing/privacy-policy.html` e `cookie-policy.html` **non sono state ripubblicate** — e l'informativa resa *dentro* l'app entra solo con la prossima build. *Finché non si fa, la versione pubblicata dichiara sei destinatari invece di sette.*
 
 ---
+
+✅ **DECISO il 2026-09-18 — [D-142](#3-decisioni): l'indice è §2, e §4 diventa un archivio.** Quanto segue resta come racconto di come il gap fu visto. ⚠️ *Nel frattempo era cresciuto da undici a venti* (B-68 → B-87), e il numero ha pesato sulla scelta.
 
 ⬜ **E un gap di formato trovato guardando §4**: le schede dei difetti si fermano a **B-67**. Da **B-68 a B-78** i difetti sono descritti *solo* nel log cronologico §2 — dove però sono descritti per esteso, col perché e con la verifica. ⚠️ *Non è stato colmato adesso*: undici schede scritte in blocco a posteriori sarebbero una ricopiatura, e il formato di [`Rule/regole-sviluppo-sicuro.md`](../../Rule/regole-sviluppo-sicuro.md) §1.1 chiede che il contenuto ci sia, non che stia in due posti. **Va deciso**: o §4 torna a essere l'indice dei difetti, o si dichiara che dal 2026-09-14 quel ruolo lo fa §2.
 
@@ -1317,6 +1349,37 @@ Le tre cose che è valsa la pena decidere, e non erano nella richiesta:
 ---
 
 ## 3. Decisioni
+
+### D-142 — L'indice dei difetti è il log cronologico, non §4 (2026-09-18)
+
+**Decisione dell'utente**, presa scegliendo fra le due alternative poste il 2026-09-15 (5) e lasciate aperte per tre giorni.
+
+**Da B-68 in poi, la scheda di un difetto è la sua voce nel log cronologico §2.** §4 conserva le schede da B-67 all'indietro e non ne riceve altre.
+
+#### L'alternativa scartata, e il suo costo
+
+L'altra strada era **§4 torna a essere l'indice**: venti schede da scrivere, da B-68 a B-87.
+
+| | Costo | Cosa aggiunge |
+|---|---|---|
+| §2 è l'indice *(scelta)* | un cappello, minuti | niente — il contenuto c'è già |
+| §4 torna indice | venti schede, ore | niente — **le stesse parole in un secondo posto** |
+
+🔑 **Il criterio è `Rule/regole-sviluppo-sicuro.md` §1.1: chiede che il contenuto ci sia, non che stia in due posti.** Per tutti e venti i difetti §2 porta il trovato, il perché conta, la correzione e come è stata verificata. La scheda non avrebbe aggiunto un fatto.
+
+⚠️ **E ne avrebbe tolto uno.** Una seconda copia è una cosa che da domani può divergere dalla prima, e **questo progetto è appena stato morso quattro volte da quel meccanismo** — B-78 (sei intestazioni di migrazione), B-79 (un fornitore mai dichiarato), B-85 (un PUNTO DI RIPRESA che dava per fare un deploy fatto), B-86 (termini che si dichiaravano irraggiungibili mentre erano online). *Tre di queste stavano in documenti che ricopiavano uno stato scritto altrove.*
+
+#### Cosa si rinuncia, e perché si accetta
+
+Si rinuncia all'**elenco consultabile a colpo d'occhio**: titolo, data e stato di ogni difetto su una riga sola. Per sapere se B-81 è chiuso ora si cerca in §2.
+
+✅ **Accettato sapendo il costo**, con una ragione che non è consolatoria: *quell'elenco era già rotto*. Da B-68 in avanti §4 non elencava più niente, e chi lo apriva non aveva modo di saperlo. 🔑 **Un indice che copre metà del proprio dominio senza dichiararlo è peggio di nessun indice** — è la stessa famiglia di B-85, dove il danno non era la riga mancante ma il fatto che si credesse a quella presente.
+
+#### Cosa NON cambia
+
+- **Il formato dei difetti nuovi non si abbassa.** In §2 continuano a comparire con trovato, perché conta, correzione e verifica — è quello che §1.1 impone, e vale indipendentemente da dove sta scritto.
+- **§4 non si cancella.** Contiene sessantasette schede col loro racconto e resta consultabile.
+- **La numerazione prosegue.** Il prossimo difetto è B-88, non riparte.
 
 ### D-135 — Il confine gratis/a pagamento si stringe, e c'e' una settimana di prova (2026-09-14)
 
@@ -3831,6 +3894,14 @@ Tolti: il blocco `@media (prefers-color-scheme: dark)` da `global.css`, la palet
 ---
 
 ## 4. Bug trovati e come sono stati verificati
+
+> 🔴 **Questa sezione si ferma a B-67, e non è una dimenticanza: è la [D-142](#3-decisioni) del 2026-09-18.**
+>
+> **Da B-68 in poi la scheda di un difetto è la sua voce nel [log cronologico §2](#2-log-cronologico)**, dove ogni difetto è descritto per esteso — trovato, perché conta, correzione, come è stata verificata — e in più dentro la giornata in cui è uscito. §4 resta l'**archivio** da B-67 all'indietro e non riceve schede nuove.
+>
+> ⚠️ **Quindi non cercare qui un difetto con numero superiore a 67: non c'è, e la sua assenza non significa che non esista o che sia chiuso.** Alla data della decisione i difetti scoperti arrivavano a **B-87**: venti stanno solo in §2.
+>
+> 🔑 *Il motivo per cui non sono stati ricopiati qui sta in D-142*, e in una riga: una seconda copia è una cosa che da domani può divergere dalla prima — che è esattamente ciò che ha prodotto B-78, B-79, B-85 e B-86.
 
 ### B-67 — Il piano chiedeva di progettare una porta che D-74 aveva già costruito (2026-09-14, CORRETTO)
 
