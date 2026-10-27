@@ -28,6 +28,10 @@ Da cui i **tre vincoli** che governano ogni scelta di questo progetto:
 
 ## 2. Log cronologico
 
+### 2026-10-27 — Il progetto è sospeso
+
+Dal brain, senza toccare codice né servizi. L'utente: *«il progetto lifecouple è sospeso perché ho poco tempo e non è una priorità»*. Il giorno prima aveva precisato che LifeCouple è un **progetto personale**, non dell'azienda F.R. di Busato Fausto. Scritto nel PUNTO DI RIPRESA (§7) e nell'elenco progetti del brain.
+
 ### 2026-09-18 — D-142: l'indice dei difetti è il log, e §4 smette di fingere di esserlo
 
 **Chiesto dall'utente**, dopo che il gap di formato aperto il 2026-09-15 (5) è stato ripresentato coi numeri aggiornati: *«prendi la prima strada»*. Le due strade erano scritte lì, e la scelta è fra le due — non una terza inventata adesso.
@@ -5644,6 +5648,8 @@ Emerso chiedendosi come si rimuove un domani l'app dagli store. **Non serve cost
 ---
 
 ## 7. PUNTO DI RIPRESA
+
+> ⏸ **Dal 2026-10-27 il progetto è sospeso** (utente: *«il progetto lifecouple è sospeso perché ho poco tempo e non è una priorità»*). Non c'è una data di ripresa. Quando riparte, si riparte da qui sotto: nel repository non è cambiato niente dall'ultimo commit, il 2026-09-18, quindi lo stato scritto qui sotto è ancora quello. I servizi esterni, invece, alla sospensione non sono stati verificati. *Prima di riprendere, conviene verificare cosa è cambiato fuori*: le versioni di Expo e delle dipendenze, le condizioni degli store, e se la vetrina su `lifecouple.heleox.it` è ancora in linea.
 
 > **Nota del 2026-09-15 (11) — non resta più niente che dipenda da noi, tranne gli screenshot.**
 >
