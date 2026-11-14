@@ -1,0 +1,10 @@
+{
+  "nota": "Le eccezioni del controllo dei segreti e dei dati, che gira prima del commit e del push (l'originale è nel brain, Code/controllo-segreti-dati.mjs). Ognuna dice perché non è un problema.",
+  "eccezioni": [
+    {
+      "percorso": "tests/**",
+      "regole": ["assegnazione-segreto"],
+      "perche": "Le password e i token inventati degli account di prova (@example.com) che i test usano sul progetto Supabase: aprono solo quegli account, che non hanno dati di persone"
+    }
+  ]
+}
